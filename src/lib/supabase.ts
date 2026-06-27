@@ -180,25 +180,28 @@ export const initAuth = (
   onAuthSuccess?: (user: User, token: string) => void,
   onAuthFailure?: () => void
 ) => {
-  // Disparar primero el estado actual (Supabase no garantiza un evento inicial inmediato)
+  // Disparar el estado actual al suscribirse.
   void (async () => {
     const session = await getCurrentSession();
     const token = session?.provider_token ?? getStoredProviderToken();
-    if (session?.user && token) {
-      onAuthSuccess?.(session.user, token);
-    } else if (!session?.user) {
+    if (session?.user) {
+      // Llamamos siempre que haya usuario; el token puede ser cadena vacía
+      // (estado 3: usuario logueado vía email sin permisos de Google).
+      onAuthSuccess?.(session.user, token ?? '');
+    } else {
       onAuthFailure?.();
     }
   })();
 
   const subscription = onAuthStateChange(({ user, providerToken }) => {
-    if (user && providerToken) {
-      onAuthSuccess?.(user, providerToken);
-    } else if (!user) {
+    if (user) {
+      onAuthSuccess?.(user, providerToken ?? '');
+    } else {
       onAuthFailure?.();
     }
   });
   return () => subscription.unsubscribe();
+
 };
 
 export const googleSignIn = async (): Promise<{
