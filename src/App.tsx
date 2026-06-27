@@ -1,6 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { User } from 'firebase/auth';
-import { initAuth, googleSignIn, logout, getAccessToken } from './lib/firebase';
+import type { User } from '@supabase/supabase-js';
+import {
+  initAuth,
+  googleSignIn,
+  logout,
+  getAccessToken,
+  getCurrentSession,
+  hasActiveSubscription,
+} from './lib/supabase';
+import Paywall from './components/Paywall';
+import ConnectGoogleScreen from './components/ConnectGoogleScreen';
+import AuthScreen from './components/AuthScreen';
+
 import { 
   findSpreadsheet, 
   createSpreadsheet, 
