@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { User } from 'firebase/auth';
-import { initAuth, googleSignIn, logout, getAccessToken } from './lib/firebase';
+import type { User } from '@supabase/supabase-js';
+import { initAuth, googleSignIn, logout, getAccessToken, checkSubscription } from './lib/supabase';
+
 import { 
   findSpreadsheet, 
   createSpreadsheet, 
@@ -31,6 +32,10 @@ import AlertasTributarias from './components/AlertasTributarias';
 import ConfigAdmin from './components/ConfigAdmin';
 import ProyectosAdmin from './components/ProyectosAdmin';
 import PagosEgresosAdmin from './components/PagosEgresosAdmin';
+import AuthScreen from './components/AuthScreen';
+import Paywall from './components/Paywall';
+import ConnectGoogleScreen from './components/ConnectGoogleScreen';
+
 
 import { 
   Building2, 
