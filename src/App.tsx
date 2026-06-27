@@ -91,26 +91,99 @@ export default function App() {
   }, [appData?.config?.trm]);
 
   useEffect(() => {
-    // Listen for Auth events
-    const unsubscribe = initAuth(
-      (fUser) => {
-        setUser(fUser);
-        setAuthLoading(false);
-        if (fUser) {
-          bootstrapSheets();
-        }
-      },
-      () => {
-        setUser(null);
-        setAuthLoading(false);
+    // Suscribirse a cambios de auth (Supabase). Maneja el flujo de 4 estados:
+    //   1. No logueado            -> AuthScreen
+    //   2. Logueado sin pago      -> Paywall
+    //   3. Logueado + pago,
+    //      sin token de Google    -> ConnectGoogleScreen
+    //   4. Logueado + pago + token -> bootstrapSheets() y Dashboard
+    let cancelled = false;
+
+    const evaluate = async (
+      nextUser: User | null,
+      providerToken: string | null
+    ) => {
+      if (cancelled) return;
+      setUser(nextUser);
+      setHasGoogleToken(!!providerToken);
+
+      if (!nextUser) {
+        setHasPaid(false);
+        setAppData(null);
         setSpreadsheetId(null);
         setSpreadsheetLink(null);
-        setAppData(null);
+        setAuthLoading(false);
+        return;
+      }
+
+      setCheckingPayment(true);
+      try {
+        const paid = await hasActiveSubscription(nextUser.id);
+        if (cancelled) return;
+        setHasPaid(paid);
+
+        if (paid && providerToken && !appData && !sheetsLoading) {
+          // Estado 4: arrancamos los Sheets
+          bootstrapSheets();
+        }
+      } catch (err) {
+        console.error('[Ferova] error verificando suscripción:', err);
+        setHasPaid(false);
+      } finally {
+        if (!cancelled) {
+          setCheckingPayment(false);
+          setAuthLoading(false);
+        }
+      }
+    };
+
+    // Estado inicial
+    void (async () => {
+      const session = await getCurrentSession();
+      const token = session?.provider_token ?? getAccessToken();
+      await evaluate(session?.user ?? null, token);
+    })();
+
+    // Suscripción reactiva
+    const unsubscribe = initAuth(
+      (fUser, token) => {
+        void evaluate(fUser, token);
+      },
+      () => {
+        void evaluate(null, null);
       }
     );
 
-    return () => unsubscribe();
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Cuando el usuario completa el pago (Paywall.onPaid) o conecta Google
+  // después, este efecto se encarga de detonar bootstrapSheets.
+  useEffect(() => {
+    if (
+      user &&
+      hasPaid &&
+      hasGoogleToken &&
+      !appData &&
+      !sheetsLoading
+    ) {
+      bootstrapSheets();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, hasPaid, hasGoogleToken]);
+
+  const handlePaymentSuccess = async () => {
+    if (!user) return;
+    setHasPaid(true);
+    // Re-evaluamos por si el token de Google ya está disponible
+    const token = getAccessToken();
+    setHasGoogleToken(!!token);
+  };
+
 
   const handleLogin = async () => {
     try {
