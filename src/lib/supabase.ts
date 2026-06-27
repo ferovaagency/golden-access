@@ -168,3 +168,53 @@ export const recordPaypalPayment = async (
     status: 'active',
     paypal_order_id: paypalOrderId,
   });
+
+// ---------------------------------------------------------------------------
+//  Firebase-compatible shim
+//  Permite que App.tsx siga usando initAuth / googleSignIn / logout /
+//  getAccessToken / setAccessTokenCustom como antes, pero por debajo todo
+//  pasa por Supabase Auth + provider_token de Google.
+// ---------------------------------------------------------------------------
+
+export const initAuth = (
+  onAuthSuccess?: (user: User, token: string) => void,
+  onAuthFailure?: () => void
+) => {
+  // Disparar primero el estado actual (Supabase no garantiza un evento inicial inmediato)
+  void (async () => {
+    const session = await getCurrentSession();
+    const token = session?.provider_token ?? getStoredProviderToken();
+    if (session?.user && token) {
+      onAuthSuccess?.(session.user, token);
+    } else if (!session?.user) {
+      onAuthFailure?.();
+    }
+  })();
+
+  const subscription = onAuthStateChange(({ user, providerToken }) => {
+    if (user && providerToken) {
+      onAuthSuccess?.(user, providerToken);
+    } else if (!user) {
+      onAuthFailure?.();
+    }
+  });
+  return () => subscription.unsubscribe();
+};
+
+export const googleSignIn = async (): Promise<{
+  user: User;
+  accessToken: string;
+} | null> => {
+  const { error } = await signInWithGoogle();
+  if (error) throw error;
+  // signInWithOAuth redirige; el listener será quien complete la sesión.
+  return null;
+};
+
+export const getAccessToken = (): string | null => getStoredProviderToken();
+
+export const setAccessTokenCustom = (token: string | null) =>
+  setStoredProviderToken(token);
+
+export const logout = signOut;
+
