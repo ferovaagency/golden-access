@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { LogOut, Loader2, Link2, AlertCircle } from 'lucide-react';
-import { signInWithGoogle, signOut } from '../lib/supabase';
+import { signInWithGoogle, linkGoogleIdentity, signOut } from '../lib/supabase';
 
 interface Props {
   user: User;
@@ -11,14 +11,25 @@ export default function ConnectGoogleScreen({ user }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isGoogleUser = (user.app_metadata as any)?.provider === 'google';
+
   const handleConnect = async () => {
     setError(null);
     setLoading(true);
     try {
-      const { error } = await signInWithGoogle();
+      // Si el usuario se registró con email, vinculamos Google a esa misma
+      // cuenta (preserva user.id y la suscripción registrada en Supabase).
+      // Si ya entró con Google pero el provider_token expiró, hacemos un
+      // sign-in normal para refrescar el token con scopes de Sheets/Drive.
+      const { error } = isGoogleUser
+        ? await signInWithGoogle()
+        : await linkGoogleIdentity();
       if (error) throw error;
     } catch (err: any) {
-      setError(err?.message ?? 'No se pudo iniciar OAuth de Google.');
+      setError(
+        err?.message ??
+          'No se pudo conectar Google. Revisa que el provider esté activo en Supabase.'
+      );
       setLoading(false);
     }
   };
