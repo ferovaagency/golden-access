@@ -58,6 +58,10 @@ import {
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [hasPaid, setHasPaid] = useState(false);
+  const [hasGoogleToken, setHasGoogleToken] = useState(false);
+  const [checkingPayment, setCheckingPayment] = useState(false);
+
   
   // Sheet State
   const [sheetsLoading, setSheetsLoading] = useState(false);
