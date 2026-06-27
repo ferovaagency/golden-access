@@ -1,0 +1,6 @@
+{
+  "name": "Ferova OS Financiero",
+  "description": "Sistema de gestión y planeación financiera y tributaria para Ferova Agency.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
