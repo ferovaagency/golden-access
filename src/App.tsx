@@ -702,7 +702,7 @@ export default function App() {
 
   // === Estado 1: No logueado ===
   if (!user) {
-    return <AuthScreen onGoogleSignIn={handleLogin} />;
+    return <AuthScreen />;
   }
 
   // Verificando suscripción contra Supabase
