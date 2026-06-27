@@ -803,7 +803,7 @@ export default function App() {
                 <UserIcon className="w-3.5 h-3.5 text-[#c9a961]" />
               </div>
               <div className="hidden md:block text-left text-[10px] leading-tight">
-                <span className="font-semibold text-white block">{user.displayName || 'Mafe'}</span>
+                <span className="font-semibold text-white block">{(user.user_metadata?.full_name as string | undefined) || (user.user_metadata?.name as string | undefined) || 'Mafe'}</span>
                 <span className="text-[#8a8377] block font-mono text-[9px] max-w-28 truncate">{user.email}</span>
               </div>
               
