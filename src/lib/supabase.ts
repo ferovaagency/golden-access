@@ -106,6 +106,26 @@ export const signInWithGoogle = () =>
     },
   });
 
+/**
+ * Vincula la identidad de Google a la cuenta YA autenticada (p. ej. registrada
+ * por email). Conserva el mismo `auth.users.id` para no romper la suscripción
+ * existente en `user_subscriptions`. Requiere que en Supabase Dashboard →
+ * Authentication → Providers esté activado "Allow manual linking".
+ */
+export const linkGoogleIdentity = () =>
+  supabase.auth.linkIdentity({
+    provider: 'google',
+    options: {
+      scopes:
+        'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file',
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
+      redirectTo: window.location.origin,
+    },
+  });
+
 export const signOut = async () => {
   setStoredProviderToken(null);
   return supabase.auth.signOut();
