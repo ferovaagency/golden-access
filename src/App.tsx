@@ -55,7 +55,7 @@ export default function App() {
   const [hasPaid, setHasPaid] = useState(false);
   const [checkingPayment, setCheckingPayment] = useState(false);
 
-  const [authLoading, setAuthLoading] = useState(true);
+
   
   // Sheet State
   const [sheetsLoading, setSheetsLoading] = useState(false);
@@ -85,23 +85,29 @@ export default function App() {
   }, [appData?.config?.trm]);
 
   useEffect(() => {
-    // Listen for Auth events
+    // Listen for Auth events (Supabase)
     const unsubscribe = initAuth(
-      (fUser) => {
+      async (fUser: User) => {
         setUser(fUser);
         setAuthLoading(false);
-        if (fUser) {
+        setCheckingPayment(true);
+        const paid = await checkSubscription(fUser.id);
+        setHasPaid(paid);
+        setCheckingPayment(false);
+        if (paid && getAccessToken()) {
           bootstrapSheets();
         }
       },
       () => {
         setUser(null);
+        setHasPaid(false);
         setAuthLoading(false);
         setSpreadsheetId(null);
         setSpreadsheetLink(null);
         setAppData(null);
       }
     );
+
 
     return () => unsubscribe();
   }, []);
