@@ -726,7 +726,7 @@ export default function App() {
 
   // === Estado 3: Pagado pero sin token de Google (registro por Email) ===
   if (!hasGoogleToken) {
-    return <ConnectGoogleScreen onConnect={handleLogin} onSignOut={handleSignOut} />;
+    return <ConnectGoogleScreen user={user} />;
   }
 
   // === Estado 4: Pagado + token de Google -> Dashboard (continúa abajo) ===
