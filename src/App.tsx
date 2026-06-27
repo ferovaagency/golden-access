@@ -1,17 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import type { User } from '@supabase/supabase-js';
-import {
-  initAuth,
-  googleSignIn,
-  logout,
-  getAccessToken,
-  getCurrentSession,
-  hasActiveSubscription,
-} from './lib/supabase';
-import Paywall from './components/Paywall';
-import ConnectGoogleScreen from './components/ConnectGoogleScreen';
-import AuthScreen from './components/AuthScreen';
-
+import { User } from 'firebase/auth';
+import { initAuth, googleSignIn, logout, getAccessToken } from './lib/firebase';
 import { 
   findSpreadsheet, 
   createSpreadsheet, 
@@ -58,10 +47,6 @@ import {
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [hasPaid, setHasPaid] = useState(false);
-  const [hasGoogleToken, setHasGoogleToken] = useState(false);
-  const [checkingPayment, setCheckingPayment] = useState(false);
-
   
   // Sheet State
   const [sheetsLoading, setSheetsLoading] = useState(false);
@@ -91,99 +76,26 @@ export default function App() {
   }, [appData?.config?.trm]);
 
   useEffect(() => {
-    // Suscribirse a cambios de auth (Supabase). Maneja el flujo de 4 estados:
-    //   1. No logueado            -> AuthScreen
-    //   2. Logueado sin pago      -> Paywall
-    //   3. Logueado + pago,
-    //      sin token de Google    -> ConnectGoogleScreen
-    //   4. Logueado + pago + token -> bootstrapSheets() y Dashboard
-    let cancelled = false;
-
-    const evaluate = async (
-      nextUser: User | null,
-      providerToken: string | null
-    ) => {
-      if (cancelled) return;
-      setUser(nextUser);
-      setHasGoogleToken(!!providerToken);
-
-      if (!nextUser) {
-        setHasPaid(false);
-        setAppData(null);
-        setSpreadsheetId(null);
-        setSpreadsheetLink(null);
+    // Listen for Auth events
+    const unsubscribe = initAuth(
+      (fUser) => {
+        setUser(fUser);
         setAuthLoading(false);
-        return;
-      }
-
-      setCheckingPayment(true);
-      try {
-        const paid = await hasActiveSubscription(nextUser.id);
-        if (cancelled) return;
-        setHasPaid(paid);
-
-        if (paid && providerToken && !appData && !sheetsLoading) {
-          // Estado 4: arrancamos los Sheets
+        if (fUser) {
           bootstrapSheets();
         }
-      } catch (err) {
-        console.error('[Ferova] error verificando suscripción:', err);
-        setHasPaid(false);
-      } finally {
-        if (!cancelled) {
-          setCheckingPayment(false);
-          setAuthLoading(false);
-        }
-      }
-    };
-
-    // Estado inicial
-    void (async () => {
-      const session = await getCurrentSession();
-      const token = session?.provider_token ?? getAccessToken();
-      await evaluate(session?.user ?? null, token);
-    })();
-
-    // Suscripción reactiva
-    const unsubscribe = initAuth(
-      (fUser, token) => {
-        void evaluate(fUser, token);
       },
       () => {
-        void evaluate(null, null);
+        setUser(null);
+        setAuthLoading(false);
+        setSpreadsheetId(null);
+        setSpreadsheetLink(null);
+        setAppData(null);
       }
     );
 
-    return () => {
-      cancelled = true;
-      unsubscribe();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => unsubscribe();
   }, []);
-
-  // Cuando el usuario completa el pago (Paywall.onPaid) o conecta Google
-  // después, este efecto se encarga de detonar bootstrapSheets.
-  useEffect(() => {
-    if (
-      user &&
-      hasPaid &&
-      hasGoogleToken &&
-      !appData &&
-      !sheetsLoading
-    ) {
-      bootstrapSheets();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, hasPaid, hasGoogleToken]);
-
-  const handlePaymentSuccess = async () => {
-    if (!user) return;
-    setHasPaid(true);
-    // Re-evaluamos por si el token de Google ya está disponible
-    const token = getAccessToken();
-    setHasGoogleToken(!!token);
-  };
-
 
   const handleLogin = async () => {
     try {
@@ -700,37 +612,44 @@ export default function App() {
     );
   }
 
-  // === Estado 1: No logueado ===
+  // Auth check fallback
   if (!user) {
-    return <AuthScreen />;
-  }
-
-  // Verificando suscripción contra Supabase
-  if (checkingPayment && !hasPaid) {
     return (
-      <div className="min-h-screen bg-[#0f0e0c] flex items-center justify-center text-[#e8e3d8]">
-        <div className="text-center space-y-3">
-          <Loader2 className="w-8 h-8 animate-spin text-[#c9a961] mx-auto" />
-          <p className="text-xs font-semibold font-mono tracking-widest text-[#a39d8e]">
-            VERIFICANDO SUSCRIPCIÓN...
+      <div className="min-h-screen bg-[#0f0e0c] flex flex-col justify-center items-center p-4 text-[#e8e3d8] font-sans">
+        <div className="max-w-md w-full bg-[#161412] border border-[#2a2620] rounded-lg p-8 text-center space-y-6 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 inset-x-0 h-[3px] bg-[#c9a961]" />
+          
+          <div className="space-y-2.5">
+            <h1 className="text-2xl font-bold font-display tracking-tight text-[#c9a961]">Ferova OS Financiero</h1>
+            <p className="text-xs text-[#a39d8e] font-mono uppercase tracking-wider">
+              Control Ejecutivo y Tránsito DIAN 2026
+            </p>
+          </div>
+
+          <p className="text-xs text-[#8a8377] leading-relaxed border-t border-b border-[#2a2620] py-4">
+            Este software autónomo utiliza Google Sheets como base de datos viva e interactúa con Google Drive para resguardar copias seguras de la agencia. Identifícate con tu cuenta autorizada para conceder privilegios API.
           </p>
+
+          <div className="pt-2">
+            <button 
+              onClick={handleLogin}
+              className="w-full flex items-center justify-center gap-3 bg-white hover:bg-neutral-100 text-black font-semibold font-sans py-3 rounded-md transition cursor-pointer"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24">
+                <path fill="#EA4335" d="M12 5.04c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24.5 12 .5c-4.7 0-8.75 2.69-10.72 6.61l3.99 3.09C6.21 7.15 8.87 5.04 12 5.04z" />
+                <path fill="#4285F4" d="M23.25 12c0-.78-.07-1.62-.23-2.39H12v4.52h6.38c-.28 1.47-1.11 2.7-2.35 3.53l3.65 2.83c2.13-1.97 3.57-4.87 3.57-8.49z" />
+                <path fill="#FBBC05" d="M5.27 14.3c-.24-.72-.38-1.5-.38-2.3s.14-1.58.38-2.3L1.28 6.61C.46 8.23 0 10.06 0 12s.46 3.77 1.28 5.39l3.99-3.09z" />
+                <path fill="#34A853" d="M12 23.5c3.24 0 5.96-1.07 7.94-2.91l-3.65-2.83c-1.04.7-2.38 1.11-4.29 1.11-3.13 0-5.79-2.11-6.74-5.2l-3.99 3.09C3.25 20.81 7.3 23.5 12 23.5z" />
+              </svg>
+              <span>Autenticar con Google Workspace</span>
+            </button>
+          </div>
+
+          <p className="text-[10px] text-[#8a8377] font-mono pt-2">Mafe © 2026 | Bogotá D.C., Colombia</p>
         </div>
       </div>
     );
   }
-
-  // === Estado 2: Logueado sin pago activo ===
-  if (!hasPaid) {
-    return <Paywall user={user} onPaid={handlePaymentSuccess} />;
-  }
-
-  // === Estado 3: Pagado pero sin token de Google (registro por Email) ===
-  if (!hasGoogleToken) {
-    return <ConnectGoogleScreen user={user} />;
-  }
-
-  // === Estado 4: Pagado + token de Google -> Dashboard (continúa abajo) ===
-
 
   const isReady = appData !== null;
   const metrics = isReady ? calcularMétricasFinancieras(appData, selectedMonth) : null;
@@ -873,7 +792,7 @@ export default function App() {
                 <UserIcon className="w-3.5 h-3.5 text-[#c9a961]" />
               </div>
               <div className="hidden md:block text-left text-[10px] leading-tight">
-                <span className="font-semibold text-white block">{(user.user_metadata?.full_name as string | undefined) || (user.user_metadata?.name as string | undefined) || 'Mafe'}</span>
+                <span className="font-semibold text-white block">{user.displayName || 'Mafe'}</span>
                 <span className="text-[#8a8377] block font-mono text-[9px] max-w-28 truncate">{user.email}</span>
               </div>
               
