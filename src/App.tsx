@@ -721,7 +721,7 @@ export default function App() {
 
   // === Estado 2: Logueado sin pago activo ===
   if (!hasPaid) {
-    return <Paywall user={user} onPaid={handlePaymentSuccess} onSignOut={handleSignOut} />;
+    return <Paywall user={user} onPaid={handlePaymentSuccess} />;
   }
 
   // === Estado 3: Pagado pero sin token de Google (registro por Email) ===
