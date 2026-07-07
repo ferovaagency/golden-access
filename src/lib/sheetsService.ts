@@ -718,6 +718,74 @@ export async function restoreFromBackup(
   return backupData;
 }
 
+/**
+ * Vuelca el AppData actual (que ahora viene de Supabase) hacia la hoja de
+ * Google Sheets del usuario, como respaldo manual opcional. Encuentra o crea
+ * "Ferova_OS_Financiero" y reutiliza saveSheetTable/updateConfigInSheet.
+ */
+export async function backupAppDataToSheets(
+  appData: AppData,
+  accessToken: string
+): Promise<{ sheetId: string; sheetLink: string }> {
+  let sheetId: string;
+  let sheetLink: string;
+
+  const existing = await findSpreadsheet(accessToken);
+  if (existing) {
+    sheetId = existing.id;
+    sheetLink = existing.webViewLink || `https://docs.google.com/spreadsheets/d/${existing.id}`;
+  } else {
+    sheetId = await createSpreadsheet(accessToken);
+    sheetLink = `https://docs.google.com/spreadsheets/d/${sheetId}`;
+  }
+
+  await updateConfigInSheet(sheetId, accessToken, appData.config);
+
+  await saveSheetTable(sheetId, accessToken, 'Clientes',
+    ['id', 'nombre', 'tipo', 'declarante', 'activo', 'fecha_creacion', 'notas', 'marca_info', 'objetivos', 'kpis', 'entregables', 'progreso', 'responsable'],
+    appData.clientes.map(c => [
+      c.id, c.nombre, c.tipo, c.declarante ? 'TRUE' : 'FALSE', c.activo ? 'TRUE' : 'FALSE', c.fecha_creacion,
+      c.notas || '', c.marca_info || '', c.objetivos || '', c.kpis || '', c.entregables || '', c.progreso || 0, c.responsable || ''
+    ])
+  );
+
+  await saveSheetTable(sheetId, accessToken, 'Servicios',
+    ['id', 'nombre', 'costo_unitario', 'descripcion'],
+    appData.servicios.map(s => [s.id, s.nombre, s.costo_unitario, s.descripcion || ''])
+  );
+
+  await saveSheetTable(sheetId, accessToken, 'Herramientas',
+    ['id', 'nombre', 'monto', 'moneda', 'tipo_cobro', 'servicios_ids', 'notas'],
+    appData.herramientas.map(h => [h.id, h.nombre, h.monto, h.moneda, h.tipo_cobro, h.servicios_ids || '', h.notas || ''])
+  );
+
+  await saveSheetTable(sheetId, accessToken, 'OtrosGastos',
+    ['id', 'nombre', 'monto', 'moneda', 'categoria'],
+    appData.otrosGastos.map(g => [g.id, g.nombre, g.monto, g.moneda, g.categoria])
+  );
+
+  await saveSheetTable(sheetId, accessToken, 'Ventas',
+    ['id', 'fecha', 'cliente_id', 'cliente_nombre', 'servicio_id', 'servicio_nombre', 'cantidad', 'precio_venta_unitario', 'costo_unitario', 'moneda', 'tipo', 'adelanto', 'estado_pago', 'notas', 'abonos_log'],
+    appData.ventas.map(v => [
+      v.id, v.fecha, v.cliente_id, v.cliente_nombre, v.servicio_id, v.servicio_nombre,
+      v.cantidad, v.precio_venta_unitario, v.costo_unitario, v.moneda, v.tipo, v.adelanto, v.estado_pago, v.notas || '',
+      JSON.stringify(v.abonos || [])
+    ])
+  );
+
+  await saveSheetTable(sheetId, accessToken, 'Horas',
+    ['id', 'fecha', 'cliente_id', 'cliente_nombre', 'servicio_id', 'servicio_nombre', 'horas', 'descripcion'],
+    appData.horas.map(h => [h.id, h.fecha, h.cliente_id, h.cliente_nombre, h.servicio_id, h.servicio_nombre, h.horas, h.descripcion])
+  );
+
+  await saveSheetTable(sheetId, accessToken, 'PagosEgresos',
+    ['id', 'fecha', 'concepto', 'categoria', 'monto', 'moneda', 'metodo_pago', 'notas'],
+    appData.pagosEgresos.map(p => [p.id, p.fecha, p.concepto, p.categoria, p.monto, p.moneda, p.metodo_pago, p.notas || ''])
+  );
+
+  return { sheetId, sheetLink };
+}
+
 export interface DriveFileInfo {
   id: string;
   name: string;
