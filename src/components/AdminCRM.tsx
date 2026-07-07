@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle } from 'lucide-react';
+import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles } from 'lucide-react';
 import { logout } from '../lib/supabase';
 import {
   isTeamMember,
@@ -18,6 +18,7 @@ import {
   sendWhatsapp,
   bookCita,
   cancelCita,
+  analyzeContenido,
   Oportunidad,
   CitaDiagnostico,
   ContenidoPotencial,
