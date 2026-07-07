@@ -136,6 +136,28 @@ export async function upsertCita(c: Partial<CitaDiagnostico> & { id?: string }):
   return data as CitaDiagnostico;
 }
 
+export async function bookCita(payload: {
+  oportunidad_id?: string | null;
+  nombre_prospecto: string;
+  email_prospecto?: string | null;
+  telefono_prospecto?: string | null;
+  fecha_hora: string;
+  duracion_min?: number;
+  notas?: string | null;
+}): Promise<CitaDiagnostico> {
+  const { data, error } = await supabase.functions.invoke('calendar-book', { body: payload });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo agendar la cita.');
+  return data.cita as CitaDiagnostico;
+}
+
+export async function cancelCita(cita_id: string): Promise<CitaDiagnostico> {
+  const { data, error } = await supabase.functions.invoke('calendar-cancel', { body: { cita_id } });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo cancelar la cita.');
+  return data.cita as CitaDiagnostico;
+}
+
 export async function listContenidoPotencial(): Promise<ContenidoPotencial[]> {
   const { data, error } = await supabase
     .from('crm_contenido_potencial')
