@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot } from 'lucide-react';
+import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle } from 'lucide-react';
 import { logout } from '../lib/supabase';
 import {
   isTeamMember,
@@ -16,6 +16,8 @@ import {
   addKnowledge,
   deleteKnowledge,
   sendWhatsapp,
+  bookCita,
+  cancelCita,
   Oportunidad,
   CitaDiagnostico,
   ContenidoPotencial,
@@ -54,6 +56,17 @@ export default function AdminCRM({ user }: Props) {
 
   const [whatsappDrafts, setWhatsappDrafts] = useState<Record<string, string>>({});
   const [sendingWhatsapp, setSendingWhatsapp] = useState<string | null>(null);
+
+  // Booking form
+  const [bookNombre, setBookNombre] = useState('');
+  const [bookEmail, setBookEmail] = useState('');
+  const [bookTelefono, setBookTelefono] = useState('');
+  const [bookOportunidadId, setBookOportunidadId] = useState('');
+  const [bookFecha, setBookFecha] = useState('');
+  const [bookDuracion, setBookDuracion] = useState(30);
+  const [bookNotas, setBookNotas] = useState('');
+  const [booking, setBooking] = useState(false);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -144,6 +157,43 @@ export default function AdminCRM({ user }: Props) {
       alert(`Error enviando WhatsApp: ${err.message || err}`);
     } finally {
       setSendingWhatsapp(null);
+    }
+  };
+
+  const handleBookCita = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bookNombre.trim() || !bookFecha) return;
+    setBooking(true);
+    try {
+      const created = await bookCita({
+        oportunidad_id: bookOportunidadId || null,
+        nombre_prospecto: bookNombre.trim(),
+        email_prospecto: bookEmail.trim() || null,
+        telefono_prospecto: bookTelefono.trim() || null,
+        fecha_hora: new Date(bookFecha).toISOString(),
+        duracion_min: Number(bookDuracion) || 30,
+        notas: bookNotas.trim() || null,
+      });
+      setCitas([created, ...citas].sort((a, b) => new Date(a.fecha_hora).getTime() - new Date(b.fecha_hora).getTime()));
+      setBookNombre(''); setBookEmail(''); setBookTelefono('');
+      setBookOportunidadId(''); setBookFecha(''); setBookNotas('');
+    } catch (err: any) {
+      alert(`Error agendando la cita: ${err.message || err}`);
+    } finally {
+      setBooking(false);
+    }
+  };
+
+  const handleCancelCita = async (id: string) => {
+    if (!window.confirm('¿Cancelar esta cita y eliminarla del calendario?')) return;
+    setCancellingId(id);
+    try {
+      const updated = await cancelCita(id);
+      setCitas(citas.map((c) => (c.id === id ? updated : c)));
+    } catch (err: any) {
+      alert(`Error cancelando: ${err.message || err}`);
+    } finally {
+      setCancellingId(null);
     }
   };
 
