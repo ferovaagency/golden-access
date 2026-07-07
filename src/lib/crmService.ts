@@ -158,6 +158,18 @@ export async function cancelCita(cita_id: string): Promise<CitaDiagnostico> {
   return data.cita as CitaDiagnostico;
 }
 
+export async function analyzeContenido(payload: {
+  plataforma?: 'linkedin' | 'reddit';
+  url_publicacion: string;
+  autor?: string | null;
+  texto: string;
+}): Promise<ContenidoPotencial> {
+  const { data, error } = await supabase.functions.invoke('linkedin-analyze', { body: payload });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo analizar el contenido.');
+  return data.contenido as ContenidoPotencial;
+}
+
 export async function listContenidoPotencial(): Promise<ContenidoPotencial[]> {
   const { data, error } = await supabase
     .from('crm_contenido_potencial')
