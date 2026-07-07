@@ -547,45 +547,110 @@ export default function AdminCRM({ user }: Props) {
 
 
         {tab === 'contenido' && (
-          <div className="space-y-2">
-            {contenido.length === 0 && !loading && (
-              <p className="text-[#8a8377] text-xs font-mono text-center py-10">
-                Sin contenido detectado todavía. Aquí aparecerán publicaciones de LinkedIn/Reddit con potencial, junto a un comentario sugerido para que publiques manualmente.
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <form onSubmit={handleAnalyzeContenido} className="lg:col-span-5 bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs h-fit">
+              <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" /> Analizar publicación
+              </h3>
+              <p className="text-[#8a8377] font-mono text-[10px] leading-relaxed">
+                Pegá el link y el texto de una publicación de LinkedIn o Reddit. La IA la puntúa (0-100), explica por qué y redacta un comentario sugerido para que lo publiques manualmente.
               </p>
-            )}
-            {contenido.map((c) => (
-              <div key={c.id} className="bg-[#161412] border border-[#2a2620] rounded-lg p-4 space-y-2 text-xs">
-                <div className="flex items-center justify-between">
-                  <a href={c.url_publicacion} target="_blank" rel="noreferrer" className="text-[#c9a961] flex items-center gap-1 font-semibold">
-                    <ExternalLink className="w-3 h-3" /> {c.plataforma} · {c.autor || 'autor desconocido'}
-                  </a>
-                  <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-[#c9a961]/10 text-[#c9a961] border border-[#c9a961]/30">
-                    score {c.score_potencial ?? '-'}
-                  </span>
-                </div>
-                {c.resumen && <p className="text-[#a39d8e]">{c.resumen}</p>}
-                {c.comentario_sugerido && (
-                  <div className="bg-[#0f0e0c]/50 border border-[#2a2620] rounded p-3">
-                    <span className="text-[9px] font-mono uppercase text-[#8a8377] block mb-1">Comentario sugerido:</span>
-                    <p className="text-[#e8e3d8]">{c.comentario_sugerido}</p>
-                  </div>
-                )}
-                <div className="flex gap-2 pt-1">
-                  <button
-                    onClick={() => handleMarkContenido(c, 'publicado_manual')}
-                    className="px-2.5 py-1 bg-[#a8c98a]/15 border border-[#a8c98a]/40 text-[#a8c98a] rounded text-[10px] font-mono"
-                  >
-                    Ya lo publiqué
-                  </button>
-                  <button
-                    onClick={() => handleMarkContenido(c, 'descartado')}
-                    className="px-2.5 py-1 bg-white/[0.03] border border-[#2a2620] text-[#8a8377] rounded text-[10px] font-mono"
-                  >
-                    Descartar
-                  </button>
-                </div>
+              <div className="flex gap-2">
+                <select
+                  value={anaPlataforma}
+                  onChange={(e) => setAnaPlataforma(e.target.value as 'linkedin' | 'reddit')}
+                  className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                >
+                  <option value="linkedin">LinkedIn</option>
+                  <option value="reddit">Reddit</option>
+                </select>
+                <input
+                  value={anaAutor}
+                  onChange={(e) => setAnaAutor(e.target.value)}
+                  placeholder="Autor (opcional)"
+                  className="flex-1 bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                />
               </div>
-            ))}
+              <input
+                value={anaUrl}
+                onChange={(e) => setAnaUrl(e.target.value)}
+                placeholder="URL de la publicación"
+                required
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              />
+              <textarea
+                value={anaTexto}
+                onChange={(e) => setAnaTexto(e.target.value)}
+                rows={8}
+                placeholder="Pegá acá el texto completo de la publicación..."
+                required
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white font-mono text-[11px] leading-relaxed"
+              />
+              <button
+                type="submit"
+                disabled={analyzing}
+                className="w-full bg-[#c9a961] hover:bg-[#b09252] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                <Sparkles className="w-3.5 h-3.5" /> {analyzing ? 'Analizando con IA...' : 'Analizar y guardar'}
+              </button>
+            </form>
+
+            <div className="lg:col-span-7 space-y-2">
+              {contenido.length === 0 && !loading && (
+                <p className="text-[#8a8377] text-xs font-mono text-center py-10">
+                  Sin contenido analizado todavía. Usá el formulario de la izquierda para pegar una publicación.
+                </p>
+              )}
+              {contenido.map((c) => (
+                <div key={c.id} className="bg-[#161412] border border-[#2a2620] rounded-lg p-4 space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <a href={c.url_publicacion} target="_blank" rel="noreferrer" className="text-[#c9a961] flex items-center gap-1 font-semibold">
+                      <ExternalLink className="w-3 h-3" /> {c.plataforma} · {c.autor || 'autor desconocido'}
+                    </a>
+                    <span
+                      className="text-[9px] font-mono uppercase px-2 py-0.5 rounded border"
+                      style={{
+                        color: (c.score_potencial ?? 0) >= 70 ? '#a8c98a' : (c.score_potencial ?? 0) >= 40 ? '#c9a961' : '#8a8377',
+                        borderColor: (c.score_potencial ?? 0) >= 70 ? '#a8c98a66' : (c.score_potencial ?? 0) >= 40 ? '#c9a96166' : '#2a2620',
+                        backgroundColor: 'rgba(255,255,255,0.02)',
+                      }}
+                    >
+                      score {c.score_potencial ?? '-'}
+                    </span>
+                  </div>
+                  {c.resumen && <p className="text-[#a39d8e]">{c.resumen}</p>}
+                  {c.razon && <p className="text-[#8a8377] italic text-[11px]">Por qué: {c.razon}</p>}
+                  {c.comentario_sugerido && (
+                    <div className="bg-[#0f0e0c]/50 border border-[#2a2620] rounded p-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[9px] font-mono uppercase text-[#8a8377]">Comentario sugerido:</span>
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(c.comentario_sugerido || ''); }}
+                          className="text-[9px] font-mono text-[#c9a961] hover:text-[#e8c481] uppercase"
+                        >
+                          Copiar
+                        </button>
+                      </div>
+                      <p className="text-[#e8e3d8]">{c.comentario_sugerido}</p>
+                    </div>
+                  )}
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      onClick={() => handleMarkContenido(c, 'publicado_manual')}
+                      className="px-2.5 py-1 bg-[#a8c98a]/15 border border-[#a8c98a]/40 text-[#a8c98a] rounded text-[10px] font-mono"
+                    >
+                      Ya lo publiqué
+                    </button>
+                    <button
+                      onClick={() => handleMarkContenido(c, 'descartado')}
+                      className="px-2.5 py-1 bg-white/[0.03] border border-[#2a2620] text-[#8a8377] rounded text-[10px] font-mono"
+                    >
+                      Descartar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
