@@ -240,6 +240,7 @@ export default function AdminCRM({ user }: Props) {
     e.preventDefault();
     if (!nombreContacto.trim()) return;
     try {
+      const valor = nuevaValorEstimado.trim() ? Number(nuevaValorEstimado) : null;
       const created = await upsertOportunidad({
         nombre_contacto: nombreContacto.trim(),
         empresa: empresa.trim() || null,
@@ -247,12 +248,17 @@ export default function AdminCRM({ user }: Props) {
         estado: 'nuevo',
         fuente_url: fuenteUrl.trim() || null,
         telefono: telefono.trim() || null,
+        servicio_id: nuevaServicioId || null,
+        valor_estimado: valor,
+        moneda: valor != null ? nuevaMoneda : null,
       });
       setOportunidades([created, ...oportunidades]);
       setNombreContacto('');
       setEmpresa('');
       setFuenteUrl('');
       setTelefono('');
+      setNuevaServicioId('');
+      setNuevaValorEstimado('');
     } catch (err: any) {
       alert(`Error creando oportunidad: ${err.message || err}`);
     }
@@ -377,6 +383,34 @@ export default function AdminCRM({ user }: Props) {
                 placeholder="WhatsApp (ej. 573001234567, opcional)"
                 className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
               />
+              <select
+                value={nuevaServicioId}
+                onChange={(e) => setNuevaServicioId(e.target.value)}
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              >
+                <option value="">Servicio del catálogo (opcional)</option>
+                {servicios.map((s) => (
+                  <option key={s.id} value={s.id}>{s.nombre}</option>
+                ))}
+              </select>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  min={0}
+                  value={nuevaValorEstimado}
+                  onChange={(e) => setNuevaValorEstimado(e.target.value)}
+                  placeholder="Valor estimado (opcional)"
+                  className="flex-1 bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                />
+                <select
+                  value={nuevaMoneda}
+                  onChange={(e) => setNuevaMoneda(e.target.value as 'COP' | 'USD')}
+                  className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                >
+                  <option value="COP">COP</option>
+                  <option value="USD">USD</option>
+                </select>
+              </div>
               <button type="submit" className="w-full bg-[#c9a961] hover:bg-[#b09252] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5">
                 <Plus className="w-3.5 h-3.5" /> Crear
               </button>
