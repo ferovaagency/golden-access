@@ -86,7 +86,7 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
                 setError(null);
                 try {
                   const details = await actions.order!.capture();
-                  await recordPaypalPayment(user.id, details.id!, PRICE_USD);
+                  await recordPaypalPayment(details.id!);
                   onPaid();
                 } catch (e: any) {
                   console.error(e);

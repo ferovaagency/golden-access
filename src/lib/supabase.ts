@@ -170,17 +170,17 @@ export const checkSubscription = async (userId: string): Promise<boolean> => {
   return true;
 };
 
-export const recordPaypalPayment = async (
-  userId: string,
-  orderId: string,
-  amountUsd: number
-) => {
-  const { error } = await supabase.from('user_subscriptions').insert({
-    user_id: userId,
-    status: 'active',
-    provider: 'paypal',
-    provider_order_id: orderId,
-    amount_usd: amountUsd,
+/**
+ * Verifica la orden de PayPal en el servidor (Edge Function `paypal-capture-order`)
+ * antes de activar la suscripción. No se inserta nada directo desde el cliente:
+ * la función usa el service_role y re-verifica el pago contra la API de PayPal,
+ * derivando el user_id del JWT ya autenticado (no de lo que envíe el navegador).
+ */
+export const recordPaypalPayment = async (orderId: string) => {
+  const { data, error } = await supabase.functions.invoke('paypal-capture-order', {
+    body: { orderId },
   });
   if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'PayPal no confirmó el pago.');
+  return data;
 };

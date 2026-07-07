@@ -1,52 +1,35 @@
 import React, { useState } from 'react';
-import { Config, Respaldo, Venta, Cliente, Hora } from '../types';
+import { Config, Venta, Cliente, Hora } from '../types';
 import { convertToCop } from '../lib/calculations';
-import { Settings, Save, RefreshCw, FolderSync, Clipboard, CheckCircle, ShieldAlert, Database, Link, Loader2 } from 'lucide-react';
+import { Settings, Save, RefreshCw, FolderSync, Clipboard } from 'lucide-react';
 
 interface ConfigAdminProps {
   config: Config;
-  respaldos: Respaldo[];
   ventas: Venta[];
   clientes: Cliente[];
   horas: Hora[];
-  spreadsheetId: string | null;
-  spreadsheetLink: string | null;
+  hasGoogleToken: boolean;
+  lastSheetBackupLink: string | null;
+  isBackingUpToSheets: boolean;
   onSaveConfig: (updated: Config) => Promise<void>;
-  onTriggerBackup: () => Promise<void>;
-  onWipeDatabase: () => Promise<void>;
-  onRestoreBackup: (backupId: string) => Promise<void>;
-  onConnectCustomSheet: (urlOrId: string) => Promise<void>;
+  onBackupToSheets: () => Promise<void>;
   formatCop: (val: number) => string;
 }
 
-export default function ConfigAdmin({ 
-  config, 
-  respaldos, 
+export default function ConfigAdmin({
+  config,
   ventas,
   clientes,
   horas,
-  spreadsheetId,
-  spreadsheetLink,
-  onSaveConfig, 
-  onTriggerBackup, 
-  onWipeDatabase,
-  onRestoreBackup,
-  onConnectCustomSheet,
-  formatCop 
+  hasGoogleToken,
+  lastSheetBackupLink,
+  isBackingUpToSheets,
+  onSaveConfig,
+  onBackupToSheets,
+  formatCop
 }: ConfigAdminProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isBackingUp, setIsBackingUp] = useState(false);
   const [copiedStatus, setCopiedStatus] = useState<string | null>(null);
-
-  // Custom Sheet Input State
-  const [customSheetInput, setCustomSheetInput] = useState('');
-  const [isConnecting, setIsConnecting] = useState(false);
-
-  // Restore & Wipe State
-  const [restoreSnapshotId, setRestoreSnapshotId] = useState('');
-  const [isRestoring, setIsRestoring] = useState(false);
-  const [confirmDeleteText, setConfirmDeleteText] = useState('');
-  const [isClearing, setIsClearing] = useState(false);
 
   // Form State
   const [trm, setTrm] = useState(config.trm);
@@ -91,32 +74,6 @@ export default function ConfigAdmin({
       alert(`Ocurrió un error al guardar: ${err.message || err}`);
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleBackupBtn = async () => {
-    setIsBackingUp(true);
-    try {
-      await onTriggerBackup();
-      alert('✨ ¡Respaldo de Planilla en Google Drive realizado con éxito!');
-    } catch (err: any) {
-      alert(`Fallo en el respaldo: ${err.message || err}`);
-    } finally {
-      setIsBackingUp(false);
-    }
-  };
-
-  const handleLinkCustomSheetSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!customSheetInput.trim()) return;
-    setIsConnecting(true);
-    try {
-      await onConnectCustomSheet(customSheetInput);
-      setCustomSheetInput('');
-    } catch (err) {
-      // Error handled or alerted in App
-    } finally {
-      setIsConnecting(false);
     }
   };
 
@@ -185,40 +142,6 @@ export default function ConfigAdmin({
     ]);
     const body = [headers.join('\t'), ...rows.map(r => r.join('\t'))].join('\n');
     triggerCopy(body, 'Horas (TSV)');
-  };
-
-  const handleRestore = async () => {
-    if (!restoreSnapshotId) return;
-    if (!window.confirm(`⚠️ ¿Estás seguro de que deseas sobreescribir COMPLETAMENTE los datos actuales de todas las tablas con el respaldo "${restoreSnapshotId}"? Esta operación no se puede deshacer.`)) {
-      return;
-    }
-
-    setIsRestoring(true);
-    try {
-      await onRestoreBackup(restoreSnapshotId);
-      setRestoreSnapshotId('');
-    } catch (err) {
-      // already alert in App
-    } finally {
-      setIsRestoring(false);
-    }
-  };
-
-  const handleClearAllData = async () => {
-    if (confirmDeleteText !== 'BORRAR FEROVA') return;
-    if (!window.confirm('⚠️ ATENCIÓN: ¿Deseas inicializar/limpiar por completo los datos en Google Sheets de Ferova Financiero? Esta acción recreará todas las tablas con su configuración por defecto.')) {
-      return;
-    }
-
-    setIsClearing(true);
-    try {
-      await onWipeDatabase();
-      setConfirmDeleteText('');
-    } catch (err) {
-      // already alert in App
-    } finally {
-      setIsClearing(false);
-    }
   };
 
   return (
@@ -421,113 +344,45 @@ export default function ConfigAdmin({
         {/* Backups & Portapapeles side columns */}
         <div className="lg:col-span-4 space-y-6">
           
-          {/* ACTIVE GOOGLE SHEET CONTROLLER */}
-          <div className="bg-[#161412] border border-[#c9a961]/35 rounded-lg overflow-hidden pb-5 shadow-lg shadow-black/30">
-            <div className="bg-[#1a1714] border-b border-[#2a2620] px-5 py-3.5 flex items-center justify-between">
-              <h3 className="text-xs font-mono tracking-widest text-[#c9a961] uppercase font-bold flex items-center gap-2">
-                <Database className="w-4 h-4 text-[#c9a961]" /> Base de Datos Activa
-              </h3>
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            </div>
-
-            <div className="p-5 space-y-4 font-sans text-xs">
-              <div className="space-y-1">
-                <span className="text-[10px] uppercase font-mono font-bold text-[#8a8377] block">Clave Única (ID)</span>
-                <span className="font-mono text-white text-[11px] block bg-black/40 px-2 py-1.5 rounded select-all truncate border border-[#2a2620]" title={spreadsheetId || 'Ninguno'}>
-                  {spreadsheetId || 'Desconectado'}
-                </span>
-              </div>
-
-              {spreadsheetLink && (
-                <a
-                  href={spreadsheetLink}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded font-mono font-semibold transition cursor-pointer text-[11px]"
-                >
-                  Abrir Spreadsheet Directo ↗
-                </a>
-              )}
-
-              <hr className="border-[#2a2620]" />
-
-              <form onSubmit={handleLinkCustomSheetSubmit} className="space-y-3">
-                <div>
-                  <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1 font-semibold">
-                    🔌 Conectar Planilla Existente (Google Sheets/Excel)
-                  </label>
-                  <p className="text-[10px] text-[#8a8377] leading-relaxed mb-1.5">
-                    Pega el enlace de tu Google Sheet (ej. el que estabas usando antes) para sincronizar inmediatamente toda la contabilidad histórica:
-                  </p>
-                  <input
-                    type="text"
-                    value={customSheetInput}
-                    onChange={(e) => setCustomSheetInput(e.target.value)}
-                    placeholder="https://docs.google.com/spreadsheets/d/..."
-                    className="w-full bg-[#0f0e0c]/50 text-white placeholder-neutral-700 border border-[#2a2620] p-2 rounded font-mono text-xs focus:outline-none focus:border-[#c9a961]"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isConnecting || !customSheetInput.trim()}
-                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-[#c9a961] hover:bg-[#b09252] text-black font-bold text-xs rounded transition cursor-pointer disabled:bg-neutral-800 disabled:text-neutral-500"
-                >
-                  {isConnecting ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Conectando planilla...
-                    </>
-                  ) : (
-                    '🔌 Conectar Planilla'
-                  )}
-                </button>
-              </form>
-            </div>
-          </div>
-
-          {/* Backups Panel */}
+          {/* Google Sheets backup panel (optional, manual) */}
           <div className="bg-[#161412] border border-[#2a2620] rounded-lg overflow-hidden pb-5">
-            <div className="bg-white/[0.02] border-b border-[#2a2620] px-5 py-3.5">
+            <div className="bg-white/[0.02] border-b border-[#2a2620] px-5 py-3.5 flex items-center justify-between">
               <h3 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase font-semibold flex items-center gap-2">
-                <FolderSync className="w-4 h-4 text-[#a8c98a]" /> Respaldo de Seguridad manual
+                <FolderSync className="w-4 h-4 text-[#a8c98a]" /> Respaldo en Google Sheets
               </h3>
+              <div className={`w-2 h-2 rounded-full ${hasGoogleToken ? 'bg-emerald-500 animate-pulse' : 'bg-[#8a8377]'}`} />
             </div>
 
             <div className="p-5 space-y-4 font-sans text-xs">
               <p className="text-[#a39d8e] leading-relaxed text-[11px]">
-                La base de datos corre de forma persistente en tu Google Sheet "Ferova_OS_Financiero". Al accionar esta copia de resguardo, duplicas toda la información contable estructurada como un archivo de respaldo manual en la carpeta "Ferova/Respaldos" de tu Google Drive personal:
+                Tu contabilidad vive en Ferova OS (Supabase). Este respaldo es opcional: copia todo lo actual hacia tu propia hoja "Ferova_OS_Financiero" en Google Drive.
               </p>
 
-              <button 
-                onClick={handleBackupBtn}
-                disabled={isBackingUp}
+              {!hasGoogleToken && (
+                <p className="text-[10px] text-[#8a8377] italic">
+                  Necesitas conectar tu cuenta de Google la primera vez.
+                </p>
+              )}
+
+              <button
+                onClick={onBackupToSheets}
+                disabled={isBackingUpToSheets}
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#a8c98a] hover:bg-[#96b579] text-black rounded font-bold font-display shadow transition cursor-pointer disabled:bg-neutral-800 disabled:text-neutral-500"
               >
-                <RefreshCw className={`w-4 h-4 ${isBackingUp ? 'animate-spin' : ''}`} />
-                {isBackingUp ? 'Prorrogando copia...' : 'Generar Copia en Drive'}
+                <RefreshCw className={`w-4 h-4 ${isBackingUpToSheets ? 'animate-spin' : ''}`} />
+                {isBackingUpToSheets ? 'Respaldando...' : hasGoogleToken ? 'Respaldar ahora' : 'Conectar Google y respaldar'}
               </button>
 
-              <div className="border-t border-[#2a2620] pt-4.5 space-y-3">
-                <span className="text-[9px] uppercase font-mono font-bold text-[#8a8377] block">Historial de Respaldos (Drive)</span>
-                
-                <div className="space-y-2 max-h-32 overflow-y-auto">
-                  {respaldos.length === 0 ? (
-                    <span className="text-[11px] text-[#8a8377] italic block text-center font-mono py-2">Sin respaldos anteriores</span>
-                  ) : (
-                    respaldos.slice(0, 10).map((resp, idx) => (
-                      <div key={idx} className="bg-[#0f0e0c]/60 border border-[#2a2620] rounded p-2.5 space-y-0.5">
-                        <div className="flex items-center justify-between text-[11px] font-mono">
-                          <span className="text-white font-semibold">{resp.fecha}</span>
-                          <span className="text-[#a8c98a] text-[9px] bg-[#a8c98a]/10 border border-[#a8c98a]/20 font-bold px-1 rounded uppercase tracking-wider">OK</span>
-                        </div>
-                        <span className="text-[10px] text-[#8a8377] block truncate">
-                          File ID: {resp.snapshot_drive_id || 'N/A'}
-                        </span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
+              {lastSheetBackupLink && (
+                <a
+                  href={lastSheetBackupLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded font-mono font-semibold transition cursor-pointer text-[11px]"
+                >
+                  Abrir última hoja respaldada ↗
+                </a>
+              )}
             </div>
           </div>
 
@@ -572,68 +427,6 @@ export default function ConfigAdmin({
                   📋 Planilla de "{copiedStatus}" copiada. ¡Pégala en Excel!
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Danger Zone: restore snapshot & double-confirm wipe */}
-          <div className="bg-[#161412] border border-[#c97a61]/30 rounded-lg overflow-hidden pb-5">
-            <div className="bg-[#1c1211] border-b border-[#c97a61]/20 px-5 py-3.5 flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 text-[#c97a61]" />
-              <h3 className="text-xs font-mono tracking-widest text-[#c97a61] uppercase font-bold">
-                Zona de Peligro y Restauración
-              </h3>
-            </div>
-
-            <div className="p-5 space-y-4 font-sans text-xs">
-              <div>
-                <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1 font-semibold">
-                  Restaurar desde Snapshot ID:
-                </label>
-                <p className="text-[10px] text-[#8a8377] leading-relaxed mb-1.5">
-                  Reemplazará todo el contenido actual del Google Sheet con los datos del archivo de respaldo ingresado.
-                </p>
-                <div className="flex gap-2">
-                  <input 
-                    type="text" 
-                    value={restoreSnapshotId}
-                    onChange={(e) => setRestoreSnapshotId(e.target.value)}
-                    placeholder="ID del archivo de respaldo"
-                    className="flex-1 bg-[#0f0e0c]/50 text-white placeholder-neutral-700 border border-[#2a2620] p-2 rounded font-mono text-xs focus:outline-none focus:border-[#c9a961]"
-                  />
-                  <button
-                    onClick={handleRestore}
-                    disabled={isRestoring || !restoreSnapshotId}
-                    className="px-3 py-2 bg-[#c9a961] hover:bg-[#b09252] text-black font-bold text-xs rounded transition disabled:bg-neutral-800 disabled:text-neutral-500 cursor-pointer"
-                  >
-                    {isRestoring ? 'Refrescando...' : 'Restaurar'}
-                  </button>
-                </div>
-              </div>
-
-              <div className="border-t border-[#2a2620] pt-4">
-                <label className="block text-[#c97a61] text-[10px] uppercase font-mono mb-1 font-bold">
-                  Borrar Todos los Datos:
-                </label>
-                <p className="text-[10px] text-[#8a8377] leading-relaxed mb-2">
-                  Esta acción eliminará de forma irreversible todas las ventas, horas, clientes, herramientas y gastos, re-sembrando la hoja de cálculo con la configuración limpia deseada para 2026.
-                </p>
-                <div className="space-y-2">
-                  <input 
-                    type="text" 
-                    value={confirmDeleteText}
-                    onChange={(e) => setConfirmDeleteText(e.target.value)}
-                    placeholder="Escribe BORRAR FEROVA para habilitar"
-                    className="w-full bg-[#0f0e0c]/50 text-white placeholder-neutral-700 border border-[#2a2620] p-2 rounded font-mono text-xs text-center focus:outline-none focus:border-[#c97a61]"
-                  />
-                  <button
-                    onClick={handleClearAllData}
-                    disabled={confirmDeleteText !== 'BORRAR FEROVA' || isClearing}
-                    className="w-full py-2.5 bg-[#c97a61] hover:bg-[#b5654e] text-black font-bold uppercase rounded tracking-wider text-[11px] transition disabled:bg-neutral-800 disabled:text-neutral-500 cursor-pointer"
-                  >
-                    {isClearing ? 'Reiniciando...' : 'Borrar Todos los Datos'}
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
 
