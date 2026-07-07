@@ -71,6 +71,21 @@ export interface ContenidoPotencial {
   estado: 'nuevo' | 'sugerido' | 'publicado_manual' | 'descartado';
   detectado_en: string;
 }
+export interface ServicioCatalogo {
+  id: string;
+  nombre: string;
+  costo_unitario: number;
+}
+
+export async function listServiciosCatalogo(userId: string): Promise<ServicioCatalogo[]> {
+  const { data, error } = await supabase
+    .from('finance_servicios')
+    .select('id, nombre, costo_unitario')
+    .eq('user_id', userId)
+    .order('nombre');
+  if (error) throw new Error(`[crmService] listServiciosCatalogo: ${error.message}`);
+  return (data || []).map((s: any) => ({ id: s.id, nombre: s.nombre, costo_unitario: Number(s.costo_unitario) }));
+}
 
 export async function isTeamMember(email: string): Promise<boolean> {
   const { data, error } = await supabase
