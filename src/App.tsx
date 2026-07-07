@@ -22,6 +22,7 @@ import ProyectosAdmin from './components/ProyectosAdmin';
 import PagosEgresosAdmin from './components/PagosEgresosAdmin';
 import AuthScreen from './components/AuthScreen';
 import Paywall from './components/Paywall';
+import AdminCRM from './components/AdminCRM';
 
 
 import { 
@@ -279,6 +280,22 @@ export default function App() {
       maximumFractionDigits: 2
     }).format(val);
   };
+
+  // Ruta oculta del CRM interno de Ferova (no forma parte del producto que se vende).
+  // No requiere pago: la autorización real la da la lista blanca crm_team_members (RLS),
+  // AdminCRM se encarga de verificarla y de rechazar a cualquiera que no esté en ella.
+  const isAdminRoute = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
+  if (isAdminRoute) {
+    if (authLoading) {
+      return (
+        <div className="min-h-screen bg-[#0f0e0c] flex items-center justify-center text-[#e8e3d8]">
+          <Loader2 className="w-8 h-8 animate-spin text-[#c9a961]" />
+        </div>
+      );
+    }
+    if (!user) return <AuthScreen />;
+    return <AdminCRM user={user} />;
+  }
 
   if (authLoading || checkingPayment) {
     return (
