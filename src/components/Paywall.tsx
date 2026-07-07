@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Loader2, ShieldCheck, LogOut } from 'lucide-react';
-import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import type { User } from '@supabase/supabase-js';
-import { logout, recordPaypalPayment } from '../lib/supabase';
+import { logout, checkSubscription } from '../lib/supabase';
 
 interface PaywallProps {
   user: User;
@@ -10,17 +9,30 @@ interface PaywallProps {
 }
 
 const PRICE_USD = Number(import.meta.env.VITE_PAYWALL_PRICE_USD || '29.00');
-const CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID || 'sb';
+const HOSTED_BUTTON_ID = '362RRUB6YWWNW';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const NOTIFY_URL = SUPABASE_URL ? `${SUPABASE_URL}/functions/v1/paypal-ipn` : undefined;
 
 export default function Paywall({ user, onPaid }: PaywallProps) {
-  const [processing, setProcessing] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!import.meta.env.VITE_PAYPAL_CLIENT_ID) {
-      console.warn('[Paywall] VITE_PAYPAL_CLIENT_ID no está definido; usando sandbox "sb".');
+  const handleCheckPayment = async () => {
+    setChecking(true);
+    setError(null);
+    try {
+      const paid = await checkSubscription(user.id);
+      if (paid) {
+        onPaid();
+      } else {
+        setError('Todavía no vemos tu pago confirmado. PayPal puede tardar unos segundos en notificarnos — intenta de nuevo en un momento.');
+      }
+    } catch (e: any) {
+      setError(`Error verificando el pago: ${e.message || e}`);
+    } finally {
+      setChecking(false);
     }
-  }, []);
+  };
 
   return (
     <div className="min-h-screen bg-[#0f0e0c] flex flex-col justify-center items-center p-4 text-[#e8e3d8] font-sans">
@@ -42,7 +54,7 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
         <div className="border-t border-b border-[#2a2620] py-5 space-y-3">
           <div className="flex items-baseline justify-center gap-1">
             <span className="text-4xl font-bold text-white">${PRICE_USD.toFixed(2)}</span>
-            <span className="text-xs text-[#8a8377] font-mono">USD / pago único</span>
+            <span className="text-xs text-[#8a8377] font-mono">USD / mes</span>
           </div>
           <ul className="text-xs text-[#a39d8e] space-y-1.5 pl-4">
             <li>• Dashboard ejecutivo + KPIs en tiempo real</li>
@@ -53,54 +65,42 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
         </div>
 
         <div className="space-y-3">
-          {processing && (
-            <div className="flex items-center justify-center gap-2 text-xs text-[#a39d8e]">
-              <Loader2 className="w-4 h-4 animate-spin text-[#c9a961]" />
-              Procesando pago...
-            </div>
-          )}
           {error && (
             <p className="text-xs text-red-400 bg-red-950/30 border border-red-900/50 rounded p-2">
               {error}
             </p>
           )}
 
-          <PayPalScriptProvider
-            options={{ clientId: CLIENT_ID, currency: 'USD', intent: 'capture' }}
-          >
-            <PayPalButtons
-              style={{ layout: 'vertical', color: 'gold', shape: 'rect', label: 'pay' }}
-              createOrder={(_data, actions) =>
-                actions.order.create({
-                  intent: 'CAPTURE',
-                  purchase_units: [
-                    {
-                      description: 'Ferova OS Financiero - Licencia',
-                      amount: { currency_code: 'USD', value: PRICE_USD.toFixed(2) },
-                    },
-                  ],
-                })
-              }
-              onApprove={async (_data, actions) => {
-                setProcessing(true);
-                setError(null);
-                try {
-                  const details = await actions.order!.capture();
-                  await recordPaypalPayment(details.id!);
-                  onPaid();
-                } catch (e: any) {
-                  console.error(e);
-                  setError(`No se pudo registrar el pago: ${e.message || e}`);
-                } finally {
-                  setProcessing(false);
-                }
-              }}
-              onError={(err) => {
-                console.error(err);
-                setError('Error en PayPal. Intenta de nuevo.');
-              }}
+          <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank" className="flex justify-center">
+            <input type="hidden" name="cmd" value="_s-xclick" />
+            <input type="hidden" name="hosted_button_id" value={HOSTED_BUTTON_ID} />
+            <input type="hidden" name="currency_code" value="USD" />
+            {/* Identifica al usuario de Supabase: el webhook de IPN lo usa para activar su suscripción */}
+            <input type="hidden" name="custom" value={user.id} />
+            {NOTIFY_URL && <input type="hidden" name="notify_url" value={NOTIFY_URL} />}
+            <input type="hidden" name="return" value={typeof window !== 'undefined' ? window.location.origin : ''} />
+            <input
+              type="image"
+              src="https://www.paypalobjects.com/es_XC/i/btn/btn_subscribe_LG.gif"
+              border={0}
+              name="submit"
+              title="PayPal es una forma segura y fácil de pagar en línea."
+              alt="Suscribirse"
             />
-          </PayPalScriptProvider>
+          </form>
+
+          <p className="text-[10px] text-[#8a8377] font-mono text-center leading-relaxed">
+            Se abre PayPal en una pestaña nueva. Cuando termines de suscribirte, vuelve aquí y pulsa el botón de abajo.
+          </p>
+
+          <button
+            onClick={handleCheckPayment}
+            disabled={checking}
+            className="w-full flex items-center justify-center gap-2 bg-[#c9a961] hover:bg-[#b09252] text-black font-semibold font-display py-2.5 rounded transition cursor-pointer disabled:opacity-60"
+          >
+            {checking && <Loader2 className="w-4 h-4 animate-spin" />}
+            Ya me suscribí, verificar acceso
+          </button>
         </div>
 
         <div className="flex items-center justify-between pt-2 border-t border-[#2a2620]">
