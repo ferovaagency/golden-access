@@ -19,6 +19,8 @@ import {
   bookCita,
   cancelCita,
   analyzeContenido,
+  listServiciosCatalogo,
+  ServicioCatalogo,
   Oportunidad,
   CitaDiagnostico,
   ContenidoPotencial,
@@ -48,6 +50,10 @@ export default function AdminCRM({ user }: Props) {
   const [canalOrigen, setCanalOrigen] = useState('linkedin');
   const [fuenteUrl, setFuenteUrl] = useState('');
   const [telefono, setTelefono] = useState('');
+  const [nuevaServicioId, setNuevaServicioId] = useState('');
+  const [nuevaValorEstimado, setNuevaValorEstimado] = useState<string>('');
+  const [nuevaMoneda, setNuevaMoneda] = useState<'COP' | 'USD'>('COP');
+  const [servicios, setServicios] = useState<ServicioCatalogo[]>([]);
 
   const [promptDraft, setPromptDraft] = useState('');
   const [savingPrompt, setSavingPrompt] = useState(false);
@@ -87,12 +93,13 @@ export default function AdminCRM({ user }: Props) {
   const refreshAll = async () => {
     setLoading(true);
     try {
-      const [o, c, k, bc, kn] = await Promise.all([
+      const [o, c, k, bc, kn, srv] = await Promise.all([
         listOportunidades(),
         listCitas(),
         listContenidoPotencial(),
         getBotConfig(),
         listKnowledge(),
+        listServiciosCatalogo(user.id).catch(() => [] as ServicioCatalogo[]),
       ]);
       setOportunidades(o);
       setCitas(c);
@@ -100,6 +107,7 @@ export default function AdminCRM({ user }: Props) {
       setBotConfig(bc);
       setPromptDraft(bc.custom_prompt || '');
       setKnowledge(kn);
+      setServicios(srv);
     } catch (err: any) {
       alert(`Error cargando el CRM: ${err.message || err}`);
     } finally {
