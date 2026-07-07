@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot } from 'lucide-react';
+import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles } from 'lucide-react';
 import { logout } from '../lib/supabase';
 import {
   isTeamMember,
@@ -16,6 +16,11 @@ import {
   addKnowledge,
   deleteKnowledge,
   sendWhatsapp,
+  bookCita,
+  cancelCita,
+  analyzeContenido,
+  listServiciosCatalogo,
+  ServicioCatalogo,
   Oportunidad,
   CitaDiagnostico,
   ContenidoPotencial,
@@ -45,6 +50,10 @@ export default function AdminCRM({ user }: Props) {
   const [canalOrigen, setCanalOrigen] = useState('linkedin');
   const [fuenteUrl, setFuenteUrl] = useState('');
   const [telefono, setTelefono] = useState('');
+  const [nuevaServicioId, setNuevaServicioId] = useState('');
+  const [nuevaValorEstimado, setNuevaValorEstimado] = useState<string>('');
+  const [nuevaMoneda, setNuevaMoneda] = useState<'COP' | 'USD'>('COP');
+  const [servicios, setServicios] = useState<ServicioCatalogo[]>([]);
 
   const [promptDraft, setPromptDraft] = useState('');
   const [savingPrompt, setSavingPrompt] = useState(false);
@@ -54,6 +63,24 @@ export default function AdminCRM({ user }: Props) {
 
   const [whatsappDrafts, setWhatsappDrafts] = useState<Record<string, string>>({});
   const [sendingWhatsapp, setSendingWhatsapp] = useState<string | null>(null);
+
+  // Booking form
+  const [bookNombre, setBookNombre] = useState('');
+  const [bookEmail, setBookEmail] = useState('');
+  const [bookTelefono, setBookTelefono] = useState('');
+  const [bookOportunidadId, setBookOportunidadId] = useState('');
+  const [bookFecha, setBookFecha] = useState('');
+  const [bookDuracion, setBookDuracion] = useState(30);
+  const [bookNotas, setBookNotas] = useState('');
+  const [booking, setBooking] = useState(false);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+  // Content analyzer
+  const [anaUrl, setAnaUrl] = useState('');
+  const [anaAutor, setAnaAutor] = useState('');
+  const [anaPlataforma, setAnaPlataforma] = useState<'linkedin' | 'reddit'>('linkedin');
+  const [anaTexto, setAnaTexto] = useState('');
+  const [analyzing, setAnalyzing] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -66,12 +93,13 @@ export default function AdminCRM({ user }: Props) {
   const refreshAll = async () => {
     setLoading(true);
     try {
-      const [o, c, k, bc, kn] = await Promise.all([
+      const [o, c, k, bc, kn, srv] = await Promise.all([
         listOportunidades(),
         listCitas(),
         listContenidoPotencial(),
         getBotConfig(),
         listKnowledge(),
+        listServiciosCatalogo(user.id).catch(() => [] as ServicioCatalogo[]),
       ]);
       setOportunidades(o);
       setCitas(c);
@@ -79,6 +107,7 @@ export default function AdminCRM({ user }: Props) {
       setBotConfig(bc);
       setPromptDraft(bc.custom_prompt || '');
       setKnowledge(kn);
+      setServicios(srv);
     } catch (err: any) {
       alert(`Error cargando el CRM: ${err.message || err}`);
     } finally {
@@ -147,10 +176,71 @@ export default function AdminCRM({ user }: Props) {
     }
   };
 
+  const handleBookCita = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bookNombre.trim() || !bookFecha) return;
+    setBooking(true);
+    try {
+      const created = await bookCita({
+        oportunidad_id: bookOportunidadId || null,
+        nombre_prospecto: bookNombre.trim(),
+        email_prospecto: bookEmail.trim() || null,
+        telefono_prospecto: bookTelefono.trim() || null,
+        fecha_hora: new Date(bookFecha).toISOString(),
+        duracion_min: Number(bookDuracion) || 30,
+        notas: bookNotas.trim() || null,
+      });
+      setCitas([created, ...citas].sort((a, b) => new Date(a.fecha_hora).getTime() - new Date(b.fecha_hora).getTime()));
+      setBookNombre(''); setBookEmail(''); setBookTelefono('');
+      setBookOportunidadId(''); setBookFecha(''); setBookNotas('');
+    } catch (err: any) {
+      alert(`Error agendando la cita: ${err.message || err}`);
+    } finally {
+      setBooking(false);
+    }
+  };
+
+  const handleCancelCita = async (id: string) => {
+    if (!window.confirm('¿Cancelar esta cita y eliminarla del calendario?')) return;
+    setCancellingId(id);
+    try {
+      const updated = await cancelCita(id);
+      setCitas(citas.map((c) => (c.id === id ? updated : c)));
+    } catch (err: any) {
+      alert(`Error cancelando: ${err.message || err}`);
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
+  const handleAnalyzeContenido = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!anaUrl.trim() || anaTexto.trim().length < 30) {
+      alert('Pega la URL y al menos 30 caracteres del texto de la publicación.');
+      return;
+    }
+    setAnalyzing(true);
+    try {
+      const created = await analyzeContenido({
+        plataforma: anaPlataforma,
+        url_publicacion: anaUrl.trim(),
+        autor: anaAutor.trim() || null,
+        texto: anaTexto.trim(),
+      });
+      setContenido([created, ...contenido]);
+      setAnaUrl(''); setAnaAutor(''); setAnaTexto('');
+    } catch (err: any) {
+      alert(`Error analizando: ${err.message || err}`);
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
   const handleCreateOportunidad = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nombreContacto.trim()) return;
     try {
+      const valor = nuevaValorEstimado.trim() ? Number(nuevaValorEstimado) : null;
       const created = await upsertOportunidad({
         nombre_contacto: nombreContacto.trim(),
         empresa: empresa.trim() || null,
@@ -158,12 +248,17 @@ export default function AdminCRM({ user }: Props) {
         estado: 'nuevo',
         fuente_url: fuenteUrl.trim() || null,
         telefono: telefono.trim() || null,
+        servicio_id: nuevaServicioId || null,
+        valor_estimado: valor,
+        moneda: valor != null ? nuevaMoneda : null,
       });
       setOportunidades([created, ...oportunidades]);
       setNombreContacto('');
       setEmpresa('');
       setFuenteUrl('');
       setTelefono('');
+      setNuevaServicioId('');
+      setNuevaValorEstimado('');
     } catch (err: any) {
       alert(`Error creando oportunidad: ${err.message || err}`);
     }
@@ -288,6 +383,34 @@ export default function AdminCRM({ user }: Props) {
                 placeholder="WhatsApp (ej. 573001234567, opcional)"
                 className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
               />
+              <select
+                value={nuevaServicioId}
+                onChange={(e) => setNuevaServicioId(e.target.value)}
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              >
+                <option value="">Servicio del catálogo (opcional)</option>
+                {servicios.map((s) => (
+                  <option key={s.id} value={s.id}>{s.nombre}</option>
+                ))}
+              </select>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  min={0}
+                  value={nuevaValorEstimado}
+                  onChange={(e) => setNuevaValorEstimado(e.target.value)}
+                  placeholder="Valor estimado (opcional)"
+                  className="flex-1 bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                />
+                <select
+                  value={nuevaMoneda}
+                  onChange={(e) => setNuevaMoneda(e.target.value as 'COP' | 'USD')}
+                  className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                >
+                  <option value="COP">COP</option>
+                  <option value="USD">USD</option>
+                </select>
+              </div>
               <button type="submit" className="w-full bg-[#c9a961] hover:bg-[#b09252] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5">
                 <Plus className="w-3.5 h-3.5" /> Crear
               </button>
@@ -297,33 +420,65 @@ export default function AdminCRM({ user }: Props) {
               {oportunidades.length === 0 && !loading && (
                 <p className="text-[#8a8377] text-xs font-mono text-center py-10">Sin oportunidades todavía.</p>
               )}
-              {oportunidades.map((o) => (
-                <div key={o.id} className="bg-[#161412] border border-[#2a2620] rounded-lg p-4 space-y-3 text-xs">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="flex-1 min-w-[160px]">
-                      <div className="font-semibold text-[#e8e3d8]">{o.nombre_contacto}</div>
-                      <div className="text-[#8a8377] font-mono text-[10px]">
-                        {o.empresa || 'Sin empresa'} · {o.canal_origen}{o.telefono ? ` · ${o.telefono}` : ''}
+              {oportunidades.map((o) => {
+                const srv = o.servicio_id ? servicios.find((s) => s.id === o.servicio_id) : null;
+                const valor = o.valor_estimado ?? null;
+                let margen: { abs: number; pct: number; color: string } | null = null;
+                if (srv && valor != null && valor > 0) {
+                  const abs = valor - srv.costo_unitario;
+                  const pct = (abs / valor) * 100;
+                  const color = pct >= 50 ? '#a8c98a' : pct >= 20 ? '#c9a961' : '#c97a61';
+                  margen = { abs, pct, color };
+                }
+                const fmt = (n: number, m: 'COP' | 'USD') =>
+                  m === 'USD'
+                    ? `US$ ${n.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+                    : `$ ${n.toLocaleString('es-CO', { maximumFractionDigits: 0 })}`;
+                return (
+                  <div key={o.id} className="bg-[#161412] border border-[#2a2620] rounded-lg p-4 space-y-3 text-xs">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex-1 min-w-[160px]">
+                        <div className="font-semibold text-[#e8e3d8]">{o.nombre_contacto}</div>
+                        <div className="text-[#8a8377] font-mono text-[10px]">
+                          {o.empresa || 'Sin empresa'} · {o.canal_origen}{o.telefono ? ` · ${o.telefono}` : ''}
+                        </div>
+                        {(srv || valor != null) && (
+                          <div className="text-[#a39d8e] font-mono text-[10px] mt-1">
+                            {srv && <span className="text-[#c9a961]">{srv.nombre}</span>}
+                            {srv && valor != null && ' · '}
+                            {valor != null && o.moneda && <span>{fmt(valor, o.moneda)}</span>}
+                          </div>
+                        )}
                       </div>
+                      {margen && (
+                        <div
+                          className="text-right font-mono text-[10px] px-2 py-1 rounded border"
+                          style={{ color: margen.color, borderColor: `${margen.color}66`, background: 'rgba(255,255,255,0.02)' }}
+                          title={`Margen bruto estimado: ${fmt(margen.abs, o.moneda || 'COP')}`}
+                        >
+                          <div className="font-bold">{margen.pct.toFixed(0)}%</div>
+                          <div className="text-[9px] opacity-80">margen</div>
+                        </div>
+                      )}
+                      {o.fuente_url && (
+                        <a href={o.fuente_url} target="_blank" rel="noreferrer" className="text-[#c9a961] flex items-center gap-1">
+                          <ExternalLink className="w-3 h-3" /> ver
+                        </a>
+                      )}
+                      <select
+                        value={o.estado}
+                        onChange={(e) => handleChangeEstado(o, e.target.value as EstadoOportunidad)}
+                        className="bg-[#0f0e0c]/60 border border-[#2a2620] rounded px-2 py-1 text-[#a39d8e] font-mono text-[10px]"
+                      >
+                        {ESTADOS.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                      <button onClick={() => handleDelete(o.id)} className="text-[#c97a61] hover:text-[#e08970]">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
-                    {o.fuente_url && (
-                      <a href={o.fuente_url} target="_blank" rel="noreferrer" className="text-[#c9a961] flex items-center gap-1">
-                        <ExternalLink className="w-3 h-3" /> ver
-                      </a>
-                    )}
-                    <select
-                      value={o.estado}
-                      onChange={(e) => handleChangeEstado(o, e.target.value as EstadoOportunidad)}
-                      className="bg-[#0f0e0c]/60 border border-[#2a2620] rounded px-2 py-1 text-[#a39d8e] font-mono text-[10px]"
-                    >
-                      {ESTADOS.map((s) => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
-                    <button onClick={() => handleDelete(o.id)} className="text-[#c97a61] hover:text-[#e08970]">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+
 
                   {o.telefono && (
                     <div className="flex gap-2">
@@ -342,79 +497,235 @@ export default function AdminCRM({ user }: Props) {
                       </button>
                     </div>
                   )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {tab === 'citas' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <form onSubmit={handleBookCita} className="lg:col-span-4 bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs h-fit">
+              <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
+                <CalendarPlus className="w-3.5 h-3.5" /> Agendar cita de diagnóstico
+              </h3>
+              <input
+                value={bookNombre}
+                onChange={(e) => setBookNombre(e.target.value)}
+                placeholder="Nombre del prospecto"
+                required
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              />
+              <input
+                type="email"
+                value={bookEmail}
+                onChange={(e) => setBookEmail(e.target.value)}
+                placeholder="Email (recibe invitación de Calendar)"
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              />
+              <input
+                value={bookTelefono}
+                onChange={(e) => setBookTelefono(e.target.value)}
+                placeholder="WhatsApp (opcional)"
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              />
+              <select
+                value={bookOportunidadId}
+                onChange={(e) => setBookOportunidadId(e.target.value)}
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              >
+                <option value="">Sin vincular a oportunidad</option>
+                {oportunidades.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.nombre_contacto}{o.empresa ? ` · ${o.empresa}` : ''}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="datetime-local"
+                value={bookFecha}
+                onChange={(e) => setBookFecha(e.target.value)}
+                required
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              />
+              <div className="flex items-center gap-2">
+                <label className="text-[#8a8377] font-mono text-[10px]">Duración (min)</label>
+                <input
+                  type="number"
+                  min={15}
+                  step={15}
+                  value={bookDuracion}
+                  onChange={(e) => setBookDuracion(Number(e.target.value))}
+                  className="w-20 bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                />
+              </div>
+              <textarea
+                value={bookNotas}
+                onChange={(e) => setBookNotas(e.target.value)}
+                rows={3}
+                placeholder="Notas / agenda de la reunión (opcional)"
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              />
+              <button
+                type="submit"
+                disabled={booking}
+                className="w-full bg-[#c9a961] hover:bg-[#b09252] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                <CalendarPlus className="w-3.5 h-3.5" /> {booking ? 'Creando evento...' : 'Agendar y crear Google Meet'}
+              </button>
+              <p className="text-[9px] text-[#8a8377] font-mono leading-relaxed">
+                Se crea el evento en el Google Calendar del equipo de Ferova, se genera un link de Meet y se envía la invitación al email del prospecto.
+              </p>
+            </form>
+
+            <div className="lg:col-span-8 space-y-2">
+              {citas.length === 0 && !loading && (
+                <p className="text-[#8a8377] text-xs font-mono text-center py-10">Sin citas agendadas todavía.</p>
+              )}
+              {citas.map((c) => (
+                <div key={c.id} className={`bg-[#161412] border rounded-lg p-4 flex flex-wrap items-center gap-3 text-xs ${c.estado === 'cancelada' ? 'border-[#2a2620] opacity-60' : 'border-[#2a2620]'}`}>
+                  <div className="flex-1 min-w-[160px]">
+                    <div className="font-semibold text-[#e8e3d8]">{c.nombre_prospecto}</div>
+                    <div className="text-[#8a8377] font-mono text-[10px]">
+                      {new Date(c.fecha_hora).toLocaleString('es-CO')} · {c.duracion_min} min
+                      {c.email_prospecto ? ` · ${c.email_prospecto}` : ''}
+                    </div>
+                  </div>
+                  <span className={`text-[9px] font-mono uppercase px-2 py-0.5 rounded border ${
+                    c.estado === 'cancelada'
+                      ? 'bg-[#c97a61]/10 text-[#c97a61] border-[#c97a61]/30'
+                      : 'bg-[#c9a961]/10 text-[#c9a961] border-[#c9a961]/30'
+                  }`}>
+                    {c.estado}
+                  </span>
+                  {c.es_pagada && <span className="text-[10px] font-mono text-[#a8c98a]">Pagada</span>}
+                  {c.meet_link && c.estado !== 'cancelada' && (
+                    <a href={c.meet_link} target="_blank" rel="noreferrer" className="text-[#c9a961] flex items-center gap-1">
+                      <ExternalLink className="w-3 h-3" /> unirse
+                    </a>
+                  )}
+                  {c.estado !== 'cancelada' && (
+                    <button
+                      onClick={() => handleCancelCita(c.id)}
+                      disabled={cancellingId === c.id}
+                      className="text-[#c97a61] hover:text-[#e08970] flex items-center gap-1 text-[10px] font-mono disabled:opacity-40"
+                    >
+                      <XCircle className="w-3.5 h-3.5" /> {cancellingId === c.id ? 'Cancelando...' : 'Cancelar'}
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {tab === 'citas' && (
-          <div className="space-y-2">
-            {citas.length === 0 && !loading && (
-              <p className="text-[#8a8377] text-xs font-mono text-center py-10">Sin citas agendadas todavía.</p>
-            )}
-            {citas.map((c) => (
-              <div key={c.id} className="bg-[#161412] border border-[#2a2620] rounded-lg p-4 flex flex-wrap items-center gap-3 text-xs">
-                <div className="flex-1 min-w-[160px]">
-                  <div className="font-semibold text-[#e8e3d8]">{c.nombre_prospecto}</div>
-                  <div className="text-[#8a8377] font-mono text-[10px]">
-                    {new Date(c.fecha_hora).toLocaleString('es-CO')} · {c.duracion_min} min
-                  </div>
-                </div>
-                <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-[#c9a961]/10 text-[#c9a961] border border-[#c9a961]/30">
-                  {c.estado}
-                </span>
-                {c.es_pagada && <span className="text-[10px] font-mono text-[#a8c98a]">Pagada</span>}
-                {c.meet_link && (
-                  <a href={c.meet_link} target="_blank" rel="noreferrer" className="text-[#c9a961] flex items-center gap-1">
-                    <ExternalLink className="w-3 h-3" /> unirse
-                  </a>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
 
         {tab === 'contenido' && (
-          <div className="space-y-2">
-            {contenido.length === 0 && !loading && (
-              <p className="text-[#8a8377] text-xs font-mono text-center py-10">
-                Sin contenido detectado todavía. Aquí aparecerán publicaciones de LinkedIn/Reddit con potencial, junto a un comentario sugerido para que publiques manualmente.
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <form onSubmit={handleAnalyzeContenido} className="lg:col-span-5 bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs h-fit">
+              <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" /> Analizar publicación
+              </h3>
+              <p className="text-[#8a8377] font-mono text-[10px] leading-relaxed">
+                Pegá el link y el texto de una publicación de LinkedIn o Reddit. La IA la puntúa (0-100), explica por qué y redacta un comentario sugerido para que lo publiques manualmente.
               </p>
-            )}
-            {contenido.map((c) => (
-              <div key={c.id} className="bg-[#161412] border border-[#2a2620] rounded-lg p-4 space-y-2 text-xs">
-                <div className="flex items-center justify-between">
-                  <a href={c.url_publicacion} target="_blank" rel="noreferrer" className="text-[#c9a961] flex items-center gap-1 font-semibold">
-                    <ExternalLink className="w-3 h-3" /> {c.plataforma} · {c.autor || 'autor desconocido'}
-                  </a>
-                  <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-[#c9a961]/10 text-[#c9a961] border border-[#c9a961]/30">
-                    score {c.score_potencial ?? '-'}
-                  </span>
-                </div>
-                {c.resumen && <p className="text-[#a39d8e]">{c.resumen}</p>}
-                {c.comentario_sugerido && (
-                  <div className="bg-[#0f0e0c]/50 border border-[#2a2620] rounded p-3">
-                    <span className="text-[9px] font-mono uppercase text-[#8a8377] block mb-1">Comentario sugerido:</span>
-                    <p className="text-[#e8e3d8]">{c.comentario_sugerido}</p>
-                  </div>
-                )}
-                <div className="flex gap-2 pt-1">
-                  <button
-                    onClick={() => handleMarkContenido(c, 'publicado_manual')}
-                    className="px-2.5 py-1 bg-[#a8c98a]/15 border border-[#a8c98a]/40 text-[#a8c98a] rounded text-[10px] font-mono"
-                  >
-                    Ya lo publiqué
-                  </button>
-                  <button
-                    onClick={() => handleMarkContenido(c, 'descartado')}
-                    className="px-2.5 py-1 bg-white/[0.03] border border-[#2a2620] text-[#8a8377] rounded text-[10px] font-mono"
-                  >
-                    Descartar
-                  </button>
-                </div>
+              <div className="flex gap-2">
+                <select
+                  value={anaPlataforma}
+                  onChange={(e) => setAnaPlataforma(e.target.value as 'linkedin' | 'reddit')}
+                  className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                >
+                  <option value="linkedin">LinkedIn</option>
+                  <option value="reddit">Reddit</option>
+                </select>
+                <input
+                  value={anaAutor}
+                  onChange={(e) => setAnaAutor(e.target.value)}
+                  placeholder="Autor (opcional)"
+                  className="flex-1 bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                />
               </div>
-            ))}
+              <input
+                value={anaUrl}
+                onChange={(e) => setAnaUrl(e.target.value)}
+                placeholder="URL de la publicación"
+                required
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              />
+              <textarea
+                value={anaTexto}
+                onChange={(e) => setAnaTexto(e.target.value)}
+                rows={8}
+                placeholder="Pegá acá el texto completo de la publicación..."
+                required
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white font-mono text-[11px] leading-relaxed"
+              />
+              <button
+                type="submit"
+                disabled={analyzing}
+                className="w-full bg-[#c9a961] hover:bg-[#b09252] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                <Sparkles className="w-3.5 h-3.5" /> {analyzing ? 'Analizando con IA...' : 'Analizar y guardar'}
+              </button>
+            </form>
+
+            <div className="lg:col-span-7 space-y-2">
+              {contenido.length === 0 && !loading && (
+                <p className="text-[#8a8377] text-xs font-mono text-center py-10">
+                  Sin contenido analizado todavía. Usá el formulario de la izquierda para pegar una publicación.
+                </p>
+              )}
+              {contenido.map((c) => (
+                <div key={c.id} className="bg-[#161412] border border-[#2a2620] rounded-lg p-4 space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <a href={c.url_publicacion} target="_blank" rel="noreferrer" className="text-[#c9a961] flex items-center gap-1 font-semibold">
+                      <ExternalLink className="w-3 h-3" /> {c.plataforma} · {c.autor || 'autor desconocido'}
+                    </a>
+                    <span
+                      className="text-[9px] font-mono uppercase px-2 py-0.5 rounded border"
+                      style={{
+                        color: (c.score_potencial ?? 0) >= 70 ? '#a8c98a' : (c.score_potencial ?? 0) >= 40 ? '#c9a961' : '#8a8377',
+                        borderColor: (c.score_potencial ?? 0) >= 70 ? '#a8c98a66' : (c.score_potencial ?? 0) >= 40 ? '#c9a96166' : '#2a2620',
+                        backgroundColor: 'rgba(255,255,255,0.02)',
+                      }}
+                    >
+                      score {c.score_potencial ?? '-'}
+                    </span>
+                  </div>
+                  {c.resumen && <p className="text-[#a39d8e]">{c.resumen}</p>}
+                  {c.razon && <p className="text-[#8a8377] italic text-[11px]">Por qué: {c.razon}</p>}
+                  {c.comentario_sugerido && (
+                    <div className="bg-[#0f0e0c]/50 border border-[#2a2620] rounded p-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[9px] font-mono uppercase text-[#8a8377]">Comentario sugerido:</span>
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(c.comentario_sugerido || ''); }}
+                          className="text-[9px] font-mono text-[#c9a961] hover:text-[#e8c481] uppercase"
+                        >
+                          Copiar
+                        </button>
+                      </div>
+                      <p className="text-[#e8e3d8]">{c.comentario_sugerido}</p>
+                    </div>
+                  )}
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      onClick={() => handleMarkContenido(c, 'publicado_manual')}
+                      className="px-2.5 py-1 bg-[#a8c98a]/15 border border-[#a8c98a]/40 text-[#a8c98a] rounded text-[10px] font-mono"
+                    >
+                      Ya lo publiqué
+                    </button>
+                    <button
+                      onClick={() => handleMarkContenido(c, 'descartado')}
+                      className="px-2.5 py-1 bg-white/[0.03] border border-[#2a2620] text-[#8a8377] rounded text-[10px] font-mono"
+                    >
+                      Descartar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

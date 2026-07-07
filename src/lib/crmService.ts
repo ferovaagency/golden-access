@@ -71,6 +71,21 @@ export interface ContenidoPotencial {
   estado: 'nuevo' | 'sugerido' | 'publicado_manual' | 'descartado';
   detectado_en: string;
 }
+export interface ServicioCatalogo {
+  id: string;
+  nombre: string;
+  costo_unitario: number;
+}
+
+export async function listServiciosCatalogo(userId: string): Promise<ServicioCatalogo[]> {
+  const { data, error } = await supabase
+    .from('finance_servicios')
+    .select('id, nombre, costo_unitario')
+    .eq('user_id', userId)
+    .order('nombre');
+  if (error) throw new Error(`[crmService] listServiciosCatalogo: ${error.message}`);
+  return (data || []).map((s: any) => ({ id: s.id, nombre: s.nombre, costo_unitario: Number(s.costo_unitario) }));
+}
 
 export async function isTeamMember(email: string): Promise<boolean> {
   const { data, error } = await supabase
@@ -134,6 +149,40 @@ export async function upsertCita(c: Partial<CitaDiagnostico> & { id?: string }):
   const { data, error } = await supabase.from('crm_citas_diagnostico').upsert(c).select('*').single();
   if (error) throw new Error(`[crmService] upsertCita: ${error.message}`);
   return data as CitaDiagnostico;
+}
+
+export async function bookCita(payload: {
+  oportunidad_id?: string | null;
+  nombre_prospecto: string;
+  email_prospecto?: string | null;
+  telefono_prospecto?: string | null;
+  fecha_hora: string;
+  duracion_min?: number;
+  notas?: string | null;
+}): Promise<CitaDiagnostico> {
+  const { data, error } = await supabase.functions.invoke('calendar-book', { body: payload });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo agendar la cita.');
+  return data.cita as CitaDiagnostico;
+}
+
+export async function cancelCita(cita_id: string): Promise<CitaDiagnostico> {
+  const { data, error } = await supabase.functions.invoke('calendar-cancel', { body: { cita_id } });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo cancelar la cita.');
+  return data.cita as CitaDiagnostico;
+}
+
+export async function analyzeContenido(payload: {
+  plataforma?: 'linkedin' | 'reddit';
+  url_publicacion: string;
+  autor?: string | null;
+  texto: string;
+}): Promise<ContenidoPotencial> {
+  const { data, error } = await supabase.functions.invoke('linkedin-analyze', { body: payload });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo analizar el contenido.');
+  return data.contenido as ContenidoPotencial;
 }
 
 export async function listContenidoPotencial(): Promise<ContenidoPotencial[]> {
