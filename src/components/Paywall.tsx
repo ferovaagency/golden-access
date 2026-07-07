@@ -82,7 +82,7 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
             <input
               type="image"
               src="https://www.paypalobjects.com/es_XC/i/btn/btn_subscribe_LG.gif"
-              border={0}
+              style={{ border: 0 }}
               name="submit"
               title="PayPal es una forma segura y fácil de pagar en línea."
               alt="Suscribirse"
