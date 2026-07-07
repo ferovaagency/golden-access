@@ -399,31 +399,121 @@ export default function AdminCRM({ user }: Props) {
         )}
 
         {tab === 'citas' && (
-          <div className="space-y-2">
-            {citas.length === 0 && !loading && (
-              <p className="text-[#8a8377] text-xs font-mono text-center py-10">Sin citas agendadas todavía.</p>
-            )}
-            {citas.map((c) => (
-              <div key={c.id} className="bg-[#161412] border border-[#2a2620] rounded-lg p-4 flex flex-wrap items-center gap-3 text-xs">
-                <div className="flex-1 min-w-[160px]">
-                  <div className="font-semibold text-[#e8e3d8]">{c.nombre_prospecto}</div>
-                  <div className="text-[#8a8377] font-mono text-[10px]">
-                    {new Date(c.fecha_hora).toLocaleString('es-CO')} · {c.duracion_min} min
-                  </div>
-                </div>
-                <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-[#c9a961]/10 text-[#c9a961] border border-[#c9a961]/30">
-                  {c.estado}
-                </span>
-                {c.es_pagada && <span className="text-[10px] font-mono text-[#a8c98a]">Pagada</span>}
-                {c.meet_link && (
-                  <a href={c.meet_link} target="_blank" rel="noreferrer" className="text-[#c9a961] flex items-center gap-1">
-                    <ExternalLink className="w-3 h-3" /> unirse
-                  </a>
-                )}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <form onSubmit={handleBookCita} className="lg:col-span-4 bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs h-fit">
+              <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
+                <CalendarPlus className="w-3.5 h-3.5" /> Agendar cita de diagnóstico
+              </h3>
+              <input
+                value={bookNombre}
+                onChange={(e) => setBookNombre(e.target.value)}
+                placeholder="Nombre del prospecto"
+                required
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              />
+              <input
+                type="email"
+                value={bookEmail}
+                onChange={(e) => setBookEmail(e.target.value)}
+                placeholder="Email (recibe invitación de Calendar)"
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              />
+              <input
+                value={bookTelefono}
+                onChange={(e) => setBookTelefono(e.target.value)}
+                placeholder="WhatsApp (opcional)"
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              />
+              <select
+                value={bookOportunidadId}
+                onChange={(e) => setBookOportunidadId(e.target.value)}
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              >
+                <option value="">Sin vincular a oportunidad</option>
+                {oportunidades.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.nombre_contacto}{o.empresa ? ` · ${o.empresa}` : ''}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="datetime-local"
+                value={bookFecha}
+                onChange={(e) => setBookFecha(e.target.value)}
+                required
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              />
+              <div className="flex items-center gap-2">
+                <label className="text-[#8a8377] font-mono text-[10px]">Duración (min)</label>
+                <input
+                  type="number"
+                  min={15}
+                  step={15}
+                  value={bookDuracion}
+                  onChange={(e) => setBookDuracion(Number(e.target.value))}
+                  className="w-20 bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                />
               </div>
-            ))}
+              <textarea
+                value={bookNotas}
+                onChange={(e) => setBookNotas(e.target.value)}
+                rows={3}
+                placeholder="Notas / agenda de la reunión (opcional)"
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              />
+              <button
+                type="submit"
+                disabled={booking}
+                className="w-full bg-[#c9a961] hover:bg-[#b09252] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                <CalendarPlus className="w-3.5 h-3.5" /> {booking ? 'Creando evento...' : 'Agendar y crear Google Meet'}
+              </button>
+              <p className="text-[9px] text-[#8a8377] font-mono leading-relaxed">
+                Se crea el evento en el Google Calendar del equipo de Ferova, se genera un link de Meet y se envía la invitación al email del prospecto.
+              </p>
+            </form>
+
+            <div className="lg:col-span-8 space-y-2">
+              {citas.length === 0 && !loading && (
+                <p className="text-[#8a8377] text-xs font-mono text-center py-10">Sin citas agendadas todavía.</p>
+              )}
+              {citas.map((c) => (
+                <div key={c.id} className={`bg-[#161412] border rounded-lg p-4 flex flex-wrap items-center gap-3 text-xs ${c.estado === 'cancelada' ? 'border-[#2a2620] opacity-60' : 'border-[#2a2620]'}`}>
+                  <div className="flex-1 min-w-[160px]">
+                    <div className="font-semibold text-[#e8e3d8]">{c.nombre_prospecto}</div>
+                    <div className="text-[#8a8377] font-mono text-[10px]">
+                      {new Date(c.fecha_hora).toLocaleString('es-CO')} · {c.duracion_min} min
+                      {c.email_prospecto ? ` · ${c.email_prospecto}` : ''}
+                    </div>
+                  </div>
+                  <span className={`text-[9px] font-mono uppercase px-2 py-0.5 rounded border ${
+                    c.estado === 'cancelada'
+                      ? 'bg-[#c97a61]/10 text-[#c97a61] border-[#c97a61]/30'
+                      : 'bg-[#c9a961]/10 text-[#c9a961] border-[#c9a961]/30'
+                  }`}>
+                    {c.estado}
+                  </span>
+                  {c.es_pagada && <span className="text-[10px] font-mono text-[#a8c98a]">Pagada</span>}
+                  {c.meet_link && c.estado !== 'cancelada' && (
+                    <a href={c.meet_link} target="_blank" rel="noreferrer" className="text-[#c9a961] flex items-center gap-1">
+                      <ExternalLink className="w-3 h-3" /> unirse
+                    </a>
+                  )}
+                  {c.estado !== 'cancelada' && (
+                    <button
+                      onClick={() => handleCancelCita(c.id)}
+                      disabled={cancellingId === c.id}
+                      className="text-[#c97a61] hover:text-[#e08970] flex items-center gap-1 text-[10px] font-mono disabled:opacity-40"
+                    >
+                      <XCircle className="w-3.5 h-3.5" /> {cancellingId === c.id ? 'Cancelando...' : 'Cancelar'}
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
+
 
         {tab === 'contenido' && (
           <div className="space-y-2">
