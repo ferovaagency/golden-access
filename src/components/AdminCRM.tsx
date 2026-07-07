@@ -420,33 +420,65 @@ export default function AdminCRM({ user }: Props) {
               {oportunidades.length === 0 && !loading && (
                 <p className="text-[#8a8377] text-xs font-mono text-center py-10">Sin oportunidades todavía.</p>
               )}
-              {oportunidades.map((o) => (
-                <div key={o.id} className="bg-[#161412] border border-[#2a2620] rounded-lg p-4 space-y-3 text-xs">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="flex-1 min-w-[160px]">
-                      <div className="font-semibold text-[#e8e3d8]">{o.nombre_contacto}</div>
-                      <div className="text-[#8a8377] font-mono text-[10px]">
-                        {o.empresa || 'Sin empresa'} · {o.canal_origen}{o.telefono ? ` · ${o.telefono}` : ''}
+              {oportunidades.map((o) => {
+                const srv = o.servicio_id ? servicios.find((s) => s.id === o.servicio_id) : null;
+                const valor = o.valor_estimado ?? null;
+                let margen: { abs: number; pct: number; color: string } | null = null;
+                if (srv && valor != null && valor > 0) {
+                  const abs = valor - srv.costo_unitario;
+                  const pct = (abs / valor) * 100;
+                  const color = pct >= 50 ? '#a8c98a' : pct >= 20 ? '#c9a961' : '#c97a61';
+                  margen = { abs, pct, color };
+                }
+                const fmt = (n: number, m: 'COP' | 'USD') =>
+                  m === 'USD'
+                    ? `US$ ${n.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+                    : `$ ${n.toLocaleString('es-CO', { maximumFractionDigits: 0 })}`;
+                return (
+                  <div key={o.id} className="bg-[#161412] border border-[#2a2620] rounded-lg p-4 space-y-3 text-xs">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex-1 min-w-[160px]">
+                        <div className="font-semibold text-[#e8e3d8]">{o.nombre_contacto}</div>
+                        <div className="text-[#8a8377] font-mono text-[10px]">
+                          {o.empresa || 'Sin empresa'} · {o.canal_origen}{o.telefono ? ` · ${o.telefono}` : ''}
+                        </div>
+                        {(srv || valor != null) && (
+                          <div className="text-[#a39d8e] font-mono text-[10px] mt-1">
+                            {srv && <span className="text-[#c9a961]">{srv.nombre}</span>}
+                            {srv && valor != null && ' · '}
+                            {valor != null && o.moneda && <span>{fmt(valor, o.moneda)}</span>}
+                          </div>
+                        )}
                       </div>
+                      {margen && (
+                        <div
+                          className="text-right font-mono text-[10px] px-2 py-1 rounded border"
+                          style={{ color: margen.color, borderColor: `${margen.color}66`, background: 'rgba(255,255,255,0.02)' }}
+                          title={`Margen bruto estimado: ${fmt(margen.abs, o.moneda || 'COP')}`}
+                        >
+                          <div className="font-bold">{margen.pct.toFixed(0)}%</div>
+                          <div className="text-[9px] opacity-80">margen</div>
+                        </div>
+                      )}
+                      {o.fuente_url && (
+                        <a href={o.fuente_url} target="_blank" rel="noreferrer" className="text-[#c9a961] flex items-center gap-1">
+                          <ExternalLink className="w-3 h-3" /> ver
+                        </a>
+                      )}
+                      <select
+                        value={o.estado}
+                        onChange={(e) => handleChangeEstado(o, e.target.value as EstadoOportunidad)}
+                        className="bg-[#0f0e0c]/60 border border-[#2a2620] rounded px-2 py-1 text-[#a39d8e] font-mono text-[10px]"
+                      >
+                        {ESTADOS.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                      <button onClick={() => handleDelete(o.id)} className="text-[#c97a61] hover:text-[#e08970]">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
-                    {o.fuente_url && (
-                      <a href={o.fuente_url} target="_blank" rel="noreferrer" className="text-[#c9a961] flex items-center gap-1">
-                        <ExternalLink className="w-3 h-3" /> ver
-                      </a>
-                    )}
-                    <select
-                      value={o.estado}
-                      onChange={(e) => handleChangeEstado(o, e.target.value as EstadoOportunidad)}
-                      className="bg-[#0f0e0c]/60 border border-[#2a2620] rounded px-2 py-1 text-[#a39d8e] font-mono text-[10px]"
-                    >
-                      {ESTADOS.map((s) => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
-                    <button onClick={() => handleDelete(o.id)} className="text-[#c97a61] hover:text-[#e08970]">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+
 
                   {o.telefono && (
                     <div className="flex gap-2">
