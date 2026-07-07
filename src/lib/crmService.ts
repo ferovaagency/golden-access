@@ -20,6 +20,8 @@ export interface Oportunidad {
   moneda: 'COP' | 'USD' | null;
   probabilidad: number | null;
   fuente_url: string | null;
+  telefono: string | null;
+  email: string | null;
   notas: string | null;
   siguiente_accion: string | null;
   fecha_siguiente_accion: string | null;
@@ -147,4 +149,64 @@ export async function upsertContenidoPotencial(c: Partial<ContenidoPotencial> & 
   const { data, error } = await supabase.from('crm_contenido_potencial').upsert(c).select('*').single();
   if (error) throw new Error(`[crmService] upsertContenidoPotencial: ${error.message}`);
   return data as ContenidoPotencial;
+}
+
+// ============================================================
+// Bot de WhatsApp (config + base de conocimiento entrenable)
+// ============================================================
+export interface BotConfig {
+  bot_enabled: boolean;
+  custom_prompt: string | null;
+  instance_name: string;
+  updated_at: string;
+}
+
+export interface KnowledgeItem {
+  id: string;
+  content: string;
+  source: string | null;
+  created_at: string;
+}
+
+export async function getBotConfig(): Promise<BotConfig> {
+  const { data, error } = await supabase.from('crm_bot_config').select('*').eq('id', true).single();
+  if (error) throw new Error(`[crmService] getBotConfig: ${error.message}`);
+  return data as BotConfig;
+}
+
+export async function saveBotConfig(patch: Partial<Pick<BotConfig, 'bot_enabled' | 'custom_prompt'>>): Promise<BotConfig> {
+  const { data, error } = await supabase
+    .from('crm_bot_config')
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq('id', true)
+    .select('*')
+    .single();
+  if (error) throw new Error(`[crmService] saveBotConfig: ${error.message}`);
+  return data as BotConfig;
+}
+
+export async function listKnowledge(): Promise<KnowledgeItem[]> {
+  const { data, error } = await supabase
+    .from('crm_bot_knowledge')
+    .select('id, content, source, created_at')
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(`[crmService] listKnowledge: ${error.message}`);
+  return data as KnowledgeItem[];
+}
+
+export async function deleteKnowledge(id: string): Promise<void> {
+  const { error } = await supabase.from('crm_bot_knowledge').delete().eq('id', id);
+  if (error) throw new Error(`[crmService] deleteKnowledge: ${error.message}`);
+}
+
+export async function addKnowledge(content: string, source?: string): Promise<void> {
+  const { data, error } = await supabase.functions.invoke('bot-knowledge-upsert', { body: { content, source } });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo agregar el conocimiento.');
+}
+
+export async function sendWhatsapp(oportunidadId: string, text: string): Promise<void> {
+  const { data, error } = await supabase.functions.invoke('whatsapp-send', { body: { oportunidad_id: oportunidadId, text } });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo enviar el mensaje de WhatsApp.');
 }
