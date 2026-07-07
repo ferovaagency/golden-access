@@ -69,6 +69,13 @@ export default function AdminCRM({ user }: Props) {
   const [booking, setBooking] = useState(false);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
+  // Content analyzer
+  const [anaUrl, setAnaUrl] = useState('');
+  const [anaAutor, setAnaAutor] = useState('');
+  const [anaPlataforma, setAnaPlataforma] = useState<'linkedin' | 'reddit'>('linkedin');
+  const [anaTexto, setAnaTexto] = useState('');
+  const [analyzing, setAnalyzing] = useState(false);
+
   useEffect(() => {
     (async () => {
       const ok = await isTeamMember(user.email || '');
@@ -195,6 +202,29 @@ export default function AdminCRM({ user }: Props) {
       alert(`Error cancelando: ${err.message || err}`);
     } finally {
       setCancellingId(null);
+    }
+  };
+
+  const handleAnalyzeContenido = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!anaUrl.trim() || anaTexto.trim().length < 30) {
+      alert('Pega la URL y al menos 30 caracteres del texto de la publicación.');
+      return;
+    }
+    setAnalyzing(true);
+    try {
+      const created = await analyzeContenido({
+        plataforma: anaPlataforma,
+        url_publicacion: anaUrl.trim(),
+        autor: anaAutor.trim() || null,
+        texto: anaTexto.trim(),
+      });
+      setContenido([created, ...contenido]);
+      setAnaUrl(''); setAnaAutor(''); setAnaTexto('');
+    } catch (err: any) {
+      alert(`Error analizando: ${err.message || err}`);
+    } finally {
+      setAnalyzing(false);
     }
   };
 
