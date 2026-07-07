@@ -497,8 +497,9 @@ export default function AdminCRM({ user }: Props) {
                       </button>
                     </div>
                   )}
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
