@@ -721,7 +721,99 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               </button>
             </form>
 
-            <div className="lg:col-span-7 space-y-2">
+            <div className="lg:col-span-5 bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs h-fit">
+              <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
+                <Download className="w-3.5 h-3.5" /> Traer hilos de un subreddit
+              </h3>
+              <p className="text-[#8a8377] font-mono text-[10px] leading-relaxed">
+                Escribe el nombre de una comunidad (ej. <span className="text-[#c9a961]">SEO</span>, <span className="text-[#c9a961]">digitalmarketing</span>, <span className="text-[#c9a961]">emprendedores</span>). Traemos los hilos más recientes/populares y podés analizar cualquiera con un click.
+              </p>
+              <div className="flex gap-2">
+                <span className="bg-[#0f0e0c]/50 border border-r-0 border-[#2a2620] p-2 rounded-l text-[#8a8377] font-mono">r/</span>
+                <input
+                  value={subInput}
+                  onChange={(e) => setSubInput(e.target.value)}
+                  placeholder="SEO"
+                  className="flex-1 bg-[#0f0e0c]/50 border border-[#2a2620] border-l-0 p-2 rounded-r text-white font-mono"
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <select
+                  value={subListing}
+                  onChange={(e) => setSubListing(e.target.value as any)}
+                  className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                >
+                  <option value="new">Nuevos</option>
+                  <option value="hot">Hot</option>
+                  <option value="top">Top</option>
+                  <option value="rising">Rising</option>
+                </select>
+                {subListing === 'top' ? (
+                  <select
+                    value={subTimeframe}
+                    onChange={(e) => setSubTimeframe(e.target.value as any)}
+                    className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                  >
+                    <option value="day">Hoy</option>
+                    <option value="week">Semana</option>
+                    <option value="month">Mes</option>
+                    <option value="year">Año</option>
+                    <option value="all">Siempre</option>
+                  </select>
+                ) : (
+                  <div className="bg-[#0f0e0c]/20 border border-dashed border-[#2a2620] p-2 rounded text-[#8a8377] font-mono text-[10px] text-center">—</div>
+                )}
+                <input
+                  type="number"
+                  min={1}
+                  max={50}
+                  value={subLimit}
+                  onChange={(e) => setSubLimit(Math.max(1, Math.min(50, Number(e.target.value) || 15)))}
+                  className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                />
+              </div>
+              <button
+                onClick={handleFetchSubreddit}
+                disabled={fetchingSub}
+                className="w-full bg-[#a8c98a] hover:bg-[#96b579] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                <Download className={`w-3.5 h-3.5 ${fetchingSub ? 'animate-pulse' : ''}`} /> {fetchingSub ? 'Trayendo...' : 'Traer hilos'}
+              </button>
+
+              {subPosts.length > 0 && (
+                <div className="pt-2 border-t border-[#2a2620] space-y-2 max-h-[520px] overflow-y-auto">
+                  <p className="text-[9px] font-mono uppercase text-[#8a8377]">{subPosts.length} hilos · r/{subPosts[0]?.subreddit}</p>
+                  {subPosts.map((p) => (
+                    <div key={p.id} className="bg-[#0f0e0c]/50 border border-[#2a2620] rounded p-3 space-y-1.5">
+                      <a href={p.url} target="_blank" rel="noreferrer" className="text-[#e8e3d8] hover:text-[#c9a961] font-semibold text-[11px] leading-snug block">
+                        {p.title}
+                      </a>
+                      <div className="flex items-center gap-3 text-[9px] font-mono text-[#8a8377] flex-wrap">
+                        <span>u/{p.author}</span>
+                        <span>▲ {p.score}</span>
+                        <span className="flex items-center gap-0.5"><MessageSquare className="w-2.5 h-2.5" /> {p.num_comments}</span>
+                        <span>{Math.round(p.upvote_ratio * 100)}% ↑</span>
+                        {p.link_flair_text && <span className="bg-[#c9a961]/10 text-[#c9a961] px-1.5 rounded">{p.link_flair_text}</span>}
+                        {!p.is_self && <span className="text-[#c97a61]">link externo</span>}
+                      </div>
+                      {p.selftext && <p className="text-[10px] text-[#a39d8e] line-clamp-3">{p.selftext.slice(0, 260)}{p.selftext.length > 260 ? '…' : ''}</p>}
+                      <button
+                        onClick={() => handleAnalyzeRedditPost(p)}
+                        disabled={analyzingPostId === p.id}
+                        className="w-full mt-1 px-2 py-1 bg-[#c9a961]/15 border border-[#c9a961]/40 text-[#c9a961] rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
+                      >
+                        <Sparkles className="w-2.5 h-2.5" /> {analyzingPostId === p.id ? 'Analizando...' : 'Analizar con IA'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="lg:col-span-12 space-y-2">
+              <h3 className="text-[#a39d8e] font-mono uppercase text-[10px] tracking-wider font-semibold border-b border-[#2a2620] pb-2">
+                Historial analizado ({contenido.length})
+              </h3>
               {contenido.length === 0 && !loading && (
                 <p className="text-[#8a8377] text-xs font-mono text-center py-10">
                   Sin contenido analizado todavía. Usá el formulario de la izquierda para pegar una publicación.
