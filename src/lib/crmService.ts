@@ -185,6 +185,36 @@ export async function analyzeContenido(payload: {
   return data.contenido as ContenidoPotencial;
 }
 
+// ============================================================
+// Reddit: traer publicaciones de un subreddit
+// ============================================================
+export interface RedditPost {
+  id: string;
+  title: string;
+  selftext: string;
+  author: string;
+  subreddit: string;
+  num_comments: number;
+  score: number;
+  upvote_ratio: number;
+  created_utc: number;
+  url: string;
+  link_flair_text: string | null;
+  is_self: boolean;
+}
+
+export async function fetchSubredditPosts(payload: {
+  subreddit: string;
+  listing?: 'new' | 'hot' | 'top' | 'rising';
+  limit?: number;
+  timeframe?: 'hour' | 'day' | 'week' | 'month' | 'year' | 'all';
+}): Promise<RedditPost[]> {
+  const { data, error } = await supabase.functions.invoke('reddit-fetch-subreddit', { body: payload });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo traer el subreddit.');
+  return data.posts as RedditPost[];
+}
+
 export async function listContenidoPotencial(): Promise<ContenidoPotencial[]> {
   const { data, error } = await supabase
     .from('crm_contenido_potencial')
