@@ -940,6 +940,7 @@ export default function App() {
                   onSaveConfig={handleSaveConfig}
                   onBackupToSheets={handleBackupToSheets}
                   onImportFromSheets={handleImportFromSheets}
+                  onImportFromSheetsUrl={handleImportFromSheetsUrl}
                   formatCop={formatCop}
                 />
               )}
