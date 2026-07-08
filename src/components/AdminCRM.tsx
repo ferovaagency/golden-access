@@ -617,6 +617,79 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                       </button>
                     </div>
                   )}
+
+                  {/* Apollo + Playbook */}
+                  <div className="pt-2 border-t border-[#2a2620] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-mono uppercase text-[#8a8377]">
+                        {o.apollo_enriched_at ? `Enriquecido con Apollo · ${new Date(o.apollo_enriched_at).toLocaleString('es-CO')}` : 'Enriquecer con Apollo + generar playbook IA'}
+                      </span>
+                      {o.playbook_generated_at && (
+                        <button
+                          onClick={() => setExpandedPlaybookId(expandedPlaybookId === o.id ? null : o.id)}
+                          className="text-[9px] font-mono text-[#c9a961] uppercase hover:text-[#e8c481]"
+                        >
+                          {expandedPlaybookId === o.id ? 'Ocultar playbook' : 'Ver playbook'}
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                      <input
+                        value={getEnrichInput(o.id).linkedin_url}
+                        onChange={(e) => setEnrichInput(o.id, { linkedin_url: e.target.value })}
+                        placeholder="LinkedIn URL (opcional)"
+                        className="bg-[#0f0e0c]/50 border border-[#2a2620] p-1.5 rounded text-white text-[11px]"
+                      />
+                      <input
+                        value={getEnrichInput(o.id).dominio}
+                        onChange={(e) => setEnrichInput(o.id, { dominio: e.target.value })}
+                        placeholder="Dominio empresa (opcional)"
+                        className="bg-[#0f0e0c]/50 border border-[#2a2620] p-1.5 rounded text-white text-[11px]"
+                      />
+                      <button
+                        onClick={() => handleEnrichApollo(o)}
+                        disabled={enrichingId === o.id}
+                        className="px-2.5 py-1.5 bg-[#c9a961]/15 border border-[#c9a961]/40 text-[#c9a961] rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
+                      >
+                        <Zap className="w-3 h-3" /> {enrichingId === o.id ? 'Procesando...' : 'Apollo + Playbook'}
+                      </button>
+                    </div>
+                    <textarea
+                      value={getEnrichInput(o.id).contexto}
+                      onChange={(e) => setEnrichInput(o.id, { contexto: e.target.value })}
+                      placeholder="Contexto de la publicación / comentario original (opcional pero muy recomendado)"
+                      rows={2}
+                      className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-1.5 rounded text-white text-[11px] font-mono"
+                    />
+
+                    {expandedPlaybookId === o.id && o.playbook_generated_at && (
+                      <div className="space-y-2 pt-2">
+                        {o.siguiente_accion && (
+                          <PlaybookCard label="Plan de acción" text={o.siguiente_accion} onCopy={copyToClipboard} accent="#c9a961" />
+                        )}
+                        {o.playbook_email && (
+                          <PlaybookCard label="Correo en frío" text={o.playbook_email} onCopy={copyToClipboard} accent="#a8c98a" />
+                        )}
+                        {o.playbook_linkedin_conectar && o.playbook_linkedin_nota && (
+                          <PlaybookCard label="LinkedIn · Nota de conexión" text={o.playbook_linkedin_nota} onCopy={copyToClipboard} accent="#7ab5c9" />
+                        )}
+                        {o.playbook_linkedin_mensaje && (
+                          <PlaybookCard label={o.playbook_linkedin_conectar ? 'LinkedIn · Mensaje tras conectar' : 'LinkedIn · DM'} text={o.playbook_linkedin_mensaje} onCopy={copyToClipboard} accent="#7ab5c9" />
+                        )}
+                        {o.playbook_whatsapp_mensaje ? (
+                          <PlaybookCard label="WhatsApp" text={o.playbook_whatsapp_mensaje} onCopy={copyToClipboard} accent="#a8c98a" />
+                        ) : (
+                          <p className="text-[10px] font-mono text-[#8a8377]">Apollo no devolvió teléfono → sin mensaje de WhatsApp.</p>
+                        )}
+                        {o.apollo_data && (
+                          <details className="text-[10px] font-mono text-[#8a8377]">
+                            <summary className="cursor-pointer hover:text-[#a39d8e]">Ver datos crudos de Apollo</summary>
+                            <pre className="mt-2 p-2 bg-[#0f0e0c] border border-[#2a2620] rounded overflow-x-auto max-h-64 text-[10px]">{JSON.stringify(o.apollo_data, null, 2)}</pre>
+                          </details>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   </div>
                 );
               })}
