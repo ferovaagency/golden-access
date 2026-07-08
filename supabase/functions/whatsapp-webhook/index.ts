@@ -92,6 +92,43 @@ async function generateReply(systemPrompt: string, history: { role: string; cont
   return data?.choices?.[0]?.message?.content || "Gracias por tu mensaje, en breve te respondemos.";
 }
 
+async function updateOpportunityMemory(admin: any, oportunidad: any) {
+  if (!LOVABLE_API_KEY || !oportunidad?.id) return;
+  try {
+    const { data: recientes } = await admin
+      .from("crm_interacciones")
+      .select("tipo, contenido, ocurrido_en")
+      .eq("oportunidad_id", oportunidad.id)
+      .order("ocurrido_en", { ascending: false })
+      .limit(16);
+    const transcript = (recientes || [])
+      .reverse()
+      .map((m: any) => `${m.tipo === "mensaje_entrante" ? "Cliente" : "Ferova"}: ${m.contenido || ""}`)
+      .join("\n")
+      .slice(0, 6000);
+    if (!transcript.trim()) return;
+    const prompt = `Resume memoria útil del prospecto para ventas en máximo 900 caracteres. Incluye: necesidad, objeciones, datos de contacto, servicio probable y próximo paso. No inventes datos.\n\nMemoria previa:\n${oportunidad.memoria_resumen || "(vacía)"}\n\nConversación reciente:\n${transcript}`;
+    const res = await fetch(`${LOVABLE_GATEWAY}/chat/completions`, {
+      method: "POST",
+      headers: aiHeaders,
+      body: JSON.stringify({
+        model: CHAT_MODEL,
+        messages: [
+          { role: "system", content: "Eres memoria CRM. Devuelve solo el resumen actualizado, sin markdown." },
+          { role: "user", content: prompt },
+        ],
+      }),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    const memory = data?.choices?.[0]?.message?.content?.trim();
+    if (!memory) return;
+    await admin.from("crm_oportunidades").update({ memoria_resumen: memory, memoria_updated_at: new Date().toISOString() }).eq("id", oportunidad.id);
+  } catch (err) {
+    console.warn("[whatsapp-webhook] memory update failed:", err);
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   const url = new URL(req.url);
@@ -115,7 +152,19 @@ Deno.serve(async (req: Request) => {
   else if (Array.isArray(body.data?.messages)) msg = body.data.messages[0] ?? null;
   else if (body.data?.key) msg = body.data;
 
-  if (event !== "messages.upsert" || !msg || instanceName !== EVOLUTION_INSTANCE_NAME) {
+  if (event === "connection.update" || event === "CONNECTION_UPDATE") {
+    const status = body.data?.state || body.data?.status || body.state || "connected";
+    await admin.from("crm_whatsapp_instances").update({
+      status: String(status).toLowerCase().includes("open") || String(status).toLowerCase().includes("connect") ? "connected" : String(status),
+      connected_at: String(status).toLowerCase().includes("open") || String(status).toLowerCase().includes("connect") ? new Date().toISOString() : null,
+    }).eq("instance_name", instanceName);
+    return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+
+  const { data: instance } = await admin.from("crm_whatsapp_instances").select("user_id, instance_name").eq("instance_name", instanceName).maybeSingle();
+  const isLegacyInstance = EVOLUTION_INSTANCE_NAME && instanceName === EVOLUTION_INSTANCE_NAME;
+
+  if (event !== "messages.upsert" || !msg || (!instance && !isLegacyInstance)) {
     return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
@@ -156,7 +205,14 @@ Deno.serve(async (req: Request) => {
     const pushName = msg.pushName || phone;
     const { data: created } = await admin
       .from("crm_oportunidades")
-      .insert({ nombre_contacto: pushName, telefono: phone, canal_origen: "whatsapp", estado: "nuevo" })
+      .insert({
+        nombre_contacto: pushName,
+        telefono: phone,
+        canal_origen: "whatsapp",
+        estado: "nuevo",
+        memoria_resumen: `Primer contacto por WhatsApp. Nombre detectado: ${pushName}. Teléfono: ${phone}.`,
+        memoria_updated_at: new Date().toISOString(),
+      })
       .select("*")
       .single();
     oportunidad = created;
@@ -170,7 +226,10 @@ Deno.serve(async (req: Request) => {
     tipo: "mensaje_entrante",
     contenido: messageText,
     whatsapp_message_id: msgId ?? null,
+    metadata: { instance_name: instanceName, push_name: msg.pushName || null },
   }); // el indice unico parcial descarta duplicados silenciosamente via error, lo ignoramos
+
+  updateOpportunityMemory(admin, oportunidad).catch(() => null);
 
   const { data: botConfig } = await admin.from("crm_bot_config").select("*").eq("id", true).single();
   if (!botConfig?.bot_enabled) {
@@ -210,6 +269,7 @@ Deno.serve(async (req: Request) => {
       tipo: "mensaje_saliente",
       contenido: reply,
     });
+    updateOpportunityMemory(admin, oportunidad).catch(() => null);
   } catch (err) {
     console.error("[whatsapp-webhook] reply error:", err);
   }
