@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles, Download, MessageSquare, Zap, Copy, Search, Star, RefreshCw, CheckCircle2 } from 'lucide-react';
-import { logout } from '../lib/supabase';
+import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles, Download, MessageSquare, Zap, Copy, Search, Star, RefreshCw, CheckCircle2, Link2 } from 'lucide-react';
+import { getAccessToken, googleSignIn, logout } from '../lib/supabase';
 import {
   isTeamMember,
   listOportunidades,
@@ -22,6 +22,7 @@ import {
   listServiciosCatalogo,
   fetchSubredditPosts,
   searchRedditByKeywords,
+  searchLinkedInByKeywords,
   enrichOportunidadApollo,
   ServicioCatalogo,
   Oportunidad,
@@ -31,10 +32,15 @@ import {
   BotConfig,
   KnowledgeItem,
   RedditPost,
+  LinkedInSearchResult,
   listResenas,
   scanResenas,
   markResenaRespondida,
   Resena,
+  listReviewSources,
+  upsertReviewSource,
+  deleteReviewSource,
+  ReviewSource,
 } from '../lib/crmService';
 
 const ESTADOS: EstadoOportunidad[] = ['nuevo', 'contactado', 'calificando', 'propuesta_enviada', 'negociacion', 'ganado', 'perdido'];
@@ -60,8 +66,14 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const [knowledge, setKnowledge] = useState<KnowledgeItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [resenas, setResenas] = useState<Resena[]>([]);
+  const [reviewSources, setReviewSources] = useState<ReviewSource[]>([]);
   const [scanningResenas, setScanningResenas] = useState(false);
   const [scanResult, setScanResult] = useState<string | null>(null);
+  const [sourcePlatform, setSourcePlatform] = useState('google');
+  const [sourceName, setSourceName] = useState('Google Business Profile');
+  const [sourceUrl, setSourceUrl] = useState('');
+  const [sourceQuery, setSourceQuery] = useState('');
+  const [savingSource, setSavingSource] = useState(false);
 
   const [nombreContacto, setNombreContacto] = useState('');
   const [empresa, setEmpresa] = useState('');
@@ -120,6 +132,12 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const [kwPosts, setKwPosts] = useState<RedditPost[]>([]);
   const [searchingKw, setSearchingKw] = useState(false);
 
+  // LinkedIn public discovery
+  const [liInput, setLiInput] = useState(DEFAULT_KEYWORDS);
+  const [liLimit, setLiLimit] = useState(12);
+  const [liResults, setLiResults] = useState<LinkedInSearchResult[]>([]);
+  const [searchingLi, setSearchingLi] = useState(false);
+
   // Apollo + playbook por oportunidad
   const [enrichingId, setEnrichingId] = useState<string | null>(null);
   const [expandedPlaybookId, setExpandedPlaybookId] = useState<string | null>(null);
@@ -139,7 +157,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const refreshAll = async () => {
     setLoading(true);
     try {
-      const [o, c, k, bc, kn, srv, r] = await Promise.all([
+      const [o, c, k, bc, kn, srv, r, rs] = await Promise.all([
         listOportunidades(),
         listCitas(),
         listContenidoPotencial(),
@@ -147,6 +165,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
         listKnowledge(),
         listServiciosCatalogo(user.id).catch(() => [] as ServicioCatalogo[]),
         listResenas().catch(() => [] as Resena[]),
+        listReviewSources().catch(() => [] as ReviewSource[]),
       ]);
       setOportunidades(o);
       setCitas(c);
@@ -156,6 +175,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setKnowledge(kn);
       setServicios(srv);
       setResenas(r);
+      setReviewSources(rs);
     } catch (err: any) {
       alert(`Error cargando el CRM: ${err.message || err}`);
     } finally {
@@ -332,6 +352,39 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     }
   };
 
+  const handleSearchLinkedIn = async () => {
+    const keywords = liInput.split(',').map((s) => s.trim()).filter(Boolean);
+    if (keywords.length === 0) { alert('Escribe al menos una palabra clave.'); return; }
+    setSearchingLi(true);
+    try {
+      const results = await searchLinkedInByKeywords({ keywords, limit: liLimit });
+      setLiResults(results);
+    } catch (err: any) {
+      alert(`Error buscando en LinkedIn: ${err.message || err}`);
+    } finally {
+      setSearchingLi(false);
+    }
+  };
+
+  const handleAnalyzeLinkedInResult = async (result: LinkedInSearchResult) => {
+    const texto = `${result.title}\n\n${result.snippet}`;
+    if (texto.trim().length < 30) { alert('El resultado no trae suficiente texto para analizar.'); return; }
+    setAnalyzingPostId(result.id);
+    try {
+      const created = await analyzeContenido({
+        plataforma: 'linkedin',
+        url_publicacion: result.url,
+        autor: result.author || null,
+        texto,
+      });
+      setContenido([created, ...contenido]);
+    } catch (err: any) {
+      alert(`Error analizando: ${err.message || err}`);
+    } finally {
+      setAnalyzingPostId(null);
+    }
+  };
+
   const handleEnrichApollo = async (o: Oportunidad) => {
     const inp = getEnrichInput(o.id);
     setEnrichingId(o.id);
@@ -359,13 +412,49 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     setScanningResenas(true);
     setScanResult(null);
     try {
+      if (!getAccessToken()) {
+        await googleSignIn();
+        return;
+      }
       const res = await scanResenas(30);
       setScanResult(`Escaneados ${res.scanned} correos · ${res.inserted} nuevas reseñas · ${res.already_saved} ya guardadas · ${res.skipped} sin reseña.`);
       setResenas(await listResenas());
+      setReviewSources(await listReviewSources());
     } catch (err: any) {
       alert(`Error escaneando Gmail: ${err.message || err}`);
     } finally {
       setScanningResenas(false);
+    }
+  };
+
+  const handleAddReviewSource = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!sourceName.trim() || !sourceUrl.trim()) return;
+    setSavingSource(true);
+    try {
+      const created = await upsertReviewSource({
+        plataforma: sourcePlatform.trim().toLowerCase(),
+        nombre: sourceName.trim(),
+        profile_url: sourceUrl.trim(),
+        gmail_query: sourceQuery.trim() || null,
+        enabled: true,
+      });
+      setReviewSources([created, ...reviewSources.filter((s) => s.id !== created.id)]);
+      setSourceUrl('');
+      setSourceQuery('');
+    } catch (err: any) {
+      alert(`Error guardando fuente: ${err.message || err}`);
+    } finally {
+      setSavingSource(false);
+    }
+  };
+
+  const handleDeleteReviewSource = async (id: string) => {
+    try {
+      await deleteReviewSource(id);
+      setReviewSources(reviewSources.filter((s) => s.id !== id));
+    } catch (err: any) {
+      alert(`Error eliminando fuente: ${err.message || err}`);
     }
   };
 
@@ -850,6 +939,59 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-12 bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs">
               <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
+                <Search className="w-3.5 h-3.5" /> Buscar publicaciones públicas de LinkedIn
+              </h3>
+              <p className="text-[#8a8377] font-mono text-[10px] leading-relaxed">
+                Funciona igual que Reddit: busca automáticamente señales públicas relacionadas con servicios de Ferova. Luego eliges qué resultado analizar y guardar.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_110px_150px] gap-2">
+                <input
+                  value={liInput}
+                  onChange={(e) => setLiInput(e.target.value)}
+                  placeholder="SEO, Shopify, automatización IA"
+                  className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white font-mono"
+                />
+                <input
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={liLimit}
+                  onChange={(e) => setLiLimit(Math.max(1, Math.min(30, Number(e.target.value) || 12)))}
+                  className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                />
+                <button
+                  onClick={handleSearchLinkedIn}
+                  disabled={searchingLi}
+                  className="bg-[#c9a961] hover:bg-[#b09252] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
+                >
+                  <Search className={`w-3.5 h-3.5 ${searchingLi ? 'animate-pulse' : ''}`} /> {searchingLi ? 'Buscando...' : 'Buscar LinkedIn'}
+                </button>
+              </div>
+              {liResults.length > 0 && (
+                <div className="pt-2 border-t border-[#2a2620] grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[420px] overflow-y-auto">
+                  <p className="md:col-span-2 text-[9px] font-mono uppercase text-[#8a8377]">{liResults.length} resultados públicos</p>
+                  {liResults.map((result) => (
+                    <div key={result.id} className="bg-[#0f0e0c]/50 border border-[#2a2620] rounded p-3 space-y-1.5">
+                      <a href={result.url} target="_blank" rel="noreferrer" className="text-[#e8e3d8] hover:text-[#c9a961] font-semibold text-[11px] leading-snug block">
+                        {result.title}
+                      </a>
+                      {result.author && <p className="text-[9px] font-mono text-[#c9a961]">{result.author}</p>}
+                      {result.snippet && <p className="text-[10px] text-[#a39d8e] line-clamp-3">{result.snippet}</p>}
+                      <button
+                        onClick={() => handleAnalyzeLinkedInResult(result)}
+                        disabled={analyzingPostId === result.id}
+                        className="w-full mt-1 px-2 py-1 bg-[#c9a961]/15 border border-[#c9a961]/40 text-[#c9a961] rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
+                      >
+                        <Sparkles className="w-2.5 h-2.5" /> {analyzingPostId === result.id ? 'Analizando...' : 'Analizar con IA'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="lg:col-span-12 bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs">
+              <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
                 <Search className="w-3.5 h-3.5" /> Buscar hilos de Reddit por palabras clave
               </h3>
               <p className="text-[#8a8377] font-mono text-[10px] leading-relaxed">
@@ -1076,7 +1218,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               </h3>
               {contenido.length === 0 && !loading && (
                 <p className="text-[#8a8377] text-xs font-mono text-center py-10">
-                  Sin contenido analizado todavía. Usá el formulario de la izquierda para pegar una publicación.
+                  Sin contenido analizado todavía. Busca en LinkedIn/Reddit y analiza los resultados que tengan potencial.
                 </p>
               )}
               {contenido.map((c) => (
@@ -1224,13 +1366,14 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
         {tab === 'resenas' && (
           <div className="space-y-4">
-            <div className="bg-[#161412] border border-[#2a2620] rounded-lg p-5 flex flex-wrap items-center gap-3">
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
+              <div className="xl:col-span-7 bg-[#161412] border border-[#2a2620] rounded-lg p-5 flex flex-wrap items-center gap-3">
               <div className="flex-1 min-w-[240px]">
                 <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
                   <Star className="w-3.5 h-3.5" /> Panel consolidado de reseñas
                 </h3>
                 <p className="text-[10px] text-[#8a8377] font-mono mt-1 leading-relaxed">
-                  Escanea Gmail (últimos 30 días) buscando notificaciones de Google Business, Clutch, Sortlist, GoodFirms, Trustpilot y DesignRush. La IA extrae plataforma, calificación, texto y link para responder.
+                  Escanea Gmail con las fuentes configuradas y detecta reseñas nuevas. La IA extrae plataforma, calificación, texto y link para responder manualmente.
                 </p>
               </div>
               <button
@@ -1241,7 +1384,80 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 {scanningResenas ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
                 {scanningResenas ? 'Escaneando...' : 'Buscar reseñas nuevas'}
               </button>
+              </div>
+
+              <form onSubmit={handleAddReviewSource} className="xl:col-span-5 bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs">
+                <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
+                  <Link2 className="w-3.5 h-3.5" /> Fuentes y perfiles de reseñas
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    value={sourcePlatform}
+                    onChange={(e) => {
+                      setSourcePlatform(e.target.value);
+                      if (!sourceName.trim()) setSourceName(e.target.value);
+                    }}
+                    className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                  >
+                    <option value="google">Google</option>
+                    <option value="clutch">Clutch</option>
+                    <option value="sortlist">Sortlist</option>
+                    <option value="goodfirms">GoodFirms</option>
+                    <option value="trustpilot">Trustpilot</option>
+                    <option value="designrush">DesignRush</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                  <input
+                    value={sourceName}
+                    onChange={(e) => setSourceName(e.target.value)}
+                    placeholder="Nombre visible"
+                    required
+                    className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                  />
+                </div>
+                <input
+                  type="url"
+                  value={sourceUrl}
+                  onChange={(e) => setSourceUrl(e.target.value)}
+                  placeholder="Link del perfil/directorio donde respondes reseñas"
+                  required
+                  className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white font-mono"
+                />
+                <input
+                  value={sourceQuery}
+                  onChange={(e) => setSourceQuery(e.target.value)}
+                  placeholder="Filtro Gmail opcional: from:... OR subject:review"
+                  className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white font-mono"
+                />
+                <button
+                  type="submit"
+                  disabled={savingSource}
+                  className="w-full bg-[#a8c98a] hover:bg-[#96b579] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
+                >
+                  <Plus className="w-3.5 h-3.5" /> {savingSource ? 'Guardando...' : 'Guardar fuente'}
+                </button>
+              </form>
             </div>
+
+            {reviewSources.length > 0 && (
+              <div className="bg-[#161412] border border-[#2a2620] rounded-lg p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+                {reviewSources.map((source) => (
+                  <div key={source.id} className="bg-[#0f0e0c]/50 border border-[#2a2620] rounded p-3 text-xs space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] uppercase font-mono text-[#c9a961]">{source.plataforma}</span>
+                      <span className="text-[#e8e3d8] font-semibold truncate">{source.nombre}</span>
+                      <button onClick={() => handleDeleteReviewSource(source.id)} className="ml-auto text-[#c97a61] hover:text-[#e08970]">
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <a href={source.profile_url} target="_blank" rel="noreferrer" className="text-[10px] font-mono text-[#a8c98a] hover:text-[#c9a961] flex items-center gap-1 truncate">
+                      <ExternalLink className="w-3 h-3" /> Abrir perfil
+                    </a>
+                    {source.gmail_query && <p className="text-[9px] font-mono text-[#8a8377] truncate">{source.gmail_query}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
             {scanResult && (
               <p className="text-[11px] text-[#a8c98a] font-mono bg-[#a8c98a]/5 border border-[#a8c98a]/30 rounded p-2">{scanResult}</p>
             )}

@@ -339,6 +339,42 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_review_sources: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          gmail_query: string | null
+          id: string
+          last_scanned_at: string | null
+          nombre: string
+          plataforma: string
+          profile_url: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          gmail_query?: string | null
+          id?: string
+          last_scanned_at?: string | null
+          nombre: string
+          plataforma: string
+          profile_url: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          gmail_query?: string | null
+          id?: string
+          last_scanned_at?: string | null
+          nombre?: string
+          plataforma?: string
+          profile_url?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       crm_team_members: {
         Row: {
           created_at: string

@@ -213,6 +213,15 @@ export interface RedditPost {
   is_self: boolean;
 }
 
+export interface LinkedInSearchResult {
+  id: string;
+  title: string;
+  snippet: string;
+  url: string;
+  author: string | null;
+  source: string;
+}
+
 export async function fetchSubredditPosts(payload: {
   subreddit: string;
   listing?: 'new' | 'hot' | 'top' | 'rising';
@@ -236,6 +245,16 @@ export async function searchRedditByKeywords(payload: {
   if (error) throw error;
   if (!data?.ok) throw new Error(data?.message || 'No se pudo buscar en Reddit.');
   return data.posts as RedditPost[];
+}
+
+export async function searchLinkedInByKeywords(payload: {
+  keywords: string[];
+  limit?: number;
+}): Promise<LinkedInSearchResult[]> {
+  const { data, error } = await supabase.functions.invoke('linkedin-search-keywords', { body: payload });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo buscar en LinkedIn.');
+  return data.results as LinkedInSearchResult[];
 }
 
 export async function enrichOportunidadApollo(payload: {
@@ -344,6 +363,43 @@ export interface Resena {
   email_subject: string | null;
   email_from: string | null;
   detectada_en: string;
+}
+
+export interface ReviewSource {
+  id: string;
+  plataforma: string;
+  nombre: string;
+  profile_url: string;
+  gmail_query: string | null;
+  enabled: boolean;
+  last_scanned_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function listReviewSources(): Promise<ReviewSource[]> {
+  const { data, error } = await (supabase as any)
+    .from('crm_review_sources')
+    .select('*')
+    .order('plataforma')
+    .order('nombre');
+  if (error) throw new Error(`[crmService] listReviewSources: ${error.message}`);
+  return data as ReviewSource[];
+}
+
+export async function upsertReviewSource(source: Partial<ReviewSource> & Pick<ReviewSource, 'plataforma' | 'nombre' | 'profile_url'>): Promise<ReviewSource> {
+  const { data, error } = await (supabase as any)
+    .from('crm_review_sources')
+    .upsert({ ...source, updated_at: new Date().toISOString() })
+    .select('*')
+    .single();
+  if (error) throw new Error(`[crmService] upsertReviewSource: ${error.message}`);
+  return data as ReviewSource;
+}
+
+export async function deleteReviewSource(id: string): Promise<void> {
+  const { error } = await (supabase as any).from('crm_review_sources').delete().eq('id', id);
+  if (error) throw new Error(`[crmService] deleteReviewSource: ${error.message}`);
 }
 
 export async function listResenas(): Promise<Resena[]> {

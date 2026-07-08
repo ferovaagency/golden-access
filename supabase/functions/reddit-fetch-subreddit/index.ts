@@ -11,6 +11,63 @@ const BodySchema = z.object({
   timeframe: z.enum(['hour', 'day', 'week', 'month', 'year', 'all']).default('week'),
 });
 
+function decodeXml(input: string): string {
+  return input
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
+function stripHtml(input: string): string {
+  return decodeXml(input.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
+}
+
+function parseAtomPosts(xml: string, cleanSub: string, limit: number) {
+  const entries = [...xml.matchAll(/<entry[\s\S]*?<\/entry>/g)].slice(0, limit);
+  return entries.map((entry, index) => {
+    const raw = entry[0];
+    const title = decodeXml(raw.match(/<title[^>]*>([\s\S]*?)<\/title>/)?.[1] || '');
+    const href = decodeXml(raw.match(/<link[^>]+href="([^"]+)"/)?.[1] || `https://www.reddit.com/r/${cleanSub}`);
+    const author = decodeXml(raw.match(/<name>([\s\S]*?)<\/name>/)?.[1] || 'reddit');
+    const updated = raw.match(/<updated>([\s\S]*?)<\/updated>/)?.[1] || new Date().toISOString();
+    const content = stripHtml(raw.match(/<content[^>]*>([\s\S]*?)<\/content>/)?.[1] || '');
+    const id = raw.match(/<id>([\s\S]*?)<\/id>/)?.[1]?.split('/').filter(Boolean).pop() || `${cleanSub}-${index}`;
+    return {
+      id,
+      title,
+      selftext: content.slice(0, 4000),
+      author: author.replace(/^\/u\//, ''),
+      subreddit: cleanSub,
+      num_comments: 0,
+      score: 0,
+      upvote_ratio: 0,
+      created_utc: Math.floor(new Date(updated).getTime() / 1000),
+      url: href,
+      link_flair_text: null,
+      is_self: true,
+    };
+  });
+}
+
+function mapPullPushPosts(data: any[], cleanSub: string, limit: number) {
+  return (data || []).slice(0, limit).map((p: any) => ({
+    id: p.id || String(p.created_utc || crypto.randomUUID()),
+    title: p.title || '',
+    selftext: (p.selftext || p.body || '').slice(0, 4000),
+    author: p.author || 'anon',
+    subreddit: p.subreddit || cleanSub,
+    num_comments: p.num_comments || 0,
+    score: p.score || 0,
+    upvote_ratio: p.upvote_ratio || 0,
+    created_utc: p.created_utc || Math.floor(Date.now() / 1000),
+    url: p.permalink ? `https://www.reddit.com${p.permalink}` : (p.full_link || p.url || `https://www.reddit.com/r/${cleanSub}`),
+    link_flair_text: p.link_flair_text || null,
+    is_self: p.is_self ?? !!p.selftext,
+  }));
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -53,14 +110,55 @@ Deno.serve(async (req) => {
     if (listing === 'top') url.searchParams.set('t', timeframe);
 
     const res = await fetch(url.toString(), {
-      headers: { 'User-Agent': 'FerovaOS-CRM/1.0 (by u/ferova)' },
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; FerovaOS/1.0; +https://ferova.agency)',
+        'Accept': 'application/json,text/plain,*/*',
+      },
     });
 
     if (!res.ok) {
+      const arctic = new URL('https://arctic-shift.photon-reddit.com/api/posts/search');
+      arctic.searchParams.set('subreddit', cleanSub);
+      arctic.searchParams.set('limit', String(limit));
+      arctic.searchParams.set('sort', 'desc');
+      const arcticRes = await fetch(arctic.toString(), { headers: { 'Accept': 'application/json', 'User-Agent': 'FerovaOS/1.0' } });
+      if (arcticRes.ok) {
+        const arcticJson = await arcticRes.json();
+        const posts = mapPullPushPosts(arcticJson?.data || [], cleanSub, limit);
+        return new Response(JSON.stringify({ ok: true, subreddit: cleanSub, listing, count: posts.length, posts, mode: 'arctic_shift_fallback' }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const pullpush = new URL('https://api.pullpush.io/reddit/search/submission/');
+      pullpush.searchParams.set('subreddit', cleanSub);
+      pullpush.searchParams.set('size', String(limit));
+      pullpush.searchParams.set('sort', 'desc');
+      pullpush.searchParams.set('sort_type', 'created_utc');
+      const pullRes = await fetch(pullpush.toString(), { headers: { 'Accept': 'application/json' } });
+      if (pullRes.ok) {
+        const pullJson = await pullRes.json();
+        const posts = mapPullPushPosts(pullJson?.data || [], cleanSub, limit);
+        return new Response(JSON.stringify({ ok: true, subreddit: cleanSub, listing, count: posts.length, posts, mode: 'pullpush_fallback' }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const rssUrl = `https://www.reddit.com/r/${cleanSub}/${listing}/.rss?limit=${limit}`;
+      const rssRes = await fetch(rssUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FerovaOS/1.0; +https://ferova.agency)', 'Accept': 'application/atom+xml,text/xml,*/*' },
+      });
+      if (rssRes.ok) {
+        const posts = parseAtomPosts(await rssRes.text(), cleanSub, limit);
+        return new Response(JSON.stringify({ ok: true, subreddit: cleanSub, listing, count: posts.length, posts, mode: 'rss_fallback' }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
       const body = await res.text();
-      console.error(`[reddit-fetch-subreddit] Reddit ${res.status}: ${body.slice(0, 200)}`);
-      return new Response(JSON.stringify({ ok: false, message: `Reddit devolvió ${res.status}. Verifica el nombre del subreddit.`, details: body.slice(0, 300) }), {
-        status: res.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      const rssBody = await rssRes.text().catch(() => '');
+      console.error(`[reddit-fetch-subreddit] Reddit JSON ${res.status}, Arctic ${arcticRes.status}, PullPush ${pullRes.status}, RSS ${rssRes.status}: ${body.slice(0, 120)} ${rssBody.slice(0, 120)}`);
+      return new Response(JSON.stringify({ ok: false, message: `Reddit bloqueó la consulta pública (${res.status}/${arcticRes.status}/${pullRes.status}/${rssRes.status}). Intenta otra comunidad o vuelve a probar en unos minutos.`, details: body.slice(0, 300) }), {
+        status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 

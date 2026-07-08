@@ -167,8 +167,24 @@ export default function App() {
     }
   };
 
-  // Import from a Google Sheet by pasting its URL. Uses backend edge function that reads
-  // the public CSV export (sheet must be shared as "Anyone with the link can view").
+  const persistImportedFinanceData = async (data: AppData) => {
+    if (!user) return;
+    await Promise.all([
+      financeService.saveConfig(user.id, data.config),
+      financeService.saveClientes(user.id, data.clientes),
+      financeService.saveServicios(user.id, data.servicios),
+      financeService.saveHerramientas(user.id, data.herramientas),
+      financeService.saveOtrosGastos(user.id, data.otrosGastos),
+      financeService.savePagosEgresos(user.id, data.pagosEgresos || []),
+      financeService.saveVentas(user.id, data.ventas),
+      financeService.saveHoras(user.id, data.horas),
+    ]);
+    const fresh = await financeService.loadFinanceData(user.id);
+    setAppData(fresh);
+  };
+
+  // Import from a Google Sheet by pasting its URL. Uses the connected Google token when available,
+  // so private sheets shared with that account work; falls back to public CSV for public sheets.
   const handleImportFromSheetsUrl = async (rawUrl: string) => {
     if (!user) return;
     const url = (rawUrl || '').trim();
@@ -176,31 +192,37 @@ export default function App() {
     if (!confirm('Esto reemplazará tus datos actuales con los de la hoja indicada. ¿Continuar?')) return;
     setSheetsLoading(true);
     try {
-      const data = await importSheetByUrl(url);
-      await Promise.all([
-        financeService.saveConfig(user.id, data.config),
-        financeService.saveClientes(user.id, data.clientes),
-        financeService.saveServicios(user.id, data.servicios),
-        financeService.saveHerramientas(user.id, data.herramientas),
-        financeService.saveOtrosGastos(user.id, data.otrosGastos),
-        financeService.savePagosEgresos(user.id, data.pagosEgresos || []),
-        financeService.saveVentas(user.id, data.ventas),
-        financeService.saveHoras(user.id, data.horas),
-      ]);
-      const fresh = await financeService.loadFinanceData(user.id);
-      setAppData(fresh);
+      const data = await importSheetByUrl(url, getAccessToken());
+      await persistImportedFinanceData(data);
       alert('✨ Importación completada.');
     } catch (err: any) {
-      alert(`Fallo al importar: ${err.message || err}\n\nAsegúrate de:\n1) Compartir la hoja con "Cualquier persona con el link puede ver".\n2) Que tenga las pestañas: Config, Clientes, Servicios, Herramientas, OtrosGastos, Ventas, Horas, PagosEgresos.`);
+      alert(`Fallo al importar: ${err.message || err}\n\nAsegúrate de:\n1) Que la hoja esté compartida con la cuenta Google conectada o pública con link.\n2) Que tenga las pestañas: Config, Clientes, Servicios, Herramientas, OtrosGastos, Ventas, Horas, PagosEgresos.`);
     } finally {
       setSheetsLoading(false);
     }
   };
 
-  // Deprecated (dejado para compatibilidad con el botón "Importar mi Google Sheet" existente):
-  // ahora redirige al flujo del link.
   const handleImportFromSheets = async () => {
-    alert('Pega el link de tu Google Sheet en el campo de abajo — asegurate de que esté compartida como "Cualquier persona con el link puede ver".');
+    if (!user) return;
+    const token = getAccessToken();
+    if (!token) {
+      try { await googleSignIn(); }
+      catch (err: any) { alert(`No se pudo conectar Google: ${err.message || err}`); }
+      return;
+    }
+    if (!confirm('Esto buscará tu hoja "Ferova_OS_Financiero" en Google Drive y reemplazará tus datos actuales. ¿Continuar?')) return;
+    setSheetsLoading(true);
+    try {
+      const sheet = await import('./lib/sheetsService').then((m) => m.findSpreadsheet(token));
+      if (!sheet?.id) throw new Error('No encontré una hoja llamada Ferova_OS_Financiero en tu Google Drive. También puedes pegar el link exacto abajo.');
+      const data = await import('./lib/sheetsService').then((m) => m.fetchSpreadsheetData(sheet.id, token));
+      await persistImportedFinanceData(data);
+      alert('✨ Hoja importada desde tu Google Drive.');
+    } catch (err: any) {
+      alert(`Fallo al importar tu hoja: ${err.message || err}`);
+    } finally {
+      setSheetsLoading(false);
+    }
   };
 
 
