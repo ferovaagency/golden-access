@@ -254,6 +254,39 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     }
   };
 
+  const handleFetchSubreddit = async () => {
+    const sub = subInput.trim().replace(/^r\//i, '');
+    if (!sub) { alert('Escribe el nombre del subreddit (ej. SEO, digitalmarketing, colombia).'); return; }
+    setFetchingSub(true);
+    try {
+      const posts = await fetchSubredditPosts({ subreddit: sub, listing: subListing, limit: subLimit, timeframe: subTimeframe });
+      setSubPosts(posts);
+    } catch (err: any) {
+      alert(`Error trayendo r/${sub}: ${err.message || err}`);
+    } finally {
+      setFetchingSub(false);
+    }
+  };
+
+  const handleAnalyzeRedditPost = async (post: RedditPost) => {
+    const texto = `${post.title}\n\n${post.selftext || '(publicación sin texto propio; probable link o imagen)'}`;
+    if (texto.length < 30) { alert('La publicación es demasiado corta para analizar.'); return; }
+    setAnalyzingPostId(post.id);
+    try {
+      const created = await analyzeContenido({
+        plataforma: 'reddit',
+        url_publicacion: post.url,
+        autor: `u/${post.author} · r/${post.subreddit}`,
+        texto,
+      });
+      setContenido([created, ...contenido]);
+    } catch (err: any) {
+      alert(`Error analizando: ${err.message || err}`);
+    } finally {
+      setAnalyzingPostId(null);
+    }
+  };
+
   const handleCreateOportunidad = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nombreContacto.trim()) return;
