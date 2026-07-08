@@ -943,6 +943,15 @@ export default function App() {
                 />
               )}
 
+              {isTeam && activeTab.startsWith('crm-') && (
+                <AdminCRM
+                  user={user}
+                  embedded
+                  tab={activeTab.replace('crm-', '') as CRMTab}
+                  onTabChange={(t) => setActiveTab(`crm-${t}`)}
+                />
+              )}
+
             </div>
           )}
 
