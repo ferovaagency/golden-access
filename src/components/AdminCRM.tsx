@@ -526,7 +526,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
   if (authorized === null) {
     return (
-      <div className={`${embedded ? 'py-12' : 'min-h-screen'} bg-[#0f0e0c] flex items-center justify-center text-[#e8e3d8]`}>
+      <div className={`${embedded ? 'py-12' : 'min-h-screen'} bg-[#f7f8fb] flex items-center justify-center text-slate-700`}>
         <Loader2 className="w-8 h-8 animate-spin text-[#c9a961]" />
       </div>
     );
@@ -534,7 +534,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
   if (!authorized) {
     return (
-      <div className={`${embedded ? 'py-12' : 'min-h-screen'} bg-[#0f0e0c] flex flex-col items-center justify-center gap-4 text-[#e8e3d8] p-6 text-center`}>
+      <div className={`${embedded ? 'py-12' : 'min-h-screen'} bg-[#f7f8fb] flex flex-col items-center justify-center gap-4 text-slate-700 p-6 text-center`}>
         <Ban className="w-10 h-10 text-[#c97a61]" />
         <p className="font-mono text-sm">No autorizado. {user.email} no está en el equipo de Ferova.</p>
         {!embedded && (
@@ -547,7 +547,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   }
 
   const bodyClass = embedded ? '' : 'p-6 max-w-6xl mx-auto';
-  const outerClass = embedded ? '' : 'min-h-screen bg-[#0f0e0c] bg-gradient-to-br from-[#0f0e0c] to-[#1a1815] text-[#e8e3d8] font-sans';
+  const outerClass = embedded ? '' : 'ferova-light-theme min-h-screen bg-[#f7f8fb] text-slate-900 font-sans';
   const kpis = [
     { label: 'Pipeline', value: oportunidades.length, accent: '#c9a961' },
     { label: 'Citas activas', value: citas.filter((c) => c.estado !== 'cancelada').length, accent: '#7ab5c9' },

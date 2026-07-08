@@ -39,22 +39,22 @@ export default function AuthScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f0e0c] flex flex-col justify-center items-center p-4 text-[#e8e3d8] font-sans">
-      <div className="max-w-md w-full bg-[#161412] border border-[#2a2620] rounded-lg p-8 space-y-6 shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 inset-x-0 h-[3px] bg-[#c9a961]" />
+    <div className="min-h-screen bg-[#f7f8fb] bg-[linear-gradient(135deg,#f7f8fb_0%,#eef6ff_52%,#f8fbf4_100%)] flex flex-col justify-center items-center p-4 text-slate-900 font-sans">
+      <div className="max-w-md w-full bg-white border border-slate-200 rounded-3xl p-8 space-y-6 shadow-2xl shadow-slate-200/70 relative overflow-hidden">
+        <div className="absolute top-0 inset-x-0 h-1 bg-blue-600" />
 
         <div className="space-y-2.5 text-center">
-          <h1 className="text-2xl font-bold font-display tracking-tight text-[#c9a961]">
+          <h1 className="text-2xl font-bold font-display tracking-tight text-slate-950">
             Ferova OS Financiero
           </h1>
-          <p className="text-xs text-[#a39d8e] font-mono uppercase tracking-wider">
-            Control Ejecutivo y Tránsito DIAN 2026
+          <p className="text-sm text-slate-500">
+            Finanzas, Growth CRM y asistente IA para operar con claridad
           </p>
         </div>
 
         <button
           onClick={handleGoogle}
-          className="w-full flex items-center justify-center gap-3 bg-white hover:bg-neutral-100 text-black font-semibold font-sans py-3 rounded-md transition cursor-pointer"
+          className="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 font-semibold font-sans py-3 rounded-2xl transition cursor-pointer shadow-sm"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path fill="#EA4335" d="M12 5.04c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24.5 12 .5c-4.7 0-8.75 2.69-10.72 6.61l3.99 3.09C6.21 7.15 8.87 5.04 12 5.04z" />
@@ -65,8 +65,8 @@ export default function AuthScreen() {
           <span>Continuar con Google</span>
         </button>
 
-        <div className="flex items-center gap-3 text-[10px] text-[#8a8377] font-mono uppercase">
-          <div className="flex-1 h-px bg-[#2a2620]" />o<div className="flex-1 h-px bg-[#2a2620]" />
+        <div className="flex items-center gap-3 text-xs text-slate-400">
+          <div className="flex-1 h-px bg-slate-200" />o<div className="flex-1 h-px bg-slate-200" />
         </div>
 
         <form onSubmit={handleEmail} className="space-y-3">
@@ -76,7 +76,7 @@ export default function AuthScreen() {
             placeholder="correo@empresa.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-[#0f0e0c] border border-[#2a2620] rounded px-3 py-2.5 text-sm text-white placeholder-[#5a564d] focus:outline-none focus:border-[#c9a961]"
+            className="w-full bg-white border border-slate-200 rounded-2xl px-3 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500"
           />
           <input
             type="password"
@@ -85,7 +85,7 @@ export default function AuthScreen() {
             placeholder="Contraseña"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-[#0f0e0c] border border-[#2a2620] rounded px-3 py-2.5 text-sm text-white placeholder-[#5a564d] focus:outline-none focus:border-[#c9a961]"
+            className="w-full bg-white border border-slate-200 rounded-2xl px-3 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500"
           />
 
           {error && (
@@ -102,7 +102,7 @@ export default function AuthScreen() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-[#c9a961] hover:bg-[#d4b56d] text-[#0f0e0c] font-semibold py-2.5 rounded transition disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-2xl transition disabled:opacity-60"
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
             {mode === 'signin' ? 'Iniciar sesión' : 'Crear cuenta'}
@@ -115,14 +115,14 @@ export default function AuthScreen() {
             setError(null);
             setInfo(null);
           }}
-          className="w-full text-[11px] text-[#a39d8e] hover:text-[#c9a961] font-mono"
+          className="w-full text-sm text-slate-500 hover:text-blue-700"
         >
           {mode === 'signin'
             ? '¿No tienes cuenta? Regístrate'
             : '¿Ya tienes cuenta? Inicia sesión'}
         </button>
 
-        <p className="text-[10px] text-[#8a8377] font-mono text-center pt-2">
+        <p className="text-xs text-slate-400 text-center pt-2">
           Mafe © 2026 | Bogotá D.C., Colombia
         </p>
       </div>

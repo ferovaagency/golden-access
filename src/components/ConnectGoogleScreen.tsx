@@ -30,23 +30,22 @@ export default function ConnectGoogleScreen({ user }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f0e0c] flex flex-col justify-center items-center p-4 text-[#e8e3d8] font-sans">
-      <div className="max-w-md w-full bg-[#161412] border border-[#2a2620] rounded-lg p-8 text-center space-y-6 shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 inset-x-0 h-[3px] bg-[#c9a961]" />
+    <div className="min-h-screen bg-[#f7f8fb] bg-[linear-gradient(135deg,#f7f8fb_0%,#eef6ff_52%,#f8fbf4_100%)] flex flex-col justify-center items-center p-4 text-slate-900 font-sans">
+      <div className="max-w-md w-full bg-white border border-slate-200 rounded-3xl p-8 text-center space-y-6 shadow-2xl shadow-slate-200/70 relative overflow-hidden">
+        <div className="absolute top-0 inset-x-0 h-1 bg-blue-600" />
 
         <div className="space-y-2.5">
-          <h1 className="text-2xl font-bold font-display tracking-tight text-[#c9a961]">
+          <h1 className="text-2xl font-bold font-display tracking-tight text-slate-950">
             Conecta Google Workspace
           </h1>
-          <p className="text-xs text-[#a39d8e] font-mono uppercase tracking-wider">
-            Permisos: Google Sheets + Google Drive
+          <p className="text-sm text-slate-500">
+            Permisos: Sheets, Drive, Calendar y Gmail para reseñas
           </p>
         </div>
 
-        <p className="text-xs text-[#8a8377] leading-relaxed border-t border-b border-[#2a2620] py-4">
-          Ferova OS usa tu Google Sheets como base de datos viva y Google Drive para respaldos
-          automáticos. Necesitamos tu autorización para acceder al documento de respaldo y base de
-          datos de la agencia.
+        <p className="text-sm text-slate-600 leading-relaxed border-t border-b border-slate-100 py-4">
+          Ferova OS guarda la operación en la base de datos y usa Google para importar/respaldar Sheets,
+          crear citas en Calendar y leer notificaciones de reseñas en Gmail.
         </p>
 
         {error && (
@@ -58,7 +57,7 @@ export default function ConnectGoogleScreen({ user }: Props) {
         <button
           onClick={handleConnect}
           disabled={loading}
-          className="w-full flex items-center justify-center gap-3 bg-white hover:bg-neutral-100 text-black font-semibold font-sans py-3 rounded-md transition cursor-pointer disabled:opacity-60"
+          className="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 font-semibold font-sans py-3 rounded-2xl transition cursor-pointer disabled:opacity-60 shadow-sm"
         >
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -75,13 +74,13 @@ export default function ConnectGoogleScreen({ user }: Props) {
           </span>
         </button>
 
-        <div className="flex items-center justify-between pt-2 border-t border-[#2a2620]">
-          <span className="text-[10px] text-[#8a8377] font-mono truncate max-w-[60%]">
+        <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+          <span className="text-xs text-slate-500 truncate max-w-[60%]">
             {user.email}
           </span>
           <button
             onClick={() => logout()}
-            className="text-[10px] text-[#8a8377] hover:text-[#c97a61] font-mono flex items-center gap-1"
+            className="text-xs text-slate-500 hover:text-red-600 flex items-center gap-1"
           >
             <LogOut className="w-3 h-3" /> Cerrar sesión
           </button>
