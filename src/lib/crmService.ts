@@ -1,4 +1,6 @@
 import { supabase } from './supabase';
+import { getAccessToken } from './supabase';
+
 
 /**
  * CRM interno de Ferova Agency (prospección, pipeline, citas, contenido).
