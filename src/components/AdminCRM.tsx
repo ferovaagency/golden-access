@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles, Download, MessageSquare, Zap, Copy, Search } from 'lucide-react';
+import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles, Download, MessageSquare, Zap, Copy, Search, Star, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { logout } from '../lib/supabase';
 import {
   isTeamMember,
@@ -31,11 +31,15 @@ import {
   BotConfig,
   KnowledgeItem,
   RedditPost,
+  listResenas,
+  scanResenas,
+  markResenaRespondida,
+  Resena,
 } from '../lib/crmService';
 
 const ESTADOS: EstadoOportunidad[] = ['nuevo', 'contactado', 'calificando', 'propuesta_enviada', 'negociacion', 'ganado', 'perdido'];
 
-export type CRMTab = 'pipeline' | 'citas' | 'contenido' | 'bot';
+export type CRMTab = 'pipeline' | 'citas' | 'contenido' | 'bot' | 'resenas';
 
 interface Props {
   user: User;
@@ -55,6 +59,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const [botConfig, setBotConfig] = useState<BotConfig | null>(null);
   const [knowledge, setKnowledge] = useState<KnowledgeItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [resenas, setResenas] = useState<Resena[]>([]);
+  const [scanningResenas, setScanningResenas] = useState(false);
+  const [scanResult, setScanResult] = useState<string | null>(null);
 
   const [nombreContacto, setNombreContacto] = useState('');
   const [empresa, setEmpresa] = useState('');
@@ -132,13 +139,14 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const refreshAll = async () => {
     setLoading(true);
     try {
-      const [o, c, k, bc, kn, srv] = await Promise.all([
+      const [o, c, k, bc, kn, srv, r] = await Promise.all([
         listOportunidades(),
         listCitas(),
         listContenidoPotencial(),
         getBotConfig(),
         listKnowledge(),
         listServiciosCatalogo(user.id).catch(() => [] as ServicioCatalogo[]),
+        listResenas().catch(() => [] as Resena[]),
       ]);
       setOportunidades(o);
       setCitas(c);
@@ -147,6 +155,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setPromptDraft(bc.custom_prompt || '');
       setKnowledge(kn);
       setServicios(srv);
+      setResenas(r);
     } catch (err: any) {
       alert(`Error cargando el CRM: ${err.message || err}`);
     } finally {
@@ -346,6 +355,29 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     try { await navigator.clipboard.writeText(text); } catch { /**/ }
   };
 
+  const handleScanResenas = async () => {
+    setScanningResenas(true);
+    setScanResult(null);
+    try {
+      const res = await scanResenas(30);
+      setScanResult(`Escaneados ${res.scanned} correos · ${res.inserted} nuevas reseñas · ${res.already_saved} ya guardadas · ${res.skipped} sin reseña.`);
+      setResenas(await listResenas());
+    } catch (err: any) {
+      alert(`Error escaneando Gmail: ${err.message || err}`);
+    } finally {
+      setScanningResenas(false);
+    }
+  };
+
+  const handleToggleRespondida = async (r: Resena) => {
+    try {
+      await markResenaRespondida(r.id, !r.respondida);
+      setResenas(resenas.map((x) => (x.id === r.id ? { ...x, respondida: !r.respondida } : x)));
+    } catch (err: any) {
+      alert(`Error actualizando: ${err.message || err}`);
+    }
+  };
+
   const handleCreateOportunidad = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nombreContacto.trim()) return;
@@ -442,7 +474,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
           </header>
 
           <nav className="flex gap-2 px-6 py-3 border-b border-[#2a2620] text-xs font-mono">
-            {(['pipeline', 'citas', 'contenido', 'bot'] as const).map((t) => (
+            {(['pipeline', 'citas', 'contenido', 'bot', 'resenas'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -450,7 +482,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   tab === t ? 'bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/40' : 'text-[#a39d8e] hover:text-white'
                 }`}
               >
-                {t === 'pipeline' ? 'Pipeline' : t === 'citas' ? 'Citas de diagnóstico' : t === 'contenido' ? 'Contenido con potencial' : 'Bot de WhatsApp'}
+                {t === 'pipeline' ? 'Pipeline' : t === 'citas' ? 'Citas de diagnóstico' : t === 'contenido' ? 'Contenido con potencial' : t === 'bot' ? 'Bot de WhatsApp' : 'Reseñas'}
               </button>
             ))}
           </nav>
@@ -1186,6 +1218,72 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'resenas' && (
+          <div className="space-y-4">
+            <div className="bg-[#161412] border border-[#2a2620] rounded-lg p-5 flex flex-wrap items-center gap-3">
+              <div className="flex-1 min-w-[240px]">
+                <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
+                  <Star className="w-3.5 h-3.5" /> Panel consolidado de reseñas
+                </h3>
+                <p className="text-[10px] text-[#8a8377] font-mono mt-1 leading-relaxed">
+                  Escanea Gmail (últimos 30 días) buscando notificaciones de Google Business, Clutch, Sortlist, GoodFirms, Trustpilot y DesignRush. La IA extrae plataforma, calificación, texto y link para responder.
+                </p>
+              </div>
+              <button
+                onClick={handleScanResenas}
+                disabled={scanningResenas}
+                className="bg-[#c9a961] hover:bg-[#b09252] text-black font-bold px-4 py-2 rounded text-xs flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {scanningResenas ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                {scanningResenas ? 'Escaneando...' : 'Buscar reseñas nuevas'}
+              </button>
+            </div>
+            {scanResult && (
+              <p className="text-[11px] text-[#a8c98a] font-mono bg-[#a8c98a]/5 border border-[#a8c98a]/30 rounded p-2">{scanResult}</p>
+            )}
+
+            <div className="space-y-2">
+              {resenas.length === 0 && !loading && (
+                <p className="text-[#8a8377] text-xs font-mono text-center py-10">Sin reseñas detectadas todavía. Toca "Buscar reseñas nuevas".</p>
+              )}
+              {resenas.map((r) => (
+                <div key={r.id} className="bg-[#161412] border border-[#2a2620] rounded-lg p-4 space-y-2 text-xs">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="uppercase font-mono text-[10px] px-2 py-0.5 rounded bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/40">
+                      {r.plataforma}
+                    </span>
+                    {r.calificacion != null && (
+                      <span className="font-mono text-[10px] text-[#e8c481] flex items-center gap-0.5">
+                        <Star className="w-3 h-3 fill-[#e8c481]" /> {r.calificacion}/5
+                      </span>
+                    )}
+                    {r.resenador && <span className="text-[#a39d8e] font-mono text-[10px]">por {r.resenador}</span>}
+                    <span className="text-[#8a8377] font-mono text-[10px] ml-auto">{new Date(r.detectada_en).toLocaleString('es-CO')}</span>
+                    <span className={`px-2 py-0.5 rounded font-mono text-[9px] uppercase border ${r.respondida ? 'bg-[#a8c98a]/15 text-[#a8c98a] border-[#a8c98a]/40' : 'bg-[#c97a61]/15 text-[#c97a61] border-[#c97a61]/40'}`}>
+                      {r.respondida ? 'Respondida' : 'Sin responder'}
+                    </span>
+                  </div>
+                  {r.texto && <p className="text-[#e8e3d8] leading-relaxed whitespace-pre-wrap">{r.texto}</p>}
+                  {r.email_subject && <p className="text-[#8a8377] font-mono text-[10px]">✉ {r.email_subject}</p>}
+                  <div className="flex items-center gap-3 pt-1">
+                    {r.link && (
+                      <a href={r.link} target="_blank" rel="noreferrer" className="text-[#c9a961] flex items-center gap-1 font-mono text-[10px] hover:text-[#e8c481]">
+                        <ExternalLink className="w-3 h-3" /> Responder en {r.plataforma}
+                      </a>
+                    )}
+                    <button
+                      onClick={() => handleToggleRespondida(r)}
+                      className={`ml-auto text-[10px] font-mono px-2 py-1 rounded border flex items-center gap-1 ${r.respondida ? 'text-[#c97a61] border-[#c97a61]/40 hover:bg-[#c97a61]/10' : 'text-[#a8c98a] border-[#a8c98a]/40 hover:bg-[#a8c98a]/10'}`}
+                    >
+                      <CheckCircle2 className="w-3 h-3" /> {r.respondida ? 'Marcar como sin responder' : 'Ya respondí'}
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

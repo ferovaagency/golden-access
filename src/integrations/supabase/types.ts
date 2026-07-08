@@ -291,6 +291,54 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_resenas: {
+        Row: {
+          calificacion: number | null
+          created_at: string
+          detectada_en: string
+          email_from: string | null
+          email_message_id: string | null
+          email_subject: string | null
+          id: string
+          link: string | null
+          plataforma: string
+          resenador: string | null
+          respondida: boolean
+          texto: string | null
+          updated_at: string
+        }
+        Insert: {
+          calificacion?: number | null
+          created_at?: string
+          detectada_en?: string
+          email_from?: string | null
+          email_message_id?: string | null
+          email_subject?: string | null
+          id?: string
+          link?: string | null
+          plataforma: string
+          resenador?: string | null
+          respondida?: boolean
+          texto?: string | null
+          updated_at?: string
+        }
+        Update: {
+          calificacion?: number | null
+          created_at?: string
+          detectada_en?: string
+          email_from?: string | null
+          email_message_id?: string | null
+          email_subject?: string | null
+          id?: string
+          link?: string | null
+          plataforma?: string
+          resenador?: string | null
+          respondida?: boolean
+          texto?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       crm_team_members: {
         Row: {
           created_at: string

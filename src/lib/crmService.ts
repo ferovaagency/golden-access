@@ -1,4 +1,6 @@
-import { supabase } from './supabase';
+import { supabase, getAccessToken } from './supabase';
+
+
 
 /**
  * CRM interno de Ferova Agency (prospección, pipeline, citas, contenido).
@@ -326,4 +328,43 @@ export async function sendWhatsapp(oportunidadId: string, text: string): Promise
   const { data, error } = await supabase.functions.invoke('whatsapp-send', { body: { oportunidad_id: oportunidadId, text } });
   if (error) throw error;
   if (!data?.ok) throw new Error(data?.message || 'No se pudo enviar el mensaje de WhatsApp.');
+}
+
+// ============================================================
+// Reseñas (escaneo de Gmail)
+// ============================================================
+export interface Resena {
+  id: string;
+  plataforma: string;
+  calificacion: number | null;
+  texto: string | null;
+  resenador: string | null;
+  link: string | null;
+  respondida: boolean;
+  email_subject: string | null;
+  email_from: string | null;
+  detectada_en: string;
+}
+
+export async function listResenas(): Promise<Resena[]> {
+  const { data, error } = await (supabase as any)
+    .from('crm_resenas')
+    .select('*')
+    .order('detectada_en', { ascending: false });
+  if (error) throw new Error(`[crmService] listResenas: ${error.message}`);
+  return data as Resena[];
+}
+
+export async function scanResenas(days = 30): Promise<{ inserted: number; scanned: number; already_saved: number; skipped: number }> {
+  const accessToken = getAccessToken();
+  if (!accessToken) throw new Error('No hay token de Google. Reconecta Google Workspace (incluye permiso Gmail).');
+  const { data, error } = await supabase.functions.invoke('reviews-scan', { body: { access_token: accessToken, days } });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo escanear.');
+  return data;
+}
+
+export async function markResenaRespondida(id: string, respondida: boolean): Promise<void> {
+  const { error } = await (supabase as any).from('crm_resenas').update({ respondida }).eq('id', id);
+  if (error) throw new Error(`[crmService] markResenaRespondida: ${error.message}`);
 }

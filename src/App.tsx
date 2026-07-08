@@ -38,7 +38,7 @@ import {
   X
 } from 'lucide-react';
 
-const CRM_TAB_IDS: CRMTab[] = ['pipeline', 'citas', 'contenido', 'bot'];
+const CRM_TAB_IDS: CRMTab[] = ['pipeline', 'citas', 'contenido', 'bot', 'resenas'];
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -404,6 +404,7 @@ export default function App() {
     { id: 'crm-citas', label: '↗ Citas + Calendar' },
     { id: 'crm-contenido', label: '↗ LinkedIn + Reddit' },
     { id: 'crm-bot', label: '↗ Bot WhatsApp' },
+    { id: 'crm-resenas', label: '↗ Reseñas' },
   ] : [];
 
   const TAB_SET = [...GESTION_OPERATIVA_TABS, ...GESTION_FINANCIERA_TABS, ...CRM_GROWTH_TABS];
