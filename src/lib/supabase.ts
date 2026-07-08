@@ -8,8 +8,8 @@
  */
 
 import type { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
-import { lovable } from '@/integrations/lovable/index';
+import { supabase } from '../integrations/supabase/client';
+import { lovable } from '../integrations/lovable/index';
 
 export { supabase };
 export type AuthUser = User;
@@ -39,14 +39,14 @@ export const initAuth = (
   onAuthSuccess?: (user: User, token: string) => void,
   onAuthFailure?: () => void
 ) => {
-  supabase.auth.getSession().then(({ data }) => {
+  supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
     const session = data.session;
     if (session?.provider_token) persistToken(session.provider_token);
     if (session?.user) onAuthSuccess?.(session.user, cachedAccessToken || '');
     else onAuthFailure?.();
   });
 
-  const { data: sub } = supabase.auth.onAuthStateChange((_event, session: Session | null) => {
+  const { data: sub } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
     if (session?.provider_token) persistToken(session.provider_token);
     if (session?.user) onAuthSuccess?.(session.user, cachedAccessToken || '');
     else {
