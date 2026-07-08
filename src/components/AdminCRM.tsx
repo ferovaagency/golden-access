@@ -102,6 +102,25 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const [fetchingSub, setFetchingSub] = useState(false);
   const [analyzingPostId, setAnalyzingPostId] = useState<string | null>(null);
 
+  // Reddit keyword search
+  const DEFAULT_KEYWORDS = 'SEO, GEO, AIO, e-commerce, Shopify, automatización IA, agente IA, asesoría marketing';
+  const DEFAULT_SUBS = 'SEO, bigseo, digitalmarketing, ecommerce, shopify, marketing, emprendedores, Colombia';
+  const [kwInput, setKwInput] = useState(DEFAULT_KEYWORDS);
+  const [kwSubs, setKwSubs] = useState(DEFAULT_SUBS);
+  const [kwSort, setKwSort] = useState<'relevance' | 'new' | 'hot' | 'top' | 'comments'>('new');
+  const [kwTimeframe, setKwTimeframe] = useState<'day' | 'week' | 'month' | 'year' | 'all'>('month');
+  const [kwLimit, setKwLimit] = useState(20);
+  const [kwPosts, setKwPosts] = useState<RedditPost[]>([]);
+  const [searchingKw, setSearchingKw] = useState(false);
+
+  // Apollo + playbook por oportunidad
+  const [enrichingId, setEnrichingId] = useState<string | null>(null);
+  const [expandedPlaybookId, setExpandedPlaybookId] = useState<string | null>(null);
+  const [enrichInputs, setEnrichInputs] = useState<Record<string, { linkedin_url: string; dominio: string; contexto: string }>>({});
+  const getEnrichInput = (id: string) => enrichInputs[id] || { linkedin_url: '', dominio: '', contexto: '' };
+  const setEnrichInput = (id: string, patch: Partial<{ linkedin_url: string; dominio: string; contexto: string }>) =>
+    setEnrichInputs({ ...enrichInputs, [id]: { ...getEnrichInput(id), ...patch } });
+
   useEffect(() => {
     (async () => {
       const ok = await isTeamMember(user.email || '');
