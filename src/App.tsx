@@ -653,6 +653,29 @@ export default function App() {
             </nav>
           </div>
 
+          {isTeam && CRM_GROWTH_TABS.length > 0 && (
+            <div className="pt-2 border-t border-[#2a2620]/45">
+              <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-[#a8c98a] block px-3 mb-2 font-black border-l-2 border-l-[#a8c98a] pl-2">
+                Growth · CRM Interno
+              </span>
+              <nav className="space-y-1 text-xs font-mono font-semibold">
+                {CRM_GROWTH_TABS.map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`w-full text-left px-3.5 py-2 rounded transition ${
+                      activeTab === tab.id
+                        ? 'bg-[#a8c98a]/10 text-[#a8c98a] border-l-3 border-l-[#a8c98a] font-semibold'
+                        : 'text-[#a39d8e] hover:text-white hover:bg-white/[0.02]'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </nav>
+            </div>
+          )}
+
         </aside>
 
         {/* Responsive Mobile Drawer menu (controlled by trigger button) */}
