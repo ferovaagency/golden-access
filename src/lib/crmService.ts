@@ -28,6 +28,14 @@ export interface Oportunidad {
   created_at: string;
   updated_at: string;
   closed_at: string | null;
+  apollo_data?: any | null;
+  apollo_enriched_at?: string | null;
+  playbook_email?: string | null;
+  playbook_linkedin_conectar?: boolean | null;
+  playbook_linkedin_nota?: string | null;
+  playbook_linkedin_mensaje?: string | null;
+  playbook_whatsapp_mensaje?: string | null;
+  playbook_generated_at?: string | null;
 }
 
 export interface Interaccion {
@@ -213,6 +221,36 @@ export async function fetchSubredditPosts(payload: {
   if (error) throw error;
   if (!data?.ok) throw new Error(data?.message || 'No se pudo traer el subreddit.');
   return data.posts as RedditPost[];
+}
+
+export async function searchRedditByKeywords(payload: {
+  keywords: string[];
+  subreddits?: string[];
+  sort?: 'relevance' | 'new' | 'hot' | 'top' | 'comments';
+  timeframe?: 'hour' | 'day' | 'week' | 'month' | 'year' | 'all';
+  limit?: number;
+}): Promise<RedditPost[]> {
+  const { data, error } = await supabase.functions.invoke('reddit-search-keywords', { body: payload });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo buscar en Reddit.');
+  return data.posts as RedditPost[];
+}
+
+export async function enrichOportunidadApollo(payload: {
+  oportunidad_id?: string;
+  nombre_contacto?: string;
+  empresa?: string;
+  dominio?: string;
+  linkedin_url?: string;
+  email?: string;
+  canal_origen?: string;
+  fuente_url?: string;
+  contexto_publicacion?: string;
+}): Promise<Oportunidad> {
+  const { data, error } = await supabase.functions.invoke('apollo-enrich-playbook', { body: payload });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo enriquecer con Apollo.');
+  return data.oportunidad as Oportunidad;
 }
 
 export async function listContenidoPotencial(): Promise<ContenidoPotencial[]> {

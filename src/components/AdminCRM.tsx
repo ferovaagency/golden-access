@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles, Download, MessageSquare } from 'lucide-react';
+import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles, Download, MessageSquare, Zap, Copy, Search } from 'lucide-react';
 import { logout } from '../lib/supabase';
 import {
   isTeamMember,
@@ -21,6 +21,8 @@ import {
   analyzeContenido,
   listServiciosCatalogo,
   fetchSubredditPosts,
+  searchRedditByKeywords,
+  enrichOportunidadApollo,
   ServicioCatalogo,
   Oportunidad,
   CitaDiagnostico,
@@ -99,6 +101,25 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const [subPosts, setSubPosts] = useState<RedditPost[]>([]);
   const [fetchingSub, setFetchingSub] = useState(false);
   const [analyzingPostId, setAnalyzingPostId] = useState<string | null>(null);
+
+  // Reddit keyword search
+  const DEFAULT_KEYWORDS = 'SEO, GEO, AIO, e-commerce, Shopify, automatización IA, agente IA, asesoría marketing';
+  const DEFAULT_SUBS = 'SEO, bigseo, digitalmarketing, ecommerce, shopify, marketing, emprendedores, Colombia';
+  const [kwInput, setKwInput] = useState(DEFAULT_KEYWORDS);
+  const [kwSubs, setKwSubs] = useState(DEFAULT_SUBS);
+  const [kwSort, setKwSort] = useState<'relevance' | 'new' | 'hot' | 'top' | 'comments'>('new');
+  const [kwTimeframe, setKwTimeframe] = useState<'day' | 'week' | 'month' | 'year' | 'all'>('month');
+  const [kwLimit, setKwLimit] = useState(20);
+  const [kwPosts, setKwPosts] = useState<RedditPost[]>([]);
+  const [searchingKw, setSearchingKw] = useState(false);
+
+  // Apollo + playbook por oportunidad
+  const [enrichingId, setEnrichingId] = useState<string | null>(null);
+  const [expandedPlaybookId, setExpandedPlaybookId] = useState<string | null>(null);
+  const [enrichInputs, setEnrichInputs] = useState<Record<string, { linkedin_url: string; dominio: string; contexto: string }>>({});
+  const getEnrichInput = (id: string) => enrichInputs[id] || { linkedin_url: '', dominio: '', contexto: '' };
+  const setEnrichInput = (id: string, patch: Partial<{ linkedin_url: string; dominio: string; contexto: string }>) =>
+    setEnrichInputs({ ...enrichInputs, [id]: { ...getEnrichInput(id), ...patch } });
 
   useEffect(() => {
     (async () => {
@@ -285,6 +306,44 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     } finally {
       setAnalyzingPostId(null);
     }
+  };
+
+  const handleSearchRedditKw = async () => {
+    const keywords = kwInput.split(',').map((s) => s.trim()).filter(Boolean);
+    if (keywords.length === 0) { alert('Escribe al menos una palabra clave.'); return; }
+    const subreddits = kwSubs.split(',').map((s) => s.trim().replace(/^r\//i, '')).filter(Boolean);
+    setSearchingKw(true);
+    try {
+      const posts = await searchRedditByKeywords({ keywords, subreddits, sort: kwSort, timeframe: kwTimeframe, limit: kwLimit });
+      setKwPosts(posts);
+    } catch (err: any) {
+      alert(`Error buscando: ${err.message || err}`);
+    } finally {
+      setSearchingKw(false);
+    }
+  };
+
+  const handleEnrichApollo = async (o: Oportunidad) => {
+    const inp = getEnrichInput(o.id);
+    setEnrichingId(o.id);
+    try {
+      const updated = await enrichOportunidadApollo({
+        oportunidad_id: o.id,
+        linkedin_url: inp.linkedin_url.trim() || undefined,
+        dominio: inp.dominio.trim() || undefined,
+        contexto_publicacion: inp.contexto.trim() || undefined,
+      });
+      setOportunidades(oportunidades.map((x) => (x.id === o.id ? updated : x)));
+      setExpandedPlaybookId(o.id);
+    } catch (err: any) {
+      alert(`Error enriqueciendo con Apollo: ${err.message || err}`);
+    } finally {
+      setEnrichingId(null);
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try { await navigator.clipboard.writeText(text); } catch { /**/ }
   };
 
   const handleCreateOportunidad = async (e: React.FormEvent) => {
@@ -558,6 +617,79 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                       </button>
                     </div>
                   )}
+
+                  {/* Apollo + Playbook */}
+                  <div className="pt-2 border-t border-[#2a2620] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-mono uppercase text-[#8a8377]">
+                        {o.apollo_enriched_at ? `Enriquecido con Apollo · ${new Date(o.apollo_enriched_at).toLocaleString('es-CO')}` : 'Enriquecer con Apollo + generar playbook IA'}
+                      </span>
+                      {o.playbook_generated_at && (
+                        <button
+                          onClick={() => setExpandedPlaybookId(expandedPlaybookId === o.id ? null : o.id)}
+                          className="text-[9px] font-mono text-[#c9a961] uppercase hover:text-[#e8c481]"
+                        >
+                          {expandedPlaybookId === o.id ? 'Ocultar playbook' : 'Ver playbook'}
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                      <input
+                        value={getEnrichInput(o.id).linkedin_url}
+                        onChange={(e) => setEnrichInput(o.id, { linkedin_url: e.target.value })}
+                        placeholder="LinkedIn URL (opcional)"
+                        className="bg-[#0f0e0c]/50 border border-[#2a2620] p-1.5 rounded text-white text-[11px]"
+                      />
+                      <input
+                        value={getEnrichInput(o.id).dominio}
+                        onChange={(e) => setEnrichInput(o.id, { dominio: e.target.value })}
+                        placeholder="Dominio empresa (opcional)"
+                        className="bg-[#0f0e0c]/50 border border-[#2a2620] p-1.5 rounded text-white text-[11px]"
+                      />
+                      <button
+                        onClick={() => handleEnrichApollo(o)}
+                        disabled={enrichingId === o.id}
+                        className="px-2.5 py-1.5 bg-[#c9a961]/15 border border-[#c9a961]/40 text-[#c9a961] rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
+                      >
+                        <Zap className="w-3 h-3" /> {enrichingId === o.id ? 'Procesando...' : 'Apollo + Playbook'}
+                      </button>
+                    </div>
+                    <textarea
+                      value={getEnrichInput(o.id).contexto}
+                      onChange={(e) => setEnrichInput(o.id, { contexto: e.target.value })}
+                      placeholder="Contexto de la publicación / comentario original (opcional pero muy recomendado)"
+                      rows={2}
+                      className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-1.5 rounded text-white text-[11px] font-mono"
+                    />
+
+                    {expandedPlaybookId === o.id && o.playbook_generated_at && (
+                      <div className="space-y-2 pt-2">
+                        {o.siguiente_accion && (
+                          <PlaybookCard label="Plan de acción" text={o.siguiente_accion} onCopy={copyToClipboard} accent="#c9a961" />
+                        )}
+                        {o.playbook_email && (
+                          <PlaybookCard label="Correo en frío" text={o.playbook_email} onCopy={copyToClipboard} accent="#a8c98a" />
+                        )}
+                        {o.playbook_linkedin_conectar && o.playbook_linkedin_nota && (
+                          <PlaybookCard label="LinkedIn · Nota de conexión" text={o.playbook_linkedin_nota} onCopy={copyToClipboard} accent="#7ab5c9" />
+                        )}
+                        {o.playbook_linkedin_mensaje && (
+                          <PlaybookCard label={o.playbook_linkedin_conectar ? 'LinkedIn · Mensaje tras conectar' : 'LinkedIn · DM'} text={o.playbook_linkedin_mensaje} onCopy={copyToClipboard} accent="#7ab5c9" />
+                        )}
+                        {o.playbook_whatsapp_mensaje ? (
+                          <PlaybookCard label="WhatsApp" text={o.playbook_whatsapp_mensaje} onCopy={copyToClipboard} accent="#a8c98a" />
+                        ) : (
+                          <p className="text-[10px] font-mono text-[#8a8377]">Apollo no devolvió teléfono → sin mensaje de WhatsApp.</p>
+                        )}
+                        {o.apollo_data && (
+                          <details className="text-[10px] font-mono text-[#8a8377]">
+                            <summary className="cursor-pointer hover:text-[#a39d8e]">Ver datos crudos de Apollo</summary>
+                            <pre className="mt-2 p-2 bg-[#0f0e0c] border border-[#2a2620] rounded overflow-x-auto max-h-64 text-[10px]">{JSON.stringify(o.apollo_data, null, 2)}</pre>
+                          </details>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   </div>
                 );
               })}
@@ -684,6 +816,92 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
         {tab === 'contenido' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-12 bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs">
+              <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
+                <Search className="w-3.5 h-3.5" /> Buscar hilos de Reddit por palabras clave
+              </h3>
+              <p className="text-[#8a8377] font-mono text-[10px] leading-relaxed">
+                Busca en varios subreddits a la vez. Deja subreddits vacío para buscar en todo Reddit. Palabras clave por defecto están alineadas a servicios de Ferova.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[9px] font-mono text-[#8a8377] uppercase">Palabras clave (separadas por coma)</label>
+                  <input
+                    value={kwInput}
+                    onChange={(e) => setKwInput(e.target.value)}
+                    placeholder="SEO, GEO, ecommerce"
+                    className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-[9px] font-mono text-[#8a8377] uppercase">Subreddits (opcional, separados por coma)</label>
+                  <input
+                    value={kwSubs}
+                    onChange={(e) => setKwSubs(e.target.value)}
+                    placeholder="SEO, digitalmarketing, ecommerce"
+                    className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white font-mono"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <select value={kwSort} onChange={(e) => setKwSort(e.target.value as any)} className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white">
+                  <option value="new">Nuevos</option>
+                  <option value="relevance">Relevancia</option>
+                  <option value="hot">Hot</option>
+                  <option value="top">Top</option>
+                  <option value="comments">Más comentarios</option>
+                </select>
+                <select value={kwTimeframe} onChange={(e) => setKwTimeframe(e.target.value as any)} className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white">
+                  <option value="day">Último día</option>
+                  <option value="week">Semana</option>
+                  <option value="month">Mes</option>
+                  <option value="year">Año</option>
+                  <option value="all">Siempre</option>
+                </select>
+                <input
+                  type="number"
+                  min={1}
+                  max={50}
+                  value={kwLimit}
+                  onChange={(e) => setKwLimit(Math.max(1, Math.min(50, Number(e.target.value) || 20)))}
+                  className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                />
+                <button
+                  onClick={handleSearchRedditKw}
+                  disabled={searchingKw}
+                  className="bg-[#a8c98a] hover:bg-[#96b579] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
+                >
+                  <Search className={`w-3.5 h-3.5 ${searchingKw ? 'animate-pulse' : ''}`} /> {searchingKw ? 'Buscando...' : 'Buscar'}
+                </button>
+              </div>
+              {kwPosts.length > 0 && (
+                <div className="pt-2 border-t border-[#2a2620] grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[520px] overflow-y-auto">
+                  <p className="md:col-span-2 text-[9px] font-mono uppercase text-[#8a8377]">{kwPosts.length} resultados</p>
+                  {kwPosts.map((p) => (
+                    <div key={p.id} className="bg-[#0f0e0c]/50 border border-[#2a2620] rounded p-3 space-y-1.5">
+                      <a href={p.url} target="_blank" rel="noreferrer" className="text-[#e8e3d8] hover:text-[#c9a961] font-semibold text-[11px] leading-snug block">
+                        {p.title}
+                      </a>
+                      <div className="flex items-center gap-3 text-[9px] font-mono text-[#8a8377] flex-wrap">
+                        <span className="text-[#c9a961]">r/{p.subreddit}</span>
+                        <span>u/{p.author}</span>
+                        <span>▲ {p.score}</span>
+                        <span className="flex items-center gap-0.5"><MessageSquare className="w-2.5 h-2.5" /> {p.num_comments}</span>
+                      </div>
+                      {p.selftext && <p className="text-[10px] text-[#a39d8e] line-clamp-3">{p.selftext.slice(0, 220)}{p.selftext.length > 220 ? '…' : ''}</p>}
+                      <button
+                        onClick={() => handleAnalyzeRedditPost(p)}
+                        disabled={analyzingPostId === p.id}
+                        className="w-full mt-1 px-2 py-1 bg-[#c9a961]/15 border border-[#c9a961]/40 text-[#c9a961] rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
+                      >
+                        <Sparkles className="w-2.5 h-2.5" /> {analyzingPostId === p.id ? 'Analizando...' : 'Analizar con IA'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <form onSubmit={handleAnalyzeContenido} className="lg:col-span-5 bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs h-fit">
               <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5" /> Analizar publicación
@@ -972,6 +1190,24 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
           </div>
         )}
       </main>
+    </div>
+  );
+}
+
+function PlaybookCard({ label, text, onCopy, accent }: { label: string; text: string; onCopy: (t: string) => void; accent: string }) {
+  return (
+    <div className="bg-[#0f0e0c]/70 border rounded p-3" style={{ borderColor: `${accent}44` }}>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-[9px] font-mono uppercase tracking-wider font-bold" style={{ color: accent }}>{label}</span>
+        <button
+          onClick={() => onCopy(text)}
+          className="text-[9px] font-mono uppercase flex items-center gap-1 hover:opacity-80"
+          style={{ color: accent }}
+        >
+          <Copy className="w-2.5 h-2.5" /> Copiar
+        </button>
+      </div>
+      <p className="text-[#e8e3d8] text-[11px] whitespace-pre-wrap leading-relaxed">{text}</p>
     </div>
   );
 }

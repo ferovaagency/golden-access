@@ -206,6 +206,8 @@ export type Database = {
       }
       crm_oportunidades: {
         Row: {
+          apollo_data: Json | null
+          apollo_enriched_at: string | null
           canal_origen: string
           closed_at: string | null
           created_at: string
@@ -218,6 +220,12 @@ export type Database = {
           moneda: string | null
           nombre_contacto: string
           notas: string | null
+          playbook_email: string | null
+          playbook_generated_at: string | null
+          playbook_linkedin_conectar: boolean | null
+          playbook_linkedin_mensaje: string | null
+          playbook_linkedin_nota: string | null
+          playbook_whatsapp_mensaje: string | null
           probabilidad: number | null
           servicio_id: string | null
           siguiente_accion: string | null
@@ -226,6 +234,8 @@ export type Database = {
           valor_estimado: number | null
         }
         Insert: {
+          apollo_data?: Json | null
+          apollo_enriched_at?: string | null
           canal_origen?: string
           closed_at?: string | null
           created_at?: string
@@ -238,6 +248,12 @@ export type Database = {
           moneda?: string | null
           nombre_contacto: string
           notas?: string | null
+          playbook_email?: string | null
+          playbook_generated_at?: string | null
+          playbook_linkedin_conectar?: boolean | null
+          playbook_linkedin_mensaje?: string | null
+          playbook_linkedin_nota?: string | null
+          playbook_whatsapp_mensaje?: string | null
           probabilidad?: number | null
           servicio_id?: string | null
           siguiente_accion?: string | null
@@ -246,6 +262,8 @@ export type Database = {
           valor_estimado?: number | null
         }
         Update: {
+          apollo_data?: Json | null
+          apollo_enriched_at?: string | null
           canal_origen?: string
           closed_at?: string | null
           created_at?: string
@@ -258,6 +276,12 @@ export type Database = {
           moneda?: string | null
           nombre_contacto?: string
           notas?: string | null
+          playbook_email?: string | null
+          playbook_generated_at?: string | null
+          playbook_linkedin_conectar?: boolean | null
+          playbook_linkedin_mensaje?: string | null
+          playbook_linkedin_nota?: string | null
+          playbook_whatsapp_mensaje?: string | null
           probabilidad?: number | null
           servicio_id?: string | null
           siguiente_accion?: string | null
