@@ -345,7 +345,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
   if (authorized === null) {
     return (
-      <div className="min-h-screen bg-[#0f0e0c] flex items-center justify-center text-[#e8e3d8]">
+      <div className={`${embedded ? 'py-12' : 'min-h-screen'} bg-[#0f0e0c] flex items-center justify-center text-[#e8e3d8]`}>
         <Loader2 className="w-8 h-8 animate-spin text-[#c9a961]" />
       </div>
     );
@@ -353,48 +353,58 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
   if (!authorized) {
     return (
-      <div className="min-h-screen bg-[#0f0e0c] flex flex-col items-center justify-center gap-4 text-[#e8e3d8] p-6 text-center">
+      <div className={`${embedded ? 'py-12' : 'min-h-screen'} bg-[#0f0e0c] flex flex-col items-center justify-center gap-4 text-[#e8e3d8] p-6 text-center`}>
         <Ban className="w-10 h-10 text-[#c97a61]" />
         <p className="font-mono text-sm">No autorizado. {user.email} no está en el equipo de Ferova.</p>
-        <button onClick={() => logout()} className="text-[#c9a961] underline text-xs font-mono">
-          Cerrar sesión
-        </button>
+        {!embedded && (
+          <button onClick={() => logout()} className="text-[#c9a961] underline text-xs font-mono">
+            Cerrar sesión
+          </button>
+        )}
       </div>
     );
   }
 
+  const bodyClass = embedded ? '' : 'p-6 max-w-6xl mx-auto';
+  const outerClass = embedded ? '' : 'min-h-screen bg-[#0f0e0c] bg-gradient-to-br from-[#0f0e0c] to-[#1a1815] text-[#e8e3d8] font-sans';
+
   return (
-    <div className="min-h-screen bg-[#0f0e0c] bg-gradient-to-br from-[#0f0e0c] to-[#1a1815] text-[#e8e3d8] font-sans">
-      <header className="bg-[#11100e] border-b border-[#2a2620] px-6 py-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-display font-bold text-[#c9a961]">Ferova Growth OS</h1>
-          <span className="text-[10px] font-mono text-[#8a8377] uppercase tracking-wider">CRM interno · no visible para clientes</span>
-        </div>
-        <button onClick={() => logout()} className="text-[#8a8377] hover:text-[#c97a61] flex items-center gap-1 text-xs font-mono">
-          <LogOut className="w-3.5 h-3.5" /> Cerrar sesión
-        </button>
-      </header>
+    <div className={outerClass}>
+      {!embedded && (
+        <>
+          <header className="bg-[#11100e] border-b border-[#2a2620] px-6 py-4 flex items-center justify-between">
+            <div>
+              <h1 className="text-lg font-display font-bold text-[#c9a961]">Ferova Growth OS</h1>
+              <span className="text-[10px] font-mono text-[#8a8377] uppercase tracking-wider">CRM interno · no visible para clientes</span>
+            </div>
+            <button onClick={() => logout()} className="text-[#8a8377] hover:text-[#c97a61] flex items-center gap-1 text-xs font-mono">
+              <LogOut className="w-3.5 h-3.5" /> Cerrar sesión
+            </button>
+          </header>
 
-      <nav className="flex gap-2 px-6 py-3 border-b border-[#2a2620] text-xs font-mono">
-        {(['pipeline', 'citas', 'contenido', 'bot'] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-3 py-1.5 rounded uppercase tracking-wider font-semibold ${
-              tab === t ? 'bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/40' : 'text-[#a39d8e] hover:text-white'
-            }`}
-          >
-            {t === 'pipeline' ? 'Pipeline' : t === 'citas' ? 'Citas de diagnóstico' : t === 'contenido' ? 'Contenido con potencial' : 'Bot de WhatsApp'}
-          </button>
-        ))}
-      </nav>
+          <nav className="flex gap-2 px-6 py-3 border-b border-[#2a2620] text-xs font-mono">
+            {(['pipeline', 'citas', 'contenido', 'bot'] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`px-3 py-1.5 rounded uppercase tracking-wider font-semibold ${
+                  tab === t ? 'bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/40' : 'text-[#a39d8e] hover:text-white'
+                }`}
+              >
+                {t === 'pipeline' ? 'Pipeline' : t === 'citas' ? 'Citas de diagnóstico' : t === 'contenido' ? 'Contenido con potencial' : 'Bot de WhatsApp'}
+              </button>
+            ))}
+          </nav>
+        </>
+      )}
 
-      <main className="p-6 max-w-6xl mx-auto">
+      <main className={bodyClass}>
         {loading && (
           <div className="flex items-center gap-2 text-[#c9a961] text-xs font-mono mb-4">
             <Loader2 className="w-4 h-4 animate-spin" /> Sincronizando...
           </div>
         )}
+
 
         {tab === 'pipeline' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
