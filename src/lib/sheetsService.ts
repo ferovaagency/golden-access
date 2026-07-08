@@ -412,6 +412,11 @@ function looksLikeJsonArray(value: unknown): boolean {
   return raw.startsWith('[') && raw.endsWith(']');
 }
 
+function numberOrDefault(value: unknown, fallback: number): number {
+  const parsed = toNumber(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 /**
  * Parses raw sheet values (as 2D arrays keyed by tab name) into the AppData shape used by the app.
  * Shared between the OAuth-based fetch and the public-CSV backend import.
@@ -459,22 +464,22 @@ export function mapValuesToAppData(valuesBySheet: Record<string, any[][]>): AppD
 
   // Fallback defaults if config headers are broken
   const config: Config = {
-    trm: configMap.trm ?? 4000,
-    uvt: configMap.uvt ?? 52374,
-    smmlv: configMap.smmlv ?? 1750905,
-    tope_no_declarante_uvt: configMap.tope_no_declarante_uvt ?? 1400,
-    tope_no_paga_renta_uvt: configMap.tope_no_paga_renta_uvt ?? 1090,
-    tope_responsable_iva_uvt: configMap.tope_responsable_iva_uvt ?? 3500,
-    retencion_servicio_min_uvt: configMap.retencion_servicio_min_uvt ?? 4,
-    tarifa_ret_declarante: configMap.tarifa_ret_declarante ?? 0.04,
-    tarifa_ret_no_declarante: configMap.tarifa_ret_no_declarante ?? 0.06,
-    tarifa_salud: configMap.tarifa_salud ?? 0.125,
-    tarifa_pension: configMap.tarifa_pension ?? 0.16,
-    ibc_porcentaje: configMap.ibc_porcentaje ?? 0.40,
-    tarifa_iva: configMap.tarifa_iva ?? 0.19,
-    salario_propuesto: configMap.salario_propuesto ?? 4000000,
-    horas_objetivo_mes: configMap.horas_objetivo_mes ?? 160,
-    meta_ventas_mensual: configMap.meta_ventas_mensual ?? 12000000,
+    trm: numberOrDefault(configMap.trm, 4000),
+    uvt: numberOrDefault(configMap.uvt, 52374),
+    smmlv: numberOrDefault(configMap.smmlv, 1750905),
+    tope_no_declarante_uvt: numberOrDefault(configMap.tope_no_declarante_uvt, 1400),
+    tope_no_paga_renta_uvt: numberOrDefault(configMap.tope_no_paga_renta_uvt, 1090),
+    tope_responsable_iva_uvt: numberOrDefault(configMap.tope_responsable_iva_uvt, 3500),
+    retencion_servicio_min_uvt: numberOrDefault(configMap.retencion_servicio_min_uvt, 4),
+    tarifa_ret_declarante: numberOrDefault(configMap.tarifa_ret_declarante, 0.04),
+    tarifa_ret_no_declarante: numberOrDefault(configMap.tarifa_ret_no_declarante, 0.06),
+    tarifa_salud: numberOrDefault(configMap.tarifa_salud, 0.125),
+    tarifa_pension: numberOrDefault(configMap.tarifa_pension, 0.16),
+    ibc_porcentaje: numberOrDefault(configMap.ibc_porcentaje, 0.40),
+    tarifa_iva: numberOrDefault(configMap.tarifa_iva, 0.19),
+    salario_propuesto: numberOrDefault(configMap.salario_propuesto, 4000000),
+    horas_objetivo_mes: numberOrDefault(configMap.horas_objetivo_mes, 160),
+    meta_ventas_mensual: numberOrDefault(configMap.meta_ventas_mensual, 12000000),
   };
 
   // 2. Clientes mapping
