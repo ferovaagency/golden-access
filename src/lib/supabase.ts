@@ -62,7 +62,7 @@ export const initAuth = (
 // Google Sign-in (managed por Lovable Cloud)
 // ============================================================
 const GOOGLE_EXTRA_SCOPES =
-  'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
+  'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/calendar.events';
 
 export const googleSignIn = async () => {
   const result = await lovable.auth.signInWithOAuth('google', {
