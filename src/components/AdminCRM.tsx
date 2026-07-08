@@ -816,6 +816,92 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
         {tab === 'contenido' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-12 bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs">
+              <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
+                <Search className="w-3.5 h-3.5" /> Buscar hilos de Reddit por palabras clave
+              </h3>
+              <p className="text-[#8a8377] font-mono text-[10px] leading-relaxed">
+                Busca en varios subreddits a la vez. Deja subreddits vacío para buscar en todo Reddit. Palabras clave por defecto están alineadas a servicios de Ferova.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[9px] font-mono text-[#8a8377] uppercase">Palabras clave (separadas por coma)</label>
+                  <input
+                    value={kwInput}
+                    onChange={(e) => setKwInput(e.target.value)}
+                    placeholder="SEO, GEO, ecommerce"
+                    className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-[9px] font-mono text-[#8a8377] uppercase">Subreddits (opcional, separados por coma)</label>
+                  <input
+                    value={kwSubs}
+                    onChange={(e) => setKwSubs(e.target.value)}
+                    placeholder="SEO, digitalmarketing, ecommerce"
+                    className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white font-mono"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <select value={kwSort} onChange={(e) => setKwSort(e.target.value as any)} className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white">
+                  <option value="new">Nuevos</option>
+                  <option value="relevance">Relevancia</option>
+                  <option value="hot">Hot</option>
+                  <option value="top">Top</option>
+                  <option value="comments">Más comentarios</option>
+                </select>
+                <select value={kwTimeframe} onChange={(e) => setKwTimeframe(e.target.value as any)} className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white">
+                  <option value="day">Último día</option>
+                  <option value="week">Semana</option>
+                  <option value="month">Mes</option>
+                  <option value="year">Año</option>
+                  <option value="all">Siempre</option>
+                </select>
+                <input
+                  type="number"
+                  min={1}
+                  max={50}
+                  value={kwLimit}
+                  onChange={(e) => setKwLimit(Math.max(1, Math.min(50, Number(e.target.value) || 20)))}
+                  className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                />
+                <button
+                  onClick={handleSearchRedditKw}
+                  disabled={searchingKw}
+                  className="bg-[#a8c98a] hover:bg-[#96b579] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
+                >
+                  <Search className={`w-3.5 h-3.5 ${searchingKw ? 'animate-pulse' : ''}`} /> {searchingKw ? 'Buscando...' : 'Buscar'}
+                </button>
+              </div>
+              {kwPosts.length > 0 && (
+                <div className="pt-2 border-t border-[#2a2620] grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[520px] overflow-y-auto">
+                  <p className="md:col-span-2 text-[9px] font-mono uppercase text-[#8a8377]">{kwPosts.length} resultados</p>
+                  {kwPosts.map((p) => (
+                    <div key={p.id} className="bg-[#0f0e0c]/50 border border-[#2a2620] rounded p-3 space-y-1.5">
+                      <a href={p.url} target="_blank" rel="noreferrer" className="text-[#e8e3d8] hover:text-[#c9a961] font-semibold text-[11px] leading-snug block">
+                        {p.title}
+                      </a>
+                      <div className="flex items-center gap-3 text-[9px] font-mono text-[#8a8377] flex-wrap">
+                        <span className="text-[#c9a961]">r/{p.subreddit}</span>
+                        <span>u/{p.author}</span>
+                        <span>▲ {p.score}</span>
+                        <span className="flex items-center gap-0.5"><MessageSquare className="w-2.5 h-2.5" /> {p.num_comments}</span>
+                      </div>
+                      {p.selftext && <p className="text-[10px] text-[#a39d8e] line-clamp-3">{p.selftext.slice(0, 220)}{p.selftext.length > 220 ? '…' : ''}</p>}
+                      <button
+                        onClick={() => handleAnalyzeRedditPost(p)}
+                        disabled={analyzingPostId === p.id}
+                        className="w-full mt-1 px-2 py-1 bg-[#c9a961]/15 border border-[#c9a961]/40 text-[#c9a961] rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
+                      >
+                        <Sparkles className="w-2.5 h-2.5" /> {analyzingPostId === p.id ? 'Analizando...' : 'Analizar con IA'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <form onSubmit={handleAnalyzeContenido} className="lg:col-span-5 bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs h-fit">
               <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5" /> Analizar publicación
