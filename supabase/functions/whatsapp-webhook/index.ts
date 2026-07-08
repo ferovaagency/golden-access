@@ -116,7 +116,7 @@ Deno.serve(async (req: Request) => {
   else if (body.data?.key) msg = body.data;
 
   if (event !== "messages.upsert" || !msg || instanceName !== EVOLUTION_INSTANCE_NAME) {
-    return new Response(JSON.stringify({ ok: true }), { headers: { "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
   const messageText = extractText(msg);
@@ -143,11 +143,11 @@ Deno.serve(async (req: Request) => {
         });
       }
     }
-    return new Response(JSON.stringify({ ok: true }), { headers: { "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
   if (!phone || !messageText || remoteJid.endsWith("@g.us")) {
-    return new Response(JSON.stringify({ ok: true }), { headers: { "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
   // Encontrar o crear la oportunidad para este numero
@@ -161,7 +161,7 @@ Deno.serve(async (req: Request) => {
       .single();
     oportunidad = created;
   }
-  if (!oportunidad) return new Response(JSON.stringify({ ok: true }), { headers: { "Content-Type": "application/json" } });
+  if (!oportunidad) return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   const msgId = msg.key?.id;
   await admin.from("crm_interacciones").insert({
@@ -174,7 +174,7 @@ Deno.serve(async (req: Request) => {
 
   const { data: botConfig } = await admin.from("crm_bot_config").select("*").eq("id", true).single();
   if (!botConfig?.bot_enabled) {
-    return new Response(JSON.stringify({ ok: true }), { headers: { "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
   try {
@@ -214,5 +214,5 @@ Deno.serve(async (req: Request) => {
     console.error("[whatsapp-webhook] reply error:", err);
   }
 
-  return new Response(JSON.stringify({ ok: true }), { headers: { "Content-Type": "application/json" } });
+  return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 });
