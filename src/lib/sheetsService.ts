@@ -318,7 +318,11 @@ export async function importSheetByUrl(url: string, accessToken?: string | null)
  */
 export function mapValuesToAppData(valuesBySheet: Record<string, any[][]>): AppData {
   const findValuesForSheet = (sheetName: string): any[][] => {
-    return valuesBySheet[sheetName] || [];
+    const direct = valuesBySheet[sheetName];
+    if (direct) return direct;
+    const normalized = normalizeKey(sheetName);
+    const foundKey = Object.keys(valuesBySheet).find((key) => normalizeKey(key) === normalized);
+    return foundKey ? valuesBySheet[foundKey] || [] : [];
   };
 
 
@@ -337,8 +341,21 @@ export function mapValuesToAppData(valuesBySheet: Record<string, any[][]>): AppD
   const configVals = rawConfig[1] || [];
   const configMap: any = {};
   configHeaders.forEach((header: string, idx: number) => {
-    configMap[header] = configVals[idx] !== undefined ? Number(configVals[idx]) : 0;
+    configMap[normalizeKey(header)] = configVals[idx] !== undefined ? toNumber(configVals[idx]) : 0;
   });
+
+  // El archivo original tuvo una versión de Config con 12 valores: después de
+  // tarifa_ret_no_declarante venían salario_propuesto, horas_objetivo_mes y
+  // meta_ventas_mensual. No debe leerse como salud/pensión/IBC.
+  if (configVals.length === 12 && configHeaders.length >= 16) {
+    configMap.salario_propuesto = toNumber(configVals[9]);
+    configMap.horas_objetivo_mes = toNumber(configVals[10]);
+    configMap.meta_ventas_mensual = toNumber(configVals[11]);
+    delete configMap.tarifa_salud;
+    delete configMap.tarifa_pension;
+    delete configMap.ibc_porcentaje;
+    delete configMap.tarifa_iva;
+  }
 
   // Fallback defaults if config headers are broken
   const config: Config = {
@@ -361,108 +378,111 @@ export function mapValuesToAppData(valuesBySheet: Record<string, any[][]>): AppD
   };
 
   // 2. Clientes mapping
-  const clientes: Cliente[] = parseTable(rawClientes, (row) => ({
-    id: row[0] || '',
-    nombre: row[1] || '',
-    tipo: (row[2] === 'Internacional' ? 'Internacional' : 'Nacional') as 'Nacional' | 'Internacional',
-    declarante: row[3] === 'TRUE',
-    activo: row[4] !== 'FALSE', // default true unless explicitly FALSE
-    fecha_creacion: row[5] || '',
-    notas: row[6] || '',
-    marca_info: row[7] || '',
-    objetivos: row[8] || '',
-    kpis: row[9] || '',
-    entregables: row[10] || '',
-    progreso: Number(row[11]) || 0,
-    responsable: row[12] || '',
+  const clientes: Cliente[] = parseTable(rawClientes, (row, get) => ({
+    id: cleanId(get(['id'], 0)),
+    nombre: text(get(['nombre', 'cliente', 'cliente_nombre'], 1)),
+    tipo: normalizeTipo(get(['tipo', 'localidad'], 2)),
+    declarante: toBool(get(['declarante', 'declarante_co'], 3)),
+    activo: toBool(get(['activo', 'estado'], 4), true),
+    fecha_creacion: toDateString(get(['fecha_creacion', 'fecha', 'created_at'], 5)),
+    notas: text(get(['notas', 'nota'], 6)),
+    marca_info: text(get(['marca_info', 'marca'], 7)),
+    objetivos: text(get(['objetivos'], 8)),
+    kpis: text(get(['kpis'], 9)),
+    entregables: text(get(['entregables'], 10)),
+    progreso: toNumber(get(['progreso'], 11)) || 0,
+    responsable: text(get(['responsable'], 12)),
   }));
 
   // 3. Servicios mapping
-  const servicios: Servicio[] = parseTable(rawServicios, (row) => ({
-    id: row[0] || '',
-    nombre: row[1] || '',
-    costo_unitario: Number(row[2]) || 0,
-    descripcion: row[3] || '',
+  const servicios: Servicio[] = parseTable(rawServicios, (row, get) => ({
+    id: cleanId(get(['id', 'servicio_id'], 0)),
+    nombre: text(get(['nombre', 'servicio', 'servicio_nombre'], 1)),
+    costo_unitario: toNumber(get(['costo_unitario', 'costo', 'coste'], 2)) || 0,
+    descripcion: text(get(['descripcion', 'descripción', 'notas'], 3)),
   }));
 
   // 4. Herramientas mapping
-  const herramientas: Herramienta[] = parseTable(rawHerramientas, (row) => ({
-    id: row[0] || '',
-    nombre: row[1] || '',
-    monto: Number(row[2]) || 0,
-    moneda: (row[3] === 'USD' ? 'USD' : 'COP') as 'COP' | 'USD',
-    tipo_cobro: (row[4] === 'porCliente' ? 'porCliente' : 'global') as 'global' | 'porCliente',
-    servicios_ids: row[5] || '',
-    notas: row[6] || '',
+  const herramientas: Herramienta[] = parseTable(rawHerramientas, (row, get) => ({
+    id: cleanId(get(['id'], 0)),
+    nombre: text(get(['nombre', 'herramienta'], 1)),
+    monto: toNumber(get(['monto', 'valor', 'precio'], 2)) || 0,
+    moneda: normalizeMoneda(get(['moneda'], 3)),
+    tipo_cobro: normalizeTipoCobro(get(['tipo_cobro', 'tipo cobro'], 4)),
+    servicios_ids: text(get(['servicios_ids', 'servicios', 'servicio_ids'], 5)),
+    notas: text(get(['notas'], 6)),
   }));
 
   // 5. Otros Gastos mapping
-  const otrosGastos: OtroGasto[] = parseTable(rawOtrosGastos, (row) => ({
-    id: row[0] || '',
-    nombre: row[1] || '',
-    monto: Number(row[2]) || 0,
-    moneda: (row[3] === 'USD' ? 'USD' : 'COP') as 'COP' | 'USD',
-    categoria: (row[4] === 'Administrativo' || row[4] === 'Operativo' || row[4] === 'Otros' ? row[4] : 'Otros') as 'Operativo' | 'Administrativo' | 'Otros',
+  const otrosGastos: OtroGasto[] = parseTable(rawOtrosGastos, (row, get) => ({
+    id: cleanId(get(['id'], 0)),
+    nombre: text(get(['nombre', 'concepto'], 1)),
+    monto: toNumber(get(['monto', 'valor'], 2)) || 0,
+    moneda: normalizeMoneda(get(['moneda'], 3)),
+    categoria: normalizeOtroGastoCategoria(get(['categoria', 'categoría'], 4)),
   }));
 
   // 6. Ventas mapping
-  const ventas: Venta[] = parseTable(rawVentas, (row) => {
+  const ventas: Venta[] = parseTable(rawVentas, (row, get) => {
     let parsedAbonos = [];
+    const notasRaw = text(get(['notas', 'nota'], 13));
+    const abonosRaw = text(get(['abonos_log', 'abonos', 'pagos', 'abonos log'], 14));
+    const effectiveAbonos = abonosRaw || (looksLikeJsonArray(notasRaw) ? notasRaw : '');
     try {
-      if (row[14]) {
-        parsedAbonos = JSON.parse(row[14]);
+      if (effectiveAbonos) {
+        parsedAbonos = JSON.parse(effectiveAbonos);
       }
     } catch (e) {
       console.warn('Error parseando abonos_log', e);
     }
     return {
-      id: row[0] || '',
-      fecha: row[1] || '',
-      cliente_id: row[2] || '',
-      cliente_nombre: row[3] || '',
-      servicio_id: row[4] || '',
-      servicio_nombre: row[5] || '',
-      cantidad: Number(row[6]) || 1,
-      precio_venta_unitario: Number(row[7]) || 0,
-      costo_unitario: Number(row[8]) || 0,
-      moneda: (row[9] === 'USD' ? 'USD' : 'COP') as 'COP' | 'USD',
-      tipo: (row[10] === 'Internacional' ? 'Internacional' : 'Nacional') as 'Nacional' | 'Internacional',
-      adelanto: Number(row[11]) || 0,
-      estado_pago: (row[12] === 'Adelanto' || row[12] === 'Pagado' ? row[12] : 'Pendiente') as 'Pendiente' | 'Adelanto' | 'Pagado',
-      notas: row[13] || '',
+      id: cleanId(get(['id', 'ref_id'], 0)),
+      fecha: toDateString(get(['fecha'], 1)),
+      cliente_id: cleanId(get(['cliente_id', 'cliente id'], 2)),
+      cliente_nombre: text(get(['cliente_nombre', 'cliente'], 3)),
+      servicio_id: cleanId(get(['servicio_id', 'servicio id'], 4)),
+      servicio_nombre: text(get(['servicio_nombre', 'servicio'], 5)),
+      cantidad: toNumber(get(['cantidad'], 6)) || 1,
+      precio_venta_unitario: toNumber(get(['precio_venta_unitario', 'precio unitario', 'precio', 'valor'], 7)) || 0,
+      costo_unitario: toNumber(get(['costo_unitario', 'costo'], 8)) || 0,
+      moneda: normalizeMoneda(get(['moneda'], 9)),
+      tipo: normalizeTipo(get(['tipo'], 10)),
+      adelanto: toNumber(get(['adelanto', 'abono'], 11)) || 0,
+      estado_pago: normalizeEstadoPago(get(['estado_pago', 'estado cobro', 'estado'], 12)),
+      notas: looksLikeJsonArray(notasRaw) ? '' : notasRaw,
       abonos: parsedAbonos,
     };
   });
 
   // 7. Horas mapping
-  const horas: Hora[] = parseTable(rawHoras, (row) => ({
-    id: row[0] || '',
-    fecha: row[1] || '',
-    cliente_id: row[2] || '',
-    cliente_nombre: row[3] || '',
-    servicio_id: row[4] || '',
-    servicio_nombre: row[5] || '',
-    horas: Number(row[6]) || 0,
-    descripcion: row[7] || '',
+  const horas: Hora[] = parseTable(rawHoras, (row, get) => ({
+    id: cleanId(get(['id', 'codigo', 'código'], 0)),
+    fecha: toDateString(get(['fecha'], 1)),
+    cliente_id: cleanId(get(['cliente_id', 'cliente id'], 2)),
+    cliente_nombre: text(get(['cliente_nombre', 'cliente'], 3)),
+    servicio_id: cleanId(get(['servicio_id', 'servicio id'], 4)),
+    servicio_nombre: text(get(['servicio_nombre', 'servicio'], 5)),
+    horas: toNumber(get(['horas', 'horas_logged'], 6)) || 0,
+    descripcion: text(get(['descripcion', 'descripción', 'actividad'], 7)),
   }));
 
   // 8. Respaldos mapping
-  const respaldos: Respaldo[] = parseTable(rawRespaldos, (row) => ({
-    fecha: row[0] || '',
-    usuario: row[1] || '',
-    snapshot_drive_id: row[2] || '',
+  const respaldos: Respaldo[] = parseTable(rawRespaldos, (row, get) => ({
+    fecha: toDateString(get(['fecha'], 0)),
+    usuario: text(get(['usuario'], 1)),
+    snapshot_drive_id: text(get(['snapshot_drive_id', 'snapshot'], 2)),
   }));
 
   // 9. PagosEgresos mapping
-  const pagosEgresos: PagoEgreso[] = parseTable(rawPagosEgresos, (row) => ({
-    id: row[0] || '',
-    fecha: row[1] || '',
-    concepto: row[2] || '',
-    categoria: (row[3] || 'Otros') as 'Herramientas' | 'Salarios' | 'Contratistas' | 'Administrativo' | 'Otros',
-    monto: Number(row[4]) || 0,
-    moneda: (row[5] === 'USD' ? 'USD' : 'COP') as 'COP' | 'USD',
-    metodo_pago: row[6] || '',
-    notas: row[7] || '',
+  const pagosEgresos: PagoEgreso[] = parseTable(rawPagosEgresos, (row, get) => ({
+    id: cleanId(get(['id'], 0)),
+    fecha: toDateString(get(['fecha'], 1)),
+    concepto: text(get(['concepto', 'nombre'], 2)),
+    categoria: normalizePagoCategoria(get(['categoria', 'categoría'], 3)),
+    monto: toNumber(get(['monto', 'valor'], 4)) || 0,
+    moneda: normalizeMoneda(get(['moneda'], 5)),
+    metodo_pago: text(get(['metodo_pago', 'método_pago', 'metodo', 'método'], 6)),
+    notas: text(get(['notas'], 7)),
   }));
 
   return {
