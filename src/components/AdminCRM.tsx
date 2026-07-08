@@ -308,7 +308,44 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     }
   };
 
-  const handleCreateOportunidad = async (e: React.FormEvent) => {
+  const handleSearchRedditKw = async () => {
+    const keywords = kwInput.split(',').map((s) => s.trim()).filter(Boolean);
+    if (keywords.length === 0) { alert('Escribe al menos una palabra clave.'); return; }
+    const subreddits = kwSubs.split(',').map((s) => s.trim().replace(/^r\//i, '')).filter(Boolean);
+    setSearchingKw(true);
+    try {
+      const posts = await searchRedditByKeywords({ keywords, subreddits, sort: kwSort, timeframe: kwTimeframe, limit: kwLimit });
+      setKwPosts(posts);
+    } catch (err: any) {
+      alert(`Error buscando: ${err.message || err}`);
+    } finally {
+      setSearchingKw(false);
+    }
+  };
+
+  const handleEnrichApollo = async (o: Oportunidad) => {
+    const inp = getEnrichInput(o.id);
+    setEnrichingId(o.id);
+    try {
+      const updated = await enrichOportunidadApollo({
+        oportunidad_id: o.id,
+        linkedin_url: inp.linkedin_url.trim() || undefined,
+        dominio: inp.dominio.trim() || undefined,
+        contexto_publicacion: inp.contexto.trim() || undefined,
+      });
+      setOportunidades(oportunidades.map((x) => (x.id === o.id ? updated : x)));
+      setExpandedPlaybookId(o.id);
+    } catch (err: any) {
+      alert(`Error enriqueciendo con Apollo: ${err.message || err}`);
+    } finally {
+      setEnrichingId(null);
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try { await navigator.clipboard.writeText(text); } catch { /**/ }
+  };
+
     e.preventDefault();
     if (!nombreContacto.trim()) return;
     try {
