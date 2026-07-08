@@ -38,6 +38,8 @@ export interface Oportunidad {
   playbook_linkedin_mensaje?: string | null;
   playbook_whatsapp_mensaje?: string | null;
   playbook_generated_at?: string | null;
+  memoria_resumen?: string | null;
+  memoria_updated_at?: string | null;
 }
 
 export interface Interaccion {
@@ -66,6 +68,7 @@ export interface CitaDiagnostico {
   calendar_event_id: string | null;
   meet_link: string | null;
   notas: string | null;
+  source?: string | null;
   created_at: string;
 }
 
@@ -181,6 +184,13 @@ export async function cancelCita(cita_id: string): Promise<CitaDiagnostico> {
   if (error) throw error;
   if (!data?.ok) throw new Error(data?.message || 'No se pudo cancelar la cita.');
   return data.cita as CitaDiagnostico;
+}
+
+export async function syncBookingLinkCitas(days = 30): Promise<{ scanned: number; inserted: number; skipped: number; citas: CitaDiagnostico[] }> {
+  const { data, error } = await supabase.functions.invoke('calendar-sync-bookings', { body: { days } });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudieron sincronizar reservas.');
+  return data;
 }
 
 export async function analyzeContenido(payload: {
@@ -299,6 +309,18 @@ export interface BotConfig {
   updated_at: string;
 }
 
+export interface WhatsappInstance {
+  user_id: string;
+  instance_name: string;
+  status: string;
+  qr_code: string | null;
+  pairing_code: string | null;
+  connected_phone: string | null;
+  last_error: string | null;
+  connected_at: string | null;
+  updated_at: string;
+}
+
 export interface KnowledgeItem {
   id: string;
   content: string;
@@ -341,6 +363,22 @@ export async function addKnowledge(content: string, source?: string): Promise<vo
   const { data, error } = await supabase.functions.invoke('bot-knowledge-upsert', { body: { content, source } });
   if (error) throw error;
   if (!data?.ok) throw new Error(data?.message || 'No se pudo agregar el conocimiento.');
+}
+
+export async function getWhatsappInstance(): Promise<WhatsappInstance | null> {
+  const { data, error } = await (supabase as any)
+    .from('crm_whatsapp_instances')
+    .select('*')
+    .maybeSingle();
+  if (error) throw new Error(`[crmService] getWhatsappInstance: ${error.message}`);
+  return data as WhatsappInstance | null;
+}
+
+export async function connectWhatsappInstance(): Promise<WhatsappInstance> {
+  const { data, error } = await supabase.functions.invoke('whatsapp-connect', { body: {} });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo generar el QR de WhatsApp.');
+  return data.instance as WhatsappInstance;
 }
 
 export async function sendWhatsapp(oportunidadId: string, text: string): Promise<void> {

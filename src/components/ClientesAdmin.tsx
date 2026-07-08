@@ -124,20 +124,20 @@ export default function ClientesAdmin({
   );
 
   return (
-    <div className="space-y-8 animate-fade-in text-[#e8e3d8]">
+    <div className="space-y-8 animate-fade-in text-slate-900">
 
       {/* Title block */}
-      <div className="border-b border-[#2a2620] pb-5">
-        <h2 className="text-xl font-display font-medium text-[#c9a961]">Maestro de Clientes</h2>
-        <p className="text-xs text-[#a39d8e] font-mono mt-1">Configuración fiscal y de localización por cliente</p>
+      <div className="border-b border-slate-200 pb-5">
+        <h2 className="text-xl font-display font-medium text-blue-600">Maestro de Clientes</h2>
+        <p className="text-xs text-slate-500 font-mono mt-1">Configuración fiscal y de localización por cliente</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* Form panel */}
-        <form onSubmit={handleCreateClient} className="lg:col-span-4 bg-[#161412] border border-[#2a2620] pb-6 rounded-lg overflow-hidden space-y-4">
-          <div className="bg-white/[0.02] border-b border-[#2a2620] px-5 py-4">
-            <h3 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase font-semibold">
+        <form onSubmit={handleCreateClient} className="lg:col-span-4 bg-white border border-slate-200 pb-6 rounded-lg overflow-hidden space-y-4">
+          <div className="bg-white/[0.02] border-b border-slate-200 px-5 py-4">
+            <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold">
               Nuevo Perfil de Cliente
             </h3>
           </div>
@@ -146,37 +146,37 @@ export default function ClientesAdmin({
             
             {/* ID */}
             <div>
-              <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">ID Único / RUT NIT</label>
+              <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">ID Único / RUT NIT</label>
               <input 
                 type="text"
                 placeholder="Ej: 901234567-8 o RUTA_N"
                 value={id}
                 onChange={(e) => setId(e.target.value)}
                 required
-                className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2.5 rounded font-mono focus:outline-none focus:border-[#c9a961]"
+                className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded font-mono focus:outline-none focus:border-[#c9a961]"
               />
             </div>
 
             {/* Nombre */}
             <div>
-              <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Nombre Comercial</label>
+              <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Nombre Comercial</label>
               <input 
                 type="text"
                 placeholder="Ej: Ruta N S.A.S"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 required
-                className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
+                className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
               />
             </div>
 
             {/* País */}
             <div>
-              <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Ubicación y Jurisdicción</label>
+              <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Ubicación y Jurisdicción</label>
               <select 
                 value={pais}
                 onChange={(e) => handleCountryChange(e.target.value)}
-                className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
+                className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
               >
                 {COUNTRIES.map(c => (
                   <option key={c.code} value={c.code} className="bg-[#0f0e0c]">
@@ -188,49 +188,49 @@ export default function ClientesAdmin({
 
             {/* If CO, declare Renta filter */}
             {isNacional && (
-              <div className="bg-[#1c1916] border border-[#2a2620] p-3 rounded flex items-center justify-between">
+              <div className="bg-slate-100 border border-slate-200 p-3 rounded flex items-center justify-between">
                 <div>
                   <span className="block font-semibold">Declarante de Renta</span>
-                  <span className="text-[10px] text-[#8a8377] block">Aplica tarifa 4% (SI) o 6% (NO)</span>
+                  <span className="text-[10px] text-slate-400 block">Aplica tarifa 4% (SI) o 6% (NO)</span>
                 </div>
                 <input 
                   type="checkbox"
                   checked={declarante}
                   onChange={(e) => setDeclarante(e.target.checked)}
-                  className="w-4.5 h-4.5 accent-[#c9a961] cursor-pointer"
+                  className="w-4.5 h-4.5 accent-blue-600 cursor-pointer"
                 />
               </div>
             )}
 
             {/* Activo / Inactivo */}
-            <div className="bg-[#1c1916] border border-[#2a2620] p-3 rounded flex items-center justify-between">
+            <div className="bg-slate-100 border border-slate-200 p-3 rounded flex items-center justify-between">
               <div>
                 <span className="block font-semibold">Cliente Activo</span>
-                <span className="text-[10px] text-[#8a8377] block">Aparece en listas de facturación</span>
+                <span className="text-[10px] text-slate-400 block">Aparece en listas de facturación</span>
               </div>
               <input 
                 type="checkbox"
                 checked={activo}
                 onChange={(e) => setActivo(e.target.checked)}
-                className="w-4.5 h-4.5 accent-[#c9a961] cursor-pointer"
+                className="w-4.5 h-4.5 accent-blue-600 cursor-pointer"
               />
             </div>
 
             {/* Notas */}
             <div>
-              <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Notas Internas</label>
+              <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Notas Internas</label>
               <textarea 
                 rows={2}
                 placeholder="Persona de contacto, observaciones clave..."
                 value={notas}
                 onChange={(e) => setNotas(e.target.value)}
-                className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
+                className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
               />
             </div>
 
             <button 
               type="submit"
-              className="w-full bg-[#c9a961] hover:bg-[#b09252] text-black font-semibold font-display py-3 rounded transition cursor-pointer"
+              className="w-full bg-blue-600 hover:bg-[#b09252] text-black font-semibold font-display py-3 rounded transition cursor-pointer"
             >
               Registrar Perfil
             </button>
@@ -239,10 +239,10 @@ export default function ClientesAdmin({
         </form>
 
         {/* List ledger */}
-        <div className="lg:col-span-8 bg-[#161412] border border-[#2a2620] rounded-lg overflow-hidden flex flex-col justify-between">
+        <div className="lg:col-span-8 bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col justify-between">
           <div>
-            <div className="bg-white/[0.02] border-b border-[#2a2620] px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <h3 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase font-semibold">
+            <div className="bg-white/[0.02] border-b border-slate-200 px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold">
                 Directorio Corporativo de Clientes
               </h3>
 
@@ -252,15 +252,15 @@ export default function ClientesAdmin({
                   placeholder="Buscar por nombre o ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-[#0f0e0c]/50 text-[#e8e3d8] border border-[#2a2620] max-w-sm pl-8 pr-4 py-1.5 rounded focus:outline-none focus:border-[#c9a961] font-sans"
+                  className="bg-slate-50 text-slate-900 border border-slate-200 max-w-sm pl-8 pr-4 py-1.5 rounded focus:outline-none focus:border-[#c9a961] font-sans"
                 />
-                <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-[#8a8377]" />
+                <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-400" />
               </div>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs font-sans">
-                <thead className="bg-[#1c1916] text-[#a39d8e] uppercase tracking-wider font-semibold font-mono border-b border-[#2a2620]">
+                <thead className="bg-slate-100 text-slate-500 uppercase tracking-wider font-semibold font-mono border-b border-slate-200">
                   <tr>
                     <th className="px-5 py-3.5">ID / RUT</th>
                     <th className="px-5 py-3.5">Nombre Razon</th>
@@ -275,7 +275,7 @@ export default function ClientesAdmin({
                 <tbody className="divide-y divide-[#2a2620]/40">
                   {filteredClientes.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="px-5 py-10 text-center text-[#8a8377] font-mono">
+                      <td colSpan={8} className="px-5 py-10 text-center text-slate-400 font-mono">
                         Aún no se han configurado perfiles de clientes.
                       </td>
                     </tr>
@@ -297,17 +297,17 @@ export default function ClientesAdmin({
 
                       return (
                         <tr key={c.id} className="hover:bg-white/[0.01]/70 transition">
-                          <td className="px-5 py-4 font-mono text-[#a39d8e]">{c.id}</td>
-                          <td className="px-5 py-4 font-semibold text-[#e8e3d8]">{c.nombre}</td>
+                          <td className="px-5 py-4 font-mono text-slate-500">{c.id}</td>
+                          <td className="px-5 py-4 font-semibold text-slate-900">{c.nombre}</td>
                           <td className="px-5 py-4">
                             <span className="font-mono flex items-center gap-1.5">
                               <span>{cFlag}</span>
-                              <span className="text-[10px] text-[#a39d8e] font-semibold">{c.tipo}</span>
+                              <span className="text-[10px] text-slate-500 font-semibold">{c.tipo}</span>
                             </span>
                           </td>
                           <td className="px-5 py-4">
                             {c.tipo === 'Internacional' ? (
-                              <span className="text-[#8a8377] italic">Exportado / Rete 0%</span>
+                              <span className="text-slate-400 italic">Exportado / Rete 0%</span>
                             ) : c.declarante ? (
                               <span className="text-[#a8c98a] bg-[#a8c98a]/10 border border-[#a8c98a]/20 px-2 py-0.5 rounded text-[10px] font-semibold">
                                 CO Declarante (4%)
@@ -318,14 +318,14 @@ export default function ClientesAdmin({
                               </span>
                             )}
                           </td>
-                          <td className="px-5 py-4 font-mono font-bold text-[#e8e3d8]">
+                          <td className="px-5 py-4 font-mono font-bold text-slate-900">
                             {computedStats.revenueStr}
                           </td>
-                          <td className="px-5 py-4 font-mono text-[#a39d8e]">
+                          <td className="px-5 py-4 font-mono text-slate-500">
                             {computedStats.hours > 0 ? (
-                              <span className="font-semibold text-[#c9a961]">{computedStats.hours.toFixed(1)} hs</span>
+                              <span className="font-semibold text-blue-600">{computedStats.hours.toFixed(1)} hs</span>
                             ) : (
-                              <span className="text-[#8a8377] italic">-</span>
+                              <span className="text-slate-400 italic">-</span>
                             )}
                           </td>
                           <td className="px-5 py-4 text-right">
@@ -334,7 +334,7 @@ export default function ClientesAdmin({
                               className={`px-2 py-0.5 rounded text-[10px] font-mono tracking-wider font-semibold cursor-pointer ${
                                 c.activo 
                                   ? 'text-[#a8c98a] bg-[#a8c98a]/10 hover:bg-[#a8c98a]/20 border border-[#a8c98a]/30' 
-                                  : 'text-[#8a8377] bg-white/[0.02] hover:bg-white/[0.04] border border-[#2a2620]'
+                                  : 'text-slate-400 bg-white/[0.02] hover:bg-white/[0.04] border border-slate-200'
                               }`}
                             >
                               {c.activo ? 'ACTIVO' : 'BAJA'}

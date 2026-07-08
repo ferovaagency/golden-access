@@ -128,27 +128,27 @@ export default function ServiciosAdmin({
   };
 
   return (
-    <div className="space-y-8 animate-fade-in text-[#e8e3d8]">
+    <div className="space-y-8 animate-fade-in text-slate-900">
 
       {/* Header */}
-      <div className="border-b border-[#2a2620] pb-5">
-        <h2 className="text-xl font-display font-medium text-[#c9a961]">Portafolio de Líneas de Servicio</h2>
-        <p className="text-xs text-[#a39d8e] font-mono mt-1">Configuración de precios de referencia, costos directos y rentabilidades por servicio</p>
+      <div className="border-b border-slate-200 pb-5">
+        <h2 className="text-xl font-display font-medium text-blue-600">Portafolio de Líneas de Servicio</h2>
+        <p className="text-xs text-slate-500 font-mono mt-1">Configuración de precios de referencia, costos directos y rentabilidades por servicio</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* Registration & Edit Form */}
-        <form onSubmit={handleCreateServicio} className="lg:col-span-4 bg-[#161412] border border-[#2a2620] pb-6 rounded-lg overflow-hidden space-y-4">
-          <div className="bg-white/[0.02] border-b border-[#2a2620] px-5 py-4">
-            <h3 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase font-semibold">
+        <form onSubmit={handleCreateServicio} className="lg:col-span-4 bg-white border border-slate-200 pb-6 rounded-lg overflow-hidden space-y-4">
+          <div className="bg-white/[0.02] border-b border-slate-200 px-5 py-4">
+            <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold">
               {editingServiceId ? 'Editar Línea de Servicio' : 'Nuevo Catálogo de Servicio'}
             </h3>
           </div>
 
           <div className="px-5 space-y-4 text-xs font-sans">
             <div>
-              <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Identificador Corto</label>
+              <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Identificador Corto</label>
               <input 
                 type="text"
                 placeholder="Ej: SERV_SEO o DES_WEB"
@@ -156,28 +156,28 @@ export default function ServiciosAdmin({
                 onChange={(e) => setSrvId(e.target.value)}
                 required
                 disabled={!!editingServiceId}
-                className={`w-full font-mono border border-[#2a2620] p-2.5 rounded focus:outline-none focus:border-[#c9a961] ${
+                className={`w-full font-mono border border-slate-200 p-2.5 rounded focus:outline-none focus:border-[#c9a961] ${
                   editingServiceId 
-                    ? 'bg-neutral-900 border-[#2a2620]/50 text-neutral-500 cursor-not-allowed opacity-70' 
-                    : 'bg-[#0f0e0c]/50 text-white'
+                    ? 'bg-neutral-900 border-slate-200/50 text-neutral-500 cursor-not-allowed opacity-70' 
+                    : 'bg-slate-50 text-slate-900'
                 }`}
               />
             </div>
 
             <div>
-              <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Nombre Comercial de Línea</label>
+              <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Nombre Comercial de Línea</label>
               <input 
                 type="text"
                 placeholder="Ej: Posicionamiento GEO & SEO"
                 value={srvNombre}
                 onChange={(e) => setSrvNombre(e.target.value)}
                 required
-                className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
+                className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
               />
             </div>
 
             <div>
-              <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Costo Unitario Directo (COP)</label>
+              <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Costo Unitario Directo (COP)</label>
               <input 
                 type="number"
                 min="0"
@@ -185,14 +185,14 @@ export default function ServiciosAdmin({
                 value={srvCostoUnitario}
                 onChange={(e) => setSrvCostoUnitario(Number(e.target.value))}
                 required
-                className="w-full bg-[#0f0e0c]/50 text-white font-mono border border-[#2a2620] p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
+                className="w-full bg-slate-50 text-slate-900 font-mono border border-slate-200 p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
               />
-              <p className="text-[10px] text-[#8a8377] mt-1">Costo de entrega de un desarrollador externo o aprovisionamiento técnico.</p>
+              <p className="text-[10px] text-slate-400 mt-1">Costo de entrega de un desarrollador externo o aprovisionamiento técnico.</p>
             </div>
 
             <button 
               type="submit"
-              className="w-full bg-[#c9a961] hover:bg-[#b09252] text-black font-semibold font-display py-3 rounded transition cursor-pointer"
+              className="w-full bg-blue-600 hover:bg-[#b09252] text-black font-semibold font-display py-3 rounded transition cursor-pointer"
             >
               {editingServiceId ? 'Guardar Cambios' : 'Registrar Línea'}
             </button>
@@ -201,7 +201,7 @@ export default function ServiciosAdmin({
               <button 
                 type="button"
                 onClick={handleCancelEdit}
-                className="w-full bg-transparent border border-[#2a2620] hover:bg-white/[0.02] text-[#a39d8e] hover:text-white font-semibold font-display py-2.5 rounded transition cursor-pointer text-xs"
+                className="w-full bg-transparent border border-slate-200 hover:bg-white/[0.02] text-slate-500 hover:text-slate-900 font-semibold font-display py-2.5 rounded transition cursor-pointer text-xs"
               >
                 Cancelar Edición
               </button>
@@ -210,16 +210,16 @@ export default function ServiciosAdmin({
         </form>
 
         {/* Directory Table */}
-        <div className="lg:col-span-8 bg-[#161412] border border-[#2a2620] rounded-lg overflow-hidden">
-          <div className="bg-white/[0.02] border-b border-[#2a2620] px-5 py-4">
-            <h3 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase font-semibold">
+        <div className="lg:col-span-8 bg-white border border-slate-200 rounded-lg overflow-hidden">
+          <div className="bg-white/[0.02] border-b border-slate-200 px-5 py-4">
+            <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold">
               Estructura Corporativa de Servicios ({servicios.length})
             </h3>
           </div>
 
           <div className="overflow-x-auto text-xs font-sans">
             <table className="w-full text-left">
-              <thead className="bg-[#1c1916] text-[#a39d8e] font-mono uppercase text-[10px] border-b border-[#2a2620]">
+              <thead className="bg-slate-100 text-slate-500 font-mono uppercase text-[10px] border-b border-slate-200">
                 <tr>
                   <th className="px-5 py-3">ID Servicio</th>
                   <th className="px-5 py-3">Nombre Comercial</th>
@@ -233,7 +233,7 @@ export default function ServiciosAdmin({
               <tbody className="divide-y divide-[#2a2620]/40">
                 {servicios.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-5 py-10 text-center text-[#8a8377] font-mono">
+                    <td colSpan={7} className="px-5 py-10 text-center text-slate-400 font-mono">
                       No hay servicios configurados.
                     </td>
                   </tr>
@@ -242,21 +242,21 @@ export default function ServiciosAdmin({
                     const stats = getServiceStats(s.id);
                     const isServiceEditing = editingServiceId === s.id;
                     return (
-                      <tr key={s.id} className={`hover:bg-white/[0.01]/70 transition ${isServiceEditing ? 'bg-[#c9a961]/5 border-l-2 border-[#c9a961]' : ''}`}>
-                        <td className="px-5 py-4 font-mono text-[#a39d8e]">{s.id}</td>
-                        <td className="px-5 py-4 font-semibold text-[#e8e3d8]">{s.nombre}</td>
-                        <td className="px-5 py-4 text-right font-mono text-white">{formatCop(s.costo_unitario)}</td>
-                        <td className="px-5 py-4 text-right font-mono font-bold text-[#c9a961]">
+                      <tr key={s.id} className={`hover:bg-white/[0.01]/70 transition ${isServiceEditing ? 'bg-blue-600/5 border-l-2 border-[#c9a961]' : ''}`}>
+                        <td className="px-5 py-4 font-mono text-slate-500">{s.id}</td>
+                        <td className="px-5 py-4 font-semibold text-slate-900">{s.nombre}</td>
+                        <td className="px-5 py-4 text-right font-mono text-slate-900">{formatCop(s.costo_unitario)}</td>
+                        <td className="px-5 py-4 text-right font-mono font-bold text-blue-600">
                           {formatCop(stats.srvRevenueCop)}
-                          <span className="text-[9px] text-[#8a8377] block font-mono">({stats.totalQty} uds vendidas)</span>
+                          <span className="text-[9px] text-slate-400 block font-mono">({stats.totalQty} uds vendidas)</span>
                         </td>
-                        <td className="px-5 py-4 text-right font-mono text-[#a39d8e]">
+                        <td className="px-5 py-4 text-right font-mono text-slate-500">
                           {stats.totalHrs > 0 ? (
-                            <span className="text-white font-medium flex items-center justify-end gap-1">
-                              <Clock className="w-3.5 h-3.5 text-[#c9a961]" /> {stats.totalHrs.toFixed(1)} hs
+                            <span className="text-slate-900 font-medium flex items-center justify-end gap-1">
+                              <Clock className="w-3.5 h-3.5 text-blue-600" /> {stats.totalHrs.toFixed(1)} hs
                             </span>
                           ) : (
-                            <span className="text-[#8a8377] italic">-</span>
+                            <span className="text-slate-400 italic">-</span>
                           )}
                         </td>
                         <td className="px-5 py-4 text-right font-mono font-bold" style={{ color: stats.marginPct >= 50 ? '#a8c98a' : (stats.marginPct > 0 ? '#c9a961' : '#8a8377') }}>
@@ -267,7 +267,7 @@ export default function ServiciosAdmin({
                             <button 
                               onClick={() => handleStartEdit(s)}
                               title="Editar servicio"
-                              className="bg-[#0f0e0c]/40 text-[#c9a961] hover:text-[#e8e3d8] p-1.5 transition rounded-lg hover:bg-[#c9a961]/10 cursor-pointer"
+                              className="bg-[#0f0e0c]/40 text-blue-600 hover:text-slate-900 p-1.5 transition rounded-lg hover:bg-blue-600/10 cursor-pointer"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>

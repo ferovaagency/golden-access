@@ -105,6 +105,7 @@ export type Database = {
           nombre_prospecto: string
           notas: string | null
           oportunidad_id: string | null
+          source: string
           telefono_prospecto: string | null
         }
         Insert: {
@@ -122,6 +123,7 @@ export type Database = {
           nombre_prospecto: string
           notas?: string | null
           oportunidad_id?: string | null
+          source?: string
           telefono_prospecto?: string | null
         }
         Update: {
@@ -139,6 +141,7 @@ export type Database = {
           nombre_prospecto?: string
           notas?: string | null
           oportunidad_id?: string | null
+          source?: string
           telefono_prospecto?: string | null
         }
         Relationships: [
@@ -197,9 +200,11 @@ export type Database = {
           created_by: string | null
           enlace: string | null
           id: string
+          metadata: Json
           ocurrido_en: string
           oportunidad_id: string
           tipo: string
+          whatsapp_message_id: string | null
         }
         Insert: {
           canal: string
@@ -207,9 +212,11 @@ export type Database = {
           created_by?: string | null
           enlace?: string | null
           id?: string
+          metadata?: Json
           ocurrido_en?: string
           oportunidad_id: string
           tipo: string
+          whatsapp_message_id?: string | null
         }
         Update: {
           canal?: string
@@ -217,9 +224,11 @@ export type Database = {
           created_by?: string | null
           enlace?: string | null
           id?: string
+          metadata?: Json
           ocurrido_en?: string
           oportunidad_id?: string
           tipo?: string
+          whatsapp_message_id?: string | null
         }
         Relationships: [
           {
@@ -244,6 +253,8 @@ export type Database = {
           fecha_siguiente_accion: string | null
           fuente_url: string | null
           id: string
+          memoria_resumen: string | null
+          memoria_updated_at: string | null
           moneda: string | null
           nombre_contacto: string
           notas: string | null
@@ -272,6 +283,8 @@ export type Database = {
           fecha_siguiente_accion?: string | null
           fuente_url?: string | null
           id?: string
+          memoria_resumen?: string | null
+          memoria_updated_at?: string | null
           moneda?: string | null
           nombre_contacto: string
           notas?: string | null
@@ -300,6 +313,8 @@ export type Database = {
           fecha_siguiente_accion?: string | null
           fuente_url?: string | null
           id?: string
+          memoria_resumen?: string | null
+          memoria_updated_at?: string | null
           moneda?: string | null
           nombre_contacto?: string
           notas?: string | null
@@ -420,6 +435,45 @@ export type Database = {
           email?: string
           nombre?: string | null
           rol?: string
+        }
+        Relationships: []
+      }
+      crm_whatsapp_instances: {
+        Row: {
+          connected_at: string | null
+          connected_phone: string | null
+          created_at: string
+          instance_name: string
+          last_error: string | null
+          pairing_code: string | null
+          qr_code: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          connected_at?: string | null
+          connected_phone?: string | null
+          created_at?: string
+          instance_name: string
+          last_error?: string | null
+          pairing_code?: string | null
+          qr_code?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          connected_at?: string | null
+          connected_phone?: string | null
+          created_at?: string
+          instance_name?: string
+          last_error?: string | null
+          pairing_code?: string | null
+          qr_code?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

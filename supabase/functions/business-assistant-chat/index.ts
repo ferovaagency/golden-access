@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
       admin.from("finance_service_profitability").select("servicio_nombre, ingresos_brutos, costos_directos, margen_bruto, ventas_count, horas_registradas").eq("user_id", userId).order("margen_bruto", { ascending: false }).limit(12),
       admin.from("crm_growth_overview").select("*").maybeSingle(),
       admin.from("crm_resenas").select("plataforma, calificacion, resenador, respondida, detectada_en").order("detectada_en", { ascending: false }).limit(10),
-      admin.from("crm_oportunidades").select("nombre_contacto, empresa, canal_origen, estado, valor_estimado, moneda, siguiente_accion").order("updated_at", { ascending: false }).limit(15),
+      admin.from("crm_oportunidades").select("nombre_contacto, empresa, canal_origen, estado, valor_estimado, moneda, siguiente_accion, memoria_resumen, memoria_updated_at").order("updated_at", { ascending: false }).limit(15),
       admin.from("finance_clientes").select("nombre, tipo, activo, progreso, responsable").eq("user_id", userId).order("nombre").limit(20),
     ]);
 

@@ -29,8 +29,8 @@ Deno.serve(async (req: Request) => {
     const { data: member } = await admin.from("crm_team_members").select("email").eq("email", email).maybeSingle();
     if (!member) return new Response(JSON.stringify({ ok: false, message: "No autorizado." }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY || !EVOLUTION_INSTANCE_NAME) {
-      return new Response(JSON.stringify({ ok: false, message: "WhatsApp no está configurado. Conecta una instancia de Evolution API y guarda EVOLUTION_API_URL, EVOLUTION_API_KEY y EVOLUTION_INSTANCE_NAME en secretos." }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
+      return new Response(JSON.stringify({ ok: false, message: "WhatsApp no está configurado para QR automático. Faltan EVOLUTION_API_URL o EVOLUTION_API_KEY." }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const { oportunidad_id, text } = await req.json();
@@ -43,8 +43,18 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({ ok: false, message: "Esta oportunidad no tiene telefono de WhatsApp." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    const { data: instance } = await admin
+      .from("crm_whatsapp_instances")
+      .select("instance_name, status")
+      .eq("user_id", userData.user.id)
+      .maybeSingle();
+    const instanceName = instance?.instance_name || EVOLUTION_INSTANCE_NAME;
+    if (!instanceName) {
+      return new Response(JSON.stringify({ ok: false, message: "Primero conecta tu número en CRM > Bot WhatsApp para generar y escanear el QR." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     const to = `${oportunidad.telefono}@s.whatsapp.net`;
-    const res = await fetch(`${EVOLUTION_API_URL}/message/sendText/${EVOLUTION_INSTANCE_NAME}`, {
+    const res = await fetch(`${EVOLUTION_API_URL}/message/sendText/${instanceName}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", apikey: EVOLUTION_API_KEY },
       body: JSON.stringify({ number: to, text }),

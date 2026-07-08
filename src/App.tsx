@@ -350,8 +350,8 @@ export default function App() {
   if (isAdminRoute) {
     if (authLoading) {
       return (
-        <div className="min-h-screen bg-[#0f0e0c] flex items-center justify-center text-[#e8e3d8]">
-          <Loader2 className="w-8 h-8 animate-spin text-[#c9a961]" />
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-900">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
         </div>
       );
     }
@@ -361,10 +361,10 @@ export default function App() {
 
   if (authLoading || checkingPayment) {
     return (
-      <div className="min-h-screen bg-[#0f0e0c] flex items-center justify-center text-[#e8e3d8]">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-900">
         <div className="text-center space-y-3">
-          <Loader2 className="w-8 h-8 animate-spin text-[#c9a961] mx-auto" />
-          <p className="text-xs font-semibold font-mono tracking-widest text-[#a39d8e]">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto" />
+          <p className="text-xs font-semibold font-mono tracking-widest text-slate-500">
             {authLoading ? 'AUTENTICANDO SESIÓN...' : 'VERIFICANDO LICENCIA...'}
           </p>
         </div>
@@ -429,7 +429,7 @@ export default function App() {
     <div className="ferova-light-theme min-h-screen bg-[#f7f8fb] flex flex-col text-[#1f2937] font-sans">
       
       {/* 1. Header component */}
-      <header className="sticky top-0 bg-white/85 backdrop-blur-xl border-b border-[#dbe4ee] relative z-20">
+      <header className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-[#dbe4ee] relative z-20">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           
           <div className="flex items-center gap-3">
@@ -475,12 +475,12 @@ export default function App() {
                       type="number"
                       value={headerTrm}
                       onChange={(e) => setHeaderTrm(e.target.value)}
-                      className="w-16 bg-[#0f0e0c] text-white border border-[#2a2620] p-0.5 px-1 rounded text-xs font-mono focus:outline-none focus:border-[#c9a961]"
+                      className="w-16 bg-slate-50 text-slate-900 border border-slate-200 p-0.5 px-1 rounded text-xs font-mono focus:outline-none focus:border-[#c9a961]"
                       autoFocus
                     />
                     <button 
                       type="submit" 
-                      className="text-emerald-500 hover:text-emerald-400 font-bold px-1 cursor-pointer"
+                      className="text-emerald-600 hover:text-emerald-700 font-bold px-1 cursor-pointer"
                       title="Guardar TRM"
                     >
                       ✓
@@ -499,10 +499,10 @@ export default function App() {
                   </form>
                 ) : (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[#c9a961] font-bold">{formatCop(appData.config.trm)}</span>
+                    <span className="text-blue-600 font-bold">{formatCop(appData.config.trm)}</span>
                     <button 
                       onClick={() => setIsEditingTrm(true)}
-                      className="text-[#8a8377] hover:text-[#e8e3d8] text-[9px] hover:underline cursor-pointer"
+                      className="text-slate-400 hover:text-slate-900 text-[9px] hover:underline cursor-pointer"
                     >
                       [✏️]
                     </button>
@@ -516,7 +516,7 @@ export default function App() {
                 <div className="hidden sm:flex items-center gap-2 bg-white px-3 py-2 rounded-2xl border border-slate-200 text-xs text-slate-600 shadow-sm">
                 <div className="w-2 h-2 rounded-full bg-emerald-500" />
                 <span>
-                  CLIENTES: <strong className="text-white">{appData.clientes.filter(c => c.activo).length}</strong>
+                  CLIENTES: <strong className="text-slate-900">{appData.clientes.filter(c => c.activo).length}</strong>
                 </span>
               </div>
             )}
@@ -527,7 +527,7 @@ export default function App() {
                 href={lastSheetBackupLink}
                 target="_blank"
                 rel="noreferrer"
-                className="bg-[#1c1916] hover:bg-[#23201c] transition px-3 py-1.5 rounded border border-[#2a2620] text-xs font-mono text-[#a39d8e] flex items-center gap-2"
+                className="bg-slate-100 hover:bg-[#23201c] transition px-3 py-1.5 rounded border border-slate-200 text-xs font-mono text-slate-500 flex items-center gap-2"
               >
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <Database className="w-3.5 h-3.5 text-emerald-500" />
@@ -542,16 +542,16 @@ export default function App() {
 
               <div className="flex items-center gap-2.5 bg-white p-1.5 pr-3.5 rounded-2xl border border-slate-200 shadow-sm">
               <div className="w-7 h-7 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-center">
-                <UserIcon className="w-3.5 h-3.5 text-[#c9a961]" />
+                <UserIcon className="w-3.5 h-3.5 text-blue-600" />
               </div>
               <div className="hidden md:block text-left text-[10px] leading-tight">
-                <span className="font-semibold text-white block">{(user.user_metadata as any)?.full_name || (user.user_metadata as any)?.name || 'Mafe'}</span>
-                <span className="text-[#8a8377] block font-mono text-[9px] max-w-28 truncate">{user.email}</span>
+                <span className="font-semibold text-slate-900 block">{(user.user_metadata as any)?.full_name || (user.user_metadata as any)?.name || 'Mafe'}</span>
+                <span className="text-slate-400 block font-mono text-[9px] max-w-40 truncate">{user.email}</span>
               </div>
               
               <button 
                 onClick={handleSignOut}
-                className="bg-[#0f0e0c]/60 p-1.5 rounded border border-[#2a2620] text-[#8a8377] hover:text-[#c97a61] cursor-pointer transition ml-1"
+                className="bg-slate-50/60 p-1.5 rounded border border-slate-200 text-slate-400 hover:text-[#c97a61] cursor-pointer transition ml-1"
                 title="Cerrar sesion Workspace"
               >
                 <LogOut className="w-3.5 h-3.5" />
@@ -561,7 +561,7 @@ export default function App() {
             {/* Mobile menu trigger */}
             <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden bg-[#161412] border border-[#2a2620] p-2 rounded text-[#a39d8e]"
+              className="lg:hidden bg-white border border-slate-200 p-2 rounded text-slate-500"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -581,16 +581,16 @@ export default function App() {
 
       {/* 2. Global Period Selection Rail */}
       {isReady && appData && (
-        <div className="bg-white/70 border-b border-slate-200 py-3 text-xs">
+        <div className="bg-white/90 border-b border-slate-200 py-3 text-xs">
           <div className="max-w-[1440px] mx-auto px-4 sm:px-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-[#c9a961]" />
-              <span className="font-mono text-[#a39d8e] text-[10px] uppercase font-bold tracking-wider">Ventana Periodo DIAN:</span>
+              <Calendar className="w-4 h-4 text-blue-600" />
+              <span className="font-mono text-slate-500 text-[10px] uppercase font-bold tracking-wider">Ventana Periodo DIAN:</span>
               <select 
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="bg-[#0f0e0c] text-white border border-[#2a2620] text-xs p-1 rounded font-mono focus:outline-none focus:border-[#c9a961]"
+                className="bg-slate-50 text-slate-900 border border-slate-200 text-xs p-1 rounded font-mono focus:outline-none focus:border-[#c9a961]"
               >
                 <option value="Todos">Histórico Completo (COP)</option>
                 {Array.from({ length: 12 }).map((_, i) => {
@@ -604,13 +604,13 @@ export default function App() {
 
             {/* Quick calculations layout bar */}
             {metrics && (
-              <div className="flex items-center gap-4 text-[10px] font-mono tracking-wider text-[#a39d8e]">
+              <div className="flex items-center gap-4 text-[10px] font-mono tracking-wider text-slate-500">
                 <div>
-                  <span>FACTURACIÓN:</span> <strong className="text-white">{formatCop(metrics.totalVentas)}</strong>
+                  <span>FACTURACIÓN:</span> <strong className="text-slate-900">{formatCop(metrics.totalVentas)}</strong>
                 </div>
                 <div className="w-px h-3 bg-[#2a2620]" />
                 <div>
-                  <span>NÓMINA RETIROS:</span> <strong className="text-white">{formatCop(metrics.salarioPropuesto)}</strong>
+                  <span>NÓMINA RETIROS:</span> <strong className="text-slate-900">{formatCop(metrics.salarioPropuesto)}</strong>
                 </div>
                 <div className="w-px h-3 bg-[#2a2620]" />
                 <div>
@@ -633,7 +633,7 @@ export default function App() {
         <aside className="lg:w-72 shrink-0 space-y-5 hidden lg:block select-none">
           
           <div>
-            <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-[#c9a961] block px-3 mb-2 font-black border-l-2 border-l-[#c9a961] pl-2">
+            <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-blue-600 block px-3 mb-2 font-black border-l-2 border-l-[#c9a961] pl-2">
               Gestión Operativa
             </span>
             <nav className="space-y-1 text-sm font-semibold">
@@ -654,8 +654,8 @@ export default function App() {
             </nav>
           </div>
 
-          <div className="pt-2 border-t border-[#2a2620]/45">
-            <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-[#a39d8e] block px-3 mb-2 font-black border-l-2 border-l-[#a39d8e] pl-2">
+          <div className="pt-2 border-t border-slate-200/45">
+            <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-slate-500 block px-3 mb-2 font-black border-l-2 border-l-[#a39d8e] pl-2">
               Control Financiero
             </span>
             <nav className="space-y-1 text-sm font-semibold">
@@ -677,8 +677,8 @@ export default function App() {
           </div>
 
           {isTeam && CRM_GROWTH_TABS.length > 0 && (
-            <div className="pt-2 border-t border-[#2a2620]/45">
-              <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-[#a8c98a] block px-3 mb-2 font-black border-l-2 border-l-[#a8c98a] pl-2">
+            <div className="pt-2 border-t border-slate-200/45">
+              <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-emerald-600 block px-3 mb-2 font-black border-l-2 border-l-[#a8c98a] pl-2">
                 Growth · CRM Interno
               </span>
               <nav className="space-y-1 text-sm font-semibold">
@@ -704,16 +704,16 @@ export default function App() {
 
         {/* Responsive Mobile Drawer menu (controlled by trigger button) */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden fixed inset-0 z-35 bg-black/80 flex justify-end" onClick={() => setIsMobileMenuOpen(false)}>
-            <div className="w-64 bg-[#11100e] border-l border-[#2a2620] h-full p-5 space-y-4 text-xs font-mono overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between border-b border-[#2a2620] pb-3 mb-2">
-                <span className="font-semibold text-[#c9a961]">Menú Corporativo</span>
-                <button onClick={() => setIsMobileMenuOpen(false)} className="text-[#8a8377]">Cerrar</button>
+          <div className="lg:hidden fixed inset-0 z-35 bg-slate-900/20 flex justify-end" onClick={() => setIsMobileMenuOpen(false)}>
+            <div className="w-64 bg-white border-l border-slate-200 h-full p-5 space-y-4 text-xs font-mono overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-2">
+                <span className="font-semibold text-blue-600">Menú Corporativo</span>
+                <button onClick={() => setIsMobileMenuOpen(false)} className="text-slate-400">Cerrar</button>
               </div>
               
               <div className="space-y-4 text-left">
                 <div>
-                  <span className="text-[9px] uppercase tracking-wider text-[#c9a961]/70 block font-bold mb-1.5 font-mono">1. GESTIÓN OPERATIVA</span>
+                  <span className="text-[9px] uppercase tracking-wider text-blue-600/70 block font-bold mb-1.5 font-mono">1. GESTIÓN OPERATIVA</span>
                   <nav className="space-y-1">
                     {GESTION_OPERATIVA_TABS.map(tab => (
                       <button
@@ -724,8 +724,8 @@ export default function App() {
                         }}
                         className={`w-full text-left px-3 py-1.5 rounded transition ${
                           activeTab === tab.id 
-                            ? 'bg-[#c9a961]/10 text-[#c9a961] font-semibold' 
-                            : 'text-[#a39d8e] hover:text-white'
+                            ? 'bg-blue-50 text-blue-600 font-semibold' 
+                            : 'text-slate-500 hover:text-slate-900'
                         }`}
                       >
                         {tab.label}
@@ -734,8 +734,8 @@ export default function App() {
                   </nav>
                 </div>
 
-                <div className="pt-2 border-t border-[#2a2620]/45">
-                  <span className="text-[9px] uppercase tracking-wider text-[#a39d8e]/70 block font-bold mb-1.5 font-mono">2. CONTROL FINANCIERO</span>
+                <div className="pt-2 border-t border-slate-200/45">
+                  <span className="text-[9px] uppercase tracking-wider text-slate-500/70 block font-bold mb-1.5 font-mono">2. CONTROL FINANCIERO</span>
                   <nav className="space-y-1">
                     {GESTION_FINANCIERA_TABS.map(tab => (
                       <button
@@ -746,8 +746,8 @@ export default function App() {
                         }}
                         className={`w-full text-left px-3 py-1.5 rounded transition ${
                           activeTab === tab.id 
-                            ? 'bg-[#c9a961]/10 text-[#c9a961] font-semibold' 
-                            : 'text-[#a39d8e] hover:text-white'
+                            ? 'bg-blue-50 text-blue-600 font-semibold' 
+                            : 'text-slate-500 hover:text-slate-900'
                         }`}
                       >
                         {tab.label}
@@ -757,15 +757,15 @@ export default function App() {
                 </div>
 
                 {isTeam && CRM_GROWTH_TABS.length > 0 && (
-                  <div className="pt-2 border-t border-[#2a2620]/45">
-                    <span className="text-[9px] uppercase tracking-wider text-[#a8c98a]/80 block font-bold mb-1.5 font-mono">3. GROWTH · CRM INTERNO</span>
+                  <div className="pt-2 border-t border-slate-200/45">
+                    <span className="text-[9px] uppercase tracking-wider text-emerald-600/80 block font-bold mb-1.5 font-mono">3. GROWTH · CRM INTERNO</span>
                     <nav className="space-y-1">
                       {CRM_GROWTH_TABS.map(tab => (
                         <button
                           key={tab.id}
                           onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false); }}
                           className={`w-full text-left px-3 py-1.5 rounded transition ${
-                            activeTab === tab.id ? 'bg-[#a8c98a]/10 text-[#a8c98a] font-semibold' : 'text-[#a39d8e] hover:text-white'
+                            activeTab === tab.id ? 'bg-emerald-50 text-emerald-600 font-semibold' : 'text-slate-500 hover:text-slate-900'
                           }`}
                         >
                           {tab.label}
@@ -785,21 +785,21 @@ export default function App() {
           
           {/* Error alerts */}
           {errorMsg && (
-            <div className="bg-[#c97a61]/10 border border-[#c97a61]/25 rounded p-4 flex gap-3 text-xs text-[#e8e3d8] mb-6">
+            <div className="bg-[#c97a61]/10 border border-[#c97a61]/25 rounded p-4 flex gap-3 text-xs text-slate-900 mb-6">
               <AlertCircle className="w-5 h-5 text-[#c97a61] shrink-0 mt-0.5" />
               <div className="space-y-1.5 w-full">
                 <span className="font-semibold font-display text-[#c97a61] block">Inconveniente de Sincronización</span>
-                <p className="text-[#a39d8e] leading-relaxed">{errorMsg}</p>
+                <p className="text-slate-500 leading-relaxed">{errorMsg}</p>
                 <div className="flex flex-wrap gap-x-4 gap-y-2 pt-2 border-t border-[#c97a61]/15 mt-2 items-center">
                   <button
                     onClick={() => user && bootstrapFinanceData(user.id)}
-                    className="underline text-white font-mono font-bold hover:text-[#c9a961] cursor-pointer"
+                    className="underline text-slate-900 font-mono font-bold hover:text-blue-600 cursor-pointer"
                   >
                     Intentar reconexión manual
                   </button>
                   <button
                     onClick={handleSignOut}
-                    className="underline text-[#a39d8e] font-mono hover:text-white cursor-pointer"
+                    className="underline text-slate-500 font-mono hover:text-slate-900 cursor-pointer"
                   >
                     Cerrar sesión
                   </button>
@@ -810,10 +810,10 @@ export default function App() {
 
           {/* Load databases spinner */}
           {!isReady && !errorMsg && (
-            <div className="bg-[#161412] border border-[#2a2620] rounded-lg p-16 text-center text-xs space-y-4">
-              <Loader2 className="w-8 h-8 animate-spin text-[#c9a961] mx-auto" />
-              <p className="font-mono text-[#a39d8e] font-semibold tracking-wider">CARGANDO TU CONTABILIDAD...</p>
-              <p className="text-[#8a8377] max-w-sm mx-auto leading-relaxed">
+            <div className="bg-white border border-slate-200 rounded-lg p-16 text-center text-xs space-y-4">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto" />
+              <p className="font-mono text-slate-500 font-semibold tracking-wider">CARGANDO TU CONTABILIDAD...</p>
+              <p className="text-slate-400 max-w-sm mx-auto leading-relaxed">
                 Sincronizando clientes, ventas y parámetros DIAN 2026 desde tu cuenta.
               </p>
             </div>
@@ -984,7 +984,7 @@ export default function App() {
       </div>
 
       {/* 4. Footer */}
-      <footer className="bg-[#11100e] border-t border-[#2a2620] py-6 text-center text-[10px] font-mono text-[#8a8377] shrink-0 uppercase tracking-widest mt-12">
+      <footer className="bg-white border-t border-slate-200 py-6 text-center text-[10px] font-mono text-slate-400 shrink-0 uppercase tracking-widest mt-12">
         Ferova OS © 2026 • Finanzas, Growth CRM y asistente IA con datos reales
       </footer>
 
