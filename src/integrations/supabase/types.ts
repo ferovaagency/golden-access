@@ -14,13 +14,676 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      crm_bot_config: {
+        Row: {
+          bot_enabled: boolean
+          custom_prompt: string | null
+          id: boolean
+          instance_name: string
+          updated_at: string
+        }
+        Insert: {
+          bot_enabled?: boolean
+          custom_prompt?: string | null
+          id?: boolean
+          instance_name?: string
+          updated_at?: string
+        }
+        Update: {
+          bot_enabled?: boolean
+          custom_prompt?: string | null
+          id?: boolean
+          instance_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      crm_bot_knowledge: {
+        Row: {
+          content: string
+          created_at: string
+          embedding: string | null
+          id: string
+          source: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          source?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          source?: string | null
+        }
+        Relationships: []
+      }
+      crm_citas_diagnostico: {
+        Row: {
+          calendar_event_id: string | null
+          created_at: string
+          duracion_min: number
+          email_prospecto: string | null
+          es_pagada: boolean
+          estado: string
+          fecha_hora: string
+          id: string
+          meet_link: string | null
+          moneda: string | null
+          monto: number | null
+          nombre_prospecto: string
+          notas: string | null
+          oportunidad_id: string | null
+          telefono_prospecto: string | null
+        }
+        Insert: {
+          calendar_event_id?: string | null
+          created_at?: string
+          duracion_min?: number
+          email_prospecto?: string | null
+          es_pagada?: boolean
+          estado?: string
+          fecha_hora: string
+          id?: string
+          meet_link?: string | null
+          moneda?: string | null
+          monto?: number | null
+          nombre_prospecto: string
+          notas?: string | null
+          oportunidad_id?: string | null
+          telefono_prospecto?: string | null
+        }
+        Update: {
+          calendar_event_id?: string | null
+          created_at?: string
+          duracion_min?: number
+          email_prospecto?: string | null
+          es_pagada?: boolean
+          estado?: string
+          fecha_hora?: string
+          id?: string
+          meet_link?: string | null
+          moneda?: string | null
+          monto?: number | null
+          nombre_prospecto?: string
+          notas?: string | null
+          oportunidad_id?: string | null
+          telefono_prospecto?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_citas_diagnostico_oportunidad_id_fkey"
+            columns: ["oportunidad_id"]
+            isOneToOne: false
+            referencedRelation: "crm_oportunidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_contenido_potencial: {
+        Row: {
+          autor: string | null
+          comentario_sugerido: string | null
+          detectado_en: string
+          estado: string
+          id: string
+          plataforma: string
+          razon: string | null
+          resumen: string | null
+          score_potencial: number | null
+          url_publicacion: string
+        }
+        Insert: {
+          autor?: string | null
+          comentario_sugerido?: string | null
+          detectado_en?: string
+          estado?: string
+          id?: string
+          plataforma?: string
+          razon?: string | null
+          resumen?: string | null
+          score_potencial?: number | null
+          url_publicacion: string
+        }
+        Update: {
+          autor?: string | null
+          comentario_sugerido?: string | null
+          detectado_en?: string
+          estado?: string
+          id?: string
+          plataforma?: string
+          razon?: string | null
+          resumen?: string | null
+          score_potencial?: number | null
+          url_publicacion?: string
+        }
+        Relationships: []
+      }
+      crm_interacciones: {
+        Row: {
+          canal: string
+          contenido: string | null
+          created_by: string | null
+          enlace: string | null
+          id: string
+          ocurrido_en: string
+          oportunidad_id: string
+          tipo: string
+        }
+        Insert: {
+          canal: string
+          contenido?: string | null
+          created_by?: string | null
+          enlace?: string | null
+          id?: string
+          ocurrido_en?: string
+          oportunidad_id: string
+          tipo: string
+        }
+        Update: {
+          canal?: string
+          contenido?: string | null
+          created_by?: string | null
+          enlace?: string | null
+          id?: string
+          ocurrido_en?: string
+          oportunidad_id?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_interacciones_oportunidad_id_fkey"
+            columns: ["oportunidad_id"]
+            isOneToOne: false
+            referencedRelation: "crm_oportunidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_oportunidades: {
+        Row: {
+          canal_origen: string
+          closed_at: string | null
+          created_at: string
+          email: string | null
+          empresa: string | null
+          estado: string
+          fecha_siguiente_accion: string | null
+          fuente_url: string | null
+          id: string
+          moneda: string | null
+          nombre_contacto: string
+          notas: string | null
+          probabilidad: number | null
+          servicio_id: string | null
+          siguiente_accion: string | null
+          telefono: string | null
+          updated_at: string
+          valor_estimado: number | null
+        }
+        Insert: {
+          canal_origen?: string
+          closed_at?: string | null
+          created_at?: string
+          email?: string | null
+          empresa?: string | null
+          estado?: string
+          fecha_siguiente_accion?: string | null
+          fuente_url?: string | null
+          id?: string
+          moneda?: string | null
+          nombre_contacto: string
+          notas?: string | null
+          probabilidad?: number | null
+          servicio_id?: string | null
+          siguiente_accion?: string | null
+          telefono?: string | null
+          updated_at?: string
+          valor_estimado?: number | null
+        }
+        Update: {
+          canal_origen?: string
+          closed_at?: string | null
+          created_at?: string
+          email?: string | null
+          empresa?: string | null
+          estado?: string
+          fecha_siguiente_accion?: string | null
+          fuente_url?: string | null
+          id?: string
+          moneda?: string | null
+          nombre_contacto?: string
+          notas?: string | null
+          probabilidad?: number | null
+          servicio_id?: string | null
+          siguiente_accion?: string | null
+          telefono?: string | null
+          updated_at?: string
+          valor_estimado?: number | null
+        }
+        Relationships: []
+      }
+      crm_team_members: {
+        Row: {
+          created_at: string
+          email: string
+          nombre: string | null
+          rol: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          nombre?: string | null
+          rol?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          nombre?: string | null
+          rol?: string
+        }
+        Relationships: []
+      }
+      finance_abonos: {
+        Row: {
+          fecha: string
+          id: string
+          monto: number
+          notas: string | null
+          tipo_pago: string | null
+          user_id: string
+          venta_id: string
+        }
+        Insert: {
+          fecha: string
+          id?: string
+          monto?: number
+          notas?: string | null
+          tipo_pago?: string | null
+          user_id: string
+          venta_id: string
+        }
+        Update: {
+          fecha?: string
+          id?: string
+          monto?: number
+          notas?: string | null
+          tipo_pago?: string | null
+          user_id?: string
+          venta_id?: string
+        }
+        Relationships: []
+      }
+      finance_clientes: {
+        Row: {
+          activo: boolean
+          declarante: boolean
+          entregables: string | null
+          fecha_creacion: string
+          id: string
+          kpis: string | null
+          marca_info: string | null
+          nombre: string
+          notas: string | null
+          objetivos: string | null
+          progreso: number | null
+          responsable: string | null
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          activo?: boolean
+          declarante?: boolean
+          entregables?: string | null
+          fecha_creacion: string
+          id: string
+          kpis?: string | null
+          marca_info?: string | null
+          nombre: string
+          notas?: string | null
+          objetivos?: string | null
+          progreso?: number | null
+          responsable?: string | null
+          tipo: string
+          user_id: string
+        }
+        Update: {
+          activo?: boolean
+          declarante?: boolean
+          entregables?: string | null
+          fecha_creacion?: string
+          id?: string
+          kpis?: string | null
+          marca_info?: string | null
+          nombre?: string
+          notas?: string | null
+          objetivos?: string | null
+          progreso?: number | null
+          responsable?: string | null
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      finance_config: {
+        Row: {
+          horas_objetivo_mes: number
+          ibc_porcentaje: number
+          meta_ventas_mensual: number
+          retencion_servicio_min_uvt: number
+          salario_propuesto: number
+          smmlv: number
+          tarifa_iva: number
+          tarifa_pension: number
+          tarifa_ret_declarante: number
+          tarifa_ret_no_declarante: number
+          tarifa_salud: number
+          tope_no_declarante_uvt: number
+          tope_no_paga_renta_uvt: number
+          tope_responsable_iva_uvt: number
+          trm: number
+          updated_at: string
+          user_id: string
+          uvt: number
+        }
+        Insert: {
+          horas_objetivo_mes?: number
+          ibc_porcentaje?: number
+          meta_ventas_mensual?: number
+          retencion_servicio_min_uvt?: number
+          salario_propuesto?: number
+          smmlv?: number
+          tarifa_iva?: number
+          tarifa_pension?: number
+          tarifa_ret_declarante?: number
+          tarifa_ret_no_declarante?: number
+          tarifa_salud?: number
+          tope_no_declarante_uvt?: number
+          tope_no_paga_renta_uvt?: number
+          tope_responsable_iva_uvt?: number
+          trm?: number
+          updated_at?: string
+          user_id: string
+          uvt?: number
+        }
+        Update: {
+          horas_objetivo_mes?: number
+          ibc_porcentaje?: number
+          meta_ventas_mensual?: number
+          retencion_servicio_min_uvt?: number
+          salario_propuesto?: number
+          smmlv?: number
+          tarifa_iva?: number
+          tarifa_pension?: number
+          tarifa_ret_declarante?: number
+          tarifa_ret_no_declarante?: number
+          tarifa_salud?: number
+          tope_no_declarante_uvt?: number
+          tope_no_paga_renta_uvt?: number
+          tope_responsable_iva_uvt?: number
+          trm?: number
+          updated_at?: string
+          user_id?: string
+          uvt?: number
+        }
+        Relationships: []
+      }
+      finance_herramienta_servicios: {
+        Row: {
+          herramienta_id: string
+          servicio_id: string
+          user_id: string
+        }
+        Insert: {
+          herramienta_id: string
+          servicio_id: string
+          user_id: string
+        }
+        Update: {
+          herramienta_id?: string
+          servicio_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      finance_herramientas: {
+        Row: {
+          id: string
+          moneda: string
+          monto: number
+          nombre: string
+          notas: string | null
+          tipo_cobro: string
+          user_id: string
+        }
+        Insert: {
+          id: string
+          moneda?: string
+          monto?: number
+          nombre: string
+          notas?: string | null
+          tipo_cobro?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          moneda?: string
+          monto?: number
+          nombre?: string
+          notas?: string | null
+          tipo_cobro?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      finance_horas: {
+        Row: {
+          cliente_id: string
+          descripcion: string | null
+          fecha: string
+          horas: number
+          id: string
+          servicio_id: string
+          user_id: string
+        }
+        Insert: {
+          cliente_id: string
+          descripcion?: string | null
+          fecha: string
+          horas?: number
+          id: string
+          servicio_id: string
+          user_id: string
+        }
+        Update: {
+          cliente_id?: string
+          descripcion?: string | null
+          fecha?: string
+          horas?: number
+          id?: string
+          servicio_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      finance_otros_gastos: {
+        Row: {
+          categoria: string
+          id: string
+          moneda: string
+          monto: number
+          nombre: string
+          user_id: string
+        }
+        Insert: {
+          categoria?: string
+          id: string
+          moneda?: string
+          monto?: number
+          nombre: string
+          user_id: string
+        }
+        Update: {
+          categoria?: string
+          id?: string
+          moneda?: string
+          monto?: number
+          nombre?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      finance_pagos_egresos: {
+        Row: {
+          categoria: string
+          concepto: string
+          fecha: string
+          id: string
+          metodo_pago: string | null
+          moneda: string
+          monto: number
+          notas: string | null
+          user_id: string
+        }
+        Insert: {
+          categoria: string
+          concepto: string
+          fecha: string
+          id: string
+          metodo_pago?: string | null
+          moneda?: string
+          monto?: number
+          notas?: string | null
+          user_id: string
+        }
+        Update: {
+          categoria?: string
+          concepto?: string
+          fecha?: string
+          id?: string
+          metodo_pago?: string | null
+          moneda?: string
+          monto?: number
+          notas?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      finance_servicios: {
+        Row: {
+          costo_unitario: number
+          descripcion: string | null
+          id: string
+          nombre: string
+          user_id: string
+        }
+        Insert: {
+          costo_unitario?: number
+          descripcion?: string | null
+          id: string
+          nombre: string
+          user_id: string
+        }
+        Update: {
+          costo_unitario?: number
+          descripcion?: string | null
+          id?: string
+          nombre?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      finance_ventas: {
+        Row: {
+          adelanto: number
+          cantidad: number
+          cliente_id: string
+          costo_unitario: number
+          estado_pago: string
+          fecha: string
+          id: string
+          moneda: string
+          notas: string | null
+          precio_venta_unitario: number
+          servicio_id: string
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          adelanto?: number
+          cantidad?: number
+          cliente_id: string
+          costo_unitario?: number
+          estado_pago?: string
+          fecha: string
+          id: string
+          moneda?: string
+          notas?: string | null
+          precio_venta_unitario?: number
+          servicio_id: string
+          tipo?: string
+          user_id: string
+        }
+        Update: {
+          adelanto?: number
+          cantidad?: number
+          cliente_id?: string
+          costo_unitario?: number
+          estado_pago?: string
+          fecha?: string
+          id?: string
+          moneda?: string
+          notas?: string | null
+          precio_venta_unitario?: number
+          servicio_id?: string
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          amount_usd: number | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          provider: string
+          provider_order_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount_usd?: number | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          provider?: string
+          provider_order_id?: string | null
+          status: string
+          user_id: string
+        }
+        Update: {
+          amount_usd?: number | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          provider?: string
+          provider_order_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_team_member: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
