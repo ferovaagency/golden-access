@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { initAuth, googleSignIn, linkGoogleIdentity, logout, getAccessToken, checkSubscription } from './lib/supabase';
+import { initAuth, googleSignIn, linkGoogleIdentity, logout, getAccessToken, checkSubscription, hydrateGoogleWorkspaceConnection } from './lib/supabase';
 import { backupAppDataToSheets, importSheetByUrl } from './lib/sheetsService';
 import * as financeService from './lib/financeService';
 import { isTeamMember } from './lib/crmService';
@@ -24,6 +24,7 @@ import PagosEgresosAdmin from './components/PagosEgresosAdmin';
 import AuthScreen from './components/AuthScreen';
 import Paywall from './components/Paywall';
 import AdminCRM, { CRMTab } from './components/AdminCRM';
+import BusinessAssistant from './components/BusinessAssistant';
 
 
 import { 
@@ -62,6 +63,7 @@ export default function App() {
   const [selectedMonth, setSelectedMonth] = useState<string>('Todos');
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
 
   // Header TRM Quick Edit
   const [headerTrm, setHeaderTrm] = useState<string>('');
@@ -128,6 +130,7 @@ export default function App() {
     setErrorMsg(null);
     try {
       const data = await financeService.loadFinanceData(userId);
+      await hydrateGoogleWorkspaceConnection(userId);
       setAppData(data);
     } catch (err: any) {
       console.error('Finance data bootstrap error:', err);
@@ -169,16 +172,7 @@ export default function App() {
 
   const persistImportedFinanceData = async (data: AppData) => {
     if (!user) return;
-    await Promise.all([
-      financeService.saveConfig(user.id, data.config),
-      financeService.saveClientes(user.id, data.clientes),
-      financeService.saveServicios(user.id, data.servicios),
-      financeService.saveHerramientas(user.id, data.herramientas),
-      financeService.saveOtrosGastos(user.id, data.otrosGastos),
-      financeService.savePagosEgresos(user.id, data.pagosEgresos || []),
-      financeService.saveVentas(user.id, data.ventas),
-      financeService.saveHoras(user.id, data.horas),
-    ]);
+    await financeService.saveImportedFinanceData(user.id, data);
     const fresh = await financeService.loadFinanceData(user.id);
     setAppData(fresh);
   };
@@ -403,54 +397,54 @@ export default function App() {
 
   // Visual Tab Categorization - Separates Operational Management from Financial Control
   const GESTION_OPERATIVA_TABS = [
-    { id: 'proyectos', label: '1. Operativo (Proyectos y KPIs)' },
-    { id: 'horas', label: '2. Control de Horas' },
-    { id: 'clientes', label: '3. Clientes' },
-    { id: 'servicios', label: '4. Servicios' }
+    { id: 'proyectos', label: 'Proyectos', hint: 'KPIs y ejecución' },
+    { id: 'horas', label: 'Horas', hint: 'Rentabilidad por tiempo' },
+    { id: 'clientes', label: 'Clientes', hint: 'Cuentas activas' },
+    { id: 'servicios', label: 'Servicios', hint: 'Catálogo y costos' }
   ];
 
   const GESTION_FINANCIERA_TABS = [
-    { id: 'dashboard', label: '5. Dashboard' },
-    { id: 'ventas', label: '6. Ingresos (Ventas y Abonos)' },
-    { id: 'pagosEgresos', label: '7. Registro de Pagos (Egresos)' },
-    { id: 'gastos', label: '8. Costos y Gastos' },
-    { id: 'equilibrioGlobal', label: '9. Equilibrio Global' },
-    { id: 'equilibrioServicio', label: '10. Equilibrio de Servicio' },
-    { id: 'iva', label: '11. Control de IVA' },
-    { id: 'alertas', label: '12. Alertas' },
-    { id: 'ajustes', label: '13. Base de Datos / Ajustes' }
+    { id: 'dashboard', label: 'Inicio financiero', hint: 'Vista ejecutiva' },
+    { id: 'ventas', label: 'Ingresos', hint: 'Ventas y abonos' },
+    { id: 'pagosEgresos', label: 'Pagos', hint: 'Egresos registrados' },
+    { id: 'gastos', label: 'Costos', hint: 'Herramientas y gastos' },
+    { id: 'equilibrioGlobal', label: 'Equilibrio', hint: 'Punto global' },
+    { id: 'equilibrioServicio', label: 'Por servicio', hint: 'Margen unitario' },
+    { id: 'iva', label: 'IVA', hint: 'Control tributario' },
+    { id: 'alertas', label: 'Alertas', hint: 'Riesgos y topes' },
+    { id: 'ajustes', label: 'Ajustes', hint: 'Google Sheets y datos' }
   ];
 
   const CRM_GROWTH_TABS = isTeam ? [
-    { id: 'crm-pipeline', label: '↗ Pipeline de Ventas' },
-    { id: 'crm-citas', label: '↗ Citas + Calendar' },
-    { id: 'crm-contenido', label: '↗ LinkedIn + Reddit' },
-    { id: 'crm-bot', label: '↗ Bot WhatsApp' },
-    { id: 'crm-resenas', label: '↗ Reseñas' },
+    { id: 'crm-pipeline', label: 'Pipeline', hint: 'Prospectos y playbooks' },
+    { id: 'crm-citas', label: 'Citas', hint: 'Diagnósticos y Calendar' },
+    { id: 'crm-contenido', label: 'LinkedIn + Reddit', hint: 'Señales automáticas' },
+    { id: 'crm-bot', label: 'Bot WhatsApp', hint: 'Conocimiento y estado' },
+    { id: 'crm-resenas', label: 'Reseñas', hint: 'Gmail y fuentes' },
   ] : [];
 
   const TAB_SET = [...GESTION_OPERATIVA_TABS, ...GESTION_FINANCIERA_TABS, ...CRM_GROWTH_TABS];
 
   return (
-    <div className="min-h-screen bg-[#0f0e0c] bg-gradient-to-br from-[#0f0e0c] to-[#1a1815] flex flex-col text-[#e8e3d8] font-sans">
+    <div className="ferova-light-theme min-h-screen bg-[#f7f8fb] flex flex-col text-[#1f2937] font-sans">
       
       {/* 1. Header component */}
-      <header className="bg-[#11100e] border-b border-[#2a2620] relative z-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+      <header className="sticky top-0 bg-white/85 backdrop-blur-xl border-b border-[#dbe4ee] relative z-20">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded bg-[#c9a961]/10 border border-[#c9a961]/25 flex items-center justify-center text-[#c9a961] shadow-inner font-bold">
+            <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-sm font-bold">
               F
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-normal font-bold font-display tracking-tight text-white">Ferova OS</h1>
-                <span className="text-[9px] bg-[#c9a961]/10 border border-[#c9a961]/35 font-mono text-[#c9a961] px-1.5 py-0.2 rounded font-semibold">
-                  2026 CONTABILIDAD
+                <h1 className="text-base font-bold font-display tracking-tight text-slate-900">Ferova OS</h1>
+                <span className="text-[10px] bg-blue-50 border border-blue-100 font-medium text-blue-700 px-2 py-0.5 rounded-full">
+                  Finanzas + Growth
                 </span>
               </div>
-              <span className="text-[10px] text-[#a39d8e] font-mono block mt-0.5 uppercase tracking-wider">
-                Ferova Agency • Bogotá, CO
+              <span className="text-xs text-slate-500 block mt-0.5">
+                Navegación clara por módulos de negocio
               </span>
             </div>
           </div>
@@ -459,8 +453,8 @@ export default function App() {
             
             {/* 1.1 TRM Editable Quick Panel */}
             {isReady && appData && (
-              <div className="hidden md:flex items-center gap-2 bg-[#161412] px-3 py-1.5 rounded border border-[#2a2620] text-xs font-mono">
-                <span className="text-[#8a8377] uppercase text-[10px] tracking-wider">TRM:</span>
+              <div className="hidden md:flex items-center gap-2 bg-white px-3 py-2 rounded-2xl border border-slate-200 text-xs shadow-sm">
+                <span className="text-slate-500 text-xs">TRM</span>
                 {isEditingTrm ? (
                   <form 
                     onSubmit={async (e) => {
@@ -519,8 +513,8 @@ export default function App() {
 
             {/* 1.2 Display de Clientes Activos */}
             {isReady && appData && (
-              <div className="hidden sm:flex items-center gap-2 bg-[#161412] px-3 py-1.5 rounded border border-[#2a2620] text-xs font-mono text-[#a39d8e]">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#a8c98a] animate-pulse" />
+                <div className="hidden sm:flex items-center gap-2 bg-white px-3 py-2 rounded-2xl border border-slate-200 text-xs text-slate-600 shadow-sm">
+                <div className="w-2 h-2 rounded-full bg-emerald-500" />
                 <span>
                   CLIENTES: <strong className="text-white">{appData.clientes.filter(c => c.activo).length}</strong>
                 </span>
@@ -542,8 +536,12 @@ export default function App() {
             )}
 
             {/* Profile component user info */}
-            <div className="flex items-center gap-2.5 bg-[#161412] p-1.5 pr-3.5 rounded border border-[#2a2620]">
-              <div className="w-7 h-7 bg-[#c9a961]/15 rounded-full border border-[#c9a961]/30 flex items-center justify-center">
+              <button onClick={() => setAssistantOpen(true)} className="hidden md:flex items-center gap-2 rounded-2xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700">
+                Asistente IA
+              </button>
+
+              <div className="flex items-center gap-2.5 bg-white p-1.5 pr-3.5 rounded-2xl border border-slate-200 shadow-sm">
+              <div className="w-7 h-7 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-center">
                 <UserIcon className="w-3.5 h-3.5 text-[#c9a961]" />
               </div>
               <div className="hidden md:block text-left text-[10px] leading-tight">
@@ -575,16 +573,16 @@ export default function App() {
 
       {/* Sync Banner */}
       {sheetsLoading && (
-        <div className="bg-[#c9a961]/10 border-b border-[#c9a961]/15 text-[#c9a961] py-2 text-center text-[10px] font-mono font-semibold uppercase tracking-wider flex items-center justify-center gap-2">
+        <div className="bg-blue-50 border-b border-blue-100 text-blue-700 py-2 text-center text-xs font-semibold flex items-center justify-center gap-2">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          <span>Sincronizando base de datos en Google Sheets...</span>
+          <span>Guardando cambios en la base de datos...</span>
         </div>
       )}
 
       {/* 2. Global Period Selection Rail */}
       {isReady && appData && (
-        <div className="bg-[#11100e] border-b border-[#2a2620] py-3 text-xs">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div className="bg-white/70 border-b border-slate-200 py-3 text-xs">
+          <div className="max-w-[1440px] mx-auto px-4 sm:px-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-[#c9a961]" />
@@ -629,27 +627,28 @@ export default function App() {
       )}
 
       {/* 3. Main layout tabs container */}
-      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col lg:flex-row gap-6">
+       <div className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-6 flex flex-col lg:flex-row gap-6">
         
         {/* Navigation Sidebar menu (lg+) */}
-        <aside className="lg:w-56 shrink-0 space-y-5 hidden lg:block select-none">
+        <aside className="lg:w-72 shrink-0 space-y-5 hidden lg:block select-none">
           
           <div>
             <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-[#c9a961] block px-3 mb-2 font-black border-l-2 border-l-[#c9a961] pl-2">
               Gestión Operativa
             </span>
-            <nav className="space-y-1 text-xs font-mono font-semibold">
+            <nav className="space-y-1 text-sm font-semibold">
               {GESTION_OPERATIVA_TABS.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full text-left px-3.5 py-2 rounded transition ${
+                  className={`w-full text-left px-4 py-3 rounded-2xl transition border ${
                     activeTab === tab.id 
-                      ? 'bg-[#c9a961]/10 text-[#c9a961] border-l-3 border-l-[#c9a961] font-semibold' 
-                      : 'text-[#a39d8e] hover:text-white hover:bg-white/[0.02]'
+                      ? 'bg-blue-50 text-blue-700 border-blue-100 shadow-sm' 
+                      : 'text-slate-600 border-transparent hover:text-slate-900 hover:bg-white hover:border-slate-200'
                   }`}
                 >
-                  {tab.label}
+                  <span className="block">{tab.label}</span>
+                  <span className="block text-xs font-normal opacity-70">{tab.hint}</span>
                 </button>
               ))}
             </nav>
@@ -659,18 +658,19 @@ export default function App() {
             <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-[#a39d8e] block px-3 mb-2 font-black border-l-2 border-l-[#a39d8e] pl-2">
               Control Financiero
             </span>
-            <nav className="space-y-1 text-xs font-mono font-semibold">
+            <nav className="space-y-1 text-sm font-semibold">
               {GESTION_FINANCIERA_TABS.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full text-left px-3.5 py-2 rounded transition ${
+                  className={`w-full text-left px-4 py-3 rounded-2xl transition border ${
                     activeTab === tab.id 
-                      ? 'bg-[#c9a961]/10 text-[#c9a961] border-l-3 border-l-[#c9a961] font-semibold' 
-                      : 'text-[#a39d8e] hover:text-white hover:bg-white/[0.02]'
+                      ? 'bg-blue-50 text-blue-700 border-blue-100 shadow-sm' 
+                      : 'text-slate-600 border-transparent hover:text-slate-900 hover:bg-white hover:border-slate-200'
                   }`}
                 >
-                  {tab.label}
+                  <span className="block">{tab.label}</span>
+                  <span className="block text-xs font-normal opacity-70">{tab.hint}</span>
                 </button>
               ))}
             </nav>
@@ -681,18 +681,19 @@ export default function App() {
               <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-[#a8c98a] block px-3 mb-2 font-black border-l-2 border-l-[#a8c98a] pl-2">
                 Growth · CRM Interno
               </span>
-              <nav className="space-y-1 text-xs font-mono font-semibold">
+              <nav className="space-y-1 text-sm font-semibold">
                 {CRM_GROWTH_TABS.map(tab => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full text-left px-3.5 py-2 rounded transition ${
+                    className={`w-full text-left px-4 py-3 rounded-2xl transition border ${
                       activeTab === tab.id
-                        ? 'bg-[#a8c98a]/10 text-[#a8c98a] border-l-3 border-l-[#a8c98a] font-semibold'
-                        : 'text-[#a39d8e] hover:text-white hover:bg-white/[0.02]'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-100 shadow-sm'
+                        : 'text-slate-600 border-transparent hover:text-slate-900 hover:bg-white hover:border-slate-200'
                     }`}
                   >
-                    {tab.label}
+                    <span className="block">{tab.label}</span>
+                    <span className="block text-xs font-normal opacity-70">{tab.hint}</span>
                   </button>
                 ))}
               </nav>
@@ -984,8 +985,10 @@ export default function App() {
 
       {/* 4. Footer */}
       <footer className="bg-[#11100e] border-t border-[#2a2620] py-6 text-center text-[10px] font-mono text-[#8a8377] shrink-0 uppercase tracking-widest mt-12">
-        Ferova OS © 2026 • Diseñado con geometría nocturna • Sincronización activa Google Workspace
+        Ferova OS © 2026 • Finanzas, Growth CRM y asistente IA con datos reales
       </footer>
+
+      {user && <BusinessAssistant user={user} open={assistantOpen} onToggle={() => setAssistantOpen((v) => !v)} />}
 
     </div>
   );
