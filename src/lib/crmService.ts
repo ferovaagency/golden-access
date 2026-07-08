@@ -28,6 +28,14 @@ export interface Oportunidad {
   created_at: string;
   updated_at: string;
   closed_at: string | null;
+  apollo_data?: any | null;
+  apollo_enriched_at?: string | null;
+  playbook_email?: string | null;
+  playbook_linkedin_conectar?: boolean | null;
+  playbook_linkedin_nota?: string | null;
+  playbook_linkedin_mensaje?: string | null;
+  playbook_whatsapp_mensaje?: string | null;
+  playbook_generated_at?: string | null;
 }
 
 export interface Interaccion {
