@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles, Download, MessageSquare, Zap, Copy, Search } from 'lucide-react';
+import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles, Download, MessageSquare, Zap, Copy, Search, Star, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { logout } from '../lib/supabase';
 import {
   isTeamMember,
@@ -31,11 +31,15 @@ import {
   BotConfig,
   KnowledgeItem,
   RedditPost,
+  listResenas,
+  scanResenas,
+  markResenaRespondida,
+  Resena,
 } from '../lib/crmService';
 
 const ESTADOS: EstadoOportunidad[] = ['nuevo', 'contactado', 'calificando', 'propuesta_enviada', 'negociacion', 'ganado', 'perdido'];
 
-export type CRMTab = 'pipeline' | 'citas' | 'contenido' | 'bot';
+export type CRMTab = 'pipeline' | 'citas' | 'contenido' | 'bot' | 'resenas';
 
 interface Props {
   user: User;
@@ -55,6 +59,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const [botConfig, setBotConfig] = useState<BotConfig | null>(null);
   const [knowledge, setKnowledge] = useState<KnowledgeItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [resenas, setResenas] = useState<Resena[]>([]);
+  const [scanningResenas, setScanningResenas] = useState(false);
+  const [scanResult, setScanResult] = useState<string | null>(null);
 
   const [nombreContacto, setNombreContacto] = useState('');
   const [empresa, setEmpresa] = useState('');
