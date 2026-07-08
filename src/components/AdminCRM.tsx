@@ -451,7 +451,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
           </header>
 
           <nav className="flex gap-2 px-6 py-3 border-b border-[#2a2620] text-xs font-mono">
-            {(['pipeline', 'citas', 'contenido', 'bot'] as const).map((t) => (
+            {(['pipeline', 'citas', 'contenido', 'bot', 'resenas'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -459,7 +459,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   tab === t ? 'bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/40' : 'text-[#a39d8e] hover:text-white'
                 }`}
               >
-                {t === 'pipeline' ? 'Pipeline' : t === 'citas' ? 'Citas de diagnóstico' : t === 'contenido' ? 'Contenido con potencial' : 'Bot de WhatsApp'}
+                {t === 'pipeline' ? 'Pipeline' : t === 'citas' ? 'Citas de diagnóstico' : t === 'contenido' ? 'Contenido con potencial' : t === 'bot' ? 'Bot de WhatsApp' : 'Reseñas'}
               </button>
             ))}
           </nav>
