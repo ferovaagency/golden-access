@@ -25,9 +25,10 @@ const SENDERS = [
   'designrush.com',
 ];
 
-function buildQuery(days: number) {
+function buildQuery(days: number, sourceQueries: string[]) {
   const from = SENDERS.map((s) => `from:${s}`).join(' OR ');
-  return `(${from}) newer_than:${days}d`;
+  const extra = sourceQueries.length ? ` OR ${sourceQueries.map((q) => `(${q})`).join(' OR ')}` : '';
+  return `((${from})${extra}) newer_than:${days}d`;
 }
 
 function decodeBase64Url(data: string): string {
@@ -111,8 +112,16 @@ Deno.serve(async (req) => {
       });
     }
 
+    const { data: sources } = await supabase
+      .from('crm_review_sources')
+      .select('*')
+      .eq('enabled', true);
+    const sourceQueries = (sources || [])
+      .map((s: any) => (s.gmail_query || s.nombre || s.plataforma || '').toString().trim())
+      .filter(Boolean);
+
     // Lista de mensajes
-    const q = encodeURIComponent(buildQuery(days));
+    const q = encodeURIComponent(buildQuery(days, sourceQueries));
     const listRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=50&q=${q}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -193,6 +202,13 @@ Si el correo NO es una notificación de reseña recibida (por ejemplo digest, ti
       }).select('*').single();
       if (insErr) { console.error('[reviews-scan] insert error', insErr); skipped++; continue; }
       inserted.push(ins);
+    }
+
+    if ((sources || []).length) {
+      await supabase
+        .from('crm_review_sources')
+        .update({ last_scanned_at: new Date().toISOString() })
+        .in('id', (sources || []).map((s: any) => s.id));
     }
 
     return new Response(JSON.stringify({

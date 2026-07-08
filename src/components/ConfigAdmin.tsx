@@ -361,7 +361,7 @@ export default function ConfigAdmin({
 
             <div className="p-5 space-y-4 font-sans text-xs">
               <p className="text-[#a39d8e] leading-relaxed text-[11px]">
-                Tu contabilidad vive en Ferova OS (Supabase). Este respaldo es opcional: copia todo lo actual hacia tu propia hoja "Ferova_OS_Financiero" en Google Drive.
+                Tu contabilidad vive en Ferova OS. Este respaldo es opcional: copia todo lo actual hacia tu propia hoja "Ferova_OS_Financiero" en Google Drive.
               </p>
 
               {!hasGoogleToken && (

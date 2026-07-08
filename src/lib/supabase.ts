@@ -18,18 +18,29 @@ export type AuthUser = User;
 // Cache del provider_token de Google (Sheets + Drive)
 // ============================================================
 const TOKEN_KEY = 'ferova_oauth_token';
+const GOOGLE_CONNECTED_KEY = 'ferova_google_workspace_connected';
 
 let cachedAccessToken: string | null =
-  typeof window !== 'undefined' ? sessionStorage.getItem(TOKEN_KEY) : null;
+  typeof window !== 'undefined'
+    ? sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY)
+    : null;
 
 const persistToken = (token: string | null) => {
   cachedAccessToken = token;
   if (typeof window === 'undefined') return;
-  if (token) sessionStorage.setItem(TOKEN_KEY, token);
-  else sessionStorage.removeItem(TOKEN_KEY);
+  if (token) {
+    sessionStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(GOOGLE_CONNECTED_KEY, 'true');
+  } else {
+    sessionStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(TOKEN_KEY);
+  }
 };
 
 export const getAccessToken = (): string | null => cachedAccessToken;
+export const hasGoogleWorkspaceConnection = (): boolean =>
+  typeof window !== 'undefined' && localStorage.getItem(GOOGLE_CONNECTED_KEY) === 'true';
 export const setAccessTokenCustom = (token: string | null) => persistToken(token);
 
 // ============================================================

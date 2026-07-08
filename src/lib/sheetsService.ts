@@ -299,9 +299,9 @@ export async function fetchSpreadsheetData(spreadsheetId: string, accessToken: s
  * Import via backend edge function. Uses public CSV endpoint — the sheet must be shared
  * as "Anyone with the link can view". No Google OAuth token required.
  */
-export async function importSheetByUrl(url: string): Promise<AppData> {
+export async function importSheetByUrl(url: string, accessToken?: string | null): Promise<AppData> {
   const { supabase } = await import('../integrations/supabase/client');
-  const { data, error } = await supabase.functions.invoke('sheets-import', { body: { url } });
+  const { data, error } = await supabase.functions.invoke('sheets-import', { body: { url, access_token: accessToken || undefined } });
   if (error) {
     const details = (error as any)?.context && typeof (error as any).context.text === 'function'
       ? await (error as any).context.text().catch(() => null)

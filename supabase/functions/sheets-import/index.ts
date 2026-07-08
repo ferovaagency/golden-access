@@ -7,7 +7,10 @@ const SHEET_TABS = ['Config', 'Clientes', 'Servicios', 'Herramientas', 'OtrosGas
 
 const BodySchema = z.object({
   url: z.string().trim().min(10).max(500),
+  access_token: z.string().trim().min(20).optional(),
 });
+
+const SHEET_RANGES = SHEET_TABS.map((tab) => `${tab}!A1:Z5000`);
 
 function extractSpreadsheetId(input: string): string | null {
   const m = input.match(/\/d\/([a-zA-Z0-9-_]+)/);
@@ -56,6 +59,24 @@ async function fetchTabCsv(spreadsheetId: string, tab: string): Promise<string[]
   return parseCsv(text);
 }
 
+async function fetchSheetsApi(spreadsheetId: string, accessToken: string): Promise<Record<string, string[][]>> {
+  const query = SHEET_RANGES.map((range) => `ranges=${encodeURIComponent(range)}`).join('&');
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchGet?${query}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) {
+    const details = await res.text();
+    throw new Error(`No pude leer la hoja con tu cuenta Google (HTTP ${res.status}). ${details.slice(0, 300)}`);
+  }
+  const data = await res.json();
+  const values: Record<string, string[][]> = {};
+  for (const vr of data.valueRanges || []) {
+    const sheetName = (vr.range || '').replace(/'/g, '').split('!')[0];
+    values[sheetName] = vr.values || [];
+  }
+  return values;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -70,6 +91,19 @@ Deno.serve(async (req) => {
     if (!spreadsheetId) {
       return new Response(JSON.stringify({ ok: false, message: 'No pude extraer el ID del link. Debe verse como https://docs.google.com/spreadsheets/d/XXXX/edit' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (parsed.data.access_token) {
+      const values = await fetchSheetsApi(spreadsheetId, parsed.data.access_token);
+      const successCount = Object.values(values).filter((v) => v.length > 0).length;
+      if (successCount === 0) {
+        return new Response(JSON.stringify({ ok: false, message: 'La hoja se abrió con Google, pero no encontré datos en las pestañas esperadas.' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      return new Response(JSON.stringify({ ok: true, spreadsheetId, values, mode: 'google_token' }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
