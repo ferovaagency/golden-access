@@ -1,38 +1,18 @@
-import { createClient, Session, User } from '@supabase/supabase-js';
-
 /**
- * SUPABASE CLIENT - Reemplaza a Firebase Auth
+ * Cliente de Supabase / Lovable Cloud.
  *
- * Requiere variables de entorno:
- *   VITE_SUPABASE_URL          -> https://<project-ref>.supabase.co
- *   VITE_SUPABASE_PUBLISHABLE_KEY -> sb_publishable_...
- *
- * El SQL para crear la tabla de suscripciones está en
- *   src/lib/supabase.sql
+ * IMPORTANTE: el proyecto migró de un Supabase externo a Lovable Cloud.
+ * El cliente ahora se importa desde el módulo auto-generado; este archivo
+ * solo re-exporta el cliente y expone helpers de auth compatibles con el
+ * código existente (financeService, crmService, componentes).
  */
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const SUPABASE_PUBLISHABLE_KEY =
-  (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ||
-  'sb_publishable_b5j2ar7b9fz2XNr95JwYCQ_Eyasabcn';
+import type { Session, User } from '@supabase/supabase-js';
+import { supabase } from '../integrations/supabase/client';
+import { lovable } from '../integrations/lovable/index';
 
-if (!SUPABASE_URL) {
-  console.error(
-    '[supabase] Falta VITE_SUPABASE_URL. Defínela en tu .env o en los Build Secrets del workspace.'
-  );
-}
-
-export const supabase = createClient(
-  SUPABASE_URL || 'https://placeholder.supabase.co',
-  SUPABASE_PUBLISHABLE_KEY,
-  {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-    },
-  }
-);
+export { supabase };
+export type AuthUser = User;
 
 // ============================================================
 // Cache del provider_token de Google (Sheets + Drive)
@@ -50,37 +30,26 @@ const persistToken = (token: string | null) => {
 };
 
 export const getAccessToken = (): string | null => cachedAccessToken;
-
 export const setAccessTokenCustom = (token: string | null) => persistToken(token);
 
 // ============================================================
-// API compatible con el código existente (firebase shim)
+// Bootstrap de sesión
 // ============================================================
-export type AuthUser = User;
-
-const GOOGLE_SCOPES =
-  'openid email profile https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
-
 export const initAuth = (
   onAuthSuccess?: (user: User, token: string) => void,
   onAuthFailure?: () => void
 ) => {
-  // Captura del provider_token desde la sesión actual (al cargar la página)
-  supabase.auth.getSession().then(({ data }) => {
+  supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
     const session = data.session;
     if (session?.provider_token) persistToken(session.provider_token);
-    if (session?.user) {
-      onAuthSuccess?.(session.user, cachedAccessToken || '');
-    } else {
-      onAuthFailure?.();
-    }
+    if (session?.user) onAuthSuccess?.(session.user, cachedAccessToken || '');
+    else onAuthFailure?.();
   });
 
-  const { data: sub } = supabase.auth.onAuthStateChange((_event, session: Session | null) => {
+  const { data: sub } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
     if (session?.provider_token) persistToken(session.provider_token);
-    if (session?.user) {
-      onAuthSuccess?.(session.user, cachedAccessToken || '');
-    } else {
+    if (session?.user) onAuthSuccess?.(session.user, cachedAccessToken || '');
+    else {
       persistToken(null);
       onAuthFailure?.();
     }
@@ -89,33 +58,31 @@ export const initAuth = (
   return () => sub.subscription.unsubscribe();
 };
 
+// ============================================================
+// Google Sign-in (managed por Lovable Cloud)
+// ============================================================
+const GOOGLE_EXTRA_SCOPES =
+  'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
+
 export const googleSignIn = async () => {
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      scopes: GOOGLE_SCOPES,
-      redirectTo: window.location.origin,
-      queryParams: { access_type: 'offline', prompt: 'consent' },
+  const result = await lovable.auth.signInWithOAuth('google', {
+    redirect_uri: window.location.origin,
+    extraParams: {
+      access_type: 'offline',
+      prompt: 'consent',
+      scope: `openid email profile ${GOOGLE_EXTRA_SCOPES}`,
     },
   });
-  if (error) throw error;
-  return data;
+  if (result.error) throw result.error;
+  return result;
 };
 
-export const linkGoogleIdentity = async () => {
-  // @ts-ignore - linkIdentity existe en supabase-js >= 2.30
-  const { data, error } = await supabase.auth.linkIdentity({
-    provider: 'google',
-    options: {
-      scopes: GOOGLE_SCOPES,
-      redirectTo: window.location.origin,
-      queryParams: { access_type: 'offline', prompt: 'consent' },
-    },
-  });
-  if (error) throw error;
-  return data;
-};
+// Alias: en Cloud, reautorizar = firmar de nuevo con el mismo helper.
+export const linkGoogleIdentity = googleSignIn;
 
+// ============================================================
+// Email / Password
+// ============================================================
 export const emailSignIn = async (email: string, password: string) => {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) throw error;
@@ -169,6 +136,3 @@ export const checkSubscription = async (userId: string): Promise<boolean> => {
   if (data.expires_at && new Date(data.expires_at) < new Date()) return false;
   return true;
 };
-// La activación de la suscripción ya no pasa por el cliente: el botón alojado de
-// PayPal (Paywall.tsx) notifica el pago vía IPN a la Edge Function `paypal-ipn`,
-// que verifica la notificación contra PayPal y actualiza user_subscriptions.

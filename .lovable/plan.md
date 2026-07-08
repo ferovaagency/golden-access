@@ -1,118 +1,108 @@
-# Plan: Ferova OS → SaaS (Supabase + PayPal Paywall)
+# Migración a Lovable Cloud (con Google login integrado)
 
-## Resumen
+## Objetivo
 
-Sustituyo la plantilla TanStack Start vacía de este proyecto Lovable por el código real del repo público `github.com/ferovaagency/Ferova-OS-financie` (Vite + React 19). Sobre ese código aplico los 5 cambios solicitados: migración Firebase→Supabase con scopes de Google Sheets/Drive, Paywall de PayPal, flujo de 4 estados en `App.tsx`, y script SQL para `user_subscriptions`. Los componentes `Dashboard`, `VentasAdmin` y la lógica de `sheetsService.ts` / `calculations.ts` se preservan sin cambios.
+Activar Lovable Cloud en este proyecto para tener el mismo Google login "un click" que Ferova AI Studio, **sin tocar tu Supabase actual** (donde viven datos de otros proyectos).
 
-## Paso 1 — Reemplazo del stack
+## Cómo queda la arquitectura
 
-Borro todo lo de TanStack Start del proyecto actual:
-- `src/router.tsx`, `src/server.ts`, `src/start.ts`, `src/styles.css`, `src/routeTree.gen.ts`
-- `src/routes/` (entero)
-- `src/lib/error-capture.ts`, `error-page.ts`, `lovable-error-reporting.ts`
-- `src/hooks/`, `src/components/ui/`
-- `vite.config.ts`, `tsconfig.json`, `components.json`
-
-Copio desde el repo a la raíz del proyecto:
-- `index.html`, `vite.config.ts`, `tsconfig.json`, `metadata.json`
-- `src/main.tsx`, `src/index.css`, `src/types.ts`
-- `src/components/` (todos los componentes existentes, incluidos `Dashboard`, `VentasAdmin`, etc.)
-- `src/lib/calculations.ts`, `src/lib/sheetsService.ts`
-- `node-domexception-mock/` y el override en `package.json`
-
-**No copio**: `src/lib/firebase.ts` (se reemplaza), `firebase-applet-config.json`, `src/App.tsx` (se reescribe).
-
-## Paso 2 — Dependencias (`package.json`)
-
-Base del repo + cambios:
-- **Quitar**: `firebase`
-- **Añadir**: `@supabase/supabase-js`, `@paypal/react-paypal-js`
-- Mantengo: `@google/genai`, `recharts`, `lucide-react`, `motion`, `xlsx`, `react@19`, etc.
-
-## Paso 3 — Cliente Supabase (`src/lib/supabase.ts`)
-
-Nuevo archivo. Clave publishable hardcodeada (`sb_publishable_b5j2ar7b9fz2XNr95JwYCQ_Eyasabcn`) y URL del proyecto (te pediré la URL `https://<ref>.supabase.co` si no la tengo). Exporta:
-
-- `supabase` (cliente)
-- `signInWithEmail(email, password)`
-- `signUpWithEmail(email, password)`
-- `signInWithGoogle()` → llama `signInWithOAuth({ provider: 'google', options: { scopes: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file', queryParams: { access_type: 'offline', prompt: 'consent' } } })`
-- `signOut()`
-- `onAuthStateChange(cb)` → reexporta el listener nativo, devolviendo `{ session, providerToken }`
-- `getCurrentSession()`
-
-## Paso 4 — Paywall (`src/components/Paywall.tsx`)
-
-- Envuelve con `PayPalScriptProvider` (client-id desde `import.meta.env.VITE_PAYPAL_CLIENT_ID`, currency USD)
-- UI: tarjeta centrada, fondo `#0f0e0c`, borde `#2a2620`, acentos `#c9a961`, tipografía clara, lista de beneficios, precio (placeholder $29 USD/mes — confirmable)
-- `PayPalButtons` con `createOrder` (monto fijo) y `onApprove`:
-  - `actions.order.capture()` → obtiene `orderID`
-  - `supabase.from('user_subscriptions').insert({ user_id, status: 'active', paypal_order_id })`
-  - Llama `onPaid()` callback para que `App.tsx` reevalúe el estado
-- Botón secundario "Cerrar sesión"
-
-Necesito el **PayPal Client ID** como secret `VITE_PAYPAL_CLIENT_ID` (build secret en Workspace Settings, o lo expongo con `define` en `vite.config.ts` desde un secret runtime). Te lo pediré tras aprobar el plan.
-
-## Paso 5 — Refactor `src/App.tsx` (flujo de 4 estados)
-
-Estado interno:
-```ts
-{ session, providerToken, hasPaid, loading }
+```text
+ANTES                          DESPUÉS
+─────                          ───────
+Tu Supabase externo            Tu Supabase externo (INTACTO)
+├── finance_*                  ├── (queda ahí sin cambios,
+├── crm_*                      │    otros proyectos siguen
+├── user_subscriptions         │    usándolo)
+└── auth.users                 └── auth.users
+       ↑
+       └── Ferova OS lee/escribe          Lovable Cloud (NUEVO)
+                                          ├── finance_* (copiados)
+                                          ├── crm_* (copiados)
+                                          ├── user_subscriptions
+                                          ├── auth.users (Google login OOB)
+                                          └── Edge functions
+                                                 ↑
+                                                 └── Ferova OS lee/escribe
 ```
 
-Lógica de render:
+**Tu Supabase actual no se toca**. Se crea un Supabase nuevo administrado por Lovable, se copian las 18 tablas que **solo** usa este proyecto, y Ferova OS pasa a apuntar al nuevo.
 
-1. **`loading`** → splash dorado
-2. **`!session`** → `<AuthScreen />` (componente nuevo: form email/password + botón Google con scopes)
-3. **`session && !hasPaid`** → `<Paywall user={session.user} onPaid={refresh} />`
-4. **`session && hasPaid && !providerToken`** → pantalla de bloqueo con botón dorado "Conectar con Google Workspace" que llama `signInWithGoogle()`
-5. **`session && hasPaid && providerToken`** → `await bootstrapSheets(providerToken)` y renderiza el `<Dashboard />` original (sin tocar su lógica interna)
+## Tablas a migrar (solo las de este proyecto)
 
-`hasPaid` se calcula con: `supabase.from('user_subscriptions').select('status').eq('user_id', uid).eq('status','active').maybeSingle()`.
+Detectadas en el código:
 
-`providerToken` se obtiene de `session.provider_token` tras OAuth de Google. Se persiste en `sessionStorage` para sobrevivir refreshes (Supabase no lo guarda).
+- **Finance (10)**: `finance_ventas`, `finance_clientes`, `finance_servicios`, `finance_horas`, `finance_abonos`, `finance_otros_gastos`, `finance_pagos_egresos`, `finance_herramientas`, `finance_herramienta_servicios`, `finance_config`
+- **CRM (7)**: `crm_oportunidades`, `crm_interacciones`, `crm_citas_diagnostico`, `crm_contenido_potencial`, `crm_team_members`, `crm_bot_config`, `crm_bot_knowledge`
+- **Suscripciones (1)**: `user_subscriptions`
 
-`sheetsService.ts` se adapta mínimamente para recibir el token desde el nuevo cliente en vez de Firebase (cambio puntual: reemplazo del getter de token, no de la lógica de Sheets).
+Confirmame que **ninguna de estas 18 tablas es leída/escrita por otro de tus proyectos**. Si alguna es compartida, la marcamos y decidimos qué hacer (dejarla en el Supabase externo con acceso cross-project, o duplicar datos).
 
-## Paso 6 — SQL para Supabase
+## Pasos
 
-Incluyo en el README o en comentario al inicio de `supabase.ts`:
+### 1. Activar Lovable Cloud
+`supabase--enable` → crea el nuevo Supabase managed con auth + Google login ya configurados (así como AI Studio).
 
-```sql
-create table public.user_subscriptions (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references auth.users(id) on delete cascade not null,
-  status text not null check (status in ('active','cancelled','expired')),
-  paypal_order_id text not null,
-  created_at timestamptz default now(),
-  unique (user_id, paypal_order_id)
-);
+### 2. Recrear el esquema en Lovable Cloud
+Genero migración con las 18 tablas exactas (columnas, tipos, FKs, índices, triggers, RLS policies, grants) leyendo primero el esquema real de tu Supabase actual vía las edge functions o pidiéndote un dump.
 
-grant select, insert on public.user_subscriptions to authenticated;
-grant all on public.user_subscriptions to service_role;
+**Necesito**: acceso SQL de solo lectura a tu Supabase actual para copiar el esquema fielmente. Dos opciones:
+- (a) Corrés `pg_dump --schema-only` de esas tablas y me pegás el SQL.
+- (b) Me das temporalmente la connection string y lo hago yo con `psql` desde el sandbox.
 
-alter table public.user_subscriptions enable row level security;
+### 3. Migrar los datos
+- Export `COPY (SELECT * FROM tabla) TO STDOUT WITH CSV` desde tu Supabase.
+- Import a Lovable Cloud vía tool `insert`.
+- **Los `user_id` de `auth.users` cambian** porque son cuentas nuevas. Estrategia: mapping table — para cada email en tu `auth.users` viejo, se crea el usuario equivalente en Lovable Cloud y se reescriben todos los `user_id` de las 18 tablas con el nuevo UUID antes de insertar.
 
-create policy "users read own subs"
-  on public.user_subscriptions for select to authenticated
-  using (auth.uid() = user_id);
+### 4. Reescribir `src/lib/supabase.ts`
+Reemplazo el cliente actual por el cliente auto-generado de Lovable Cloud (`src/integrations/lovable/client.ts`). El código de `financeService.ts`, `crmService.ts`, componentes: **sin cambios** (usan `supabase.from(...)`, misma API).
 
-create policy "users insert own subs"
-  on public.user_subscriptions for insert to authenticated
-  with check (auth.uid() = user_id);
-```
+### 5. Rehacer las 7 edge functions
+`paypal-ipn`, `paypal-capture-order`, `calendar-book`, `calendar-cancel`, `linkedin-analyze`, `whatsapp-send`, `whatsapp-webhook`, `bot-knowledge-upsert` se redeployan en Lovable Cloud. El código es idéntico salvo variables de entorno.
 
-Además, instrucciones para configurar en el panel de Supabase: Authentication → Providers → Google (Client ID/Secret de Google Cloud con scopes Sheets+Drive), y agregar el dominio de Lovable a Redirect URLs.
+### 6. Reconfigurar secretos
+- PayPal: `PAYPAL_CLIENT_ID`, `PAYPAL_SECRET`, `PAYPAL_WEBHOOK_ID`
+- WhatsApp/Meta: los que tengas hoy
+- Google Calendar: reconecto el connector
+- `LOVABLE_API_KEY` para AI Gateway (linkedin-analyze) — auto-provisionado
 
-## Lo que no toco
+### 7. Actualizar webhooks externos
+- **PayPal Dashboard**: cambiar URL del IPN al nuevo endpoint de Lovable Cloud.
+- **WhatsApp/Meta**: cambiar callback URL del webhook.
 
-- `Dashboard.tsx`, `VentasAdmin.tsx`, demás componentes del repo: se copian tal cual.
-- `calculations.ts`: sin cambios.
-- `sheetsService.ts`: único cambio es cómo obtiene el token (un parámetro vs Firebase).
+### 8. Verificación
+- Login con Google desde el preview.
+- Cargar Dashboard, VentasAdmin, CRM y confirmar que los datos se ven.
+- Test de un pago PayPal en sandbox.
+- Cuando confirmes que todo funciona → apagamos las escrituras al Supabase viejo desde este proyecto (queda como archivo de referencia).
 
-## Riesgos / advertencias
+## Riesgos y advertencias
 
-- **Insert desde cliente del registro de pago es inseguro** (un usuario puede insertar `status='active'` sin pagar). Lo ideal sería verificar el pago server-side via webhook de PayPal, pero el prompt pide insert directo desde `onApprove`. Lo implemento como pediste, pero te lo señalo.
-- **`provider_token` de Google expira** (~1h) y Supabase no refresca tokens de proveedores OAuth automáticamente. El usuario tendrá que re-conectar Google periódicamente o implementar refresh tokens server-side (fuera del alcance de este plan).
-- **`VITE_PAYPAL_CLIENT_ID`** debe configurarse como **Build Secret** en Workspace Settings → Build Secrets (las variables `VITE_*` se inyectan en build, no en runtime). Te guío para hacerlo tras aprobar.
-- Necesitaré la **URL del proyecto Supabase** (`https://<ref>.supabase.co`) — la clave pública sola no basta.
+- **Ventana de escritura dual**: entre la exportación y el switch, cualquier venta/gasto que cargues en el Supabase viejo se pierde. Recomiendo hacer la migración en horario bajo y con la app en "modo mantenimiento" (te muestro un banner) por ~30 min.
+- **PayPal en producción**: si tenés suscripciones activas cobrando ahora, la URL del IPN cambia. Los pagos que ocurran mientras cambiás la config podrían no registrarse. Sugiero pausar el plan en PayPal durante la ventana.
+- **Google Sheets**: seguirá funcionando igual (el `provider_token` se obtiene del OAuth de Google en Lovable Cloud, mismos scopes).
+- **`sb_publishable_b5j2ar7b9fz2XNr95JwYCQ_Eyasabcn`** (tu clave actual) queda obsoleta para este proyecto pero **sigue viva** para los otros proyectos que usan ese Supabase.
+
+## Detalles técnicos
+
+- **Cliente Supabase**: Lovable Cloud usa `@supabase/supabase-js` estándar; la API `from().select()` es idéntica → los servicios no cambian.
+- **Auth mapping**: crear tabla temporal `auth_id_map(old_id uuid, new_id uuid, email text)` en el nuevo Supabase, poblarla con INSERT USER via admin API por email, y usar UPDATE con JOIN para reescribir FKs.
+- **RLS**: se replican las policies existentes; como los `user_id` cambian pero mantenemos la asociación email→user, las policies `auth.uid() = user_id` siguen siendo correctas post-mapping.
+- **Storage**: no detecté uso de storage buckets en el código; si tenés archivos en el Supabase viejo, decime y los agrego a la migración.
+
+## Estimación
+
+- Setup + esquema: ~30 min
+- Datos + auth mapping: ~1 h (depende del volumen)
+- Edge functions + secretos: ~45 min
+- Webhooks externos + smoke test: ~30 min
+
+**Total: ~3 h de trabajo, con la app operativa al final.**
+
+---
+
+## Antes de arrancar necesito confirmación de 3 cosas
+
+1. ¿Las 18 tablas listadas son **exclusivas** de este proyecto? ¿O alguna es compartida?
+2. ¿Preferís opción (a) pg_dump manual o (b) me pasás connection string temporal?
+3. ¿Hay suscripciones PayPal activas cobrando ahora (impacta la ventana de mantenimiento)?
