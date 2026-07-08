@@ -13,6 +13,26 @@ body {
   min-height: 100vh;
 }
 
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+select,
+textarea,
+a,
+p,
+span,
+div,
+h1,
+h2,
+h3,
+h4,
+pre {
+  min-width: 0;
+}
+
 /* Scrollbar styles */
 ::-webkit-scrollbar {
   width: 6px;
@@ -51,7 +71,11 @@ body {
 }
 
 .ferova-light-theme {
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
+}
+
+.ferova-light-theme * {
+  letter-spacing: 0;
 }
 
 .ferova-light-theme .bg-\[\#0f0e0c\],
@@ -88,6 +112,32 @@ body {
 .ferova-light-theme .bg-\[\#c9a961\] {
   background-color: var(--primary) !important;
   color: #ffffff !important;
+}
+
+.ferova-light-theme input,
+.ferova-light-theme textarea,
+.ferova-light-theme select {
+  max-width: 100%;
+}
+
+.ferova-light-theme p,
+.ferova-light-theme span,
+.ferova-light-theme a,
+.ferova-light-theme button,
+.ferova-light-theme label,
+.ferova-light-theme pre {
+  overflow-wrap: anywhere;
+}
+
+.ferova-light-theme button {
+  line-height: 1.2;
+}
+
+.ferova-light-theme .bg-white .text-white,
+.ferova-light-theme .bg-white\/70 .text-white,
+.ferova-light-theme .bg-white\/85 .text-white,
+.ferova-light-theme .bg-white\/95 .text-white {
+  color: var(--text) !important;
 }
 
 .ferova-light-theme .border-l-\[\#a39d8e\] { border-left-color: #94a3b8 !important; }
