@@ -399,7 +399,14 @@ export default function App() {
     { id: 'ajustes', label: '13. Base de Datos / Ajustes' }
   ];
 
-  const TAB_SET = [...GESTION_OPERATIVA_TABS, ...GESTION_FINANCIERA_TABS];
+  const CRM_GROWTH_TABS = isTeam ? [
+    { id: 'crm-pipeline', label: '↗ Pipeline de Ventas' },
+    { id: 'crm-citas', label: '↗ Citas + Calendar' },
+    { id: 'crm-contenido', label: '↗ LinkedIn + Reddit' },
+    { id: 'crm-bot', label: '↗ Bot WhatsApp' },
+  ] : [];
+
+  const TAB_SET = [...GESTION_OPERATIVA_TABS, ...GESTION_FINANCIERA_TABS, ...CRM_GROWTH_TABS];
 
   return (
     <div className="min-h-screen bg-[#0f0e0c] bg-gradient-to-br from-[#0f0e0c] to-[#1a1815] flex flex-col text-[#e8e3d8] font-sans">
