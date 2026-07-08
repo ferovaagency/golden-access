@@ -91,6 +91,15 @@ pre {
   background-color: var(--surface) !important;
 }
 
+.ferova-light-theme .bg-\[\#0f0e0c\]\/50,
+.ferova-light-theme .bg-\[\#0f0e0c\]\/60,
+.ferova-light-theme .bg-\[\#0f0e0c\]\/70,
+.ferova-light-theme .bg-\[\#0f0e0c\]\/20,
+.ferova-light-theme .bg-white\/\[0\.02\],
+.ferova-light-theme .bg-white\/\[0\.03\] {
+  background-color: var(--surface-soft) !important;
+}
+
 .ferova-light-theme .border-\[\#2a2620\] {
   border-color: var(--line) !important;
 }
@@ -119,6 +128,18 @@ pre {
   max-width: 100%;
 }
 
+.ferova-light-theme input.text-white,
+.ferova-light-theme textarea.text-white,
+.ferova-light-theme select.text-white,
+.ferova-light-theme .bg-transparent.text-white {
+  color: var(--text) !important;
+}
+
+.ferova-light-theme .bg-blue-600.text-black,
+.ferova-light-theme .bg-blue-600 .text-black {
+  color: #ffffff !important;
+}
+
 .ferova-light-theme p,
 .ferova-light-theme span,
 .ferova-light-theme a,
@@ -130,13 +151,6 @@ pre {
 
 .ferova-light-theme button {
   line-height: 1.2;
-}
-
-.ferova-light-theme .bg-white .text-white,
-.ferova-light-theme .bg-white\/70 .text-white,
-.ferova-light-theme .bg-white\/85 .text-white,
-.ferova-light-theme .bg-white\/95 .text-white {
-  color: var(--text) !important;
 }
 
 .ferova-light-theme .border-l-\[\#a39d8e\] { border-left-color: #94a3b8 !important; }
