@@ -139,13 +139,14 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const refreshAll = async () => {
     setLoading(true);
     try {
-      const [o, c, k, bc, kn, srv] = await Promise.all([
+      const [o, c, k, bc, kn, srv, r] = await Promise.all([
         listOportunidades(),
         listCitas(),
         listContenidoPotencial(),
         getBotConfig(),
         listKnowledge(),
         listServiciosCatalogo(user.id).catch(() => [] as ServicioCatalogo[]),
+        listResenas().catch(() => [] as Resena[]),
       ]);
       setOportunidades(o);
       setCitas(c);
@@ -154,6 +155,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setPromptDraft(bc.custom_prompt || '');
       setKnowledge(kn);
       setServicios(srv);
+      setResenas(r);
     } catch (err: any) {
       alert(`Error cargando el CRM: ${err.message || err}`);
     } finally {
