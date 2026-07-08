@@ -355,6 +355,29 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     try { await navigator.clipboard.writeText(text); } catch { /**/ }
   };
 
+  const handleScanResenas = async () => {
+    setScanningResenas(true);
+    setScanResult(null);
+    try {
+      const res = await scanResenas(30);
+      setScanResult(`Escaneados ${res.scanned} correos · ${res.inserted} nuevas reseñas · ${res.already_saved} ya guardadas · ${res.skipped} sin reseña.`);
+      setResenas(await listResenas());
+    } catch (err: any) {
+      alert(`Error escaneando Gmail: ${err.message || err}`);
+    } finally {
+      setScanningResenas(false);
+    }
+  };
+
+  const handleToggleRespondida = async (r: Resena) => {
+    try {
+      await markResenaRespondida(r.id, !r.respondida);
+      setResenas(resenas.map((x) => (x.id === r.id ? { ...x, respondida: !r.respondida } : x)));
+    } catch (err: any) {
+      alert(`Error actualizando: ${err.message || err}`);
+    }
+  };
+
   const handleCreateOportunidad = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nombreContacto.trim()) return;
