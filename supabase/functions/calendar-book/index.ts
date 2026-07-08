@@ -122,11 +122,39 @@ Deno.serve(async (req) => {
       || gEvent.conferenceData?.entryPoints?.find((e: any) => e.entryPointType === 'video')?.uri
       || null;
 
+    let oportunidadId = body.oportunidad_id || null;
+    if (!oportunidadId) {
+      const { data: existing } = await supabase
+        .from('crm_oportunidades')
+        .select('*')
+        .or(body.email_prospecto ? `email.eq.${body.email_prospecto}` : `nombre_contacto.eq.${body.nombre_prospecto}`)
+        .maybeSingle();
+      if (existing?.id) oportunidadId = existing.id;
+      else {
+        const { data: opp, error: oppErr } = await supabase
+          .from('crm_oportunidades')
+          .insert({
+            nombre_contacto: body.nombre_prospecto,
+            email: body.email_prospecto || null,
+            telefono: body.telefono_prospecto || null,
+            canal_origen: 'web',
+            estado: 'nuevo',
+            fuente_url: 'calendar-manual',
+            notas: body.notas || 'Prospecto creado automáticamente desde una cita de diagnóstico.',
+            siguiente_accion: 'Preparar diagnóstico y completar datos del prospecto.',
+          })
+          .select('*')
+          .single();
+        if (oppErr) throw oppErr;
+        oportunidadId = opp.id;
+      }
+    }
+
     // Insert into crm_citas_diagnostico (RLS uses caller's JWT)
     const { data: cita, error: insErr } = await supabase
       .from('crm_citas_diagnostico')
       .insert({
-        oportunidad_id: body.oportunidad_id || null,
+        oportunidad_id: oportunidadId,
         nombre_prospecto: body.nombre_prospecto,
         email_prospecto: body.email_prospecto || null,
         telefono_prospecto: body.telefono_prospecto || null,
@@ -137,6 +165,7 @@ Deno.serve(async (req) => {
         calendar_event_id: gEvent.id,
         meet_link: meetLink,
         notas: body.notas || null,
+        source: 'manual',
       })
       .select('*')
       .single();
