@@ -111,7 +111,7 @@ export async function listOportunidades(): Promise<Oportunidad[]> {
 
 export async function upsertOportunidad(o: Partial<Oportunidad> & { id?: string }): Promise<Oportunidad> {
   const payload = { ...o, updated_at: new Date().toISOString() };
-  const { data, error } = await supabase.from('crm_oportunidades').upsert(payload).select('*').single();
+  const { data, error } = await (supabase as any).from('crm_oportunidades').upsert(payload).select('*').single();
   if (error) throw new Error(`[crmService] upsertOportunidad: ${error.message}`);
   return data as Oportunidad;
 }
@@ -146,7 +146,7 @@ export async function listCitas(): Promise<CitaDiagnostico[]> {
 }
 
 export async function upsertCita(c: Partial<CitaDiagnostico> & { id?: string }): Promise<CitaDiagnostico> {
-  const { data, error } = await supabase.from('crm_citas_diagnostico').upsert(c).select('*').single();
+  const { data, error } = await (supabase as any).from('crm_citas_diagnostico').upsert(c).select('*').single();
   if (error) throw new Error(`[crmService] upsertCita: ${error.message}`);
   return data as CitaDiagnostico;
 }
@@ -195,7 +195,7 @@ export async function listContenidoPotencial(): Promise<ContenidoPotencial[]> {
 }
 
 export async function upsertContenidoPotencial(c: Partial<ContenidoPotencial> & { id?: string }): Promise<ContenidoPotencial> {
-  const { data, error } = await supabase.from('crm_contenido_potencial').upsert(c).select('*').single();
+  const { data, error } = await (supabase as any).from('crm_contenido_potencial').upsert(c).select('*').single();
   if (error) throw new Error(`[crmService] upsertContenidoPotencial: ${error.message}`);
   return data as ContenidoPotencial;
 }
