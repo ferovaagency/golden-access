@@ -204,10 +204,11 @@ export async function loadFinanceData(userId: string): Promise<AppData> {
 }
 
 async function overwriteTable(table: string, userId: string, rows: Record<string, any>[]) {
-  const delRes = await supabase.from(table).delete().eq('user_id', userId);
+  const client = supabase as any;
+  const delRes = await client.from(table).delete().eq('user_id', userId);
   if (delRes.error) throw new Error(`[financeService] overwrite ${table} (delete): ${delRes.error.message}`);
   if (rows.length === 0) return;
-  const insRes = await supabase.from(table).insert(rows.map((r) => ({ ...r, user_id: userId })));
+  const insRes = await client.from(table).insert(rows.map((r) => ({ ...r, user_id: userId })));
   if (insRes.error) throw new Error(`[financeService] overwrite ${table} (insert): ${insRes.error.message}`);
 }
 
