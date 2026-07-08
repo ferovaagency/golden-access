@@ -5,9 +5,9 @@ export function PromptInput({ children, onSubmit, className = '' }: React.PropsW
   return <form onSubmit={onSubmit} className={`rounded-2xl border border-slate-200 bg-white p-2 shadow-sm ${className}`}>{children}</form>;
 }
 
-export function PromptInputTextarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea {...props} className={`block min-h-20 w-full resize-none rounded-xl border-0 bg-transparent px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 ${props.className || ''}`} />;
-}
+export const PromptInputTextarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement>>(function PromptInputTextarea(props, ref) {
+  return <textarea ref={ref} {...props} className={`block min-h-20 w-full resize-none rounded-xl border-0 bg-transparent px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 ${props.className || ''}`} />;
+});
 
 export function PromptInputFooter({ children, className = '' }: React.PropsWithChildren<{ className?: string }>) {
   return <div className={`flex items-center border-t border-slate-100 px-2 pt-2 ${className}`}>{children}</div>;
