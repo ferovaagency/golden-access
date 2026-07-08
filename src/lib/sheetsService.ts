@@ -312,6 +312,106 @@ export async function importSheetByUrl(url: string, accessToken?: string | null)
   return mapValuesToAppData(data.values as Record<string, any[][]>);
 }
 
+function normalizeKey(value: unknown): string {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function text(value: unknown): string {
+  if (value == null) return '';
+  return String(value).trim();
+}
+
+function toNumber(value: unknown): number {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  const raw = text(value);
+  if (!raw) return 0;
+  const normalized = raw
+    .replace(/[$\s]/g, '')
+    .replace(/\.(?=\d{3}(\D|$))/g, '')
+    .replace(',', '.');
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function cleanId(value: unknown): string {
+  const raw = text(value);
+  if (!raw) return '';
+  const num = Number(raw);
+  if (Number.isFinite(num) && /^\d+(\.0+)?(e\+?\d+)?$/i.test(raw)) {
+    return Math.trunc(num).toLocaleString('fullwide', { useGrouping: false });
+  }
+  return raw;
+}
+
+function toBool(value: unknown, defaultValue = false): boolean {
+  const normalized = normalizeKey(value);
+  if (!normalized) return defaultValue;
+  if (['true', '1', 'si', 's', 'yes', 'y', 'activo', 'activa'].includes(normalized)) return true;
+  if (['false', '0', 'no', 'n', 'inactivo', 'inactiva'].includes(normalized)) return false;
+  return defaultValue;
+}
+
+function toDateString(value: unknown): string {
+  if (value == null || text(value) === '') return '';
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString().slice(0, 10);
+  const raw = text(value);
+  const serial = Number(raw);
+  if (Number.isFinite(serial) && serial > 25000 && serial < 70000) {
+    const epoch = Date.UTC(1899, 11, 30);
+    return new Date(epoch + serial * 86_400_000).toISOString().slice(0, 10);
+  }
+  const parsed = new Date(raw);
+  if (!Number.isNaN(parsed.getTime()) && /[-/T]|\d{4}/.test(raw)) return parsed.toISOString().slice(0, 10);
+  return raw;
+}
+
+function normalizeTipo(value: unknown): 'Nacional' | 'Internacional' {
+  return normalizeKey(value).includes('internacional') ? 'Internacional' : 'Nacional';
+}
+
+function normalizeMoneda(value: unknown): 'COP' | 'USD' {
+  return text(value).toUpperCase() === 'USD' ? 'USD' : 'COP';
+}
+
+function normalizeTipoCobro(value: unknown): 'global' | 'porCliente' {
+  const normalized = normalizeKey(value);
+  return normalized === 'porcliente' || normalized === 'por_cliente' ? 'porCliente' : 'global';
+}
+
+function normalizeEstadoPago(value: unknown): 'Pendiente' | 'Adelanto' | 'Pagado' {
+  const normalized = normalizeKey(value);
+  if (normalized.includes('pagado')) return 'Pagado';
+  if (normalized.includes('adelanto') || normalized.includes('abono')) return 'Adelanto';
+  return 'Pendiente';
+}
+
+function normalizeOtroGastoCategoria(value: unknown): 'Operativo' | 'Administrativo' | 'Otros' {
+  const normalized = normalizeKey(value);
+  if (normalized.includes('admin')) return 'Administrativo';
+  if (normalized.includes('oper')) return 'Operativo';
+  return 'Otros';
+}
+
+function normalizePagoCategoria(value: unknown): 'Herramientas' | 'Salarios' | 'Contratistas' | 'Administrativo' | 'Otros' {
+  const normalized = normalizeKey(value);
+  if (normalized.includes('herramient')) return 'Herramientas';
+  if (normalized.includes('salario') || normalized.includes('nomina')) return 'Salarios';
+  if (normalized.includes('contrat')) return 'Contratistas';
+  if (normalized.includes('admin')) return 'Administrativo';
+  return 'Otros';
+}
+
+function looksLikeJsonArray(value: unknown): boolean {
+  const raw = text(value);
+  return raw.startsWith('[') && raw.endsWith(']');
+}
+
 /**
  * Parses raw sheet values (as 2D arrays keyed by tab name) into the AppData shape used by the app.
  * Shared between the OAuth-based fetch and the public-CSV backend import.
@@ -501,13 +601,21 @@ export function mapValuesToAppData(valuesBySheet: Record<string, any[][]>): AppD
 /**
  * Helper to dismiss headers row and map items
  */
-function parseTable<T>(rawRows: any[][], mapper: (row: any[]) => T): T[] {
+function parseTable<T>(rawRows: any[][], mapper: (row: any[], get: (aliases: string[], fallbackIndex: number) => any) => T): T[] {
   if (rawRows.length <= 1) return [];
+  const headers = (rawRows[0] || []).map(normalizeKey);
+  const getFor = (row: any[]) => (aliases: string[], fallbackIndex: number) => {
+    const index = aliases
+      .map(normalizeKey)
+      .map((alias) => headers.indexOf(alias))
+      .find((idx) => idx >= 0);
+    return row[index ?? fallbackIndex];
+  };
   // Skip row 0 (headers) and filter out empty rows
   return rawRows
     .slice(1)
     .filter(row => row && row.length > 0 && row[0] !== undefined && String(row[0]).trim() !== '')
-    .map(mapper);
+    .map((row) => mapper(row, getFor(row)));
 }
 
 /**
