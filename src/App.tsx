@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { initAuth, googleSignIn, linkGoogleIdentity, logout, getAccessToken, checkSubscription } from './lib/supabase';
-import { backupAppDataToSheets } from './lib/sheetsService';
+import { backupAppDataToSheets, findSpreadsheet, fetchSpreadsheetData } from './lib/sheetsService';
 import * as financeService from './lib/financeService';
 import { Config, AppData, Cliente, Servicio, Herramienta, OtroGasto, Venta, Hora, PagoEgreso } from './types';
 import { calcularMétricasFinancieras } from './lib/calculations';
@@ -155,6 +155,51 @@ export default function App() {
       alert(`Fallo en el respaldo a Sheets: ${err.message || err}`);
     } finally {
       setIsBackingUpToSheets(false);
+    }
+  };
+
+  // Import all finance data from user's Google Sheet into DB (one-shot)
+  const handleImportFromSheets = async () => {
+    if (!user) return;
+    let token = getAccessToken();
+    if (!token) {
+      try {
+        if (user?.identities?.some((i) => i.provider === 'google')) {
+          await googleSignIn();
+        } else {
+          await linkGoogleIdentity();
+        }
+      } catch (err: any) {
+        alert(`No se pudo conectar con Google: ${err.message || err}`);
+      }
+      return;
+    }
+    if (!confirm('Esto reemplazará tus datos actuales con lo que tengas en Google Sheets (Ferova_OS_Financiero). ¿Continuar?')) return;
+    setSheetsLoading(true);
+    try {
+      const ss = await findSpreadsheet(token);
+      if (!ss) {
+        alert('No se encontró un archivo llamado "Ferova_OS_Financiero" en tu Google Drive.');
+        return;
+      }
+      const data = await fetchSpreadsheetData(ss.id, token);
+      await Promise.all([
+        financeService.saveConfig(user.id, data.config),
+        financeService.saveClientes(user.id, data.clientes),
+        financeService.saveServicios(user.id, data.servicios),
+        financeService.saveHerramientas(user.id, data.herramientas),
+        financeService.saveOtrosGastos(user.id, data.otrosGastos),
+        financeService.savePagosEgresos(user.id, data.pagosEgresos || []),
+        financeService.saveVentas(user.id, data.ventas),
+        financeService.saveHoras(user.id, data.horas),
+      ]);
+      const fresh = await financeService.loadFinanceData(user.id);
+      setAppData(fresh);
+      alert('✨ Importación desde Google Sheets completada.');
+    } catch (err: any) {
+      alert(`Fallo al importar desde Sheets: ${err.message || err}`);
+    } finally {
+      setSheetsLoading(false);
     }
   };
 
@@ -842,6 +887,7 @@ export default function App() {
                   isBackingUpToSheets={isBackingUpToSheets}
                   onSaveConfig={handleSaveConfig}
                   onBackupToSheets={handleBackupToSheets}
+                  onImportFromSheets={handleImportFromSheets}
                   formatCop={formatCop}
                 />
               )}

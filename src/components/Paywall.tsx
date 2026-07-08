@@ -8,7 +8,7 @@ interface PaywallProps {
   onPaid: () => void;
 }
 
-const PRICE_USD = Number(import.meta.env.VITE_PAYWALL_PRICE_USD || '29.00');
+const PRICE_USD = Number(import.meta.env.VITE_PAYWALL_PRICE_USD || '50.00');
 const HOSTED_BUTTON_ID = '362RRUB6YWWNW';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const NOTIFY_URL = SUPABASE_URL ? `${SUPABASE_URL}/functions/v1/paypal-ipn` : undefined;
