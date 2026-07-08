@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { initAuth, googleSignIn, linkGoogleIdentity, logout, getAccessToken, checkSubscription } from './lib/supabase';
-import { backupAppDataToSheets, findSpreadsheet, fetchSpreadsheetData } from './lib/sheetsService';
+import { backupAppDataToSheets, importSheetByUrl } from './lib/sheetsService';
 import * as financeService from './lib/financeService';
+import { isTeamMember } from './lib/crmService';
 import { Config, AppData, Cliente, Servicio, Herramienta, OtroGasto, Venta, Hora, PagoEgreso } from './types';
 import { calcularMétricasFinancieras } from './lib/calculations';
 
@@ -22,7 +23,7 @@ import ProyectosAdmin from './components/ProyectosAdmin';
 import PagosEgresosAdmin from './components/PagosEgresosAdmin';
 import AuthScreen from './components/AuthScreen';
 import Paywall from './components/Paywall';
-import AdminCRM from './components/AdminCRM';
+import AdminCRM, { CRMTab } from './components/AdminCRM';
 
 
 import { 
@@ -37,10 +38,13 @@ import {
   X
 } from 'lucide-react';
 
+const CRM_TAB_IDS: CRMTab[] = ['pipeline', 'citas', 'contenido', 'bot'];
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [hasPaid, setHasPaid] = useState(false);
+  const [isTeam, setIsTeam] = useState(false);
   const [checkingPayment, setCheckingPayment] = useState(false);
 
 
