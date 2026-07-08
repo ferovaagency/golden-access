@@ -16,6 +16,7 @@ export interface Oportunidad {
   canal_origen: CanalOrigen;
   estado: EstadoOportunidad;
   servicio_id: string | null;
+  servicio_catalogo_id: string | null;
   valor_estimado: number | null;
   moneda: 'COP' | 'USD' | null;
   probabilidad: number | null;
@@ -209,4 +210,52 @@ export async function sendWhatsapp(oportunidadId: string, text: string): Promise
   const { data, error } = await supabase.functions.invoke('whatsapp-send', { body: { oportunidad_id: oportunidadId, text } });
   if (error) throw error;
   if (!data?.ok) throw new Error(data?.message || 'No se pudo enviar el mensaje de WhatsApp.');
+}
+
+// ============================================================
+// Analizador de contenido (LinkedIn/Reddit pegado manualmente, sin scraping)
+// ============================================================
+export async function analyzeContent(
+  plataforma: 'linkedin' | 'reddit',
+  urlPublicacion: string,
+  texto: string,
+  autor?: string
+): Promise<ContenidoPotencial> {
+  const { data, error } = await supabase.functions.invoke('content-analyze', {
+    body: { plataforma, url_publicacion: urlPublicacion, autor, texto },
+  });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo analizar el contenido.');
+  return data.item as ContenidoPotencial;
+}
+
+// ============================================================
+// Catálogo de servicios propio de Ferova (costo/precio de referencia,
+// para priorizar el pipeline por rentabilidad real)
+// ============================================================
+export interface ServicioCatalogo {
+  id: string;
+  nombre: string;
+  costo_estimado: number;
+  precio_venta_estimado: number;
+  moneda: 'COP' | 'USD';
+  notas: string | null;
+  created_at: string;
+}
+
+export async function listServiciosCatalogo(): Promise<ServicioCatalogo[]> {
+  const { data, error } = await supabase.from('crm_servicios_catalogo').select('*').order('nombre');
+  if (error) throw new Error(`[crmService] listServiciosCatalogo: ${error.message}`);
+  return data as ServicioCatalogo[];
+}
+
+export async function upsertServicioCatalogo(s: Partial<ServicioCatalogo> & { id: string }): Promise<ServicioCatalogo> {
+  const { data, error } = await supabase.from('crm_servicios_catalogo').upsert(s).select('*').single();
+  if (error) throw new Error(`[crmService] upsertServicioCatalogo: ${error.message}`);
+  return data as ServicioCatalogo;
+}
+
+export async function deleteServicioCatalogo(id: string): Promise<void> {
+  const { error } = await supabase.from('crm_servicios_catalogo').delete().eq('id', id);
+  if (error) throw new Error(`[crmService] deleteServicioCatalogo: ${error.message}`);
 }

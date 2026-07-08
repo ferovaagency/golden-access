@@ -1,27 +1,34 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot } from 'lucide-react';
-import { logout } from '../lib/supabase';
+import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, Calendar as CalendarIcon, X } from 'lucide-react';
+import { logout, getAccessToken, googleSignIn, linkGoogleIdentity } from '../lib/supabase';
+import { createDiagnosticEvent, deleteDiagnosticEvent } from '../lib/calendarService';
 import {
   isTeamMember,
   listOportunidades,
   upsertOportunidad,
   deleteOportunidad,
   listCitas,
+  upsertCita,
   listContenidoPotencial,
   upsertContenidoPotencial,
+  analyzeContent,
   getBotConfig,
   saveBotConfig,
   listKnowledge,
   addKnowledge,
   deleteKnowledge,
   sendWhatsapp,
+  listServiciosCatalogo,
+  upsertServicioCatalogo,
+  deleteServicioCatalogo,
   Oportunidad,
   CitaDiagnostico,
   ContenidoPotencial,
   EstadoOportunidad,
   BotConfig,
   KnowledgeItem,
+  ServicioCatalogo,
 } from '../lib/crmService';
 
 const ESTADOS: EstadoOportunidad[] = ['nuevo', 'contactado', 'calificando', 'propuesta_enviada', 'negociacion', 'ganado', 'perdido'];
@@ -32,12 +39,13 @@ interface Props {
 
 export default function AdminCRM({ user }: Props) {
   const [authorized, setAuthorized] = useState<boolean | null>(null);
-  const [tab, setTab] = useState<'pipeline' | 'citas' | 'contenido' | 'bot'>('pipeline');
+  const [tab, setTab] = useState<'pipeline' | 'citas' | 'contenido' | 'bot' | 'servicios'>('pipeline');
   const [oportunidades, setOportunidades] = useState<Oportunidad[]>([]);
   const [citas, setCitas] = useState<CitaDiagnostico[]>([]);
   const [contenido, setContenido] = useState<ContenidoPotencial[]>([]);
   const [botConfig, setBotConfig] = useState<BotConfig | null>(null);
   const [knowledge, setKnowledge] = useState<KnowledgeItem[]>([]);
+  const [serviciosCatalogo, setServiciosCatalogo] = useState<ServicioCatalogo[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [nombreContacto, setNombreContacto] = useState('');
@@ -45,6 +53,7 @@ export default function AdminCRM({ user }: Props) {
   const [canalOrigen, setCanalOrigen] = useState('linkedin');
   const [fuenteUrl, setFuenteUrl] = useState('');
   const [telefono, setTelefono] = useState('');
+  const [servicioCatalogoId, setServicioCatalogoId] = useState('');
 
   const [promptDraft, setPromptDraft] = useState('');
   const [savingPrompt, setSavingPrompt] = useState(false);
@@ -54,6 +63,29 @@ export default function AdminCRM({ user }: Props) {
 
   const [whatsappDrafts, setWhatsappDrafts] = useState<Record<string, string>>({});
   const [sendingWhatsapp, setSendingWhatsapp] = useState<string | null>(null);
+
+  const [citaNombre, setCitaNombre] = useState('');
+  const [citaEmail, setCitaEmail] = useState('');
+  const [citaTelefono, setCitaTelefono] = useState('');
+  const [citaFecha, setCitaFecha] = useState('');
+  const [citaHora, setCitaHora] = useState('10:00');
+  const [citaDuracion, setCitaDuracion] = useState(30);
+  const [citaEsPagada, setCitaEsPagada] = useState(true);
+  const [citaMonto, setCitaMonto] = useState<number | ''>('');
+  const [citaOportunidadId, setCitaOportunidadId] = useState('');
+  const [creatingCita, setCreatingCita] = useState(false);
+  const [cancelingCitaId, setCancelingCitaId] = useState<string | null>(null);
+
+  const [analyzePlataforma, setAnalyzePlataforma] = useState<'linkedin' | 'reddit'>('linkedin');
+  const [analyzeUrl, setAnalyzeUrl] = useState('');
+  const [analyzeAutor, setAnalyzeAutor] = useState('');
+  const [analyzeTexto, setAnalyzeTexto] = useState('');
+  const [analyzing, setAnalyzing] = useState(false);
+
+  const [servicioNombre, setServicioNombre] = useState('');
+  const [servicioCosto, setServicioCosto] = useState<number | ''>('');
+  const [servicioPrecio, setServicioPrecio] = useState<number | ''>('');
+  const [savingServicio, setSavingServicio] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -66,12 +98,13 @@ export default function AdminCRM({ user }: Props) {
   const refreshAll = async () => {
     setLoading(true);
     try {
-      const [o, c, k, bc, kn] = await Promise.all([
+      const [o, c, k, bc, kn, sc] = await Promise.all([
         listOportunidades(),
         listCitas(),
         listContenidoPotencial(),
         getBotConfig(),
         listKnowledge(),
+        listServiciosCatalogo(),
       ]);
       setOportunidades(o);
       setCitas(c);
@@ -79,6 +112,7 @@ export default function AdminCRM({ user }: Props) {
       setBotConfig(bc);
       setPromptDraft(bc.custom_prompt || '');
       setKnowledge(kn);
+      setServiciosCatalogo(sc);
     } catch (err: any) {
       alert(`Error cargando el CRM: ${err.message || err}`);
     } finally {
@@ -147,6 +181,98 @@ export default function AdminCRM({ user }: Props) {
     }
   };
 
+  const ensureGoogleToken = async (): Promise<string | null> => {
+    const existing = getAccessToken();
+    if (existing) return existing;
+    try {
+      if (user.identities?.some((i) => i.provider === 'google')) {
+        await googleSignIn();
+      } else {
+        await linkGoogleIdentity();
+      }
+    } catch (err: any) {
+      alert(`No se pudo conectar Google Calendar: ${err.message || err}`);
+    }
+    // El flujo de OAuth redirige la página; tras volver, el usuario debe reintentar.
+    return null;
+  };
+
+  const handleCreateCita = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!citaNombre.trim() || !citaFecha || !citaHora) return;
+
+    const token = await ensureGoogleToken();
+    if (!token) {
+      alert('Conecta tu Google Calendar y vuelve a intentar agendar la cita.');
+      return;
+    }
+
+    setCreatingCita(true);
+    try {
+      const start = new Date(`${citaFecha}T${citaHora}:00`);
+      const end = new Date(start.getTime() + citaDuracion * 60000);
+
+      const { eventId, meetLink } = await createDiagnosticEvent(token, {
+        summary: `Diagnóstico Ferova Agency · ${citaNombre.trim()}`,
+        description: citaTelefono ? `Teléfono: ${citaTelefono}` : 'Cita de diagnóstico agendada desde el CRM interno.',
+        startISO: start.toISOString(),
+        endISO: end.toISOString(),
+        attendeeEmail: citaEmail.trim() || undefined,
+      });
+
+      const created = await upsertCita({
+        oportunidad_id: citaOportunidadId || null,
+        nombre_prospecto: citaNombre.trim(),
+        email_prospecto: citaEmail.trim() || null,
+        telefono_prospecto: citaTelefono.trim() || null,
+        fecha_hora: start.toISOString(),
+        duracion_min: citaDuracion,
+        estado: 'agendada',
+        es_pagada: citaEsPagada,
+        monto: citaMonto === '' ? null : Number(citaMonto),
+        calendar_event_id: eventId,
+        meet_link: meetLink,
+      });
+
+      setCitas([...citas, created].sort((a, b) => a.fecha_hora.localeCompare(b.fecha_hora)));
+      setCitaNombre('');
+      setCitaEmail('');
+      setCitaTelefono('');
+      setCitaFecha('');
+      setCitaMonto('');
+      setCitaOportunidadId('');
+    } catch (err: any) {
+      if (err.message === 'UNAUTHORIZED') {
+        alert('Tu sesión de Google Calendar expiró. Vuelve a conectar Google e intenta de nuevo.');
+      } else {
+        alert(`Error agendando la cita: ${err.message || err}`);
+      }
+    } finally {
+      setCreatingCita(false);
+    }
+  };
+
+  const handleCancelCita = async (cita: CitaDiagnostico) => {
+    if (!window.confirm(`¿Cancelar la cita con ${cita.nombre_prospecto}?`)) return;
+    setCancelingCitaId(cita.id);
+    try {
+      const token = getAccessToken();
+      if (token && cita.calendar_event_id) {
+        try {
+          await deleteDiagnosticEvent(token, cita.calendar_event_id);
+        } catch (err: any) {
+          console.warn('No se pudo cancelar el evento en Google Calendar:', err.message || err);
+        }
+      }
+      const updated = await upsertCita({ id: cita.id, estado: 'cancelada' });
+      setCitas(citas.map((c) => (c.id === cita.id ? updated : c)));
+    } catch (err: any) {
+      alert(`Error cancelando la cita: ${err.message || err}`);
+    } finally {
+      setCancelingCitaId(null);
+    }
+  };
+
   const handleCreateOportunidad = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nombreContacto.trim()) return;
@@ -158,12 +284,14 @@ export default function AdminCRM({ user }: Props) {
         estado: 'nuevo',
         fuente_url: fuenteUrl.trim() || null,
         telefono: telefono.trim() || null,
+        servicio_catalogo_id: servicioCatalogoId || null,
       });
       setOportunidades([created, ...oportunidades]);
       setNombreContacto('');
       setEmpresa('');
       setFuenteUrl('');
       setTelefono('');
+      setServicioCatalogoId('');
     } catch (err: any) {
       alert(`Error creando oportunidad: ${err.message || err}`);
     }
@@ -196,6 +324,60 @@ export default function AdminCRM({ user }: Props) {
       alert(`Error actualizando contenido: ${err.message || err}`);
     }
   };
+
+  const handleAnalyzeContent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!analyzeUrl.trim() || !analyzeTexto.trim()) return;
+    setAnalyzing(true);
+    try {
+      const created = await analyzeContent(analyzePlataforma, analyzeUrl.trim(), analyzeTexto.trim(), analyzeAutor.trim() || undefined);
+      setContenido([created, ...contenido]);
+      setAnalyzeUrl('');
+      setAnalyzeAutor('');
+      setAnalyzeTexto('');
+    } catch (err: any) {
+      alert(`Error analizando la publicación: ${err.message || err}`);
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const handleCreateServicio = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!servicioNombre.trim()) return;
+    setSavingServicio(true);
+    try {
+      const id = `svc_${Date.now().toString().slice(-8)}`;
+      const created = await upsertServicioCatalogo({
+        id,
+        nombre: servicioNombre.trim(),
+        costo_estimado: servicioCosto === '' ? 0 : Number(servicioCosto),
+        precio_venta_estimado: servicioPrecio === '' ? 0 : Number(servicioPrecio),
+        moneda: 'COP',
+      });
+      setServiciosCatalogo([...serviciosCatalogo, created].sort((a, b) => a.nombre.localeCompare(b.nombre)));
+      setServicioNombre('');
+      setServicioCosto('');
+      setServicioPrecio('');
+    } catch (err: any) {
+      alert(`Error guardando el servicio: ${err.message || err}`);
+    } finally {
+      setSavingServicio(false);
+    }
+  };
+
+  const handleDeleteServicio = async (id: string) => {
+    if (!window.confirm('¿Eliminar este servicio del catálogo?')) return;
+    try {
+      await deleteServicioCatalogo(id);
+      setServiciosCatalogo(serviciosCatalogo.filter((s) => s.id !== id));
+    } catch (err: any) {
+      alert(`Error eliminando: ${err.message || err}`);
+    }
+  };
+
+  const margenPct = (s: ServicioCatalogo) =>
+    s.precio_venta_estimado > 0 ? Math.round(((s.precio_venta_estimado - s.costo_estimado) / s.precio_venta_estimado) * 100) : null;
 
   if (authorized === null) {
     return (
@@ -230,7 +412,7 @@ export default function AdminCRM({ user }: Props) {
       </header>
 
       <nav className="flex gap-2 px-6 py-3 border-b border-[#2a2620] text-xs font-mono">
-        {(['pipeline', 'citas', 'contenido', 'bot'] as const).map((t) => (
+        {(['pipeline', 'citas', 'contenido', 'bot', 'servicios'] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -238,7 +420,7 @@ export default function AdminCRM({ user }: Props) {
               tab === t ? 'bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/40' : 'text-[#a39d8e] hover:text-white'
             }`}
           >
-            {t === 'pipeline' ? 'Pipeline' : t === 'citas' ? 'Citas de diagnóstico' : t === 'contenido' ? 'Contenido con potencial' : 'Bot de WhatsApp'}
+            {t === 'pipeline' ? 'Pipeline' : t === 'citas' ? 'Citas de diagnóstico' : t === 'contenido' ? 'Contenido con potencial' : t === 'bot' ? 'Bot de WhatsApp' : 'Servicios'}
           </button>
         ))}
       </nav>
@@ -288,6 +470,18 @@ export default function AdminCRM({ user }: Props) {
                 placeholder="WhatsApp (ej. 573001234567, opcional)"
                 className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
               />
+              {serviciosCatalogo.length > 0 && (
+                <select
+                  value={servicioCatalogoId}
+                  onChange={(e) => setServicioCatalogoId(e.target.value)}
+                  className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                >
+                  <option value="">Servicio de interés (opcional)</option>
+                  {serviciosCatalogo.map((s) => (
+                    <option key={s.id} value={s.id}>{s.nombre}</option>
+                  ))}
+                </select>
+              )}
               <button type="submit" className="w-full bg-[#c9a961] hover:bg-[#b09252] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5">
                 <Plus className="w-3.5 h-3.5" /> Crear
               </button>
@@ -297,7 +491,10 @@ export default function AdminCRM({ user }: Props) {
               {oportunidades.length === 0 && !loading && (
                 <p className="text-[#8a8377] text-xs font-mono text-center py-10">Sin oportunidades todavía.</p>
               )}
-              {oportunidades.map((o) => (
+              {oportunidades.map((o) => {
+                const servicioLigado = serviciosCatalogo.find((s) => s.id === o.servicio_catalogo_id);
+                const margen = servicioLigado ? margenPct(servicioLigado) : null;
+                return (
                 <div key={o.id} className="bg-[#161412] border border-[#2a2620] rounded-lg p-4 space-y-3 text-xs">
                   <div className="flex flex-wrap items-center gap-3">
                     <div className="flex-1 min-w-[160px]">
@@ -306,6 +503,18 @@ export default function AdminCRM({ user }: Props) {
                         {o.empresa || 'Sin empresa'} · {o.canal_origen}{o.telefono ? ` · ${o.telefono}` : ''}
                       </div>
                     </div>
+                    {servicioLigado && (
+                      <span
+                        className={`text-[9px] font-mono uppercase px-2 py-0.5 rounded border ${
+                          margen !== null && margen >= 40
+                            ? 'bg-[#a8c98a]/10 text-[#a8c98a] border-[#a8c98a]/30'
+                            : 'bg-[#c97a61]/10 text-[#c97a61] border-[#c97a61]/30'
+                        }`}
+                        title={`${servicioLigado.nombre}: costo ${servicioLigado.costo_estimado} / precio ${servicioLigado.precio_venta_estimado}`}
+                      >
+                        {servicioLigado.nombre} · margen {margen ?? '-'}%
+                      </span>
+                    )}
                     {o.fuente_url && (
                       <a href={o.fuente_url} target="_blank" rel="noreferrer" className="text-[#c9a961] flex items-center gap-1">
                         <ExternalLink className="w-3 h-3" /> ver
@@ -343,40 +552,184 @@ export default function AdminCRM({ user }: Props) {
                     </div>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
 
         {tab === 'citas' && (
-          <div className="space-y-2">
-            {citas.length === 0 && !loading && (
-              <p className="text-[#8a8377] text-xs font-mono text-center py-10">Sin citas agendadas todavía.</p>
-            )}
-            {citas.map((c) => (
-              <div key={c.id} className="bg-[#161412] border border-[#2a2620] rounded-lg p-4 flex flex-wrap items-center gap-3 text-xs">
-                <div className="flex-1 min-w-[160px]">
-                  <div className="font-semibold text-[#e8e3d8]">{c.nombre_prospecto}</div>
-                  <div className="text-[#8a8377] font-mono text-[10px]">
-                    {new Date(c.fecha_hora).toLocaleString('es-CO')} · {c.duracion_min} min
-                  </div>
-                </div>
-                <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-[#c9a961]/10 text-[#c9a961] border border-[#c9a961]/30">
-                  {c.estado}
-                </span>
-                {c.es_pagada && <span className="text-[10px] font-mono text-[#a8c98a]">Pagada</span>}
-                {c.meet_link && (
-                  <a href={c.meet_link} target="_blank" rel="noreferrer" className="text-[#c9a961] flex items-center gap-1">
-                    <ExternalLink className="w-3 h-3" /> unirse
-                  </a>
-                )}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <form onSubmit={handleCreateCita} className="lg:col-span-4 bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs h-fit">
+              <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
+                <CalendarIcon className="w-3.5 h-3.5" /> Agendar diagnóstico
+              </h3>
+              <input
+                value={citaNombre}
+                onChange={(e) => setCitaNombre(e.target.value)}
+                placeholder="Nombre del prospecto"
+                required
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              />
+              <input
+                type="email"
+                value={citaEmail}
+                onChange={(e) => setCitaEmail(e.target.value)}
+                placeholder="Email (para invitarlo por Calendar)"
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              />
+              <input
+                value={citaTelefono}
+                onChange={(e) => setCitaTelefono(e.target.value)}
+                placeholder="WhatsApp (opcional)"
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              />
+              {oportunidades.length > 0 && (
+                <select
+                  value={citaOportunidadId}
+                  onChange={(e) => setCitaOportunidadId(e.target.value)}
+                  className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                >
+                  <option value="">Sin ligar a oportunidad</option>
+                  {oportunidades.map((o) => (
+                    <option key={o.id} value={o.id}>{o.nombre_contacto}</option>
+                  ))}
+                </select>
+              )}
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="date"
+                  value={citaFecha}
+                  onChange={(e) => setCitaFecha(e.target.value)}
+                  required
+                  className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                />
+                <input
+                  type="time"
+                  value={citaHora}
+                  onChange={(e) => setCitaHora(e.target.value)}
+                  required
+                  className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                />
               </div>
-            ))}
+              <select
+                value={citaDuracion}
+                onChange={(e) => setCitaDuracion(Number(e.target.value))}
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              >
+                <option value={30}>30 minutos</option>
+                <option value={45}>45 minutos</option>
+                <option value={60}>60 minutos</option>
+              </select>
+              <div className="flex items-center justify-between bg-[#0f0e0c]/30 border border-[#2a2620] p-2.5 rounded">
+                <span>Diagnóstico pagado</span>
+                <input type="checkbox" checked={citaEsPagada} onChange={(e) => setCitaEsPagada(e.target.checked)} className="accent-[#c9a961]" />
+              </div>
+              {citaEsPagada && (
+                <input
+                  type="number"
+                  min="0"
+                  value={citaMonto}
+                  onChange={(e) => setCitaMonto(e.target.value === '' ? '' : Number(e.target.value))}
+                  placeholder="Monto cobrado (opcional)"
+                  className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                />
+              )}
+              <button
+                type="submit"
+                disabled={creatingCita}
+                className="w-full bg-[#c9a961] hover:bg-[#b09252] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                <Plus className="w-3.5 h-3.5" /> {creatingCita ? 'Agendando...' : 'Agendar en Google Calendar'}
+              </button>
+              <p className="text-[#8a8377] text-[10px] leading-relaxed">
+                Si no has conectado Google, se abrirá una ventana para autorizarlo — vuelve a pulsar "Agendar" después de conectar.
+              </p>
+            </form>
+
+            <div className="lg:col-span-8 space-y-2">
+              {citas.length === 0 && !loading && (
+                <p className="text-[#8a8377] text-xs font-mono text-center py-10">Sin citas agendadas todavía.</p>
+              )}
+              {citas.map((c) => (
+                <div key={c.id} className="bg-[#161412] border border-[#2a2620] rounded-lg p-4 flex flex-wrap items-center gap-3 text-xs">
+                  <div className="flex-1 min-w-[160px]">
+                    <div className="font-semibold text-[#e8e3d8]">{c.nombre_prospecto}</div>
+                    <div className="text-[#8a8377] font-mono text-[10px]">
+                      {new Date(c.fecha_hora).toLocaleString('es-CO')} · {c.duracion_min} min
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-[#c9a961]/10 text-[#c9a961] border border-[#c9a961]/30">
+                    {c.estado}
+                  </span>
+                  {c.es_pagada && <span className="text-[10px] font-mono text-[#a8c98a]">Pagada</span>}
+                  {c.meet_link && (
+                    <a href={c.meet_link} target="_blank" rel="noreferrer" className="text-[#c9a961] flex items-center gap-1">
+                      <ExternalLink className="w-3 h-3" /> unirse
+                    </a>
+                  )}
+                  {c.estado !== 'cancelada' && (
+                    <button
+                      onClick={() => handleCancelCita(c)}
+                      disabled={cancelingCitaId === c.id}
+                      className="text-[#c97a61] hover:text-[#e08970] p-1 disabled:opacity-40"
+                      title="Cancelar cita"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
         {tab === 'contenido' && (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <form onSubmit={handleAnalyzeContent} className="lg:col-span-4 bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs h-fit">
+              <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold">Analizar publicación</h3>
+              <p className="text-[#8a8377] text-[10px] leading-relaxed">
+                Pega el link y el texto de una publicación de LinkedIn o Reddit (no la buscamos automáticamente — LinkedIn no lo permite sin arriesgar la cuenta). La IA la puntúa y redacta un comentario sugerido.
+              </p>
+              <select
+                value={analyzePlataforma}
+                onChange={(e) => setAnalyzePlataforma(e.target.value as 'linkedin' | 'reddit')}
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              >
+                <option value="linkedin">LinkedIn</option>
+                <option value="reddit">Reddit</option>
+              </select>
+              <input
+                value={analyzeUrl}
+                onChange={(e) => setAnalyzeUrl(e.target.value)}
+                placeholder="Link de la publicación"
+                required
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              />
+              <input
+                value={analyzeAutor}
+                onChange={(e) => setAnalyzeAutor(e.target.value)}
+                placeholder="Autor (opcional)"
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              />
+              <textarea
+                value={analyzeTexto}
+                onChange={(e) => setAnalyzeTexto(e.target.value)}
+                rows={5}
+                placeholder="Pega aquí el texto completo de la publicación..."
+                required
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2.5 rounded text-white"
+              />
+              <button
+                type="submit"
+                disabled={analyzing}
+                className="w-full bg-[#c9a961] hover:bg-[#b09252] text-black font-bold py-2 rounded disabled:opacity-50"
+              >
+                {analyzing ? 'Analizando...' : 'Analizar y sugerir comentario'}
+              </button>
+            </form>
+
+            <div className="lg:col-span-8 space-y-2">
             {contenido.length === 0 && !loading && (
               <p className="text-[#8a8377] text-xs font-mono text-center py-10">
                 Sin contenido detectado todavía. Aquí aparecerán publicaciones de LinkedIn/Reddit con potencial, junto a un comentario sugerido para que publiques manualmente.
@@ -415,6 +768,7 @@ export default function AdminCRM({ user }: Props) {
                 </div>
               </div>
             ))}
+            </div>
           </div>
         )}
 
@@ -504,6 +858,78 @@ export default function AdminCRM({ user }: Props) {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'servicios' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <form onSubmit={handleCreateServicio} className="lg:col-span-4 bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs h-fit">
+              <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold">Nuevo servicio (catálogo propio)</h3>
+              <p className="text-[#8a8377] text-[10px] leading-relaxed">
+                Costo y precio de referencia de tus servicios, para que el pipeline priorice por rentabilidad real (independiente de las cuentas de tus clientes en Ferova OS Financiero).
+              </p>
+              <input
+                value={servicioNombre}
+                onChange={(e) => setServicioNombre(e.target.value)}
+                placeholder="Nombre del servicio"
+                required
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              />
+              <input
+                type="number"
+                min="0"
+                value={servicioCosto}
+                onChange={(e) => setServicioCosto(e.target.value === '' ? '' : Number(e.target.value))}
+                placeholder="Costo estimado (COP)"
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              />
+              <input
+                type="number"
+                min="0"
+                value={servicioPrecio}
+                onChange={(e) => setServicioPrecio(e.target.value === '' ? '' : Number(e.target.value))}
+                placeholder="Precio de venta estimado (COP)"
+                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+              />
+              <button
+                type="submit"
+                disabled={savingServicio}
+                className="w-full bg-[#c9a961] hover:bg-[#b09252] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                <Plus className="w-3.5 h-3.5" /> {savingServicio ? 'Guardando...' : 'Agregar servicio'}
+              </button>
+            </form>
+
+            <div className="lg:col-span-8 space-y-2">
+              {serviciosCatalogo.length === 0 && (
+                <p className="text-[#8a8377] text-xs font-mono text-center py-10">Sin servicios en el catálogo todavía.</p>
+              )}
+              {serviciosCatalogo.map((s) => {
+                const margen = margenPct(s);
+                return (
+                  <div key={s.id} className="bg-[#161412] border border-[#2a2620] rounded-lg p-4 flex flex-wrap items-center gap-3 text-xs">
+                    <div className="flex-1 min-w-[160px]">
+                      <div className="font-semibold text-[#e8e3d8]">{s.nombre}</div>
+                      <div className="text-[#8a8377] font-mono text-[10px]">
+                        Costo ${s.costo_estimado.toLocaleString('es-CO')} · Precio ${s.precio_venta_estimado.toLocaleString('es-CO')}
+                      </div>
+                    </div>
+                    <span
+                      className={`text-[9px] font-mono uppercase px-2 py-0.5 rounded border ${
+                        margen !== null && margen >= 40
+                          ? 'bg-[#a8c98a]/10 text-[#a8c98a] border-[#a8c98a]/30'
+                          : 'bg-[#c97a61]/10 text-[#c97a61] border-[#c97a61]/30'
+                      }`}
+                    >
+                      margen {margen ?? '-'}%
+                    </span>
+                    <button onClick={() => handleDeleteServicio(s.id)} className="text-[#c97a61] hover:text-[#e08970]">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

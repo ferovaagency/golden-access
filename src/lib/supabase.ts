@@ -59,7 +59,7 @@ export const setAccessTokenCustom = (token: string | null) => persistToken(token
 export type AuthUser = User;
 
 const GOOGLE_SCOPES =
-  'openid email profile https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
+  'openid email profile https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar.events';
 
 export const initAuth = (
   onAuthSuccess?: (user: User, token: string) => void,
