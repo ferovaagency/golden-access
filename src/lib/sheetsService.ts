@@ -256,13 +256,9 @@ export async function fetchSpreadsheetData(spreadsheetId: string, accessToken: s
   let loadedAllNine = false;
 
   try {
-    // 1. Try to fetch all 9 sheets in a single request (highly efficient)
     const queryParams = coreSheets.map(item => `ranges=${encodeURIComponent(item.range)}`).join('&');
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchGet?${queryParams}`;
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
     if (res.ok) {
       const data = await res.json();
       valueRanges = data.valueRanges || [];
@@ -271,41 +267,60 @@ export async function fetchSpreadsheetData(spreadsheetId: string, accessToken: s
       console.warn(`Fetch with 9 sheets returned status ${res.status}. Falling back to 8 core sheets.`);
     }
   } catch (err) {
-    console.warn("9-sheets direct fetch threw error, using fallback:", err);
+    console.warn('9-sheets direct fetch threw error, using fallback:', err);
   }
 
-  // 2. If 9-sheets fetch failed (e.g. PagosEgresos sheet does not exist yet), fall back to only the 8 known core sheets
   if (!loadedAllNine) {
     const fallbackSheets = coreSheets.slice(0, 8);
     const queryParams = fallbackSheets.map(item => `ranges=${encodeURIComponent(item.range)}`).join('&');
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchGet?${queryParams}`;
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
     if (!res.ok) {
       throw new Error(`Error trayendo datos de Sheets (8 core sheets): ${res.statusText || 'Respuesta no exitosa'}`);
     }
-
     const data = await res.json();
     valueRanges = data.valueRanges || [];
-
-    // Trigger asynchronous creation of the missing 'PagosEgresos' sheet in the background so it exists next time
     ensureSingleWorksheetExists(spreadsheetId, accessToken, 'PagosEgresos').catch(err => {
       console.error("Background auto-upgrade of 'PagosEgresos' failed:", err);
     });
   }
 
-  // Robustly extract sheet values by matching the range title self-descriptively
+  // Convertir valueRanges (formato Google API) a un mapa {sheetName: values[][]}
+  const valuesBySheet: Record<string, any[][]> = {};
+  for (const vr of valueRanges) {
+    if (!vr?.range) continue;
+    const sheetName = vr.range.replace(/'/g, '').split('!')[0];
+    valuesBySheet[sheetName] = vr.values || [];
+  }
+  return mapValuesToAppData(valuesBySheet);
+}
+
+/**
+ * Import via backend edge function. Uses public CSV endpoint — the sheet must be shared
+ * as "Anyone with the link can view". No Google OAuth token required.
+ */
+export async function importSheetByUrl(url: string): Promise<AppData> {
+  const { supabase } = await import('../integrations/supabase/client');
+  const { data, error } = await supabase.functions.invoke('sheets-import', { body: { url } });
+  if (error) {
+    const details = (error as any)?.context && typeof (error as any).context.text === 'function'
+      ? await (error as any).context.text().catch(() => null)
+      : null;
+    throw new Error(details || (error as Error).message || 'No se pudo importar desde el link');
+  }
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo importar desde el link');
+  return mapValuesToAppData(data.values as Record<string, any[][]>);
+}
+
+/**
+ * Parses raw sheet values (as 2D arrays keyed by tab name) into the AppData shape used by the app.
+ * Shared between the OAuth-based fetch and the public-CSV backend import.
+ */
+export function mapValuesToAppData(valuesBySheet: Record<string, any[][]>): AppData {
   const findValuesForSheet = (sheetName: string): any[][] => {
-    const normSheet = sheetName.replace(/'/g, '').toLowerCase();
-    const found = valueRanges.find((vr: any) => {
-      if (!vr.range) return false;
-      const cleanRange = vr.range.replace(/'/g, '').toLowerCase();
-      return cleanRange.startsWith(`${normSheet}!`);
-    });
-    return found?.values || [];
+    return valuesBySheet[sheetName] || [];
   };
+
 
   const rawConfig = findValuesForSheet('Config');
   const rawClientes = findValuesForSheet('Clientes');
