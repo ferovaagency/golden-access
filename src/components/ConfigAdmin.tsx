@@ -27,6 +27,7 @@ export default function ConfigAdmin({
   isBackingUpToSheets,
   onSaveConfig,
   onBackupToSheets,
+  onImportFromSheets,
   formatCop
 }: ConfigAdminProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
