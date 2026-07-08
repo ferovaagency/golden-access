@@ -1,4 +1,5 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 // Recibe eventos messages.upsert de Evolution API para la instancia de WhatsApp
 // de Ferova Agency. Registra todo en el CRM (crm_oportunidades/crm_interacciones)
@@ -20,13 +21,18 @@ const CHAT_MODEL = "google/gemini-2.5-flash";
 const EMBED_MODEL = "google/gemini-embedding-001";
 
 const evoHeaders = { "Content-Type": "application/json", apikey: EVOLUTION_API_KEY };
+const aiHeaders = { "Content-Type": "application/json", "Lovable-API-Key": LOVABLE_API_KEY, "X-Lovable-AIG-SDK": "manual-fetch" };
 
 async function sendWhatsapp(to: string, text: string) {
-  await fetch(`${EVOLUTION_API_URL}/message/sendText/${EVOLUTION_INSTANCE_NAME}`, {
+  if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY || !EVOLUTION_INSTANCE_NAME) {
+    throw new Error("WhatsApp no está configurado: faltan EVOLUTION_API_URL, EVOLUTION_API_KEY o EVOLUTION_INSTANCE_NAME.");
+  }
+  const res = await fetch(`${EVOLUTION_API_URL}/message/sendText/${EVOLUTION_INSTANCE_NAME}`, {
     method: "POST",
     headers: evoHeaders,
     body: JSON.stringify({ number: to, text }),
   });
+  if (!res.ok) throw new Error(`Evolution API error ${res.status}: ${await res.text()}`);
 }
 
 function extractText(msg: any): string {
@@ -51,7 +57,7 @@ async function embed(text: string): Promise<number[] | null> {
   try {
     const res = await fetch(`${LOVABLE_GATEWAY}/embeddings`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
+      headers: aiHeaders,
       body: JSON.stringify({ model: EMBED_MODEL, input: text }),
     });
     if (!res.ok) {
@@ -78,7 +84,7 @@ async function generateReply(systemPrompt: string, history: { role: string; cont
   ];
   const res = await fetch(`${LOVABLE_GATEWAY}/chat/completions`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
+    headers: aiHeaders,
     body: JSON.stringify({ model: CHAT_MODEL, messages }),
   });
   if (!res.ok) throw new Error(`Lovable AI Gateway error ${res.status}: ${await res.text()}`);
@@ -87,16 +93,17 @@ async function generateReply(systemPrompt: string, history: { role: string; cont
 }
 
 Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   const url = new URL(req.url);
   if (url.searchParams.get("token") !== WEBHOOK_TOKEN || !WEBHOOK_TOKEN) {
-    return new Response("forbidden", { status: 403 });
+    return new Response("forbidden", { status: 403, headers: corsHeaders });
   }
 
   let body: any;
   try {
     body = await req.json();
   } catch {
-    return new Response(JSON.stringify({ ok: true }), { headers: { "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
   const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);

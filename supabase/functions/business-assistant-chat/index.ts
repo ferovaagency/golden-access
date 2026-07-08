@@ -7,6 +7,13 @@ function textFromParts(message: UIMessage): string {
   return (message.parts || []).map((part: any) => part.type === "text" ? part.text : "").join("").trim();
 }
 
+function latestAssistant(messages: UIMessage[]): UIMessage | null {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role === "assistant") return messages[i];
+  }
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return new Response(JSON.stringify({ ok: false, message: "Method not allowed" }), { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -65,7 +72,9 @@ Deno.serve(async (req) => {
     const response = result.toUIMessageStreamResponse({
       originalMessages: messages,
       headers: getLovableAiGatewayResponseHeaders(undefined, { ...corsHeaders, ...(initialRunId ? { "X-Lovable-AIG-Run-ID": initialRunId } : {}) }),
-      onFinish: async ({ responseMessage }: any) => {
+      onFinish: async ({ messages: finishedMessages }: any) => {
+        const responseMessage = latestAssistant(finishedMessages || []);
+        if (!responseMessage) return;
         const { error } = await admin.from("business_assistant_messages").insert({ user_id: userId, role: "assistant", parts: responseMessage.parts || [], content: textFromParts(responseMessage) });
         if (error) console.error("[business-assistant] assistant persist error", error);
       },

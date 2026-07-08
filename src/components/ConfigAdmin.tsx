@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Config, Venta, Cliente, Hora } from '../types';
 import { convertToCop } from '../lib/calculations';
 import { Settings, Save, RefreshCw, FolderSync, Clipboard } from 'lucide-react';
+import { copyText } from '../lib/clipboard';
 
 interface ConfigAdminProps {
   config: Config;
@@ -84,8 +85,8 @@ export default function ConfigAdmin({
   };
 
   // TSV Clipboard triggers
-  const triggerCopy = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
+  const triggerCopy = async (text: string, label: string) => {
+    await copyText(text);
     setCopiedStatus(label);
     setTimeout(() => setCopiedStatus(null), 2500);
   };

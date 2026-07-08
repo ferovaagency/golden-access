@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, type UIMessage } from 'ai';
-import { Bot, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { Bot, PanelRightClose } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Conversation, ConversationContent } from './ai-elements/conversation';
 import { Message, MessageContent, MessageResponse } from './ai-elements/message';
@@ -47,8 +47,11 @@ export default function BusinessAssistant({ user, open, onToggle }: Props) {
 
   const transport = useMemo(() => new DefaultChatTransport({
     api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/business-assistant-chat`,
-    headers: {
-      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+    fetch: async (input, init) => {
+      const { data } = await supabase.auth.getSession();
+      const headers = new Headers(init?.headers);
+      if (data.session?.access_token) headers.set('Authorization', `Bearer ${data.session.access_token}`);
+      return fetch(input, { ...init, headers });
     },
   }), []);
 
