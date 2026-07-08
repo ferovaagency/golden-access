@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
       created.push(cita);
 
       if (oportunidad?.id && email) {
-        fetch(`${SUPABASE_URL}/functions/v1/apollo-enrich-playbook`, {
+        await fetch(`${SUPABASE_URL}/functions/v1/apollo-enrich-playbook`, {
           method: "POST",
           headers: { Authorization: authHeader, "Content-Type": "application/json" },
           body: JSON.stringify({ oportunidad_id: oportunidad.id, email, fuente_url: BOOKING_LINK, contexto_publicacion: description }),

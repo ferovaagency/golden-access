@@ -177,6 +177,19 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (oportunidadId && body.email_prospecto) {
+      await fetch(`${Deno.env.get('SUPABASE_URL')!}/functions/v1/apollo-enrich-playbook`, {
+        method: 'POST',
+        headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          oportunidad_id: oportunidadId,
+          email: body.email_prospecto,
+          fuente_url: 'calendar-manual',
+          contexto_publicacion: body.notas || 'Cita de diagnóstico agendada manualmente desde el CRM.',
+        }),
+      }).catch(() => null);
+    }
+
     return new Response(JSON.stringify({ ok: true, cita }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
