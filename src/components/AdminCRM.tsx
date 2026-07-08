@@ -91,6 +91,15 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const [anaTexto, setAnaTexto] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
 
+  // Reddit subreddit fetcher
+  const [subInput, setSubInput] = useState('');
+  const [subListing, setSubListing] = useState<'new' | 'hot' | 'top' | 'rising'>('new');
+  const [subLimit, setSubLimit] = useState(15);
+  const [subTimeframe, setSubTimeframe] = useState<'hour' | 'day' | 'week' | 'month' | 'year' | 'all'>('week');
+  const [subPosts, setSubPosts] = useState<RedditPost[]>([]);
+  const [fetchingSub, setFetchingSub] = useState(false);
+  const [analyzingPostId, setAnalyzingPostId] = useState<string | null>(null);
+
   useEffect(() => {
     (async () => {
       const ok = await isTeamMember(user.email || '');
