@@ -308,7 +308,7 @@ export async function importSheetByUrl(url: string, accessToken?: string | null)
       : null;
     throw new Error(details || (error as Error).message || 'No se pudo importar desde el link');
   }
-  if (!data?.ok) throw new Error(data?.message || 'No se pudo importar desde el link');
+  if (!data?.ok) throw new Error(`${data?.message || 'No se pudo importar desde el link'}${data?.details ? `\n${data.details}` : ''}`);
   return mapValuesToAppData(data.values as Record<string, any[][]>);
 }
 

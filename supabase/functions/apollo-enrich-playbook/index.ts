@@ -211,7 +211,7 @@ Servicios de Ferova a mencionar solo si son relevantes al dolor detectado: SEO, 
 
     const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${LOVABLE_API_KEY}` },
+      headers: { 'Content-Type': 'application/json', 'Lovable-API-Key': LOVABLE_API_KEY, 'X-Lovable-AIG-SDK': 'manual-fetch' },
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
         messages: [

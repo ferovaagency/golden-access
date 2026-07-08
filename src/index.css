@@ -1,17 +1,16 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300..800;1,9..144,300..800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;650&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Fraunces", serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Figtree", ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
   font-family: var(--font-sans);
-  background-color: #0f0e0c;
-  background-image: linear-gradient(to bottom right, #0f0e0c, #1a1815);
-  color: #e8e3d8;
+  background-color: #f7f8fb;
+  background-image: linear-gradient(135deg, #f7f8fb 0%, #eef6ff 48%, #f8fbf4 100%);
+  color: #1f2937;
   min-height: 100vh;
 }
 
@@ -24,11 +23,124 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #e5e5e5;
+  background: #cbd5e1;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #d4d4d4;
+  background: #94a3b8;
+}
+
+.ferova-light-theme {
+  --bg: #f7f8fb;
+  --surface: #ffffff;
+  --surface-soft: #f1f5f9;
+  --surface-tint: #eef6ff;
+  --line: #dbe4ee;
+  --text: #1f2937;
+  --muted: #64748b;
+  --primary: #2563eb;
+  --primary-soft: #dbeafe;
+  --success: #16a34a;
+  --success-soft: #dcfce7;
+  --warning: #d97706;
+  --warning-soft: #fef3c7;
+  --danger: #dc2626;
+  --danger-soft: #fee2e2;
+  --violet: #7c3aed;
+  --violet-soft: #ede9fe;
+  --shadow-soft: 0 18px 50px rgba(15, 23, 42, 0.08);
+}
+
+.ferova-light-theme, .ferova-light-theme * {
+  letter-spacing: 0;
+}
+
+.ferova-light-theme .bg-\[\#0f0e0c\],
+.ferova-light-theme .bg-\[\#11100e\],
+.ferova-light-theme .bg-\[\#14120f\],
+.ferova-light-theme .bg-\[\#161412\],
+.ferova-light-theme .bg-\[\#1c1916\] {
+  background-color: var(--surface);
+}
+
+.ferova-light-theme .bg-\[\#0f0e0c\]\/50,
+.ferova-light-theme .bg-\[\#0f0e0c\]\/60,
+.ferova-light-theme .bg-\[\#0f0e0c\]\/20,
+.ferova-light-theme .bg-white\/\[0\.02\],
+.ferova-light-theme .bg-white\/\[0\.03\] {
+  background-color: var(--surface-soft);
+}
+
+.ferova-light-theme .border-\[\#2a2620\],
+.ferova-light-theme .border-\[\#2a2620\]\/45 {
+  border-color: var(--line);
+}
+
+.ferova-light-theme .text-\[\#e8e3d8\],
+.ferova-light-theme .text-white {
+  color: var(--text);
+}
+
+.ferova-light-theme .text-\[\#a39d8e\],
+.ferova-light-theme .text-\[\#8a8377\] {
+  color: var(--muted);
+}
+
+.ferova-light-theme .text-\[\#c9a961\] {
+  color: var(--primary);
+}
+
+.ferova-light-theme .bg-\[\#c9a961\] {
+  background-color: var(--primary);
+  color: #ffffff;
+}
+
+.ferova-light-theme .border-\[\#c9a961\]\/25,
+.ferova-light-theme .border-\[\#c9a961\]\/30,
+.ferova-light-theme .border-\[\#c9a961\]\/35,
+.ferova-light-theme .border-\[\#c9a961\]\/40 {
+  border-color: #bfdbfe;
+}
+
+.ferova-light-theme .bg-\[\#c9a961\]\/10,
+.ferova-light-theme .bg-\[\#c9a961\]\/15 {
+  background-color: var(--primary-soft);
+}
+
+.ferova-light-theme .text-\[\#a8c98a\] {
+  color: var(--success);
+}
+
+.ferova-light-theme .bg-\[\#a8c98a\],
+.ferova-light-theme .bg-\[\#a8c98a\]\/10,
+.ferova-light-theme .bg-\[\#a8c98a\]\/15 {
+  background-color: var(--success-soft);
+  color: #166534;
+}
+
+.ferova-light-theme .text-\[\#c97a61\] {
+  color: var(--danger);
+}
+
+.ferova-light-theme .bg-\[\#c97a61\]\/10 {
+  background-color: var(--danger-soft);
+}
+
+.ferova-light-theme .rounded-lg {
+  border-radius: 12px;
+}
+
+.ferova-light-theme input,
+.ferova-light-theme textarea,
+.ferova-light-theme select {
+  background-color: #ffffff;
+  color: var(--text);
+  border-color: var(--line);
+}
+
+.ferova-light-theme input::placeholder,
+.ferova-light-theme textarea::placeholder {
+  color: #94a3b8;
 }
 
 /* Custom transitions */

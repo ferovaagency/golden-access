@@ -77,7 +77,8 @@ ${body.texto.slice(0, 6000)}
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        'Lovable-API-Key': LOVABLE_API_KEY,
+        'X-Lovable-AIG-SDK': 'manual-fetch',
       },
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',

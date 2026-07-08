@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      business_assistant_messages: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          parts: Json
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          parts?: Json
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          parts?: Json
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       crm_bot_config: {
         Row: {
           bot_enabled: boolean
@@ -753,6 +780,42 @@ export type Database = {
         }
         Relationships: []
       }
+      google_workspace_connections: {
+        Row: {
+          access_token: string | null
+          connected: boolean
+          connected_email: string | null
+          created_at: string
+          expires_at: string | null
+          last_error: string | null
+          scopes: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          connected?: boolean
+          connected_email?: string | null
+          created_at?: string
+          expires_at?: string | null
+          last_error?: string | null
+          scopes?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          connected?: boolean
+          connected_email?: string | null
+          created_at?: string
+          expires_at?: string | null
+          last_error?: string | null
+          scopes?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_subscriptions: {
         Row: {
           amount_usd: number | null
@@ -788,7 +851,73 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      business_overview: {
+        Row: {
+          clientes_activos: number | null
+          egresos_pagados: number | null
+          gastos_operativos: number | null
+          margen_directo_total: number | null
+          meta_ventas_mensual: number | null
+          oportunidades_total: number | null
+          pipeline_estimado: number | null
+          resenas_sin_responder: number | null
+          trm: number | null
+          user_id: string | null
+          ventas_totales: number | null
+        }
+        Insert: {
+          clientes_activos?: never
+          egresos_pagados?: never
+          gastos_operativos?: never
+          margen_directo_total?: never
+          meta_ventas_mensual?: number | null
+          oportunidades_total?: never
+          pipeline_estimado?: never
+          resenas_sin_responder?: never
+          trm?: number | null
+          user_id?: string | null
+          ventas_totales?: never
+        }
+        Update: {
+          clientes_activos?: never
+          egresos_pagados?: never
+          gastos_operativos?: never
+          margen_directo_total?: never
+          meta_ventas_mensual?: number | null
+          oportunidades_total?: never
+          pipeline_estimado?: never
+          resenas_sin_responder?: never
+          trm?: number | null
+          user_id?: string | null
+          ventas_totales?: never
+        }
+        Relationships: []
+      }
+      crm_growth_overview: {
+        Row: {
+          citas_activas: number | null
+          contenidos_analizados: number | null
+          oportunidades_abiertas: number | null
+          oportunidades_ganadas: number | null
+          oportunidades_total: number | null
+          pipeline_estimado: number | null
+          resenas_sin_responder: number | null
+        }
+        Relationships: []
+      }
+      finance_service_profitability: {
+        Row: {
+          costos_directos: number | null
+          horas_registradas: number | null
+          ingresos_brutos: number | null
+          margen_bruto: number | null
+          servicio_id: string | null
+          servicio_nombre: string | null
+          user_id: string | null
+          ventas_count: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       is_team_member: { Args: never; Returns: boolean }

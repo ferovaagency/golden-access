@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles, Download, MessageSquare, Zap, Copy, Search, Star, RefreshCw, CheckCircle2, Link2 } from 'lucide-react';
 import { getAccessToken, googleSignIn, logout } from '../lib/supabase';
+import { copyText } from '../lib/clipboard';
 import {
   isTeamMember,
   listOportunidades,
@@ -405,7 +406,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   };
 
   const copyToClipboard = async (text: string) => {
-    try { await navigator.clipboard.writeText(text); } catch { /**/ }
+    await copyText(text);
   };
 
   const handleScanResenas = async () => {
@@ -525,7 +526,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
   if (authorized === null) {
     return (
-      <div className={`${embedded ? 'py-12' : 'min-h-screen'} bg-[#0f0e0c] flex items-center justify-center text-[#e8e3d8]`}>
+      <div className={`${embedded ? 'py-12' : 'min-h-screen'} bg-[#f7f8fb] flex items-center justify-center text-slate-700`}>
         <Loader2 className="w-8 h-8 animate-spin text-[#c9a961]" />
       </div>
     );
@@ -533,7 +534,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
   if (!authorized) {
     return (
-      <div className={`${embedded ? 'py-12' : 'min-h-screen'} bg-[#0f0e0c] flex flex-col items-center justify-center gap-4 text-[#e8e3d8] p-6 text-center`}>
+      <div className={`${embedded ? 'py-12' : 'min-h-screen'} bg-[#f7f8fb] flex flex-col items-center justify-center gap-4 text-slate-700 p-6 text-center`}>
         <Ban className="w-10 h-10 text-[#c97a61]" />
         <p className="font-mono text-sm">No autorizado. {user.email} no está en el equipo de Ferova.</p>
         {!embedded && (
@@ -546,7 +547,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   }
 
   const bodyClass = embedded ? '' : 'p-6 max-w-6xl mx-auto';
-  const outerClass = embedded ? '' : 'min-h-screen bg-[#0f0e0c] bg-gradient-to-br from-[#0f0e0c] to-[#1a1815] text-[#e8e3d8] font-sans';
+  const outerClass = embedded ? '' : 'ferova-light-theme min-h-screen bg-[#f7f8fb] text-slate-900 font-sans';
   const kpis = [
     { label: 'Pipeline', value: oportunidades.length, accent: '#c9a961' },
     { label: 'Citas activas', value: citas.filter((c) => c.estado !== 'cancelada').length, accent: '#7ab5c9' },
@@ -1269,7 +1270,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[9px] font-mono uppercase text-[#8a8377]">Comentario sugerido:</span>
                         <button
-                          onClick={() => { navigator.clipboard.writeText(c.comentario_sugerido || ''); }}
+                          onClick={() => copyToClipboard(c.comentario_sugerido || '')}
                           className="text-[9px] font-mono text-[#c9a961] hover:text-[#e8c481] uppercase"
                         >
                           Copiar
@@ -1321,6 +1322,19 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   Instancia de WhatsApp: <span className="text-[#a39d8e] font-mono">{botConfig.instance_name}</span>. También puedes
                   escribir "activar bot" / "apagar bot" desde el propio WhatsApp para controlarlo.
                 </p>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-100 rounded-lg p-5 space-y-2 text-xs text-slate-700">
+                <h3 className="text-blue-700 font-semibold flex items-center gap-1.5">
+                  <Link2 className="w-3.5 h-3.5" /> Cómo conectar tu número de WhatsApp
+                </h3>
+                <ol className="list-decimal pl-4 space-y-1 leading-relaxed">
+                  <li>Creá o abrí una instancia en Evolution API con el mismo nombre mostrado arriba.</li>
+                  <li>Escaneá el QR de esa instancia con el WhatsApp que querés usar.</li>
+                  <li>Guardá en secretos: EVOLUTION_API_URL, EVOLUTION_API_KEY, EVOLUTION_INSTANCE_NAME y WHATSAPP_WEBHOOK_TOKEN.</li>
+                  <li>En Evolution API configurá el webhook hacia la función <span className="font-mono">whatsapp-webhook</span> agregando <span className="font-mono">?token=WHATSAPP_WEBHOOK_TOKEN</span>.</li>
+                </ol>
+                <p className="text-slate-500">Después de eso, los mensajes entrantes crean oportunidades y el bot responde solo si está activo.</p>
               </div>
 
               <div className="bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs">

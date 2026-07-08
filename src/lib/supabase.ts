@@ -19,6 +19,12 @@ export type AuthUser = User;
 // ============================================================
 const TOKEN_KEY = 'ferova_oauth_token';
 const GOOGLE_CONNECTED_KEY = 'ferova_google_workspace_connected';
+const GOOGLE_SCOPES = [
+  'https://www.googleapis.com/auth/spreadsheets',
+  'https://www.googleapis.com/auth/drive.file',
+  'https://www.googleapis.com/auth/gmail.readonly',
+  'https://www.googleapis.com/auth/calendar.events',
+];
 
 let cachedAccessToken: string | null =
   typeof window !== 'undefined'
@@ -38,6 +44,38 @@ const persistToken = (token: string | null) => {
   }
 };
 
+const persistWorkspaceConnection = async (session: Session | null) => {
+  const token = session?.provider_token || cachedAccessToken;
+  const user = session?.user;
+  if (!token || !user) return;
+  persistToken(token);
+  try {
+    await (supabase as any).from('google_workspace_connections').upsert({
+      user_id: user.id,
+      access_token: token,
+      connected: true,
+      scopes: GOOGLE_SCOPES,
+      connected_email: user.email || null,
+      last_error: null,
+      updated_at: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.warn('[google workspace] no se pudo persistir la conexión:', error);
+  }
+};
+
+export const hydrateGoogleWorkspaceConnection = async (userId?: string): Promise<string | null> => {
+  if (cachedAccessToken) return cachedAccessToken;
+  if (!userId) return null;
+  const { data, error } = await (supabase as any)
+    .from('google_workspace_connections')
+    .select('access_token, connected')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (!error && data?.connected && data.access_token) persistToken(data.access_token);
+  return cachedAccessToken;
+};
+
 export const getAccessToken = (): string | null => cachedAccessToken;
 export const hasGoogleWorkspaceConnection = (): boolean =>
   typeof window !== 'undefined' && localStorage.getItem(GOOGLE_CONNECTED_KEY) === 'true';
@@ -52,14 +90,18 @@ export const initAuth = (
 ) => {
   supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
     const session = data.session;
-    if (session?.provider_token) persistToken(session.provider_token);
-    if (session?.user) onAuthSuccess?.(session.user, cachedAccessToken || '');
+    if (session?.provider_token) persistWorkspaceConnection(session);
+    if (session?.user) {
+      hydrateGoogleWorkspaceConnection(session.user.id).finally(() => onAuthSuccess?.(session.user, cachedAccessToken || ''));
+    }
     else onAuthFailure?.();
   });
 
   const { data: sub } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
-    if (session?.provider_token) persistToken(session.provider_token);
-    if (session?.user) onAuthSuccess?.(session.user, cachedAccessToken || '');
+    if (session?.provider_token) persistWorkspaceConnection(session);
+    if (session?.user) {
+      hydrateGoogleWorkspaceConnection(session.user.id).finally(() => onAuthSuccess?.(session.user, cachedAccessToken || ''));
+    }
     else {
       persistToken(null);
       onAuthFailure?.();
@@ -72,8 +114,7 @@ export const initAuth = (
 // ============================================================
 // Google Sign-in (managed por Lovable Cloud)
 // ============================================================
-const GOOGLE_EXTRA_SCOPES =
-  'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/calendar.events';
+const GOOGLE_EXTRA_SCOPES = GOOGLE_SCOPES.join(' ');
 
 export const googleSignIn = async () => {
   const result = await lovable.auth.signInWithOAuth('google', {

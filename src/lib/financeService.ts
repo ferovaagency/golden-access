@@ -212,6 +212,17 @@ async function overwriteTable(table: string, userId: string, rows: Record<string
   if (insRes.error) throw new Error(`[financeService] overwrite ${table} (insert): ${insRes.error.message}`);
 }
 
+export async function saveImportedFinanceData(userId: string, data: AppData) {
+  await saveConfig(userId, data.config);
+  await saveClientes(userId, data.clientes);
+  await saveServicios(userId, data.servicios);
+  await saveHerramientas(userId, data.herramientas);
+  await saveOtrosGastos(userId, data.otrosGastos);
+  await savePagosEgresos(userId, data.pagosEgresos || []);
+  await saveVentas(userId, data.ventas);
+  await saveHoras(userId, data.horas);
+}
+
 export async function saveClientes(userId: string, list: Cliente[]) {
   await overwriteTable('finance_clientes', userId, list.map((c) => ({
     id: c.id,

@@ -13,6 +13,12 @@ interface Body {
   days?: number;
 }
 
+const aiHeaders = (key: string) => ({
+  'Content-Type': 'application/json',
+  'Lovable-API-Key': key,
+  'X-Lovable-AIG-SDK': 'manual-fetch',
+});
+
 const SENDERS = [
   'noreply-business@google.com',
   'noreply@business.google.com',
@@ -98,7 +104,12 @@ Deno.serve(async (req) => {
     }
 
     const body = (await req.json()) as Body;
-    const accessToken = body.access_token?.trim();
+    const { data: savedConnection } = await supabase
+      .from('google_workspace_connections')
+      .select('access_token')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    const accessToken = body.access_token?.trim() || savedConnection?.access_token?.trim();
     if (!accessToken) {
       return new Response(JSON.stringify({ ok: false, message: 'Falta access_token de Google. Reconecta Google Workspace con permiso Gmail.' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -163,7 +174,7 @@ Deno.serve(async (req) => {
       // IA extracción
       const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${LOVABLE_API_KEY}` },
+        headers: aiHeaders(LOVABLE_API_KEY),
         body: JSON.stringify({
           model: 'google/gemini-2.5-flash',
           messages: [
@@ -182,7 +193,13 @@ Si el correo NO es una notificación de reseña recibida (por ejemplo digest, ti
           response_format: { type: 'json_object' },
         }),
       });
-      if (!aiRes.ok) { skipped++; continue; }
+      if (!aiRes.ok) {
+        const t = await aiRes.text();
+        console.error(`[reviews-scan] ai extraction ${aiRes.status}: ${t}`);
+        return new Response(JSON.stringify({ ok: false, message: 'Error extrayendo reseñas con IA', status: aiRes.status, details: t.slice(0, 700) }), {
+          status: aiRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
       const aiJson = await aiRes.json();
       const content = aiJson?.choices?.[0]?.message?.content;
       let parsed: any = {};
