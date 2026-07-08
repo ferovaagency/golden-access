@@ -80,16 +80,21 @@ export default function App() {
         setUser(fUser);
         setAuthLoading(false);
         setCheckingPayment(true);
-        const paid = await checkSubscription(fUser.id);
-        setHasPaid(paid);
+        const [paid, team] = await Promise.all([
+          checkSubscription(fUser.id),
+          isTeamMember(fUser.email || '').catch(() => false),
+        ]);
+        setHasPaid(paid || team);
+        setIsTeam(team);
         setCheckingPayment(false);
-        if (paid) {
+        if (paid || team) {
           bootstrapFinanceData(fUser.id);
         }
       },
       () => {
         setUser(null);
         setHasPaid(false);
+        setIsTeam(false);
         setAuthLoading(false);
         setAppData(null);
       }
