@@ -55,11 +55,14 @@ export default function BusinessAssistant({ user, open, onToggle }: Props) {
     },
   }), []);
 
-  const { messages, sendMessage, status, stop, error } = useChat({
+  const { messages, setMessages, sendMessage, status, stop, error } = useChat({
     id: `business-assistant-${user.id}`,
-    messages: initialMessages,
     transport,
   });
+
+  useEffect(() => {
+    if (loaded) setMessages(initialMessages);
+  }, [loaded, initialMessages, setMessages]);
 
   useEffect(() => {
     if (open) setTimeout(() => textareaRef.current?.focus(), 80);
