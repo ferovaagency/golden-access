@@ -95,8 +95,7 @@ pre {
   border-color: var(--line) !important;
 }
 
-.ferova-light-theme .text-\[\#e8e3d8\],
-.ferova-light-theme .text-white {
+.ferova-light-theme .text-\[\#e8e3d8\] {
   color: var(--text) !important;
 }
 
