@@ -14,6 +14,7 @@ interface ConfigAdminProps {
   onSaveConfig: (updated: Config) => Promise<void>;
   onBackupToSheets: () => Promise<void>;
   onImportFromSheets: () => Promise<void>;
+  onImportFromSheetsUrl: (url: string) => Promise<void>;
   formatCop: (val: number) => string;
 }
 
