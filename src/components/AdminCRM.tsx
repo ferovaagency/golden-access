@@ -1107,3 +1107,21 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     </div>
   );
 }
+
+function PlaybookCard({ label, text, onCopy, accent }: { label: string; text: string; onCopy: (t: string) => void; accent: string }) {
+  return (
+    <div className="bg-[#0f0e0c]/70 border rounded p-3" style={{ borderColor: `${accent}44` }}>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-[9px] font-mono uppercase tracking-wider font-bold" style={{ color: accent }}>{label}</span>
+        <button
+          onClick={() => onCopy(text)}
+          className="text-[9px] font-mono uppercase flex items-center gap-1 hover:opacity-80"
+          style={{ color: accent }}
+        >
+          <Copy className="w-2.5 h-2.5" /> Copiar
+        </button>
+      </div>
+      <p className="text-[#e8e3d8] text-[11px] whitespace-pre-wrap leading-relaxed">{text}</p>
+    </div>
+  );
+}
