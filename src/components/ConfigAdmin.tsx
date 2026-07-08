@@ -14,6 +14,7 @@ interface ConfigAdminProps {
   onSaveConfig: (updated: Config) => Promise<void>;
   onBackupToSheets: () => Promise<void>;
   onImportFromSheets: () => Promise<void>;
+  onImportFromSheetsUrl: (url: string) => Promise<void>;
   formatCop: (val: number) => string;
 }
 
@@ -28,10 +29,13 @@ export default function ConfigAdmin({
   onSaveConfig,
   onBackupToSheets,
   onImportFromSheets,
+  onImportFromSheetsUrl,
   formatCop
 }: ConfigAdminProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copiedStatus, setCopiedStatus] = useState<string | null>(null);
+  const [sheetUrl, setSheetUrl] = useState('');
+  const [isImportingUrl, setIsImportingUrl] = useState(false);
 
   // Form State
   const [trm, setTrm] = useState(config.trm);
@@ -397,6 +401,32 @@ export default function ConfigAdmin({
                 >
                   <FolderSync className="w-4 h-4" />
                   {hasGoogleToken ? 'Importar mi Google Sheet' : 'Conectar Google e importar'}
+                </button>
+              </div>
+
+              <div className="border-t border-[#2a2620] pt-4 mt-2 space-y-2">
+                <p className="text-[10px] text-[#8a8377] uppercase tracking-widest font-mono">Importar pegando link</p>
+                <p className="text-[11px] text-[#a39d8e] leading-relaxed">
+                  Pega la URL de tu Google Sheet (debe estar compartido con tu cuenta Google conectada) y lo importamos directo. Debe tener las pestañas: <span className="font-mono text-[#c9a961]">Config, Clientes, Servicios, Herramientas, OtrosGastos, Ventas, Horas, PagosEgresos</span>.
+                </p>
+                <input
+                  type="url"
+                  value={sheetUrl}
+                  onChange={(e) => setSheetUrl(e.target.value)}
+                  placeholder="https://docs.google.com/spreadsheets/d/XXXXXXX/edit"
+                  className="w-full bg-[#0f0e0c]/70 text-white border border-[#2a2620] p-2.5 rounded font-mono text-[11px] focus:outline-none focus:border-[#c9a961]"
+                />
+                <button
+                  onClick={async () => {
+                    setIsImportingUrl(true);
+                    try { await onImportFromSheetsUrl(sheetUrl); }
+                    finally { setIsImportingUrl(false); }
+                  }}
+                  disabled={isImportingUrl || !sheetUrl.trim()}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#a8c98a] hover:bg-[#96b579] text-black rounded font-bold font-display shadow transition cursor-pointer text-[11px] disabled:bg-neutral-800 disabled:text-neutral-500"
+                >
+                  <FolderSync className={`w-4 h-4 ${isImportingUrl ? 'animate-spin' : ''}`} />
+                  {isImportingUrl ? 'Importando...' : 'Importar desde este link'}
                 </button>
               </div>
             </div>
