@@ -1,5 +1,5 @@
-import { supabase } from './supabase';
-import { getAccessToken } from './supabase';
+import { supabase, getAccessToken } from './supabase';
+
 
 
 /**
