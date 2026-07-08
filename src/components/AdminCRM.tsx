@@ -547,6 +547,12 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
   const bodyClass = embedded ? '' : 'p-6 max-w-6xl mx-auto';
   const outerClass = embedded ? '' : 'min-h-screen bg-[#0f0e0c] bg-gradient-to-br from-[#0f0e0c] to-[#1a1815] text-[#e8e3d8] font-sans';
+  const kpis = [
+    { label: 'Pipeline', value: oportunidades.length, accent: '#c9a961' },
+    { label: 'Citas activas', value: citas.filter((c) => c.estado !== 'cancelada').length, accent: '#7ab5c9' },
+    { label: 'Contenido analizado', value: contenido.length, accent: '#a8c98a' },
+    { label: 'Reseñas sin responder', value: resenas.filter((r) => !r.respondida).length, accent: '#c97a61' },
+  ];
 
   return (
     <div className={outerClass}>
@@ -584,6 +590,24 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
             <Loader2 className="w-4 h-4 animate-spin" /> Sincronizando...
           </div>
         )}
+
+        <section className="mb-6 grid grid-cols-1 lg:grid-cols-[1.4fr_2fr] gap-4">
+          <div className="border border-[#2a2620] rounded-lg p-5 bg-[#14120f]">
+            <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#8a8377]">Growth cockpit</p>
+            <h2 className="text-2xl font-display font-semibold text-[#e8e3d8] mt-2">CRM interno de Ferova</h2>
+            <p className="text-xs text-[#a39d8e] mt-2 leading-relaxed">
+              Captura demanda, analiza señales, agenda diagnósticos y centraliza reseñas sin enviar nada automáticamente.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+            {kpis.map((item) => (
+              <div key={item.label} className="bg-[#161412] border border-[#2a2620] rounded-lg p-4">
+                <span className="text-[9px] font-mono uppercase tracking-wider text-[#8a8377]">{item.label}</span>
+                <div className="text-2xl font-display font-bold mt-2" style={{ color: item.accent }}>{item.value}</div>
+              </div>
+            ))}
+          </div>
+        </section>
 
 
         {tab === 'pipeline' && (
