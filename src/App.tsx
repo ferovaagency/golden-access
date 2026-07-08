@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { initAuth, googleSignIn, linkGoogleIdentity, logout, getAccessToken, checkSubscription } from './lib/supabase';
-import { backupAppDataToSheets } from './lib/sheetsService';
+import { backupAppDataToSheets, findSpreadsheet, fetchSpreadsheetData } from './lib/sheetsService';
 import * as financeService from './lib/financeService';
 import { Config, AppData, Cliente, Servicio, Herramienta, OtroGasto, Venta, Hora, PagoEgreso } from './types';
 import { calcularMétricasFinancieras } from './lib/calculations';
