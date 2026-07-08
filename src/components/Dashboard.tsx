@@ -366,7 +366,7 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
               <span className="text-slate-900 uppercase font-semibold">1. Declaración de Renta Persona Natural</span>
               <span className="text-slate-500">Ventas Anuales Proyectadas: <b className="text-white">{formatCop(projectedAnnualSales)}</b> / {formatCop(limiteRentaVentas)} (1.400 UVT)</span>
             </div>
-            <div className="w-full bg-[#2a2620] rounded-full h-2 overflow-hidden mt-2">
+            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden mt-2">
               <div 
                 className="h-full rounded-full transition-all duration-300"
                 style={{ width: `${Math.min(pctRentaVentas, 100)}%`, backgroundColor: alertRenta.bar }}
@@ -384,7 +384,7 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
               <span className="text-slate-900 uppercase font-semibold">2. Responsabilidad de IVA (Art. 437 ET)</span>
               <span className="text-slate-500">Tope de Ingresos: <b className="text-white">{formatCop(projectedAnnualSales)}</b> / {formatCop(limiteResponsableIva)} (3.500 UVT)</span>
             </div>
-            <div className="w-full bg-[#2a2620] rounded-full h-2 overflow-hidden mt-2">
+            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden mt-2">
               <div 
                 className="h-full rounded-full transition-all duration-300"
                 style={{ width: `${Math.min(pctIvaVentas, 100)}%`, backgroundColor: alertIva.bar }}
@@ -402,7 +402,7 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
               <span className="text-slate-900 uppercase font-semibold">3. Impuesto de Renta a Pagar</span>
               <span className="text-slate-500">Utilidad Gravable Anual: <b className="text-white">{formatCop(projectedAnnualNet)}</b> / Exento hasta {formatCop(limitePagaRenta)} (1.090 UVT)</span>
             </div>
-            <div className="w-full bg-[#2a2620] rounded-full h-2 overflow-hidden mt-2">
+            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden mt-2">
               <div 
                 className="h-full rounded-full transition-all duration-300"
                 style={{ width: `${Math.min(pctPagaRenta, 100)}%`, backgroundColor: alertPagoRenta.bar }}
@@ -429,13 +429,13 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
             {chartServiceData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartServiceData}>
-                  <XAxis dataKey="name" stroke="#8a8377" fontSize={11} tickLine={false} />
-                  <YAxis stroke="#8a8377" fontSize={11} tickFormatter={(v) => `$${(v/1e6).toFixed(1)}M`} />
+                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={11} tickFormatter={(v) => `$${(v/1e6).toFixed(1)}M`} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: '#161412', borderColor: '#2a2620', color: '#e8e3d8' }}
+                    contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', color: '#0f172a', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                     formatter={(v: any) => [formatCop(v), 'Facturado']}
                   />
-                  <Bar dataKey="ventas" fill="#c9a961" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="ventas" fill="#2563eb" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -453,13 +453,13 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
             {chartServiceData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartServiceData}>
-                  <XAxis dataKey="name" stroke="#8a8377" fontSize={11} tickLine={false} />
-                  <YAxis stroke="#8a8377" fontSize={11} tickFormatter={(v) => `$${(v/e6TotalOr1(v)).toFixed(1)}M`} />
+                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={11} tickFormatter={(v) => `$${(v/e6TotalOr1(v)).toFixed(1)}M`} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: '#161412', borderColor: '#2a2620', color: '#e8e3d8' }}
+                    contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', color: '#0f172a', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                     formatter={(v: any) => [formatCop(v), 'Utilidad']}
                   />
-                  <Bar dataKey="utilidad" fill="#a8c98a" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="utilidad" fill="#16a34a" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -479,17 +479,17 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
           {evolutionData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={evolutionData}>
-                <CartesianGrid stroke="#2a2620" strokeDasharray="3 3" />
-                <XAxis dataKey="month" stroke="#8a8377" fontSize={11} />
-                <YAxis stroke="#8a8377" fontSize={11} tickFormatter={(v) => `$${(v/1e6).toFixed(1)}M`} />
+                <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" />
+                <XAxis dataKey="month" stroke="#94a3b8" fontSize={11} />
+                <YAxis stroke="#94a3b8" fontSize={11} tickFormatter={(v) => `$${(v/1e6).toFixed(1)}M`} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#161412', borderColor: '#2a2620', color: '#e8e3d8' }}
+                  contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', color: '#0f172a', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   formatter={(v: any) => [formatCop(v)]}
                 />
                 <Legend textAnchor="middle" wrapperStyle={{ fontSize: 11, color: '#e8e3d8', paddingTop: 10 }} />
-                <Line type="monotone" dataKey="ventas" name="Ventas" stroke="#c9a961" strokeWidth={2} activeDot={{ r: 6 }} />
-                <Line type="monotone" dataKey="costos" name="Costos + Fijos" stroke="#c97a61" strokeWidth={1.5} />
-                <Line type="monotone" dataKey="utilidad" name="Utilidad Estimada" stroke="#a8c98a" strokeWidth={2.5} />
+                <Line type="monotone" dataKey="ventas" name="Ventas" stroke="#2563eb" strokeWidth={2} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="costos" name="Costos + Fijos" stroke="#dc2626" strokeWidth={1.5} />
+                <Line type="monotone" dataKey="utilidad" name="Utilidad Estimada" stroke="#16a34a" strokeWidth={2.5} />
               </LineChart>
             </ResponsiveContainer>
           ) : (

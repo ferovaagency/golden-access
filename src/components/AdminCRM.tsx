@@ -527,7 +527,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   if (authorized === null) {
     return (
       <div className={`${embedded ? 'py-12' : 'min-h-screen'} bg-[#f7f8fb] flex items-center justify-center text-slate-700`}>
-        <Loader2 className="w-8 h-8 animate-spin text-[#c9a961]" />
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
       </div>
     );
   }
@@ -535,10 +535,10 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   if (!authorized) {
     return (
       <div className={`${embedded ? 'py-12' : 'min-h-screen'} bg-[#f7f8fb] flex flex-col items-center justify-center gap-4 text-slate-700 p-6 text-center`}>
-        <Ban className="w-10 h-10 text-[#c97a61]" />
+        <Ban className="w-10 h-10 text-red-600" />
         <p className="font-mono text-sm">No autorizado. {user.email} no está en el equipo de Ferova.</p>
         {!embedded && (
-          <button onClick={() => logout()} className="text-[#c9a961] underline text-xs font-mono">
+          <button onClick={() => logout()} className="text-blue-600 underline text-xs font-mono">
             Cerrar sesión
           </button>
         )}
@@ -559,12 +559,12 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     <div className={outerClass}>
       {!embedded && (
         <>
-          <header className="bg-[#11100e] border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+          <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
             <div>
-              <h1 className="text-lg font-display font-bold text-[#c9a961]">Ferova Growth OS</h1>
+              <h1 className="text-lg font-display font-bold text-blue-600">Ferova Growth OS</h1>
               <span className="text-[10px] font-mono text-[#8a8377] uppercase tracking-wider">CRM interno · no visible para clientes</span>
             </div>
-            <button onClick={() => logout()} className="text-[#8a8377] hover:text-[#c97a61] flex items-center gap-1 text-xs font-mono">
+            <button onClick={() => logout()} className="text-[#8a8377] hover:text-red-600 flex items-center gap-1 text-xs font-mono">
               <LogOut className="w-3.5 h-3.5" /> Cerrar sesión
             </button>
           </header>
@@ -575,7 +575,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 key={t}
                 onClick={() => setTab(t)}
                 className={`px-3 py-1.5 rounded uppercase tracking-wider font-semibold ${
-                  tab === t ? 'bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/40' : 'text-slate-500 hover:text-white'
+                  tab === t ? 'bg-blue-50 text-blue-600 border border-[#c9a961]/40' : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
                 {t === 'pipeline' ? 'Pipeline' : t === 'citas' ? 'Citas de diagnóstico' : t === 'contenido' ? 'Contenido con potencial' : t === 'bot' ? 'Bot de WhatsApp' : 'Reseñas'}
@@ -587,13 +587,13 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
       <main className={bodyClass}>
         {loading && (
-          <div className="flex items-center gap-2 text-[#c9a961] text-xs font-mono mb-4">
+          <div className="flex items-center gap-2 text-blue-600 text-xs font-mono mb-4">
             <Loader2 className="w-4 h-4 animate-spin" /> Sincronizando...
           </div>
         )}
 
         <section className="mb-6 grid grid-cols-1 lg:grid-cols-[1.4fr_2fr] gap-4">
-          <div className="border border-slate-200 rounded-lg p-5 bg-[#14120f]">
+          <div className="border border-slate-200 rounded-lg p-5 bg-white">
             <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#8a8377]">Growth cockpit</p>
             <h2 className="text-2xl font-display font-semibold text-slate-900 mt-2">CRM interno de Ferova</h2>
             <p className="text-xs text-slate-500 mt-2 leading-relaxed">
@@ -614,24 +614,24 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
         {tab === 'pipeline' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <form onSubmit={handleCreateOportunidad} className="lg:col-span-4 bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs h-fit">
-              <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold">Nueva oportunidad</h3>
+              <h3 className="text-blue-600 font-mono uppercase text-[10px] tracking-wider font-bold">Nueva oportunidad</h3>
               <input
                 value={nombreContacto}
                 onChange={(e) => setNombreContacto(e.target.value)}
                 placeholder="Nombre de contacto"
                 required
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
               />
               <input
                 value={empresa}
                 onChange={(e) => setEmpresa(e.target.value)}
                 placeholder="Empresa (opcional)"
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
               />
               <select
                 value={canalOrigen}
                 onChange={(e) => setCanalOrigen(e.target.value)}
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
               >
                 {['linkedin', 'whatsapp', 'email', 'reddit', 'web', 'googlemaps', 'referido', 'otro'].map((c) => (
                   <option key={c} value={c}>{c}</option>
@@ -641,18 +641,18 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 value={fuenteUrl}
                 onChange={(e) => setFuenteUrl(e.target.value)}
                 placeholder="Link de la publicación/perfil (opcional)"
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
               />
               <input
                 value={telefono}
                 onChange={(e) => setTelefono(e.target.value)}
                 placeholder="WhatsApp (ej. 573001234567, opcional)"
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
               />
               <select
                 value={nuevaServicioId}
                 onChange={(e) => setNuevaServicioId(e.target.value)}
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
               >
                 <option value="">Servicio del catálogo (opcional)</option>
                 {servicios.map((s) => (
@@ -666,12 +666,12 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   value={nuevaValorEstimado}
                   onChange={(e) => setNuevaValorEstimado(e.target.value)}
                   placeholder="Valor estimado (opcional)"
-                  className="flex-1 bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                  className="flex-1 bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
                 />
                 <select
                   value={nuevaMoneda}
                   onChange={(e) => setNuevaMoneda(e.target.value as 'COP' | 'USD')}
-                  className="bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                  className="bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
                 >
                   <option value="COP">COP</option>
                   <option value="USD">USD</option>
@@ -710,7 +710,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                         </div>
                         {(srv || valor != null) && (
                           <div className="text-slate-500 font-mono text-[10px] mt-1">
-                            {srv && <span className="text-[#c9a961]">{srv.nombre}</span>}
+                            {srv && <span className="text-blue-600">{srv.nombre}</span>}
                             {srv && valor != null && ' · '}
                             {valor != null && o.moneda && <span>{fmt(valor, o.moneda)}</span>}
                           </div>
@@ -727,7 +727,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                         </div>
                       )}
                       {o.fuente_url && (
-                        <a href={o.fuente_url} target="_blank" rel="noreferrer" className="text-[#c9a961] flex items-center gap-1">
+                        <a href={o.fuente_url} target="_blank" rel="noreferrer" className="text-blue-600 flex items-center gap-1">
                           <ExternalLink className="w-3 h-3" /> ver
                         </a>
                       )}
@@ -740,7 +740,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                           <option key={s} value={s}>{s}</option>
                         ))}
                       </select>
-                      <button onClick={() => handleDelete(o.id)} className="text-[#c97a61] hover:text-[#e08970]">
+                      <button onClick={() => handleDelete(o.id)} className="text-red-600 hover:text-[#e08970]">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -752,12 +752,12 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                         value={whatsappDrafts[o.id] || ''}
                         onChange={(e) => setWhatsappDrafts({ ...whatsappDrafts, [o.id]: e.target.value })}
                         placeholder="Escribe un mensaje de WhatsApp..."
-                        className="flex-1 bg-slate-50/50 border border-slate-200 p-1.5 rounded text-white"
+                        className="flex-1 bg-slate-50/50 border border-slate-200 p-1.5 rounded text-slate-900"
                       />
                       <button
                         onClick={() => handleSendWhatsapp(o.id)}
                         disabled={sendingWhatsapp === o.id || !whatsappDrafts[o.id]?.trim()}
-                        className="px-2.5 py-1.5 bg-[#a8c98a]/15 border border-[#a8c98a]/40 text-[#a8c98a] rounded flex items-center gap-1 disabled:opacity-40"
+                        className="px-2.5 py-1.5 bg-[#a8c98a]/15 border border-[#a8c98a]/40 text-emerald-600 rounded flex items-center gap-1 disabled:opacity-40"
                       >
                         <Send className="w-3 h-3" /> {sendingWhatsapp === o.id ? 'Enviando...' : 'Enviar'}
                       </button>
@@ -773,7 +773,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                       {o.playbook_generated_at && (
                         <button
                           onClick={() => setExpandedPlaybookId(expandedPlaybookId === o.id ? null : o.id)}
-                          className="text-[9px] font-mono text-[#c9a961] uppercase hover:text-[#e8c481]"
+                          className="text-[9px] font-mono text-blue-600 uppercase hover:text-[#e8c481]"
                         >
                           {expandedPlaybookId === o.id ? 'Ocultar playbook' : 'Ver playbook'}
                         </button>
@@ -784,18 +784,18 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                         value={getEnrichInput(o.id).linkedin_url}
                         onChange={(e) => setEnrichInput(o.id, { linkedin_url: e.target.value })}
                         placeholder="LinkedIn URL (opcional)"
-                        className="bg-slate-50/50 border border-slate-200 p-1.5 rounded text-white text-[11px]"
+                        className="bg-slate-50/50 border border-slate-200 p-1.5 rounded text-slate-900 text-[11px]"
                       />
                       <input
                         value={getEnrichInput(o.id).dominio}
                         onChange={(e) => setEnrichInput(o.id, { dominio: e.target.value })}
                         placeholder="Dominio empresa (opcional)"
-                        className="bg-slate-50/50 border border-slate-200 p-1.5 rounded text-white text-[11px]"
+                        className="bg-slate-50/50 border border-slate-200 p-1.5 rounded text-slate-900 text-[11px]"
                       />
                       <button
                         onClick={() => handleEnrichApollo(o)}
                         disabled={enrichingId === o.id}
-                        className="px-2.5 py-1.5 bg-[#c9a961]/15 border border-[#c9a961]/40 text-[#c9a961] rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
+                        className="px-2.5 py-1.5 bg-blue-50 border border-[#c9a961]/40 text-blue-600 rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
                       >
                         <Zap className="w-3 h-3" /> {enrichingId === o.id ? 'Procesando...' : 'Apollo + Playbook'}
                       </button>
@@ -805,7 +805,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                       onChange={(e) => setEnrichInput(o.id, { contexto: e.target.value })}
                       placeholder="Contexto de la publicación / comentario original (opcional pero muy recomendado)"
                       rows={2}
-                      className="w-full bg-slate-50/50 border border-slate-200 p-1.5 rounded text-white text-[11px] font-mono"
+                      className="w-full bg-slate-50/50 border border-slate-200 p-1.5 rounded text-slate-900 text-[11px] font-mono"
                     />
 
                     {expandedPlaybookId === o.id && o.playbook_generated_at && (
@@ -846,7 +846,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
         {tab === 'citas' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <form onSubmit={handleBookCita} className="lg:col-span-4 bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs h-fit">
-              <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
+              <h3 className="text-blue-600 font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
                 <CalendarPlus className="w-3.5 h-3.5" /> Agendar cita de diagnóstico
               </h3>
               <input
@@ -854,25 +854,25 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 onChange={(e) => setBookNombre(e.target.value)}
                 placeholder="Nombre del prospecto"
                 required
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
               />
               <input
                 type="email"
                 value={bookEmail}
                 onChange={(e) => setBookEmail(e.target.value)}
                 placeholder="Email (recibe invitación de Calendar)"
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
               />
               <input
                 value={bookTelefono}
                 onChange={(e) => setBookTelefono(e.target.value)}
                 placeholder="WhatsApp (opcional)"
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
               />
               <select
                 value={bookOportunidadId}
                 onChange={(e) => setBookOportunidadId(e.target.value)}
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
               >
                 <option value="">Sin vincular a oportunidad</option>
                 {oportunidades.map((o) => (
@@ -886,7 +886,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 value={bookFecha}
                 onChange={(e) => setBookFecha(e.target.value)}
                 required
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
               />
               <div className="flex items-center gap-2">
                 <label className="text-[#8a8377] font-mono text-[10px]">Duración (min)</label>
@@ -896,7 +896,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   step={15}
                   value={bookDuracion}
                   onChange={(e) => setBookDuracion(Number(e.target.value))}
-                  className="w-20 bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                  className="w-20 bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
                 />
               </div>
               <textarea
@@ -904,7 +904,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 onChange={(e) => setBookNotas(e.target.value)}
                 rows={3}
                 placeholder="Notas / agenda de la reunión (opcional)"
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
               />
               <button
                 type="submit"
@@ -933,14 +933,14 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   </div>
                   <span className={`text-[9px] font-mono uppercase px-2 py-0.5 rounded border ${
                     c.estado === 'cancelada'
-                      ? 'bg-[#c97a61]/10 text-[#c97a61] border-[#c97a61]/30'
-                      : 'bg-[#c9a961]/10 text-[#c9a961] border-[#c9a961]/30'
+                      ? 'bg-[#c97a61]/10 text-red-600 border-[#c97a61]/30'
+                      : 'bg-[#c9a961]/10 text-blue-600 border-[#c9a961]/30'
                   }`}>
                     {c.estado}
                   </span>
-                  {c.es_pagada && <span className="text-[10px] font-mono text-[#a8c98a]">Pagada</span>}
+                  {c.es_pagada && <span className="text-[10px] font-mono text-emerald-600">Pagada</span>}
                   {c.meet_link && c.estado !== 'cancelada' && (
-                    <a href={c.meet_link} target="_blank" rel="noreferrer" className="text-[#c9a961] flex items-center gap-1">
+                    <a href={c.meet_link} target="_blank" rel="noreferrer" className="text-blue-600 flex items-center gap-1">
                       <ExternalLink className="w-3 h-3" /> unirse
                     </a>
                   )}
@@ -948,7 +948,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                     <button
                       onClick={() => handleCancelCita(c.id)}
                       disabled={cancellingId === c.id}
-                      className="text-[#c97a61] hover:text-[#e08970] flex items-center gap-1 text-[10px] font-mono disabled:opacity-40"
+                      className="text-red-600 hover:text-[#e08970] flex items-center gap-1 text-[10px] font-mono disabled:opacity-40"
                     >
                       <XCircle className="w-3.5 h-3.5" /> {cancellingId === c.id ? 'Cancelando...' : 'Cancelar'}
                     </button>
@@ -963,7 +963,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
         {tab === 'contenido' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-12 bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs">
-              <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
+              <h3 className="text-blue-600 font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
                 <Search className="w-3.5 h-3.5" /> Buscar publicaciones públicas de LinkedIn
               </h3>
               <p className="text-[#8a8377] font-mono text-[10px] leading-relaxed">
@@ -974,7 +974,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   value={liInput}
                   onChange={(e) => setLiInput(e.target.value)}
                   placeholder="SEO, Shopify, automatización IA"
-                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white font-mono"
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900 font-mono"
                 />
                 <input
                   type="number"
@@ -982,7 +982,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   max={30}
                   value={liLimit}
                   onChange={(e) => setLiLimit(Math.max(1, Math.min(30, Number(e.target.value) || 12)))}
-                  className="bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                  className="bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
                 />
                 <button
                   onClick={handleSearchLinkedIn}
@@ -997,15 +997,15 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   <p className="md:col-span-2 text-[9px] font-mono uppercase text-[#8a8377]">{liResults.length} resultados públicos</p>
                   {liResults.map((result) => (
                     <div key={result.id} className="bg-slate-50/50 border border-slate-200 rounded p-3 space-y-1.5">
-                      <a href={result.url} target="_blank" rel="noreferrer" className="text-slate-900 hover:text-[#c9a961] font-semibold text-[11px] leading-snug block">
+                      <a href={result.url} target="_blank" rel="noreferrer" className="text-slate-900 hover:text-blue-600 font-semibold text-[11px] leading-snug block">
                         {result.title}
                       </a>
-                      {result.author && <p className="text-[9px] font-mono text-[#c9a961]">{result.author}</p>}
+                      {result.author && <p className="text-[9px] font-mono text-blue-600">{result.author}</p>}
                       {result.snippet && <p className="text-[10px] text-slate-500 line-clamp-3">{result.snippet}</p>}
                       <button
                         onClick={() => handleAnalyzeLinkedInResult(result)}
                         disabled={analyzingPostId === result.id}
-                        className="w-full mt-1 px-2 py-1 bg-[#c9a961]/15 border border-[#c9a961]/40 text-[#c9a961] rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
+                        className="w-full mt-1 px-2 py-1 bg-blue-50 border border-[#c9a961]/40 text-blue-600 rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
                       >
                         <Sparkles className="w-2.5 h-2.5" /> {analyzingPostId === result.id ? 'Analizando...' : 'Analizar con IA'}
                       </button>
@@ -1016,7 +1016,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
             </div>
 
             <div className="lg:col-span-12 bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs">
-              <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
+              <h3 className="text-blue-600 font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
                 <Search className="w-3.5 h-3.5" /> Buscar hilos de Reddit por palabras clave
               </h3>
               <p className="text-[#8a8377] font-mono text-[10px] leading-relaxed">
@@ -1029,7 +1029,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                     value={kwInput}
                     onChange={(e) => setKwInput(e.target.value)}
                     placeholder="SEO, GEO, ecommerce"
-                    className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white font-mono"
+                    className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900 font-mono"
                   />
                 </div>
                 <div>
@@ -1038,19 +1038,19 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                     value={kwSubs}
                     onChange={(e) => setKwSubs(e.target.value)}
                     placeholder="SEO, digitalmarketing, ecommerce"
-                    className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white font-mono"
+                    className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900 font-mono"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                <select value={kwSort} onChange={(e) => setKwSort(e.target.value as any)} className="bg-slate-50/50 border border-slate-200 p-2 rounded text-white">
+                <select value={kwSort} onChange={(e) => setKwSort(e.target.value as any)} className="bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900">
                   <option value="new">Nuevos</option>
                   <option value="relevance">Relevancia</option>
                   <option value="hot">Hot</option>
                   <option value="top">Top</option>
                   <option value="comments">Más comentarios</option>
                 </select>
-                <select value={kwTimeframe} onChange={(e) => setKwTimeframe(e.target.value as any)} className="bg-slate-50/50 border border-slate-200 p-2 rounded text-white">
+                <select value={kwTimeframe} onChange={(e) => setKwTimeframe(e.target.value as any)} className="bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900">
                   <option value="day">Último día</option>
                   <option value="week">Semana</option>
                   <option value="month">Mes</option>
@@ -1063,7 +1063,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   max={50}
                   value={kwLimit}
                   onChange={(e) => setKwLimit(Math.max(1, Math.min(50, Number(e.target.value) || 20)))}
-                  className="bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                  className="bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
                 />
                 <button
                   onClick={handleSearchRedditKw}
@@ -1078,11 +1078,11 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   <p className="md:col-span-2 text-[9px] font-mono uppercase text-[#8a8377]">{kwPosts.length} resultados</p>
                   {kwPosts.map((p) => (
                     <div key={p.id} className="bg-slate-50/50 border border-slate-200 rounded p-3 space-y-1.5">
-                      <a href={p.url} target="_blank" rel="noreferrer" className="text-slate-900 hover:text-[#c9a961] font-semibold text-[11px] leading-snug block">
+                      <a href={p.url} target="_blank" rel="noreferrer" className="text-slate-900 hover:text-blue-600 font-semibold text-[11px] leading-snug block">
                         {p.title}
                       </a>
                       <div className="flex items-center gap-3 text-[9px] font-mono text-[#8a8377] flex-wrap">
-                        <span className="text-[#c9a961]">r/{p.subreddit}</span>
+                        <span className="text-blue-600">r/{p.subreddit}</span>
                         <span>u/{p.author}</span>
                         <span>▲ {p.score}</span>
                         <span className="flex items-center gap-0.5"><MessageSquare className="w-2.5 h-2.5" /> {p.num_comments}</span>
@@ -1091,7 +1091,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                       <button
                         onClick={() => handleAnalyzeRedditPost(p)}
                         disabled={analyzingPostId === p.id}
-                        className="w-full mt-1 px-2 py-1 bg-[#c9a961]/15 border border-[#c9a961]/40 text-[#c9a961] rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
+                        className="w-full mt-1 px-2 py-1 bg-blue-50 border border-[#c9a961]/40 text-blue-600 rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
                       >
                         <Sparkles className="w-2.5 h-2.5" /> {analyzingPostId === p.id ? 'Analizando...' : 'Analizar con IA'}
                       </button>
@@ -1102,7 +1102,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
             </div>
 
             <form onSubmit={handleAnalyzeContenido} className="lg:col-span-5 bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs h-fit">
-              <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
+              <h3 className="text-blue-600 font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5" /> Analizar publicación
               </h3>
               <p className="text-[#8a8377] font-mono text-[10px] leading-relaxed">
@@ -1112,7 +1112,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 <select
                   value={anaPlataforma}
                   onChange={(e) => setAnaPlataforma(e.target.value as 'linkedin' | 'reddit')}
-                  className="bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                  className="bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
                 >
                   <option value="linkedin">LinkedIn</option>
                   <option value="reddit">Reddit</option>
@@ -1121,7 +1121,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   value={anaAutor}
                   onChange={(e) => setAnaAutor(e.target.value)}
                   placeholder="Autor (opcional)"
-                  className="flex-1 bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                  className="flex-1 bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
                 />
               </div>
               <input
@@ -1129,7 +1129,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 onChange={(e) => setAnaUrl(e.target.value)}
                 placeholder="URL de la publicación"
                 required
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
               />
               <textarea
                 value={anaTexto}
@@ -1137,7 +1137,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 rows={8}
                 placeholder="Pegá acá el texto completo de la publicación..."
                 required
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white font-mono text-[11px] leading-relaxed"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900 font-mono text-[11px] leading-relaxed"
               />
               <button
                 type="submit"
@@ -1149,11 +1149,11 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
             </form>
 
             <div className="lg:col-span-5 bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs h-fit">
-              <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
+              <h3 className="text-blue-600 font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
                 <Download className="w-3.5 h-3.5" /> Traer hilos de un subreddit
               </h3>
               <p className="text-[#8a8377] font-mono text-[10px] leading-relaxed">
-                Escribe el nombre de una comunidad (ej. <span className="text-[#c9a961]">SEO</span>, <span className="text-[#c9a961]">digitalmarketing</span>, <span className="text-[#c9a961]">emprendedores</span>). Traemos los hilos más recientes/populares y podés analizar cualquiera con un click.
+                Escribe el nombre de una comunidad (ej. <span className="text-blue-600">SEO</span>, <span className="text-blue-600">digitalmarketing</span>, <span className="text-blue-600">emprendedores</span>). Traemos los hilos más recientes/populares y podés analizar cualquiera con un click.
               </p>
               <div className="flex gap-2">
                 <span className="bg-slate-50/50 border border-r-0 border-slate-200 p-2 rounded-l text-[#8a8377] font-mono">r/</span>
@@ -1161,14 +1161,14 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   value={subInput}
                   onChange={(e) => setSubInput(e.target.value)}
                   placeholder="SEO"
-                  className="flex-1 bg-slate-50/50 border border-slate-200 border-l-0 p-2 rounded-r text-white font-mono"
+                  className="flex-1 bg-slate-50/50 border border-slate-200 border-l-0 p-2 rounded-r text-slate-900 font-mono"
                 />
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <select
                   value={subListing}
                   onChange={(e) => setSubListing(e.target.value as any)}
-                  className="bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                  className="bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
                 >
                   <option value="new">Nuevos</option>
                   <option value="hot">Hot</option>
@@ -1179,7 +1179,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   <select
                     value={subTimeframe}
                     onChange={(e) => setSubTimeframe(e.target.value as any)}
-                    className="bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                    className="bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
                   >
                     <option value="day">Hoy</option>
                     <option value="week">Semana</option>
@@ -1196,7 +1196,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   max={50}
                   value={subLimit}
                   onChange={(e) => setSubLimit(Math.max(1, Math.min(50, Number(e.target.value) || 15)))}
-                  className="bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                  className="bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
                 />
               </div>
               <button
@@ -1212,7 +1212,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   <p className="text-[9px] font-mono uppercase text-[#8a8377]">{subPosts.length} hilos · r/{subPosts[0]?.subreddit}</p>
                   {subPosts.map((p) => (
                     <div key={p.id} className="bg-slate-50/50 border border-slate-200 rounded p-3 space-y-1.5">
-                      <a href={p.url} target="_blank" rel="noreferrer" className="text-slate-900 hover:text-[#c9a961] font-semibold text-[11px] leading-snug block">
+                      <a href={p.url} target="_blank" rel="noreferrer" className="text-slate-900 hover:text-blue-600 font-semibold text-[11px] leading-snug block">
                         {p.title}
                       </a>
                       <div className="flex items-center gap-3 text-[9px] font-mono text-[#8a8377] flex-wrap">
@@ -1220,14 +1220,14 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                         <span>▲ {p.score}</span>
                         <span className="flex items-center gap-0.5"><MessageSquare className="w-2.5 h-2.5" /> {p.num_comments}</span>
                         <span>{Math.round(p.upvote_ratio * 100)}% ↑</span>
-                        {p.link_flair_text && <span className="bg-[#c9a961]/10 text-[#c9a961] px-1.5 rounded">{p.link_flair_text}</span>}
-                        {!p.is_self && <span className="text-[#c97a61]">link externo</span>}
+                        {p.link_flair_text && <span className="bg-[#c9a961]/10 text-blue-600 px-1.5 rounded">{p.link_flair_text}</span>}
+                        {!p.is_self && <span className="text-red-600">link externo</span>}
                       </div>
                       {p.selftext && <p className="text-[10px] text-slate-500 line-clamp-3">{p.selftext.slice(0, 260)}{p.selftext.length > 260 ? '…' : ''}</p>}
                       <button
                         onClick={() => handleAnalyzeRedditPost(p)}
                         disabled={analyzingPostId === p.id}
-                        className="w-full mt-1 px-2 py-1 bg-[#c9a961]/15 border border-[#c9a961]/40 text-[#c9a961] rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
+                        className="w-full mt-1 px-2 py-1 bg-blue-50 border border-[#c9a961]/40 text-blue-600 rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
                       >
                         <Sparkles className="w-2.5 h-2.5" /> {analyzingPostId === p.id ? 'Analizando...' : 'Analizar con IA'}
                       </button>
@@ -1249,7 +1249,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               {contenido.map((c) => (
                 <div key={c.id} className="bg-white border border-slate-200 rounded-lg p-4 space-y-2 text-xs">
                   <div className="flex items-center justify-between">
-                    <a href={c.url_publicacion} target="_blank" rel="noreferrer" className="text-[#c9a961] flex items-center gap-1 font-semibold">
+                    <a href={c.url_publicacion} target="_blank" rel="noreferrer" className="text-blue-600 flex items-center gap-1 font-semibold">
                       <ExternalLink className="w-3 h-3" /> {c.plataforma} · {c.autor || 'autor desconocido'}
                     </a>
                     <span
@@ -1271,7 +1271,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                         <span className="text-[9px] font-mono uppercase text-[#8a8377]">Comentario sugerido:</span>
                         <button
                           onClick={() => copyToClipboard(c.comentario_sugerido || '')}
-                          className="text-[9px] font-mono text-[#c9a961] hover:text-[#e8c481] uppercase"
+                          className="text-[9px] font-mono text-blue-600 hover:text-[#e8c481] uppercase"
                         >
                           Copiar
                         </button>
@@ -1282,7 +1282,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   <div className="flex gap-2 pt-1">
                     <button
                       onClick={() => handleMarkContenido(c, 'publicado_manual')}
-                      className="px-2.5 py-1 bg-[#a8c98a]/15 border border-[#a8c98a]/40 text-[#a8c98a] rounded text-[10px] font-mono"
+                      className="px-2.5 py-1 bg-[#a8c98a]/15 border border-[#a8c98a]/40 text-emerald-600 rounded text-[10px] font-mono"
                     >
                       Ya lo publiqué
                     </button>
@@ -1304,14 +1304,14 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
             <div className="lg:col-span-5 space-y-4">
               <div className="bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
+                  <h3 className="text-blue-600 font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
                     <Bot className="w-3.5 h-3.5" /> Estado del bot
                   </h3>
                   <button
                     onClick={handleToggleBot}
                     className={`px-3 py-1 rounded font-mono text-[10px] font-bold uppercase ${
                       botConfig.bot_enabled
-                        ? 'bg-[#a8c98a]/15 text-[#a8c98a] border border-[#a8c98a]/40'
+                        ? 'bg-[#a8c98a]/15 text-emerald-600 border border-[#a8c98a]/40'
                         : 'bg-white/[0.03] text-[#8a8377] border border-slate-200'
                     }`}
                   >
@@ -1338,13 +1338,13 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               </div>
 
               <div className="bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs">
-                <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold">Prompt del bot</h3>
+                <h3 className="text-blue-600 font-mono uppercase text-[10px] tracking-wider font-bold">Prompt del bot</h3>
                 <textarea
                   value={promptDraft}
                   onChange={(e) => setPromptDraft(e.target.value)}
                   rows={6}
                   placeholder="Eres el asistente de ventas de Ferova Agency..."
-                  className="w-full bg-slate-50/50 border border-slate-200 p-2.5 rounded text-white"
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2.5 rounded text-slate-900"
                 />
                 <button
                   onClick={handleSavePrompt}
@@ -1358,20 +1358,20 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
             <div className="lg:col-span-7 space-y-4">
               <form onSubmit={handleAddKnowledge} className="bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs">
-                <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold">Entrenar con nueva información</h3>
+                <h3 className="text-blue-600 font-mono uppercase text-[10px] tracking-wider font-bold">Entrenar con nueva información</h3>
                 <textarea
                   value={newKnowledge}
                   onChange={(e) => setNewKnowledge(e.target.value)}
                   rows={3}
                   placeholder="Ej: Nuestros precios son... / Horario de atención... / Política de reembolsos..."
                   required
-                  className="w-full bg-slate-50/50 border border-slate-200 p-2.5 rounded text-white"
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2.5 rounded text-slate-900"
                 />
                 <input
                   value={newKnowledgeSource}
                   onChange={(e) => setNewKnowledgeSource(e.target.value)}
                   placeholder="Fuente (opcional, ej. 'Página de precios')"
-                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
                 />
                 <button
                   type="submit"
@@ -1392,7 +1392,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                       <p className="text-slate-900">{k.content}</p>
                       {k.source && <span className="text-[#8a8377] font-mono text-[10px] block mt-1">Fuente: {k.source}</span>}
                     </div>
-                    <button onClick={() => handleDeleteKnowledge(k.id)} className="text-[#c97a61] hover:text-[#e08970] shrink-0">
+                    <button onClick={() => handleDeleteKnowledge(k.id)} className="text-red-600 hover:text-[#e08970] shrink-0">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -1407,7 +1407,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
               <div className="xl:col-span-7 bg-white border border-slate-200 rounded-lg p-5 flex flex-wrap items-center gap-3">
               <div className="flex-1 min-w-[240px]">
-                <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
+                <h3 className="text-blue-600 font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
                   <Star className="w-3.5 h-3.5" /> Panel consolidado de reseñas
                 </h3>
                 <p className="text-[10px] text-[#8a8377] font-mono mt-1 leading-relaxed">
@@ -1425,7 +1425,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               </div>
 
               <form onSubmit={handleAddReviewSource} className="xl:col-span-5 bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs">
-                <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
+                <h3 className="text-blue-600 font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
                   <Link2 className="w-3.5 h-3.5" /> Fuentes y perfiles de reseñas
                 </h3>
                 <div className="grid grid-cols-2 gap-2">
@@ -1435,7 +1435,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                       setSourcePlatform(e.target.value);
                       if (!sourceName.trim()) setSourceName(e.target.value);
                     }}
-                    className="bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                    className="bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
                   >
                     <option value="google">Google</option>
                     <option value="clutch">Clutch</option>
@@ -1450,7 +1450,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                     onChange={(e) => setSourceName(e.target.value)}
                     placeholder="Nombre visible"
                     required
-                    className="bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
+                    className="bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
                   />
                 </div>
                 <input
@@ -1459,13 +1459,13 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   onChange={(e) => setSourceUrl(e.target.value)}
                   placeholder="Link del perfil/directorio donde respondes reseñas"
                   required
-                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white font-mono"
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900 font-mono"
                 />
                 <input
                   value={sourceQuery}
                   onChange={(e) => setSourceQuery(e.target.value)}
                   placeholder="Filtro Gmail opcional: from:... OR subject:review"
-                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white font-mono"
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900 font-mono"
                 />
                 <button
                   type="submit"
@@ -1482,13 +1482,13 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 {reviewSources.map((source) => (
                   <div key={source.id} className="bg-slate-50/50 border border-slate-200 rounded p-3 text-xs space-y-1.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-[9px] uppercase font-mono text-[#c9a961]">{source.plataforma}</span>
+                      <span className="text-[9px] uppercase font-mono text-blue-600">{source.plataforma}</span>
                       <span className="text-slate-900 font-semibold truncate">{source.nombre}</span>
-                      <button onClick={() => handleDeleteReviewSource(source.id)} className="ml-auto text-[#c97a61] hover:text-[#e08970]">
+                      <button onClick={() => handleDeleteReviewSource(source.id)} className="ml-auto text-red-600 hover:text-[#e08970]">
                         <Trash2 className="w-3 h-3" />
                       </button>
                     </div>
-                    <a href={source.profile_url} target="_blank" rel="noreferrer" className="text-[10px] font-mono text-[#a8c98a] hover:text-[#c9a961] flex items-center gap-1 truncate">
+                    <a href={source.profile_url} target="_blank" rel="noreferrer" className="text-[10px] font-mono text-emerald-600 hover:text-blue-600 flex items-center gap-1 truncate">
                       <ExternalLink className="w-3 h-3" /> Abrir perfil
                     </a>
                     {source.gmail_query && <p className="text-[9px] font-mono text-[#8a8377] truncate">{source.gmail_query}</p>}
@@ -1497,7 +1497,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               </div>
             )}
             {scanResult && (
-              <p className="text-[11px] text-[#a8c98a] font-mono bg-[#a8c98a]/5 border border-[#a8c98a]/30 rounded p-2">{scanResult}</p>
+              <p className="text-[11px] text-emerald-600 font-mono bg-[#a8c98a]/5 border border-[#a8c98a]/30 rounded p-2">{scanResult}</p>
             )}
 
             <div className="space-y-2">
@@ -1507,7 +1507,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               {resenas.map((r) => (
                 <div key={r.id} className="bg-white border border-slate-200 rounded-lg p-4 space-y-2 text-xs">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="uppercase font-mono text-[10px] px-2 py-0.5 rounded bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/40">
+                    <span className="uppercase font-mono text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-600 border border-[#c9a961]/40">
                       {r.plataforma}
                     </span>
                     {r.calificacion != null && (
@@ -1517,7 +1517,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                     )}
                     {r.resenador && <span className="text-slate-500 font-mono text-[10px]">por {r.resenador}</span>}
                     <span className="text-[#8a8377] font-mono text-[10px] ml-auto">{new Date(r.detectada_en).toLocaleString('es-CO')}</span>
-                    <span className={`px-2 py-0.5 rounded font-mono text-[9px] uppercase border ${r.respondida ? 'bg-[#a8c98a]/15 text-[#a8c98a] border-[#a8c98a]/40' : 'bg-[#c97a61]/15 text-[#c97a61] border-[#c97a61]/40'}`}>
+                    <span className={`px-2 py-0.5 rounded font-mono text-[9px] uppercase border ${r.respondida ? 'bg-[#a8c98a]/15 text-emerald-600 border-[#a8c98a]/40' : 'bg-[#c97a61]/15 text-red-600 border-[#c97a61]/40'}`}>
                       {r.respondida ? 'Respondida' : 'Sin responder'}
                     </span>
                   </div>
@@ -1525,13 +1525,13 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   {r.email_subject && <p className="text-[#8a8377] font-mono text-[10px]">✉ {r.email_subject}</p>}
                   <div className="flex items-center gap-3 pt-1">
                     {r.link && (
-                      <a href={r.link} target="_blank" rel="noreferrer" className="text-[#c9a961] flex items-center gap-1 font-mono text-[10px] hover:text-[#e8c481]">
+                      <a href={r.link} target="_blank" rel="noreferrer" className="text-blue-600 flex items-center gap-1 font-mono text-[10px] hover:text-[#e8c481]">
                         <ExternalLink className="w-3 h-3" /> Responder en {r.plataforma}
                       </a>
                     )}
                     <button
                       onClick={() => handleToggleRespondida(r)}
-                      className={`ml-auto text-[10px] font-mono px-2 py-1 rounded border flex items-center gap-1 ${r.respondida ? 'text-[#c97a61] border-[#c97a61]/40 hover:bg-[#c97a61]/10' : 'text-[#a8c98a] border-[#a8c98a]/40 hover:bg-[#a8c98a]/10'}`}
+                      className={`ml-auto text-[10px] font-mono px-2 py-1 rounded border flex items-center gap-1 ${r.respondida ? 'text-red-600 border-[#c97a61]/40 hover:bg-[#c97a61]/10' : 'text-emerald-600 border-[#a8c98a]/40 hover:bg-[#a8c98a]/10'}`}
                     >
                       <CheckCircle2 className="w-3 h-3" /> {r.respondida ? 'Marcar como sin responder' : 'Ya respondí'}
                     </button>

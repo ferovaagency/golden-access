@@ -351,7 +351,7 @@ export default function App() {
     if (authLoading) {
       return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-900">
-          <Loader2 className="w-8 h-8 animate-spin text-[#c9a961]" />
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
         </div>
       );
     }
@@ -363,7 +363,7 @@ export default function App() {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-900">
         <div className="text-center space-y-3">
-          <Loader2 className="w-8 h-8 animate-spin text-[#c9a961] mx-auto" />
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto" />
           <p className="text-xs font-semibold font-mono tracking-widest text-slate-500">
             {authLoading ? 'AUTENTICANDO SESIÓN...' : 'VERIFICANDO LICENCIA...'}
           </p>
@@ -429,11 +429,11 @@ export default function App() {
     <div className="ferova-light-theme min-h-screen bg-[#f7f8fb] flex flex-col text-[#1f2937] font-sans">
       
       {/* 1. Header component */}
-      <header className="sticky top-0 bg-white/85 backdrop-blur-xl border-b border-[#dbe4ee] relative z-20">
+      <header className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-[#dbe4ee] relative z-20">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-slate-900 shadow-sm font-bold">
+            <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-sm font-bold">
               F
             </div>
             <div>
@@ -480,7 +480,7 @@ export default function App() {
                     />
                     <button 
                       type="submit" 
-                      className="text-emerald-500 hover:text-emerald-400 font-bold px-1 cursor-pointer"
+                      className="text-emerald-600 hover:text-emerald-700 font-bold px-1 cursor-pointer"
                       title="Guardar TRM"
                     >
                       ✓
@@ -499,7 +499,7 @@ export default function App() {
                   </form>
                 ) : (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[#c9a961] font-bold">{formatCop(appData.config.trm)}</span>
+                    <span className="text-blue-600 font-bold">{formatCop(appData.config.trm)}</span>
                     <button 
                       onClick={() => setIsEditingTrm(true)}
                       className="text-slate-400 hover:text-slate-900 text-[9px] hover:underline cursor-pointer"
@@ -536,17 +536,17 @@ export default function App() {
             )}
 
             {/* Profile component user info */}
-              <button onClick={() => setAssistantOpen(true)} className="hidden md:flex items-center gap-2 rounded-2xl bg-blue-600 px-3 py-2 text-xs font-semibold text-slate-900 shadow-sm hover:bg-blue-700">
+              <button onClick={() => setAssistantOpen(true)} className="hidden md:flex items-center gap-2 rounded-2xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700">
                 Asistente IA
               </button>
 
               <div className="flex items-center gap-2.5 bg-white p-1.5 pr-3.5 rounded-2xl border border-slate-200 shadow-sm">
               <div className="w-7 h-7 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-center">
-                <UserIcon className="w-3.5 h-3.5 text-[#c9a961]" />
+                <UserIcon className="w-3.5 h-3.5 text-blue-600" />
               </div>
               <div className="hidden md:block text-left text-[10px] leading-tight">
                 <span className="font-semibold text-slate-900 block">{(user.user_metadata as any)?.full_name || (user.user_metadata as any)?.name || 'Mafe'}</span>
-                <span className="text-slate-400 block font-mono text-[9px] max-w-28 truncate">{user.email}</span>
+                <span className="text-slate-400 block font-mono text-[9px] max-w-40 truncate">{user.email}</span>
               </div>
               
               <button 
@@ -581,11 +581,11 @@ export default function App() {
 
       {/* 2. Global Period Selection Rail */}
       {isReady && appData && (
-        <div className="bg-white/70 border-b border-slate-200 py-3 text-xs">
+        <div className="bg-white/90 border-b border-slate-200 py-3 text-xs">
           <div className="max-w-[1440px] mx-auto px-4 sm:px-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-[#c9a961]" />
+              <Calendar className="w-4 h-4 text-blue-600" />
               <span className="font-mono text-slate-500 text-[10px] uppercase font-bold tracking-wider">Ventana Periodo DIAN:</span>
               <select 
                 value={selectedMonth}
@@ -633,7 +633,7 @@ export default function App() {
         <aside className="lg:w-72 shrink-0 space-y-5 hidden lg:block select-none">
           
           <div>
-            <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-[#c9a961] block px-3 mb-2 font-black border-l-2 border-l-[#c9a961] pl-2">
+            <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-blue-600 block px-3 mb-2 font-black border-l-2 border-l-[#c9a961] pl-2">
               Gestión Operativa
             </span>
             <nav className="space-y-1 text-sm font-semibold">
@@ -678,7 +678,7 @@ export default function App() {
 
           {isTeam && CRM_GROWTH_TABS.length > 0 && (
             <div className="pt-2 border-t border-slate-200/45">
-              <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-[#a8c98a] block px-3 mb-2 font-black border-l-2 border-l-[#a8c98a] pl-2">
+              <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-emerald-600 block px-3 mb-2 font-black border-l-2 border-l-[#a8c98a] pl-2">
                 Growth · CRM Interno
               </span>
               <nav className="space-y-1 text-sm font-semibold">
@@ -707,13 +707,13 @@ export default function App() {
           <div className="lg:hidden fixed inset-0 z-35 bg-slate-900/20 flex justify-end" onClick={() => setIsMobileMenuOpen(false)}>
             <div className="w-64 bg-white border-l border-slate-200 h-full p-5 space-y-4 text-xs font-mono overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-2">
-                <span className="font-semibold text-[#c9a961]">Menú Corporativo</span>
+                <span className="font-semibold text-blue-600">Menú Corporativo</span>
                 <button onClick={() => setIsMobileMenuOpen(false)} className="text-slate-400">Cerrar</button>
               </div>
               
               <div className="space-y-4 text-left">
                 <div>
-                  <span className="text-[9px] uppercase tracking-wider text-[#c9a961]/70 block font-bold mb-1.5 font-mono">1. GESTIÓN OPERATIVA</span>
+                  <span className="text-[9px] uppercase tracking-wider text-blue-600/70 block font-bold mb-1.5 font-mono">1. GESTIÓN OPERATIVA</span>
                   <nav className="space-y-1">
                     {GESTION_OPERATIVA_TABS.map(tab => (
                       <button
@@ -724,8 +724,8 @@ export default function App() {
                         }}
                         className={`w-full text-left px-3 py-1.5 rounded transition ${
                           activeTab === tab.id 
-                            ? 'bg-[#c9a961]/10 text-[#c9a961] font-semibold' 
-                            : 'text-slate-500 hover:text-white'
+                            ? 'bg-blue-50 text-blue-600 font-semibold' 
+                            : 'text-slate-500 hover:text-slate-900'
                         }`}
                       >
                         {tab.label}
@@ -746,8 +746,8 @@ export default function App() {
                         }}
                         className={`w-full text-left px-3 py-1.5 rounded transition ${
                           activeTab === tab.id 
-                            ? 'bg-[#c9a961]/10 text-[#c9a961] font-semibold' 
-                            : 'text-slate-500 hover:text-white'
+                            ? 'bg-blue-50 text-blue-600 font-semibold' 
+                            : 'text-slate-500 hover:text-slate-900'
                         }`}
                       >
                         {tab.label}
@@ -758,14 +758,14 @@ export default function App() {
 
                 {isTeam && CRM_GROWTH_TABS.length > 0 && (
                   <div className="pt-2 border-t border-slate-200/45">
-                    <span className="text-[9px] uppercase tracking-wider text-[#a8c98a]/80 block font-bold mb-1.5 font-mono">3. GROWTH · CRM INTERNO</span>
+                    <span className="text-[9px] uppercase tracking-wider text-emerald-600/80 block font-bold mb-1.5 font-mono">3. GROWTH · CRM INTERNO</span>
                     <nav className="space-y-1">
                       {CRM_GROWTH_TABS.map(tab => (
                         <button
                           key={tab.id}
                           onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false); }}
                           className={`w-full text-left px-3 py-1.5 rounded transition ${
-                            activeTab === tab.id ? 'bg-[#a8c98a]/10 text-[#a8c98a] font-semibold' : 'text-slate-500 hover:text-white'
+                            activeTab === tab.id ? 'bg-emerald-50 text-emerald-600 font-semibold' : 'text-slate-500 hover:text-slate-900'
                           }`}
                         >
                           {tab.label}
@@ -793,7 +793,7 @@ export default function App() {
                 <div className="flex flex-wrap gap-x-4 gap-y-2 pt-2 border-t border-[#c97a61]/15 mt-2 items-center">
                   <button
                     onClick={() => user && bootstrapFinanceData(user.id)}
-                    className="underline text-slate-900 font-mono font-bold hover:text-[#c9a961] cursor-pointer"
+                    className="underline text-slate-900 font-mono font-bold hover:text-blue-600 cursor-pointer"
                   >
                     Intentar reconexión manual
                   </button>
@@ -811,7 +811,7 @@ export default function App() {
           {/* Load databases spinner */}
           {!isReady && !errorMsg && (
             <div className="bg-white border border-slate-200 rounded-lg p-16 text-center text-xs space-y-4">
-              <Loader2 className="w-8 h-8 animate-spin text-[#c9a961] mx-auto" />
+              <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto" />
               <p className="font-mono text-slate-500 font-semibold tracking-wider">CARGANDO TU CONTABILIDAD...</p>
               <p className="text-slate-400 max-w-sm mx-auto leading-relaxed">
                 Sincronizando clientes, ventas y parámetros DIAN 2026 desde tu cuenta.
