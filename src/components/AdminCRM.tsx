@@ -19,6 +19,7 @@ import {
   sendWhatsapp,
   bookCita,
   cancelCita,
+  syncBookingLinkCitas,
   analyzeContenido,
   listServiciosCatalogo,
   fetchSubredditPosts,
@@ -42,6 +43,9 @@ import {
   upsertReviewSource,
   deleteReviewSource,
   ReviewSource,
+  getWhatsappInstance,
+  connectWhatsappInstance,
+  WhatsappInstance,
 } from '../lib/crmService';
 
 const ESTADOS: EstadoOportunidad[] = ['nuevo', 'contactado', 'calificando', 'propuesta_enviada', 'negociacion', 'ganado', 'perdido'];
@@ -94,6 +98,8 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
   const [whatsappDrafts, setWhatsappDrafts] = useState<Record<string, string>>({});
   const [sendingWhatsapp, setSendingWhatsapp] = useState<string | null>(null);
+  const [whatsappInstance, setWhatsappInstance] = useState<WhatsappInstance | null>(null);
+  const [connectingWhatsapp, setConnectingWhatsapp] = useState(false);
 
   // Booking form
   const [bookNombre, setBookNombre] = useState('');
@@ -104,6 +110,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const [bookDuracion, setBookDuracion] = useState(30);
   const [bookNotas, setBookNotas] = useState('');
   const [booking, setBooking] = useState(false);
+  const [syncingBookings, setSyncingBookings] = useState(false);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   // Content analyzer
@@ -158,7 +165,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const refreshAll = async () => {
     setLoading(true);
     try {
-      const [o, c, k, bc, kn, srv, r, rs] = await Promise.all([
+      const [o, c, k, bc, kn, srv, r, rs, wi] = await Promise.all([
         listOportunidades(),
         listCitas(),
         listContenidoPotencial(),
@@ -167,6 +174,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
         listServiciosCatalogo(user.id).catch(() => [] as ServicioCatalogo[]),
         listResenas().catch(() => [] as Resena[]),
         listReviewSources().catch(() => [] as ReviewSource[]),
+        getWhatsappInstance().catch(() => null),
       ]);
       setOportunidades(o);
       setCitas(c);
@@ -177,6 +185,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setServicios(srv);
       setResenas(r);
       setReviewSources(rs);
+      setWhatsappInstance(wi);
     } catch (err: any) {
       alert(`Error cargando el CRM: ${err.message || err}`);
     } finally {
@@ -279,6 +288,33 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       alert(`Error cancelando: ${err.message || err}`);
     } finally {
       setCancellingId(null);
+    }
+  };
+
+  const handleSyncBookingLink = async () => {
+    setSyncingBookings(true);
+    try {
+      const result = await syncBookingLinkCitas(30);
+      const [freshCitas, freshOpps] = await Promise.all([listCitas(), listOportunidades()]);
+      setCitas(freshCitas);
+      setOportunidades(freshOpps);
+      alert(`Reservas revisadas: ${result.scanned}. Nuevas citas importadas: ${result.inserted}.`);
+    } catch (err: any) {
+      alert(`Error sincronizando reservas: ${err.message || err}`);
+    } finally {
+      setSyncingBookings(false);
+    }
+  };
+
+  const handleConnectWhatsapp = async () => {
+    setConnectingWhatsapp(true);
+    try {
+      const instance = await connectWhatsappInstance();
+      setWhatsappInstance(instance);
+    } catch (err: any) {
+      alert(`Error generando QR: ${err.message || err}`);
+    } finally {
+      setConnectingWhatsapp(false);
     }
   };
 
@@ -548,6 +584,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
   const bodyClass = embedded ? '' : 'p-6 max-w-6xl mx-auto';
   const outerClass = embedded ? '' : 'ferova-light-theme min-h-screen bg-[#f7f8fb] text-slate-900 font-sans';
+  const qrSrc = whatsappInstance?.qr_code
+    ? (whatsappInstance.qr_code.startsWith('data:') ? whatsappInstance.qr_code : `data:image/png;base64,${whatsappInstance.qr_code}`)
+    : null;
   const kpis = [
     { label: 'Pipeline', value: oportunidades.length, accent: '#c9a961' },
     { label: 'Citas activas', value: citas.filter((c) => c.estado !== 'cancelada').length, accent: '#7ab5c9' },
@@ -916,6 +955,23 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               <p className="text-[9px] text-[#8a8377] font-mono leading-relaxed">
                 Se crea el evento en el Google Calendar del equipo de Ferova, se genera un link de Meet y se envía la invitación al email del prospecto.
               </p>
+              <div className="border-t border-slate-200 pt-3 space-y-2">
+                <p className="text-[9px] text-slate-500 font-mono leading-relaxed">
+                  También reconoce reservas hechas desde tu link público y crea prospecto + oportunidad en pipeline.
+                </p>
+                <a href="https://calendar.app.google/NuikMY4L6FcUDMUP6" target="_blank" rel="noreferrer" className="block truncate text-[10px] font-mono text-blue-600 hover:underline">
+                  calendar.app.google/NuikMY4L6FcUDMUP6
+                </a>
+                <button
+                  type="button"
+                  onClick={handleSyncBookingLink}
+                  disabled={syncingBookings}
+                  className="w-full bg-emerald-50 border border-emerald-100 text-emerald-700 font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${syncingBookings ? 'animate-spin' : ''}`} />
+                  {syncingBookings ? 'Buscando reservas...' : 'Traer reservas del link'}
+                </button>
+              </div>
             </form>
 
             <div className="lg:col-span-8 space-y-2">
@@ -1326,15 +1382,32 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
               <div className="bg-blue-50 border border-blue-100 rounded-lg p-5 space-y-2 text-xs text-slate-700">
                 <h3 className="text-blue-700 font-semibold flex items-center gap-1.5">
-                  <Link2 className="w-3.5 h-3.5" /> Cómo conectar tu número de WhatsApp
+                  <Link2 className="w-3.5 h-3.5" /> Conectar WhatsApp con QR automático
                 </h3>
-                <ol className="list-decimal pl-4 space-y-1 leading-relaxed">
-                  <li>Creá o abrí una instancia en Evolution API con el mismo nombre mostrado arriba.</li>
-                  <li>Escaneá el QR de esa instancia con el WhatsApp que querés usar.</li>
-                  <li>Guardá en secretos: EVOLUTION_API_URL, EVOLUTION_API_KEY, EVOLUTION_INSTANCE_NAME y WHATSAPP_WEBHOOK_TOKEN.</li>
-                  <li>En Evolution API configurá el webhook hacia la función <span className="font-mono">whatsapp-webhook</span> agregando <span className="font-mono">?token=WHATSAPP_WEBHOOK_TOKEN</span>.</li>
-                </ol>
-                <p className="text-slate-500">Después de eso, los mensajes entrantes crean oportunidades y el bot responde solo si está activo.</p>
+                <p className="text-slate-600 leading-relaxed">
+                  Cada cuenta tiene una instancia separada. Genera el QR aquí, escanéalo desde WhatsApp y el bot empezará a registrar prospectos, oportunidades, conversaciones y memoria.
+                </p>
+                <button
+                  onClick={handleConnectWhatsapp}
+                  disabled={connectingWhatsapp}
+                  className="w-full rounded-xl bg-blue-600 px-4 py-2.5 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${connectingWhatsapp ? 'animate-spin' : ''}`} />
+                  {connectingWhatsapp ? 'Generando QR...' : qrSrc ? 'Actualizar QR' : 'Generar QR de conexión'}
+                </button>
+                {qrSrc && (
+                  <div className="rounded-2xl bg-white border border-blue-100 p-4 text-center space-y-2">
+                    <img src={qrSrc} alt="QR para conectar WhatsApp" className="mx-auto h-48 w-48 rounded-xl border border-slate-200 object-contain" />
+                    <p className="text-[10px] font-mono text-slate-500">Abre WhatsApp → Dispositivos vinculados → Vincular dispositivo.</p>
+                  </div>
+                )}
+                {whatsappInstance && (
+                  <div className="rounded-xl bg-white/70 border border-blue-100 p-3 text-[10px] font-mono text-slate-600 space-y-1">
+                    <p>Instancia: <span className="text-slate-900 break-all">{whatsappInstance.instance_name}</span></p>
+                    <p>Estado: <span className="text-blue-700">{whatsappInstance.status}</span></p>
+                    {whatsappInstance.last_error && <p className="text-red-600 break-words">{whatsappInstance.last_error}</p>}
+                  </div>
+                )}
               </div>
 
               <div className="bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs">
