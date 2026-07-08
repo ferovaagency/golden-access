@@ -13,6 +13,7 @@ interface ConfigAdminProps {
   isBackingUpToSheets: boolean;
   onSaveConfig: (updated: Config) => Promise<void>;
   onBackupToSheets: () => Promise<void>;
+  onImportFromSheets: () => Promise<void>;
   formatCop: (val: number) => string;
 }
 
