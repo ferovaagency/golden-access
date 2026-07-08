@@ -29,10 +29,13 @@ export default function ConfigAdmin({
   onSaveConfig,
   onBackupToSheets,
   onImportFromSheets,
+  onImportFromSheetsUrl,
   formatCop
 }: ConfigAdminProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copiedStatus, setCopiedStatus] = useState<string | null>(null);
+  const [sheetUrl, setSheetUrl] = useState('');
+  const [isImportingUrl, setIsImportingUrl] = useState(false);
 
   // Form State
   const [trm, setTrm] = useState(config.trm);
