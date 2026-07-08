@@ -67,7 +67,10 @@ Deno.serve(async (req) => {
       if (!start) { skipped++; continue; }
       const duration = end ? Math.max(15, Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000)) : 30;
 
-      let { data: oportunidad } = await admin.from("crm_oportunidades").select("*").or(email ? `email.eq.${email}` : `nombre_contacto.eq.${nombre}`).maybeSingle();
+      const oppQuery = admin.from("crm_oportunidades").select("*");
+      let { data: oportunidad } = email
+        ? await oppQuery.eq("email", email).maybeSingle()
+        : await oppQuery.eq("nombre_contacto", nombre).maybeSingle();
       if (!oportunidad) {
         const { data } = await admin.from("crm_oportunidades").insert({
           nombre_contacto: nombre,

@@ -124,11 +124,10 @@ Deno.serve(async (req) => {
 
     let oportunidadId = body.oportunidad_id || null;
     if (!oportunidadId) {
-      const { data: existing } = await supabase
-        .from('crm_oportunidades')
-        .select('*')
-        .or(body.email_prospecto ? `email.eq.${body.email_prospecto}` : `nombre_contacto.eq.${body.nombre_prospecto}`)
-        .maybeSingle();
+      const existingQuery = supabase.from('crm_oportunidades').select('*');
+      const { data: existing } = body.email_prospecto
+        ? await existingQuery.eq('email', body.email_prospecto).maybeSingle()
+        : await existingQuery.eq('nombre_contacto', body.nombre_prospecto).maybeSingle();
       if (existing?.id) oportunidadId = existing.id;
       else {
         const { data: opp, error: oppErr } = await supabase
