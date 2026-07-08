@@ -10,6 +10,13 @@ const WEBHOOK_TOKEN = Deno.env.get("WHATSAPP_WEBHOOK_TOKEN") || "";
 
 const evoHeaders = { "Content-Type": "application/json", apikey: EVOLUTION_API_KEY };
 
+function jsonResponse(body: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 function instanceNameFor(userId: string) {
   return `ferova_${userId.replace(/-/g, "").slice(0, 24)}`;
 }
@@ -28,22 +35,37 @@ async function evo(path: string, init?: RequestInit) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  if (req.method !== "POST") return new Response(JSON.stringify({ ok: false, message: "Method not allowed" }), { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  if (req.method !== "POST") return jsonResponse({ ok: false, message: "Method not allowed" }, 405);
 
   try {
     const authHeader = req.headers.get("Authorization") || "";
     const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: authHeader } } });
     const { data: { user }, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !user?.email) return new Response(JSON.stringify({ ok: false, message: "No autenticado" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (userErr || !user?.email) return jsonResponse({ ok: false, message: "No autenticado" }, 401);
     const { data: member } = await userClient.from("crm_team_members").select("email").eq("email", user.email).maybeSingle();
-    if (!member) return new Response(JSON.stringify({ ok: false, message: "No autorizado" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-    if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY || !WEBHOOK_TOKEN) {
-      return new Response(JSON.stringify({ ok: false, message: "WhatsApp todavía no está configurado para emitir QR automático. Faltan EVOLUTION_API_URL, EVOLUTION_API_KEY o WHATSAPP_WEBHOOK_TOKEN." }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
+    if (!member) return jsonResponse({ ok: false, message: "No autorizado" }, 403);
 
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const instanceName = instanceNameFor(user.id);
+
+    if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
+      const missing = [
+        !EVOLUTION_API_URL ? "EVOLUTION_API_URL" : null,
+        !EVOLUTION_API_KEY ? "EVOLUTION_API_KEY" : null,
+      ].filter(Boolean).join(", ");
+      const message = `WhatsApp necesita configurar ${missing} para generar el QR automático.`;
+      const { data: saved, error } = await admin.from("crm_whatsapp_instances").upsert({
+        user_id: user.id,
+        instance_name: instanceName,
+        status: "setup_required",
+        qr_code: null,
+        pairing_code: null,
+        last_error: message,
+        updated_at: new Date().toISOString(),
+      }).select("*").single();
+      if (error) throw error;
+      return jsonResponse({ ok: true, configured: false, message, instance: saved });
+    }
 
     const create = await evo("/instance/create", {
       method: "POST",
@@ -51,14 +73,16 @@ Deno.serve(async (req) => {
     });
     if (!create.ok && ![400, 403, 409].includes(create.status)) {
       await admin.from("crm_whatsapp_instances").upsert({ user_id: user.id, instance_name: instanceName, status: "error", last_error: create.text });
-      return new Response(JSON.stringify({ ok: false, message: "No pude crear la instancia de WhatsApp", status: create.status, details: create.text }), { status: create.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return jsonResponse({ ok: false, message: "No pude crear la instancia de WhatsApp", status: create.status, details: create.text });
     }
 
-    const webhookUrl = `${SUPABASE_URL}/functions/v1/whatsapp-webhook?token=${encodeURIComponent(WEBHOOK_TOKEN)}`;
-    await evo(`/webhook/set/${instanceName}`, {
-      method: "POST",
-      body: JSON.stringify({ webhook: { enabled: true, url: webhookUrl, events: ["MESSAGES_UPSERT", "CONNECTION_UPDATE"] } }),
-    }).catch(() => null);
+    if (WEBHOOK_TOKEN) {
+      const webhookUrl = `${SUPABASE_URL}/functions/v1/whatsapp-webhook?token=${encodeURIComponent(WEBHOOK_TOKEN)}`;
+      await evo(`/webhook/set/${instanceName}`, {
+        method: "POST",
+        body: JSON.stringify({ webhook: { enabled: true, url: webhookUrl, events: ["MESSAGES_UPSERT", "CONNECTION_UPDATE"] } }),
+      }).catch(() => null);
+    }
 
     const connect = await evo(`/instance/connect/${instanceName}`, { method: "GET" });
     const qr = pickQr(connect.data) || pickQr(create.data);
@@ -76,9 +100,9 @@ Deno.serve(async (req) => {
     }).select("*").single();
     if (error) throw error;
 
-    return new Response(JSON.stringify({ ok: true, instance: saved }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return jsonResponse({ ok: true, configured: true, instance: saved });
   } catch (err) {
     console.error("[whatsapp-connect] error", err);
-    return new Response(JSON.stringify({ ok: false, message: err instanceof Error ? err.message : String(err) }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return jsonResponse({ ok: false, message: err instanceof Error ? err.message : String(err) });
   }
 });
