@@ -887,6 +887,7 @@ export default function App() {
                   isBackingUpToSheets={isBackingUpToSheets}
                   onSaveConfig={handleSaveConfig}
                   onBackupToSheets={handleBackupToSheets}
+                  onImportFromSheets={handleImportFromSheets}
                   formatCop={formatCop}
                 />
               )}
