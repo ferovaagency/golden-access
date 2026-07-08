@@ -145,9 +145,9 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
     : 0;
 
   const getFiscalAlertColor = (pct: number) => {
-    if (pct < 70) return { bar: '#a8c98a', text: 'bajo control', border: 'border-l-[#a8c98a] bg-[#141812]' }; // green
-    if (pct < 100) return { bar: '#c9a961', text: 'alerta preventiva', border: 'border-l-[#c9a961] bg-[#181611]' }; // gold
-    return { bar: '#c97a61', text: 'tope superado', border: 'border-l-[#c97a61] bg-[#181312]' }; // terracota/red
+    if (pct < 70) return { bar: '#a8c98a', text: 'bajo control', border: 'border-l-[#a8c98a] bg-slate-50' }; // green
+    if (pct < 100) return { bar: '#c9a961', text: 'alerta preventiva', border: 'border-l-[#c9a961] bg-slate-50' }; // gold
+    return { bar: '#c97a61', text: 'tope superado', border: 'border-l-[#c97a61] bg-slate-50' }; // terracota/red
   };
 
   const alertRenta = getFiscalAlertColor(pctRentaVentas);
@@ -191,49 +191,49 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
     }));
 
   return (
-    <div className="space-y-8 animate-fade-in text-[#e8e3d8]">
+    <div className="space-y-8 animate-fade-in text-slate-900">
 
       {/* 5-Level Utility Step Banner */}
       <div>
-        <h3 className="text-xs font-mono tracking-[0.2em] text-[#a39d8e] uppercase mb-4 flex items-center gap-1.5">
+        <h3 className="text-xs font-mono tracking-[0.2em] text-slate-500 uppercase mb-4 flex items-center gap-1.5">
           <TrendingUp className="w-4 h-4 text-[#c9a961]" /> Niveles de Utilidad
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           
-          <div className="bg-[#161412] border border-[#2a2620] border-l-4 border-l-[#a39d8e] p-5 rounded-lg">
-            <span className="text-[10px] font-mono tracking-wider text-[#8a8377] block uppercase">Nivel 0</span>
-            <span className="text-sm font-sans font-medium text-[#a39d8e] block mt-1">Ventas Totales</span>
-            <div className="text-xl font-display font-semibold text-[#e8e3d8] mt-3">{formatCop(totalVentas)}</div>
-            <div className="text-[10px] text-[#8a8377] font-mono mt-1">100% de ingresos</div>
+          <div className="bg-white border border-slate-200 border-l-4 border-l-[#a39d8e] p-5 rounded-lg">
+            <span className="text-[10px] font-mono tracking-wider text-slate-400 block uppercase">Nivel 0</span>
+            <span className="text-sm font-sans font-medium text-slate-500 block mt-1">Ventas Totales</span>
+            <div className="text-xl font-display font-semibold text-slate-900 mt-3">{formatCop(totalVentas)}</div>
+            <div className="text-[10px] text-slate-400 font-mono mt-1">100% de ingresos</div>
           </div>
 
-          <div className="bg-[#161412] border border-[#2a2620] border-l-4 border-l-[#c9a961] p-5 rounded-lg">
-            <span className="text-[10px] font-mono tracking-wider text-[#8a8377] block uppercase">Nivel 1</span>
-            <span className="text-sm font-sans font-medium text-[#a39d8e] block mt-1">Utilidad Bruta</span>
+          <div className="bg-white border border-slate-200 border-l-4 border-l-[#c9a961] p-5 rounded-lg">
+            <span className="text-[10px] font-mono tracking-wider text-slate-400 block uppercase">Nivel 1</span>
+            <span className="text-sm font-sans font-medium text-slate-500 block mt-1">Utilidad Bruta</span>
             <div className="text-xl font-display font-semibold text-[#c9a961] mt-3">{formatCop(utilidadBruta)}</div>
-            <div className="text-[10px] text-[#8a8377] font-mono mt-1">Menos costos directos</div>
+            <div className="text-[10px] text-slate-400 font-mono mt-1">Menos costos directos</div>
           </div>
 
-          <div className="bg-[#161412] border border-[#2a2620] border-l-4 border-l-[#a8c98a] p-5 rounded-lg">
-            <span className="text-[10px] font-mono tracking-wider text-[#8a8377] block uppercase">Nivel 2</span>
-            <span className="text-sm font-sans font-medium text-[#a39d8e] block mt-1">Utilidad Operacional</span>
+          <div className="bg-white border border-slate-200 border-l-4 border-l-[#a8c98a] p-5 rounded-lg">
+            <span className="text-[10px] font-mono tracking-wider text-slate-400 block uppercase">Nivel 2</span>
+            <span className="text-sm font-sans font-medium text-slate-500 block mt-1">Utilidad Operacional</span>
             <div className="text-xl font-display font-semibold text-[#a8c98a] mt-3">{formatCop(utilidadOperacional)}</div>
-            <div className="text-[10px] text-[#8a8377] font-mono mt-1">Menos herramientas y fijos</div>
+            <div className="text-[10px] text-slate-400 font-mono mt-1">Menos herramientas y fijos</div>
           </div>
 
-          <div className="bg-[#161412] border border-[#2a2620] border-l-4 border-l-[#c97a61] p-5 rounded-lg">
-            <span className="text-[10px] font-mono tracking-wider text-[#8a8377] block uppercase">Nivel 3</span>
-            <span className="text-sm font-sans font-medium text-[#a39d8e] block mt-1">Antes de Impuestos</span>
-            <div className="text-xl font-display font-semibold text-[#e8e3d8] mt-3">{formatCop(utilidadAntesImpuestos)}</div>
-            <div className="text-[10px] text-[#8a8377] font-mono mt-1">Menos salario Mafe</div>
+          <div className="bg-white border border-slate-200 border-l-4 border-l-[#c97a61] p-5 rounded-lg">
+            <span className="text-[10px] font-mono tracking-wider text-slate-400 block uppercase">Nivel 3</span>
+            <span className="text-sm font-sans font-medium text-slate-500 block mt-1">Antes de Impuestos</span>
+            <div className="text-xl font-display font-semibold text-slate-900 mt-3">{formatCop(utilidadAntesImpuestos)}</div>
+            <div className="text-[10px] text-slate-400 font-mono mt-1">Menos salario Mafe</div>
           </div>
 
-          <div className="bg-[#181512] border border-[#2a2620] border-l-4 border-l-[#c9a961] p-5 rounded-lg relative overflow-hidden">
+          <div className="bg-white border border-slate-200 border-l-4 border-l-[#c9a961] p-5 rounded-lg relative overflow-hidden">
             <div className="absolute top-0 right-0 w-16 h-16 bg-[#c9a961]/5 rounded-bl-full pointer-events-none" />
             <span className="text-[10px] font-mono tracking-wider text-[#c9a961] block uppercase">Nivel 4 · Neto</span>
-            <span className="text-sm font-sans font-medium text-[#e8e3d8] block mt-1 font-semibold">Utilidad Neta Real</span>
+            <span className="text-sm font-sans font-medium text-slate-900 block mt-1 font-semibold">Utilidad Neta Real</span>
             <div className="text-xl font-display font-bold text-[#a8c98a] mt-3">{formatCop(utilidadNeta)}</div>
-            <div className="text-[10px] text-[#8a8377] font-mono mt-1">Menos Renta DIAN Est.</div>
+            <div className="text-[10px] text-slate-400 font-mono mt-1">Menos Renta DIAN Est.</div>
           </div>
 
         </div>
@@ -242,42 +242,42 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
       {/* 4 Cards: Retenciones, Banco, Salario Neto, Adelantos */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
-        <div className="bg-[#13110f] border border-[#2a2620] p-5 rounded-lg">
-          <span className="text-[10px] font-mono tracking-wider text-[#8a8377] uppercase block">Retenciones Aplicadas</span>
+        <div className="bg-white border border-slate-200 p-5 rounded-lg">
+          <span className="text-[10px] font-mono tracking-wider text-slate-400 uppercase block">Retenciones Aplicadas</span>
           <div className="text-2xl font-display font-medium text-[#c97a61] mt-2">{formatCop(totalRetencion)}</div>
-          <p className="text-[11px] text-[#8a8377] font-sans mt-2">Deducido en la fuente por declarar.</p>
+          <p className="text-[11px] text-slate-400 font-sans mt-2">Deducido en la fuente por declarar.</p>
         </div>
 
-        <div className="bg-[#13110f] border border-[#2a2620] p-5 rounded-lg">
-          <span className="text-[10px] font-mono tracking-wider text-[#8a8377] uppercase block">Lo que entra al Banco</span>
+        <div className="bg-white border border-slate-200 p-5 rounded-lg">
+          <span className="text-[10px] font-mono tracking-wider text-slate-400 uppercase block">Lo que entra al Banco</span>
           <div className="text-2xl font-display font-medium text-[#a8c98a] mt-2">{formatCop(loQueEntraAlBanco)}</div>
-          <p className="text-[11px] text-[#8a8377] font-sans mt-2">Valor neto sin retenciones.</p>
+          <p className="text-[11px] text-slate-400 font-sans mt-2">Valor neto sin retenciones.</p>
         </div>
 
-        <div className="bg-[#13110f] border border-[#2a2620] p-5 rounded-lg flex flex-col justify-between">
+        <div className="bg-white border border-slate-200 p-5 rounded-lg flex flex-col justify-between">
           <div>
-            <span className="text-[10px] font-mono tracking-wider text-[#8a8377] uppercase block">Control Salarial (Socio)</span>
+            <span className="text-[10px] font-mono tracking-wider text-slate-400 uppercase block">Control Salarial (Socio)</span>
             <div className="flex items-baseline justify-between mt-2.5">
-              <span className="text-xs text-[#a39d8e]">Real Pagado:</span>
+              <span className="text-xs text-slate-500">Real Pagado:</span>
               <span className="text-xl font-display font-semibold text-[#a8c98a]">{formatCop(metrics.salariosRealesPagados)}</span>
             </div>
           </div>
-          <div className="border-t border-[#2a2620]/50 pt-2 mt-2 space-y-1 text-[10px] font-mono">
-            <div className="flex justify-between text-[#a39d8e]">
+          <div className="border-t border-slate-200/50 pt-2 mt-2 space-y-1 text-[10px] font-mono">
+            <div className="flex justify-between text-slate-500">
               <span>Propuesto:</span>
               <span className="text-[#c9a961]">{formatCop(salarioPropuesto)}</span>
             </div>
-            <div className="flex justify-between text-[#8a8377]">
+            <div className="flex justify-between text-slate-400">
               <span>Neto Retirable Est:</span>
-              <span className="text-[#e8e3d8]">{formatCop(miSalarioNeto)}</span>
+              <span className="text-slate-900">{formatCop(miSalarioNeto)}</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-[#13110f] border border-[#2a2620] p-5 rounded-lg">
-          <span className="text-[10px] font-mono tracking-wider text-[#8a8377] uppercase block">Adelantos Recibidos</span>
-          <div className="text-2xl font-display font-medium text-[#e8e3d8] mt-2">{formatCop(totalAdelanto)}</div>
-          <p className="text-[11px] text-[#8a8377] font-sans mt-2">Suma de anticipos de clientes.</p>
+        <div className="bg-white border border-slate-200 p-5 rounded-lg">
+          <span className="text-[10px] font-mono tracking-wider text-slate-400 uppercase block">Adelantos Recibidos</span>
+          <div className="text-2xl font-display font-medium text-slate-900 mt-2">{formatCop(totalAdelanto)}</div>
+          <p className="text-[11px] text-slate-400 font-sans mt-2">Suma de anticipos de clientes.</p>
         </div>
 
       </div>
@@ -285,35 +285,35 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
       {/* Ventas Nacionales vs Internacionales */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        <div className="bg-[#161412] border border-[#2a2620] border-l-3 border-l-[#c9a961] p-6 rounded-lg flex flex-col justify-between">
+        <div className="bg-white border border-slate-200 border-l-3 border-l-[#c9a961] p-6 rounded-lg flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase">Ventas Nacionales</span>
+              <span className="text-xs font-mono tracking-widest text-slate-500 uppercase">Ventas Nacionales</span>
               <span className="text-[10px] bg-[#c9a961]/10 text-[#c9a961] px-2 py-0.5 rounded font-mono font-semibold">CO</span>
             </div>
-            <div className="text-2xl font-display font-bold text-[#e8e3d8] mt-4">{formatCop(ventasNacionales)}</div>
-            <p className="text-xs text-[#a39d8e] mt-2 leading-relaxed">
+            <div className="text-2xl font-display font-bold text-slate-900 mt-4">{formatCop(ventasNacionales)}</div>
+            <p className="text-xs text-slate-500 mt-2 leading-relaxed">
               Ventas en territorio colombiano. Sujetas a cobro de IVA y retenciones en la fuente según el estatuto.
             </p>
           </div>
-          <div className="mt-6 pt-4 border-t border-[#2a2620] flex items-center justify-between text-xs font-mono text-[#8a8377]">
+          <div className="mt-6 pt-4 border-t border-slate-200 flex items-center justify-between text-xs font-mono text-slate-400">
             <span>Margen de contribución nacional:</span>
             <span className="font-bold text-[#a8c98a]">{margenNacional.toFixed(1)}%</span>
           </div>
         </div>
 
-        <div className="bg-[#161412] border border-[#2a2620] border-l-3 border-[#8a8377] p-6 rounded-lg flex flex-col justify-between">
+        <div className="bg-white border border-slate-200 border-l-3 border-[#8a8377] p-6 rounded-lg flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase">Ventas Internacionales</span>
+              <span className="text-xs font-mono tracking-widest text-slate-500 uppercase">Ventas Internacionales</span>
               <span className="text-[10px] bg-emerald-500/10 text-[#a8c98a] px-2 py-0.5 rounded font-mono font-semibold">GOB</span>
             </div>
-            <div className="text-2xl font-display font-bold text-[#e8e3d8] mt-4">{formatCop(ventasInternacionales)}</div>
-            <p className="text-xs text-[#a39d8e] mt-2 leading-relaxed">
+            <div className="text-2xl font-display font-bold text-slate-900 mt-4">{formatCop(ventasInternacionales)}</div>
+            <p className="text-xs text-slate-500 mt-2 leading-relaxed">
               Exportación de servicios digitales. Exentas de IVA por ley especial de exportación.
             </p>
           </div>
-          <div className="mt-6 pt-4 border-t border-[#2a2620] flex items-center justify-between text-xs font-mono text-[#8a8377]">
+          <div className="mt-6 pt-4 border-t border-slate-200 flex items-center justify-between text-xs font-mono text-slate-400">
             <span>Nota de régimen tributario:</span>
             <span className="text-[#a8c98a] font-semibold">Exenta de IVA (Art. 481 ET)</span>
           </div>
@@ -323,29 +323,29 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
 
       {/* Hour analysis (visible only if there are recorded hours) */}
       {totalHoras > 0 && (
-        <div className="bg-[#13110f] border border-[#2a2620] p-6 rounded-lg">
-          <h4 className="text-xs font-mono tracking-[0.2em] text-[#a39d8e] uppercase mb-4 flex items-center gap-1.5">
+        <div className="bg-white border border-slate-200 p-6 rounded-lg">
+          <h4 className="text-xs font-mono tracking-[0.2em] text-slate-500 uppercase mb-4 flex items-center gap-1.5">
             <Clock className="w-4 h-4 text-[#c9a961]" /> Análisis del Valor de Mi Hora
           </h4>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
-            <div className="bg-white/[0.01] border border-[#2a2620] p-4 rounded-lg">
-              <span className="text-[10px] font-mono text-[#8a8377] uppercase block">Hora Cobrada Promedio</span>
-              <div className="text-xl font-display font-semibold text-[#e8e3d8] mt-2">{formatCop(horaCobradaObj)}</div>
-              <p className="text-[11px] text-[#8a8377] mt-1 font-mono">Factura general / Total horas registradas</p>
+            <div className="bg-white/[0.01] border border-slate-200 p-4 rounded-lg">
+              <span className="text-[10px] font-mono text-slate-400 uppercase block">Hora Cobrada Promedio</span>
+              <div className="text-xl font-display font-semibold text-slate-900 mt-2">{formatCop(horaCobradaObj)}</div>
+              <p className="text-[11px] text-slate-400 mt-1 font-mono">Factura general / Total horas registradas</p>
             </div>
 
-            <div className="bg-white/[0.01] border border-[#2a2620] p-4 rounded-lg">
-              <span className="text-[10px] font-mono text-[#8a8377] uppercase block">Hora Real</span>
+            <div className="bg-white/[0.01] border border-slate-200 p-4 rounded-lg">
+              <span className="text-[10px] font-mono text-slate-400 uppercase block">Hora Real</span>
               <div className="text-xl font-display font-semibold text-[#a8c98a] mt-2">{formatCop(horaRealObj)}</div>
-              <p className="text-[11px] text-[#8a8377] mt-1 font-mono">Utilidad neta real / Total horas registradas</p>
+              <p className="text-[11px] text-slate-400 mt-1 font-mono">Utilidad neta real / Total horas registradas</p>
             </div>
 
-            <div className="bg-white/[0.01] border border-[#2a2620] p-4 rounded-lg">
+            <div className="bg-white/[0.01] border border-slate-200 p-4 rounded-lg">
               <span className="text-[10px] font-mono text-[#c9a961] uppercase block font-semibold">Hora Mínima Objetivo</span>
               <div className="text-xl font-display font-semibold text-[#c9a961] mt-2">{formatCop(horaObjetivoMinima)}</div>
-              <p className="text-[11px] text-[#8a8377] mt-1 font-mono">Salario / Horas objetivo ({config.horas_objetivo_mes || 160})</p>
+              <p className="text-[11px] text-slate-400 mt-1 font-mono">Salario / Horas objetivo ({config.horas_objetivo_mes || 160})</p>
             </div>
 
           </div>
@@ -353,8 +353,8 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
       )}
 
       {/* Tax alert progress lines (Anualizadas) */}
-      <div className="bg-[#161412] border border-[#2a2620] p-6 rounded-lg">
-        <h4 className="text-xs font-mono tracking-[0.2em] text-[#a39d8e] uppercase mb-6 flex items-center gap-1.5">
+      <div className="bg-white border border-slate-200 p-6 rounded-lg">
+        <h4 className="text-xs font-mono tracking-[0.2em] text-slate-500 uppercase mb-6 flex items-center gap-1.5">
           <ShieldAlert className="w-4 h-4 text-[#c97a61]" /> Proyecciones de Carga e Impuestos DIAN 2026
         </h4>
 
@@ -363,8 +363,8 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
           {/* Card 1: Declarar Renta */}
           <div className={`border-l-3 p-4 rounded ${alertRenta.border}`}>
             <div className="flex flex-col sm:flex-row justify-between text-xs font-mono mb-2">
-              <span className="text-[#e8e3d8] uppercase font-semibold">1. Declaración de Renta Persona Natural</span>
-              <span className="text-[#a39d8e]">Ventas Anuales Proyectadas: <b className="text-white">{formatCop(projectedAnnualSales)}</b> / {formatCop(limiteRentaVentas)} (1.400 UVT)</span>
+              <span className="text-slate-900 uppercase font-semibold">1. Declaración de Renta Persona Natural</span>
+              <span className="text-slate-500">Ventas Anuales Proyectadas: <b className="text-white">{formatCop(projectedAnnualSales)}</b> / {formatCop(limiteRentaVentas)} (1.400 UVT)</span>
             </div>
             <div className="w-full bg-[#2a2620] rounded-full h-2 overflow-hidden mt-2">
               <div 
@@ -372,7 +372,7 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
                 style={{ width: `${Math.min(pctRentaVentas, 100)}%`, backgroundColor: alertRenta.bar }}
               />
             </div>
-            <div className="flex justify-between items-center text-[10px] font-mono text-[#a39d8e] mt-2">
+            <div className="flex justify-between items-center text-[10px] font-mono text-slate-500 mt-2">
               <span>Porcentaje de cumplimiento del tope: {pctRentaVentas.toFixed(0)}%</span>
               <span className="uppercase tracking-wider font-semibold" style={{ color: alertRenta.bar }}>[{alertRenta.text}]</span>
             </div>
@@ -381,8 +381,8 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
           {/* Card 2: Responsante IVA */}
           <div className={`border-l-3 p-4 rounded ${alertIva.border}`}>
             <div className="flex flex-col sm:flex-row justify-between text-xs font-mono mb-2">
-              <span className="text-[#e8e3d8] uppercase font-semibold">2. Responsabilidad de IVA (Art. 437 ET)</span>
-              <span className="text-[#a39d8e]">Tope de Ingresos: <b className="text-white">{formatCop(projectedAnnualSales)}</b> / {formatCop(limiteResponsableIva)} (3.500 UVT)</span>
+              <span className="text-slate-900 uppercase font-semibold">2. Responsabilidad de IVA (Art. 437 ET)</span>
+              <span className="text-slate-500">Tope de Ingresos: <b className="text-white">{formatCop(projectedAnnualSales)}</b> / {formatCop(limiteResponsableIva)} (3.500 UVT)</span>
             </div>
             <div className="w-full bg-[#2a2620] rounded-full h-2 overflow-hidden mt-2">
               <div 
@@ -390,7 +390,7 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
                 style={{ width: `${Math.min(pctIvaVentas, 100)}%`, backgroundColor: alertIva.bar }}
               />
             </div>
-            <div className="flex justify-between items-center text-[10px] font-mono text-[#a39d8e] mt-2">
+            <div className="flex justify-between items-center text-[10px] font-mono text-slate-500 mt-2">
               <span>Porcentaje de cumplimiento del tope: {pctIvaVentas.toFixed(0)}%</span>
               <span className="uppercase tracking-wider font-semibold" style={{ color: alertIva.bar }}>[{alertIva.text}]</span>
             </div>
@@ -399,8 +399,8 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
           {/* Card 3: Pagar Renta */}
           <div className={`border-l-3 p-4 rounded ${alertPagoRenta.border}`}>
             <div className="flex flex-col sm:flex-row justify-between text-xs font-mono mb-2">
-              <span className="text-[#e8e3d8] uppercase font-semibold">3. Impuesto de Renta a Pagar</span>
-              <span className="text-[#a39d8e]">Utilidad Gravable Anual: <b className="text-white">{formatCop(projectedAnnualNet)}</b> / Exento hasta {formatCop(limitePagaRenta)} (1.090 UVT)</span>
+              <span className="text-slate-900 uppercase font-semibold">3. Impuesto de Renta a Pagar</span>
+              <span className="text-slate-500">Utilidad Gravable Anual: <b className="text-white">{formatCop(projectedAnnualNet)}</b> / Exento hasta {formatCop(limitePagaRenta)} (1.090 UVT)</span>
             </div>
             <div className="w-full bg-[#2a2620] rounded-full h-2 overflow-hidden mt-2">
               <div 
@@ -408,7 +408,7 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
                 style={{ width: `${Math.min(pctPagaRenta, 100)}%`, backgroundColor: alertPagoRenta.bar }}
               />
             </div>
-            <div className="flex justify-between items-center text-[10px] font-mono text-[#a39d8e] mt-2">
+            <div className="flex justify-between items-center text-[10px] font-mono text-slate-500 mt-2">
               <span>Porcentaje de exención utilizado: {pctPagaRenta.toFixed(0)}%</span>
               <span className="uppercase tracking-wider font-semibold" style={{ color: alertPagoRenta.bar }}>[{alertPagoRenta.text}]</span>
             </div>
@@ -421,8 +421,8 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Ventas por servicio */}
-        <div className="bg-[#161412] border border-[#2a2620] p-6 rounded-lg">
-          <h4 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase mb-6">
+        <div className="bg-white border border-slate-200 p-6 rounded-lg">
+          <h4 className="text-xs font-mono tracking-widest text-slate-500 uppercase mb-6">
             Ventas por Servicio
           </h4>
           <div className="h-64">
@@ -439,14 +439,14 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-xs text-[#8a8377] font-mono">Sin información</div>
+              <div className="h-full flex items-center justify-center text-xs text-slate-400 font-mono">Sin información</div>
             )}
           </div>
         </div>
 
         {/* Utilidad por servicio */}
-        <div className="bg-[#161412] border border-[#2a2620] p-6 rounded-lg">
-          <h4 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase mb-6">
+        <div className="bg-white border border-slate-200 p-6 rounded-lg">
+          <h4 className="text-xs font-mono tracking-widest text-slate-500 uppercase mb-6">
             Utilidad Operativa Estimada por Servicio
           </h4>
           <div className="h-64">
@@ -463,7 +463,7 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-xs text-[#8a8377] font-mono">Sin información</div>
+              <div className="h-full flex items-center justify-center text-xs text-slate-400 font-mono">Sin información</div>
             )}
           </div>
         </div>
@@ -471,8 +471,8 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
       </div>
 
       {/* Evolución Mensual (Ventas, Costos, Utilidad) */}
-      <div className="bg-[#161412] border border-[#2a2620] p-6 rounded-lg">
-        <h4 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase mb-6">
+      <div className="bg-white border border-slate-200 p-6 rounded-lg">
+        <h4 className="text-xs font-mono tracking-widest text-slate-500 uppercase mb-6">
           Evolución Mensual (Ventas vs Costos vs Utilidad Neta)
         </h4>
         <div className="h-72">
@@ -493,7 +493,7 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-full flex items-center justify-center text-xs text-[#8a8377] font-mono">Sin información histórica suficiente</div>
+            <div className="h-full flex items-center justify-center text-xs text-slate-400 font-mono">Sin información histórica suficiente</div>
           )}
         </div>
       </div>

@@ -152,20 +152,20 @@ export default function ConfigAdmin({
   };
 
   return (
-    <div className="space-y-8 animate-fade-in text-[#e8e3d8]">
+    <div className="space-y-8 animate-fade-in text-slate-900">
       
       {/* Header */}
-      <div className="border-b border-[#2a2620] pb-5">
+      <div className="border-b border-slate-200 pb-5">
         <h2 className="text-xl font-display font-medium text-[#c9a961]">Configuración del Sistema</h2>
-        <p className="text-xs text-[#a39d8e] font-mono mt-1">Límites DIAN, constantes 2026, respaldos y copias contables para fijos de operación</p>
+        <p className="text-xs text-slate-500 font-mono mt-1">Límites DIAN, constantes 2026, respaldos y copias contables para fijos de operación</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* Main Parameters Panel */}
-        <div className="lg:col-span-8 bg-[#161412] border border-[#2a2620] rounded-lg overflow-hidden pb-4">
-          <div className="bg-white/[0.02] border-b border-[#2a2620] px-5 py-4 flex items-center justify-between">
-            <h3 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase font-semibold flex items-center gap-2">
+        <div className="lg:col-span-8 bg-white border border-slate-200 rounded-lg overflow-hidden pb-4">
+          <div className="bg-white/[0.02] border-b border-slate-200 px-5 py-4 flex items-center justify-between">
+            <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold flex items-center gap-2">
               <Settings className="w-4 h-4 text-[#c9a961]" /> Parámetros de Tributación Colombiana (DIAN 2026)
             </h3>
           </div>
@@ -174,168 +174,168 @@ export default function ConfigAdmin({
             
             {/* Constantes 2026 */}
             <div className="space-y-4">
-              <h4 className="font-semibold text-[#c9a961] border-b border-[#2a2620] pb-1.5 uppercase font-mono text-[10px] tracking-wider">
+              <h4 className="font-semibold text-[#c9a961] border-b border-slate-200 pb-1.5 uppercase font-mono text-[10px] tracking-wider">
                 1. Constantes DIAN oficiales Ley 2026
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-sans">
                 <div>
-                  <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Unidad Valor Tributario (UVT)</label>
+                  <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Unidad Valor Tributario (UVT)</label>
                   <input 
                     type="number" 
                     value={uvt}
                     onChange={(e) => setUvt(Number(e.target.value))}
                     required
-                    className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2.5 rounded font-mono focus:outline-none"
+                    className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded font-mono focus:outline-none"
                   />
-                  <span className="text-[10px] text-[#8a8377] block mt-1">Oficial 2026: $52.374 COP</span>
+                  <span className="text-[10px] text-slate-400 block mt-1">Oficial 2026: $52.374 COP</span>
                 </div>
 
                 <div>
-                  <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Salario Mínimo (SMMLV)</label>
+                  <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Salario Mínimo (SMMLV)</label>
                   <input 
                     type="number" 
                     value={smmlv}
                     onChange={(e) => setSmmlv(Number(e.target.value))}
                     required
-                    className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2.5 rounded font-mono focus:outline-none"
+                    className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded font-mono focus:outline-none"
                   />
-                  <span className="text-[10px] text-[#8a8377] block mt-1">Oficial 2026: $1.750.905 COP</span>
+                  <span className="text-[10px] text-slate-400 block mt-1">Oficial 2026: $1.750.905 COP</span>
                 </div>
 
                 <div>
-                  <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">TRM Dolar Estimada</label>
+                  <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">TRM Dolar Estimada</label>
                   <input 
                     type="number" 
                     value={trm}
                     onChange={(e) => setTrm(Number(e.target.value))}
                     required
-                    className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2.5 rounded font-mono focus:outline-none"
+                    className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded font-mono focus:outline-none"
                   />
-                  <span className="text-[10px] text-[#8a8377] block mt-1">COP por cada USD</span>
+                  <span className="text-[10px] text-slate-400 block mt-1">COP por cada USD</span>
                 </div>
               </div>
             </div>
 
             {/* Topes en UVT */}
             <div className="space-y-4">
-              <h4 className="font-semibold text-[#c9a961] border-b border-[#2a2620] pb-1.5 uppercase font-mono text-[10px] tracking-wider">
+              <h4 className="font-semibold text-[#c9a961] border-b border-slate-200 pb-1.5 uppercase font-mono text-[10px] tracking-wider">
                 2. Topes Anuales de Control (En UVT)
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-sans">
                 <div>
-                  <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Declarar Renta (Ventas)</label>
+                  <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Declarar Renta (Ventas)</label>
                   <input 
                     type="number" 
                     value={topeNoDeclaranteUvt}
                     onChange={(e) => setTopeNoDeclaranteUvt(Number(e.target.value))}
                     required
-                    className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2.5 rounded font-mono focus:outline-none"
+                    className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded font-mono focus:outline-none"
                   />
-                  <span className="text-[10px] text-[#8a8377] block mt-1">Normalmente: 1.400 UVT</span>
+                  <span className="text-[10px] text-slate-400 block mt-1">Normalmente: 1.400 UVT</span>
                 </div>
 
                 <div>
-                  <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Exento Pago de Renta</label>
+                  <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Exento Pago de Renta</label>
                   <input 
                     type="number" 
                     value={topeNoPagaRentaUvt}
                     onChange={(e) => setTopeNoPagaRentaUvt(Number(e.target.value))}
                     required
-                    className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2.5 rounded font-mono focus:outline-none"
+                    className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded font-mono focus:outline-none"
                   />
-                  <span className="text-[10px] text-[#8a8377] block mt-1">Normalmente: 1.090 UVT</span>
+                  <span className="text-[10px] text-slate-400 block mt-1">Normalmente: 1.090 UVT</span>
                 </div>
 
                 <div>
-                  <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Tope Responsable IVA</label>
+                  <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Tope Responsable IVA</label>
                   <input 
                     type="number" 
                     value={topeResponsableIvaUvt}
                     onChange={(e) => setTopeResponsableIvaUvt(Number(e.target.value))}
                     required
-                    className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2.5 rounded font-mono focus:outline-none"
+                    className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded font-mono focus:outline-none"
                   />
-                  <span className="text-[10px] text-[#8a8377] block mt-1">Normalmente: 3.500 UVT</span>
+                  <span className="text-[10px] text-slate-400 block mt-1">Normalmente: 3.500 UVT</span>
                 </div>
               </div>
             </div>
 
             {/* Tarifas retencion */}
             <div className="space-y-4">
-              <h4 className="font-semibold text-[#c9a961] border-b border-[#2a2620] pb-1.5 uppercase font-mono text-[10px] tracking-wider">
+              <h4 className="font-semibold text-[#c9a961] border-b border-slate-200 pb-1.5 uppercase font-mono text-[10px] tracking-wider">
                 3. Porcentajes de Retención en la Fuente
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-sans">
                 <div>
-                  <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Cliente Declarante (Servicios)</label>
+                  <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Cliente Declarante (Servicios)</label>
                   <input 
                     type="number" 
                     value={tarifaRetDeclarante}
                     onChange={(e) => setTarifaRetDeclarante(Number(e.target.value))}
                     step="0.01"
                     required
-                    className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2.5 rounded font-mono focus:outline-none"
+                    className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded font-mono focus:outline-none"
                   />
-                  <span className="text-[10px] text-[#8a8377] block mt-1">Porcentaje: 0.04 (4%)</span>
+                  <span className="text-[10px] text-slate-400 block mt-1">Porcentaje: 0.04 (4%)</span>
                 </div>
 
                 <div>
-                  <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Cliente NO Declarante</label>
+                  <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Cliente NO Declarante</label>
                   <input 
                     type="number" 
                     value={tarifaRetNoDeclarante}
                     onChange={(e) => setTarifaRetNoDeclarante(Number(e.target.value))}
                     step="0.01"
                     required
-                    className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2.5 rounded font-mono focus:outline-none"
+                    className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded font-mono focus:outline-none"
                   />
-                  <span className="text-[10px] text-[#8a8377] block mt-1">Porcentaje: 0.06 (6%)</span>
+                  <span className="text-[10px] text-slate-400 block mt-1">Porcentaje: 0.06 (6%)</span>
                 </div>
               </div>
             </div>
 
             {/* Metas Ferova */}
             <div className="space-y-4">
-              <h4 className="font-semibold text-[#c9a961] border-b border-[#2a2620] pb-1.5 uppercase font-mono text-[10px] tracking-wider">
+              <h4 className="font-semibold text-[#c9a961] border-b border-slate-200 pb-1.5 uppercase font-mono text-[10px] tracking-wider">
                 4. Parámetros de Operación Ferova Agency
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-sans">
                 <div>
-                  <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Sueldo Base Deseado</label>
+                  <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Sueldo Base Deseado</label>
                   <input 
                     type="number" 
                     value={salarioPropuesto}
                     onChange={(e) => setSalarioPropuesto(Number(e.target.value))}
                     required
-                    className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2.5 rounded font-mono focus:outline-none"
+                    className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded font-mono focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Cuota Comercial Ventas / Mes</label>
+                  <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Cuota Comercial Ventas / Mes</label>
                   <input 
                     type="number" 
                     value={metaVentasMensual}
                     onChange={(e) => setMetaVentasMensual(Number(e.target.value))}
                     required
-                    className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2.5 rounded font-mono focus:outline-none"
+                    className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded font-mono focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Objetivo Capacidad Horas / Mes</label>
+                  <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Objetivo Capacidad Horas / Mes</label>
                   <input 
                     type="number" 
                     value={horasObjetivoMes}
                     onChange={(e) => setHorasObjetivoMes(Number(e.target.value))}
                     required
-                    className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2.5 rounded font-mono focus:outline-none"
+                    className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded font-mono focus:outline-none"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="pt-3 border-t border-[#2a2620]/60 flex items-center justify-end">
+            <div className="pt-3 border-t border-slate-200/60 flex items-center justify-end">
               <button 
                 type="submit"
                 disabled={isSubmitting}
@@ -352,21 +352,21 @@ export default function ConfigAdmin({
         <div className="lg:col-span-4 space-y-6">
           
           {/* Google Sheets backup panel (optional, manual) */}
-          <div className="bg-[#161412] border border-[#2a2620] rounded-lg overflow-hidden pb-5">
-            <div className="bg-white/[0.02] border-b border-[#2a2620] px-5 py-3.5 flex items-center justify-between">
-              <h3 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase font-semibold flex items-center gap-2">
+          <div className="bg-white border border-slate-200 rounded-lg overflow-hidden pb-5">
+            <div className="bg-white/[0.02] border-b border-slate-200 px-5 py-3.5 flex items-center justify-between">
+              <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold flex items-center gap-2">
                 <FolderSync className="w-4 h-4 text-[#a8c98a]" /> Respaldo en Google Sheets
               </h3>
               <div className={`w-2 h-2 rounded-full ${hasGoogleToken ? 'bg-emerald-500 animate-pulse' : 'bg-[#8a8377]'}`} />
             </div>
 
             <div className="p-5 space-y-4 font-sans text-xs">
-              <p className="text-[#a39d8e] leading-relaxed text-[11px]">
+              <p className="text-slate-500 leading-relaxed text-[11px]">
                 Tu contabilidad vive en Ferova OS. Este respaldo es opcional: copia todo lo actual hacia tu propia hoja "Ferova_OS_Financiero" en Google Drive.
               </p>
 
               {!hasGoogleToken && (
-                <p className="text-[10px] text-[#8a8377] italic">
+                <p className="text-[10px] text-slate-400 italic">
                   Necesitas conectar tu cuenta de Google la primera vez.
                 </p>
               )}
@@ -391,9 +391,9 @@ export default function ConfigAdmin({
                 </a>
               )}
 
-              <div className="border-t border-[#2a2620] pt-4 mt-2 space-y-2">
-                <p className="text-[10px] text-[#8a8377] uppercase tracking-widest font-mono">Importar desde Sheets</p>
-                <p className="text-[11px] text-[#a39d8e] leading-relaxed">
+              <div className="border-t border-slate-200 pt-4 mt-2 space-y-2">
+                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-mono">Importar desde Sheets</p>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
                   Trae toda tu información financiera desde la hoja "Ferova_OS_Financiero" de tu Drive hacia Ferova OS. Reemplazará los datos actuales.
                 </p>
                 <button
@@ -405,9 +405,9 @@ export default function ConfigAdmin({
                 </button>
               </div>
 
-              <div className="border-t border-[#2a2620] pt-4 mt-2 space-y-2">
-                <p className="text-[10px] text-[#8a8377] uppercase tracking-widest font-mono">Importar pegando link</p>
-                <p className="text-[11px] text-[#a39d8e] leading-relaxed">
+              <div className="border-t border-slate-200 pt-4 mt-2 space-y-2">
+                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-mono">Importar pegando link</p>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
                   Pega la URL de tu Google Sheet (debe estar compartido con tu cuenta Google conectada) y lo importamos directo. Debe tener las pestañas: <span className="font-mono text-[#c9a961]">Config, Clientes, Servicios, Herramientas, OtrosGastos, Ventas, Horas, PagosEgresos</span>.
                 </p>
                 <input
@@ -415,7 +415,7 @@ export default function ConfigAdmin({
                   value={sheetUrl}
                   onChange={(e) => setSheetUrl(e.target.value)}
                   placeholder="https://docs.google.com/spreadsheets/d/XXXXXXX/edit"
-                  className="w-full bg-[#0f0e0c]/70 text-white border border-[#2a2620] p-2.5 rounded font-mono text-[11px] focus:outline-none focus:border-[#c9a961]"
+                  className="w-full bg-[#0f0e0c]/70 text-slate-900 border border-slate-200 p-2.5 rounded font-mono text-[11px] focus:outline-none focus:border-[#c9a961]"
                 />
                 <button
                   onClick={async () => {
@@ -434,36 +434,36 @@ export default function ConfigAdmin({
           </div>
 
           {/* TSV Accountant copiers */}
-          <div className="bg-[#161412] border border-[#2a2620] rounded-lg overflow-hidden pb-5">
-            <div className="bg-white/[0.02] border-b border-[#2a2620] px-5 py-3.5">
-              <h3 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase font-semibold flex items-center gap-2">
+          <div className="bg-white border border-slate-200 rounded-lg overflow-hidden pb-5">
+            <div className="bg-white/[0.02] border-b border-slate-200 px-5 py-3.5">
+              <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold flex items-center gap-2">
                 <Clipboard className="w-4 h-4 text-[#c9a961]" /> Portapapeles contable rápido (TSV)
               </h3>
             </div>
 
             <div className="p-5 space-y-4 font-sans text-xs">
-              <p className="text-[#a39d8e] leading-relaxed text-[11px]">
+              <p className="text-slate-500 leading-relaxed text-[11px]">
                 Herramienta ágil sin descargas: copia las tres planillas principales en formato tabular listo para pegar directo en Microsoft Excel o Numbers para tu contador general:
               </p>
 
               <div className="space-y-2">
                 <button 
                   onClick={exportVentasTsv}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#0f0e0c]/50 hover:bg-[#0f0e0c] border border-[#2a2620] text-[#e8e3d8] rounded text-xs font-mono transition cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-50 hover:bg-[#0f0e0c] border border-slate-200 text-slate-900 rounded text-xs font-mono transition cursor-pointer"
                 >
                   Planilla de Ventas ({ventas.length} registros)
                 </button>
 
                 <button 
                   onClick={exportClientesTsv}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#0f0e0c]/50 hover:bg-[#0f0e0c] border border-[#2a2620] text-[#e8e3d8] rounded text-xs font-mono transition cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-50 hover:bg-[#0f0e0c] border border-slate-200 text-slate-900 rounded text-xs font-mono transition cursor-pointer"
                 >
                   Directorio Clientes ({clientes.length} perfiles)
                 </button>
 
                 <button 
                   onClick={exportHorasTsv}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#0f0e0c]/50 hover:bg-[#0f0e0c] border border-[#2a2620] text-[#e8e3d8] rounded text-xs font-mono transition cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-50 hover:bg-[#0f0e0c] border border-slate-200 text-slate-900 rounded text-xs font-mono transition cursor-pointer"
                 >
                   Bitácora de Horas ({horas.length} registros)
                 </button>

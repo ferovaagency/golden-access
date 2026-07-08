@@ -559,7 +559,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     <div className={outerClass}>
       {!embedded && (
         <>
-          <header className="bg-[#11100e] border-b border-[#2a2620] px-6 py-4 flex items-center justify-between">
+          <header className="bg-[#11100e] border-b border-slate-200 px-6 py-4 flex items-center justify-between">
             <div>
               <h1 className="text-lg font-display font-bold text-[#c9a961]">Ferova Growth OS</h1>
               <span className="text-[10px] font-mono text-[#8a8377] uppercase tracking-wider">CRM interno · no visible para clientes</span>
@@ -569,13 +569,13 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
             </button>
           </header>
 
-          <nav className="flex gap-2 px-6 py-3 border-b border-[#2a2620] text-xs font-mono">
+          <nav className="flex gap-2 px-6 py-3 border-b border-slate-200 text-xs font-mono">
             {(['pipeline', 'citas', 'contenido', 'bot', 'resenas'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
                 className={`px-3 py-1.5 rounded uppercase tracking-wider font-semibold ${
-                  tab === t ? 'bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/40' : 'text-[#a39d8e] hover:text-white'
+                  tab === t ? 'bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/40' : 'text-slate-500 hover:text-white'
                 }`}
               >
                 {t === 'pipeline' ? 'Pipeline' : t === 'citas' ? 'Citas de diagnóstico' : t === 'contenido' ? 'Contenido con potencial' : t === 'bot' ? 'Bot de WhatsApp' : 'Reseñas'}
@@ -593,16 +593,16 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
         )}
 
         <section className="mb-6 grid grid-cols-1 lg:grid-cols-[1.4fr_2fr] gap-4">
-          <div className="border border-[#2a2620] rounded-lg p-5 bg-[#14120f]">
+          <div className="border border-slate-200 rounded-lg p-5 bg-[#14120f]">
             <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#8a8377]">Growth cockpit</p>
-            <h2 className="text-2xl font-display font-semibold text-[#e8e3d8] mt-2">CRM interno de Ferova</h2>
-            <p className="text-xs text-[#a39d8e] mt-2 leading-relaxed">
+            <h2 className="text-2xl font-display font-semibold text-slate-900 mt-2">CRM interno de Ferova</h2>
+            <p className="text-xs text-slate-500 mt-2 leading-relaxed">
               Captura demanda, analiza señales, agenda diagnósticos y centraliza reseñas sin enviar nada automáticamente.
             </p>
           </div>
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
             {kpis.map((item) => (
-              <div key={item.label} className="bg-[#161412] border border-[#2a2620] rounded-lg p-4">
+              <div key={item.label} className="bg-white border border-slate-200 rounded-lg p-4">
                 <span className="text-[9px] font-mono uppercase tracking-wider text-[#8a8377]">{item.label}</span>
                 <div className="text-2xl font-display font-bold mt-2" style={{ color: item.accent }}>{item.value}</div>
               </div>
@@ -613,25 +613,25 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
         {tab === 'pipeline' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <form onSubmit={handleCreateOportunidad} className="lg:col-span-4 bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs h-fit">
+            <form onSubmit={handleCreateOportunidad} className="lg:col-span-4 bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs h-fit">
               <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold">Nueva oportunidad</h3>
               <input
                 value={nombreContacto}
                 onChange={(e) => setNombreContacto(e.target.value)}
                 placeholder="Nombre de contacto"
                 required
-                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
               />
               <input
                 value={empresa}
                 onChange={(e) => setEmpresa(e.target.value)}
                 placeholder="Empresa (opcional)"
-                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
               />
               <select
                 value={canalOrigen}
                 onChange={(e) => setCanalOrigen(e.target.value)}
-                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
               >
                 {['linkedin', 'whatsapp', 'email', 'reddit', 'web', 'googlemaps', 'referido', 'otro'].map((c) => (
                   <option key={c} value={c}>{c}</option>
@@ -641,18 +641,18 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 value={fuenteUrl}
                 onChange={(e) => setFuenteUrl(e.target.value)}
                 placeholder="Link de la publicación/perfil (opcional)"
-                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
               />
               <input
                 value={telefono}
                 onChange={(e) => setTelefono(e.target.value)}
                 placeholder="WhatsApp (ej. 573001234567, opcional)"
-                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
               />
               <select
                 value={nuevaServicioId}
                 onChange={(e) => setNuevaServicioId(e.target.value)}
-                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
               >
                 <option value="">Servicio del catálogo (opcional)</option>
                 {servicios.map((s) => (
@@ -666,12 +666,12 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   value={nuevaValorEstimado}
                   onChange={(e) => setNuevaValorEstimado(e.target.value)}
                   placeholder="Valor estimado (opcional)"
-                  className="flex-1 bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                  className="flex-1 bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
                 />
                 <select
                   value={nuevaMoneda}
                   onChange={(e) => setNuevaMoneda(e.target.value as 'COP' | 'USD')}
-                  className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                  className="bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
                 >
                   <option value="COP">COP</option>
                   <option value="USD">USD</option>
@@ -701,15 +701,15 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                     ? `US$ ${n.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
                     : `$ ${n.toLocaleString('es-CO', { maximumFractionDigits: 0 })}`;
                 return (
-                  <div key={o.id} className="bg-[#161412] border border-[#2a2620] rounded-lg p-4 space-y-3 text-xs">
+                  <div key={o.id} className="bg-white border border-slate-200 rounded-lg p-4 space-y-3 text-xs">
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="flex-1 min-w-[160px]">
-                        <div className="font-semibold text-[#e8e3d8]">{o.nombre_contacto}</div>
+                        <div className="font-semibold text-slate-900">{o.nombre_contacto}</div>
                         <div className="text-[#8a8377] font-mono text-[10px]">
                           {o.empresa || 'Sin empresa'} · {o.canal_origen}{o.telefono ? ` · ${o.telefono}` : ''}
                         </div>
                         {(srv || valor != null) && (
-                          <div className="text-[#a39d8e] font-mono text-[10px] mt-1">
+                          <div className="text-slate-500 font-mono text-[10px] mt-1">
                             {srv && <span className="text-[#c9a961]">{srv.nombre}</span>}
                             {srv && valor != null && ' · '}
                             {valor != null && o.moneda && <span>{fmt(valor, o.moneda)}</span>}
@@ -734,7 +734,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                       <select
                         value={o.estado}
                         onChange={(e) => handleChangeEstado(o, e.target.value as EstadoOportunidad)}
-                        className="bg-[#0f0e0c]/60 border border-[#2a2620] rounded px-2 py-1 text-[#a39d8e] font-mono text-[10px]"
+                        className="bg-slate-50/60 border border-slate-200 rounded px-2 py-1 text-slate-500 font-mono text-[10px]"
                       >
                         {ESTADOS.map((s) => (
                           <option key={s} value={s}>{s}</option>
@@ -752,7 +752,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                         value={whatsappDrafts[o.id] || ''}
                         onChange={(e) => setWhatsappDrafts({ ...whatsappDrafts, [o.id]: e.target.value })}
                         placeholder="Escribe un mensaje de WhatsApp..."
-                        className="flex-1 bg-[#0f0e0c]/50 border border-[#2a2620] p-1.5 rounded text-white"
+                        className="flex-1 bg-slate-50/50 border border-slate-200 p-1.5 rounded text-white"
                       />
                       <button
                         onClick={() => handleSendWhatsapp(o.id)}
@@ -765,7 +765,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   )}
 
                   {/* Apollo + Playbook */}
-                  <div className="pt-2 border-t border-[#2a2620] space-y-2">
+                  <div className="pt-2 border-t border-slate-200 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-[9px] font-mono uppercase text-[#8a8377]">
                         {o.apollo_enriched_at ? `Enriquecido con Apollo · ${new Date(o.apollo_enriched_at).toLocaleString('es-CO')}` : 'Enriquecer con Apollo + generar playbook IA'}
@@ -784,13 +784,13 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                         value={getEnrichInput(o.id).linkedin_url}
                         onChange={(e) => setEnrichInput(o.id, { linkedin_url: e.target.value })}
                         placeholder="LinkedIn URL (opcional)"
-                        className="bg-[#0f0e0c]/50 border border-[#2a2620] p-1.5 rounded text-white text-[11px]"
+                        className="bg-slate-50/50 border border-slate-200 p-1.5 rounded text-white text-[11px]"
                       />
                       <input
                         value={getEnrichInput(o.id).dominio}
                         onChange={(e) => setEnrichInput(o.id, { dominio: e.target.value })}
                         placeholder="Dominio empresa (opcional)"
-                        className="bg-[#0f0e0c]/50 border border-[#2a2620] p-1.5 rounded text-white text-[11px]"
+                        className="bg-slate-50/50 border border-slate-200 p-1.5 rounded text-white text-[11px]"
                       />
                       <button
                         onClick={() => handleEnrichApollo(o)}
@@ -805,7 +805,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                       onChange={(e) => setEnrichInput(o.id, { contexto: e.target.value })}
                       placeholder="Contexto de la publicación / comentario original (opcional pero muy recomendado)"
                       rows={2}
-                      className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-1.5 rounded text-white text-[11px] font-mono"
+                      className="w-full bg-slate-50/50 border border-slate-200 p-1.5 rounded text-white text-[11px] font-mono"
                     />
 
                     {expandedPlaybookId === o.id && o.playbook_generated_at && (
@@ -829,8 +829,8 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                         )}
                         {o.apollo_data && (
                           <details className="text-[10px] font-mono text-[#8a8377]">
-                            <summary className="cursor-pointer hover:text-[#a39d8e]">Ver datos crudos de Apollo</summary>
-                            <pre className="mt-2 p-2 bg-[#0f0e0c] border border-[#2a2620] rounded overflow-x-auto max-h-64 text-[10px]">{JSON.stringify(o.apollo_data, null, 2)}</pre>
+                            <summary className="cursor-pointer hover:text-slate-500">Ver datos crudos de Apollo</summary>
+                            <pre className="mt-2 p-2 bg-slate-50 border border-slate-200 rounded overflow-x-auto max-h-64 text-[10px]">{JSON.stringify(o.apollo_data, null, 2)}</pre>
                           </details>
                         )}
                       </div>
@@ -845,7 +845,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
         {tab === 'citas' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <form onSubmit={handleBookCita} className="lg:col-span-4 bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs h-fit">
+            <form onSubmit={handleBookCita} className="lg:col-span-4 bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs h-fit">
               <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
                 <CalendarPlus className="w-3.5 h-3.5" /> Agendar cita de diagnóstico
               </h3>
@@ -854,25 +854,25 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 onChange={(e) => setBookNombre(e.target.value)}
                 placeholder="Nombre del prospecto"
                 required
-                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
               />
               <input
                 type="email"
                 value={bookEmail}
                 onChange={(e) => setBookEmail(e.target.value)}
                 placeholder="Email (recibe invitación de Calendar)"
-                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
               />
               <input
                 value={bookTelefono}
                 onChange={(e) => setBookTelefono(e.target.value)}
                 placeholder="WhatsApp (opcional)"
-                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
               />
               <select
                 value={bookOportunidadId}
                 onChange={(e) => setBookOportunidadId(e.target.value)}
-                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
               >
                 <option value="">Sin vincular a oportunidad</option>
                 {oportunidades.map((o) => (
@@ -886,7 +886,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 value={bookFecha}
                 onChange={(e) => setBookFecha(e.target.value)}
                 required
-                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
               />
               <div className="flex items-center gap-2">
                 <label className="text-[#8a8377] font-mono text-[10px]">Duración (min)</label>
@@ -896,7 +896,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   step={15}
                   value={bookDuracion}
                   onChange={(e) => setBookDuracion(Number(e.target.value))}
-                  className="w-20 bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                  className="w-20 bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
                 />
               </div>
               <textarea
@@ -904,7 +904,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 onChange={(e) => setBookNotas(e.target.value)}
                 rows={3}
                 placeholder="Notas / agenda de la reunión (opcional)"
-                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
               />
               <button
                 type="submit"
@@ -923,9 +923,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 <p className="text-[#8a8377] text-xs font-mono text-center py-10">Sin citas agendadas todavía.</p>
               )}
               {citas.map((c) => (
-                <div key={c.id} className={`bg-[#161412] border rounded-lg p-4 flex flex-wrap items-center gap-3 text-xs ${c.estado === 'cancelada' ? 'border-[#2a2620] opacity-60' : 'border-[#2a2620]'}`}>
+                <div key={c.id} className={`bg-white border rounded-lg p-4 flex flex-wrap items-center gap-3 text-xs ${c.estado === 'cancelada' ? 'border-slate-200 opacity-60' : 'border-slate-200'}`}>
                   <div className="flex-1 min-w-[160px]">
-                    <div className="font-semibold text-[#e8e3d8]">{c.nombre_prospecto}</div>
+                    <div className="font-semibold text-slate-900">{c.nombre_prospecto}</div>
                     <div className="text-[#8a8377] font-mono text-[10px]">
                       {new Date(c.fecha_hora).toLocaleString('es-CO')} · {c.duracion_min} min
                       {c.email_prospecto ? ` · ${c.email_prospecto}` : ''}
@@ -962,7 +962,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
         {tab === 'contenido' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-12 bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs">
+            <div className="lg:col-span-12 bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs">
               <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
                 <Search className="w-3.5 h-3.5" /> Buscar publicaciones públicas de LinkedIn
               </h3>
@@ -974,7 +974,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   value={liInput}
                   onChange={(e) => setLiInput(e.target.value)}
                   placeholder="SEO, Shopify, automatización IA"
-                  className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white font-mono"
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white font-mono"
                 />
                 <input
                   type="number"
@@ -982,7 +982,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   max={30}
                   value={liLimit}
                   onChange={(e) => setLiLimit(Math.max(1, Math.min(30, Number(e.target.value) || 12)))}
-                  className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                  className="bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
                 />
                 <button
                   onClick={handleSearchLinkedIn}
@@ -993,15 +993,15 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 </button>
               </div>
               {liResults.length > 0 && (
-                <div className="pt-2 border-t border-[#2a2620] grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[420px] overflow-y-auto">
+                <div className="pt-2 border-t border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[420px] overflow-y-auto">
                   <p className="md:col-span-2 text-[9px] font-mono uppercase text-[#8a8377]">{liResults.length} resultados públicos</p>
                   {liResults.map((result) => (
-                    <div key={result.id} className="bg-[#0f0e0c]/50 border border-[#2a2620] rounded p-3 space-y-1.5">
-                      <a href={result.url} target="_blank" rel="noreferrer" className="text-[#e8e3d8] hover:text-[#c9a961] font-semibold text-[11px] leading-snug block">
+                    <div key={result.id} className="bg-slate-50/50 border border-slate-200 rounded p-3 space-y-1.5">
+                      <a href={result.url} target="_blank" rel="noreferrer" className="text-slate-900 hover:text-[#c9a961] font-semibold text-[11px] leading-snug block">
                         {result.title}
                       </a>
                       {result.author && <p className="text-[9px] font-mono text-[#c9a961]">{result.author}</p>}
-                      {result.snippet && <p className="text-[10px] text-[#a39d8e] line-clamp-3">{result.snippet}</p>}
+                      {result.snippet && <p className="text-[10px] text-slate-500 line-clamp-3">{result.snippet}</p>}
                       <button
                         onClick={() => handleAnalyzeLinkedInResult(result)}
                         disabled={analyzingPostId === result.id}
@@ -1015,7 +1015,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               )}
             </div>
 
-            <div className="lg:col-span-12 bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs">
+            <div className="lg:col-span-12 bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs">
               <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
                 <Search className="w-3.5 h-3.5" /> Buscar hilos de Reddit por palabras clave
               </h3>
@@ -1029,7 +1029,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                     value={kwInput}
                     onChange={(e) => setKwInput(e.target.value)}
                     placeholder="SEO, GEO, ecommerce"
-                    className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white font-mono"
+                    className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white font-mono"
                   />
                 </div>
                 <div>
@@ -1038,19 +1038,19 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                     value={kwSubs}
                     onChange={(e) => setKwSubs(e.target.value)}
                     placeholder="SEO, digitalmarketing, ecommerce"
-                    className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white font-mono"
+                    className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white font-mono"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                <select value={kwSort} onChange={(e) => setKwSort(e.target.value as any)} className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white">
+                <select value={kwSort} onChange={(e) => setKwSort(e.target.value as any)} className="bg-slate-50/50 border border-slate-200 p-2 rounded text-white">
                   <option value="new">Nuevos</option>
                   <option value="relevance">Relevancia</option>
                   <option value="hot">Hot</option>
                   <option value="top">Top</option>
                   <option value="comments">Más comentarios</option>
                 </select>
-                <select value={kwTimeframe} onChange={(e) => setKwTimeframe(e.target.value as any)} className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white">
+                <select value={kwTimeframe} onChange={(e) => setKwTimeframe(e.target.value as any)} className="bg-slate-50/50 border border-slate-200 p-2 rounded text-white">
                   <option value="day">Último día</option>
                   <option value="week">Semana</option>
                   <option value="month">Mes</option>
@@ -1063,7 +1063,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   max={50}
                   value={kwLimit}
                   onChange={(e) => setKwLimit(Math.max(1, Math.min(50, Number(e.target.value) || 20)))}
-                  className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                  className="bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
                 />
                 <button
                   onClick={handleSearchRedditKw}
@@ -1074,11 +1074,11 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 </button>
               </div>
               {kwPosts.length > 0 && (
-                <div className="pt-2 border-t border-[#2a2620] grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[520px] overflow-y-auto">
+                <div className="pt-2 border-t border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[520px] overflow-y-auto">
                   <p className="md:col-span-2 text-[9px] font-mono uppercase text-[#8a8377]">{kwPosts.length} resultados</p>
                   {kwPosts.map((p) => (
-                    <div key={p.id} className="bg-[#0f0e0c]/50 border border-[#2a2620] rounded p-3 space-y-1.5">
-                      <a href={p.url} target="_blank" rel="noreferrer" className="text-[#e8e3d8] hover:text-[#c9a961] font-semibold text-[11px] leading-snug block">
+                    <div key={p.id} className="bg-slate-50/50 border border-slate-200 rounded p-3 space-y-1.5">
+                      <a href={p.url} target="_blank" rel="noreferrer" className="text-slate-900 hover:text-[#c9a961] font-semibold text-[11px] leading-snug block">
                         {p.title}
                       </a>
                       <div className="flex items-center gap-3 text-[9px] font-mono text-[#8a8377] flex-wrap">
@@ -1087,7 +1087,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                         <span>▲ {p.score}</span>
                         <span className="flex items-center gap-0.5"><MessageSquare className="w-2.5 h-2.5" /> {p.num_comments}</span>
                       </div>
-                      {p.selftext && <p className="text-[10px] text-[#a39d8e] line-clamp-3">{p.selftext.slice(0, 220)}{p.selftext.length > 220 ? '…' : ''}</p>}
+                      {p.selftext && <p className="text-[10px] text-slate-500 line-clamp-3">{p.selftext.slice(0, 220)}{p.selftext.length > 220 ? '…' : ''}</p>}
                       <button
                         onClick={() => handleAnalyzeRedditPost(p)}
                         disabled={analyzingPostId === p.id}
@@ -1101,7 +1101,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               )}
             </div>
 
-            <form onSubmit={handleAnalyzeContenido} className="lg:col-span-5 bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs h-fit">
+            <form onSubmit={handleAnalyzeContenido} className="lg:col-span-5 bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs h-fit">
               <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5" /> Analizar publicación
               </h3>
@@ -1112,7 +1112,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 <select
                   value={anaPlataforma}
                   onChange={(e) => setAnaPlataforma(e.target.value as 'linkedin' | 'reddit')}
-                  className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                  className="bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
                 >
                   <option value="linkedin">LinkedIn</option>
                   <option value="reddit">Reddit</option>
@@ -1121,7 +1121,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   value={anaAutor}
                   onChange={(e) => setAnaAutor(e.target.value)}
                   placeholder="Autor (opcional)"
-                  className="flex-1 bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                  className="flex-1 bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
                 />
               </div>
               <input
@@ -1129,7 +1129,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 onChange={(e) => setAnaUrl(e.target.value)}
                 placeholder="URL de la publicación"
                 required
-                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
               />
               <textarea
                 value={anaTexto}
@@ -1137,7 +1137,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 rows={8}
                 placeholder="Pegá acá el texto completo de la publicación..."
                 required
-                className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white font-mono text-[11px] leading-relaxed"
+                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white font-mono text-[11px] leading-relaxed"
               />
               <button
                 type="submit"
@@ -1148,7 +1148,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               </button>
             </form>
 
-            <div className="lg:col-span-5 bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs h-fit">
+            <div className="lg:col-span-5 bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs h-fit">
               <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
                 <Download className="w-3.5 h-3.5" /> Traer hilos de un subreddit
               </h3>
@@ -1156,19 +1156,19 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 Escribe el nombre de una comunidad (ej. <span className="text-[#c9a961]">SEO</span>, <span className="text-[#c9a961]">digitalmarketing</span>, <span className="text-[#c9a961]">emprendedores</span>). Traemos los hilos más recientes/populares y podés analizar cualquiera con un click.
               </p>
               <div className="flex gap-2">
-                <span className="bg-[#0f0e0c]/50 border border-r-0 border-[#2a2620] p-2 rounded-l text-[#8a8377] font-mono">r/</span>
+                <span className="bg-slate-50/50 border border-r-0 border-slate-200 p-2 rounded-l text-[#8a8377] font-mono">r/</span>
                 <input
                   value={subInput}
                   onChange={(e) => setSubInput(e.target.value)}
                   placeholder="SEO"
-                  className="flex-1 bg-[#0f0e0c]/50 border border-[#2a2620] border-l-0 p-2 rounded-r text-white font-mono"
+                  className="flex-1 bg-slate-50/50 border border-slate-200 border-l-0 p-2 rounded-r text-white font-mono"
                 />
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <select
                   value={subListing}
                   onChange={(e) => setSubListing(e.target.value as any)}
-                  className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                  className="bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
                 >
                   <option value="new">Nuevos</option>
                   <option value="hot">Hot</option>
@@ -1179,7 +1179,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   <select
                     value={subTimeframe}
                     onChange={(e) => setSubTimeframe(e.target.value as any)}
-                    className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                    className="bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
                   >
                     <option value="day">Hoy</option>
                     <option value="week">Semana</option>
@@ -1188,7 +1188,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                     <option value="all">Siempre</option>
                   </select>
                 ) : (
-                  <div className="bg-[#0f0e0c]/20 border border-dashed border-[#2a2620] p-2 rounded text-[#8a8377] font-mono text-[10px] text-center">—</div>
+                  <div className="bg-slate-50/20 border border-dashed border-slate-200 p-2 rounded text-[#8a8377] font-mono text-[10px] text-center">—</div>
                 )}
                 <input
                   type="number"
@@ -1196,7 +1196,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   max={50}
                   value={subLimit}
                   onChange={(e) => setSubLimit(Math.max(1, Math.min(50, Number(e.target.value) || 15)))}
-                  className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                  className="bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
                 />
               </div>
               <button
@@ -1208,11 +1208,11 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               </button>
 
               {subPosts.length > 0 && (
-                <div className="pt-2 border-t border-[#2a2620] space-y-2 max-h-[520px] overflow-y-auto">
+                <div className="pt-2 border-t border-slate-200 space-y-2 max-h-[520px] overflow-y-auto">
                   <p className="text-[9px] font-mono uppercase text-[#8a8377]">{subPosts.length} hilos · r/{subPosts[0]?.subreddit}</p>
                   {subPosts.map((p) => (
-                    <div key={p.id} className="bg-[#0f0e0c]/50 border border-[#2a2620] rounded p-3 space-y-1.5">
-                      <a href={p.url} target="_blank" rel="noreferrer" className="text-[#e8e3d8] hover:text-[#c9a961] font-semibold text-[11px] leading-snug block">
+                    <div key={p.id} className="bg-slate-50/50 border border-slate-200 rounded p-3 space-y-1.5">
+                      <a href={p.url} target="_blank" rel="noreferrer" className="text-slate-900 hover:text-[#c9a961] font-semibold text-[11px] leading-snug block">
                         {p.title}
                       </a>
                       <div className="flex items-center gap-3 text-[9px] font-mono text-[#8a8377] flex-wrap">
@@ -1223,7 +1223,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                         {p.link_flair_text && <span className="bg-[#c9a961]/10 text-[#c9a961] px-1.5 rounded">{p.link_flair_text}</span>}
                         {!p.is_self && <span className="text-[#c97a61]">link externo</span>}
                       </div>
-                      {p.selftext && <p className="text-[10px] text-[#a39d8e] line-clamp-3">{p.selftext.slice(0, 260)}{p.selftext.length > 260 ? '…' : ''}</p>}
+                      {p.selftext && <p className="text-[10px] text-slate-500 line-clamp-3">{p.selftext.slice(0, 260)}{p.selftext.length > 260 ? '…' : ''}</p>}
                       <button
                         onClick={() => handleAnalyzeRedditPost(p)}
                         disabled={analyzingPostId === p.id}
@@ -1238,7 +1238,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
             </div>
 
             <div className="lg:col-span-12 space-y-2">
-              <h3 className="text-[#a39d8e] font-mono uppercase text-[10px] tracking-wider font-semibold border-b border-[#2a2620] pb-2">
+              <h3 className="text-slate-500 font-mono uppercase text-[10px] tracking-wider font-semibold border-b border-slate-200 pb-2">
                 Historial analizado ({contenido.length})
               </h3>
               {contenido.length === 0 && !loading && (
@@ -1247,7 +1247,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 </p>
               )}
               {contenido.map((c) => (
-                <div key={c.id} className="bg-[#161412] border border-[#2a2620] rounded-lg p-4 space-y-2 text-xs">
+                <div key={c.id} className="bg-white border border-slate-200 rounded-lg p-4 space-y-2 text-xs">
                   <div className="flex items-center justify-between">
                     <a href={c.url_publicacion} target="_blank" rel="noreferrer" className="text-[#c9a961] flex items-center gap-1 font-semibold">
                       <ExternalLink className="w-3 h-3" /> {c.plataforma} · {c.autor || 'autor desconocido'}
@@ -1263,10 +1263,10 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                       score {c.score_potencial ?? '-'}
                     </span>
                   </div>
-                  {c.resumen && <p className="text-[#a39d8e]">{c.resumen}</p>}
+                  {c.resumen && <p className="text-slate-500">{c.resumen}</p>}
                   {c.razon && <p className="text-[#8a8377] italic text-[11px]">Por qué: {c.razon}</p>}
                   {c.comentario_sugerido && (
-                    <div className="bg-[#0f0e0c]/50 border border-[#2a2620] rounded p-3">
+                    <div className="bg-slate-50/50 border border-slate-200 rounded p-3">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[9px] font-mono uppercase text-[#8a8377]">Comentario sugerido:</span>
                         <button
@@ -1276,7 +1276,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                           Copiar
                         </button>
                       </div>
-                      <p className="text-[#e8e3d8]">{c.comentario_sugerido}</p>
+                      <p className="text-slate-900">{c.comentario_sugerido}</p>
                     </div>
                   )}
                   <div className="flex gap-2 pt-1">
@@ -1288,7 +1288,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                     </button>
                     <button
                       onClick={() => handleMarkContenido(c, 'descartado')}
-                      className="px-2.5 py-1 bg-white/[0.03] border border-[#2a2620] text-[#8a8377] rounded text-[10px] font-mono"
+                      className="px-2.5 py-1 bg-white/[0.03] border border-slate-200 text-[#8a8377] rounded text-[10px] font-mono"
                     >
                       Descartar
                     </button>
@@ -1302,7 +1302,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
         {tab === 'bot' && botConfig && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-5 space-y-4">
-              <div className="bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs">
+              <div className="bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs">
                 <div className="flex items-center justify-between">
                   <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
                     <Bot className="w-3.5 h-3.5" /> Estado del bot
@@ -1312,14 +1312,14 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                     className={`px-3 py-1 rounded font-mono text-[10px] font-bold uppercase ${
                       botConfig.bot_enabled
                         ? 'bg-[#a8c98a]/15 text-[#a8c98a] border border-[#a8c98a]/40'
-                        : 'bg-white/[0.03] text-[#8a8377] border border-[#2a2620]'
+                        : 'bg-white/[0.03] text-[#8a8377] border border-slate-200'
                     }`}
                   >
                     {botConfig.bot_enabled ? 'Activo' : 'Apagado'}
                   </button>
                 </div>
                 <p className="text-[#8a8377] leading-relaxed">
-                  Instancia de WhatsApp: <span className="text-[#a39d8e] font-mono">{botConfig.instance_name}</span>. También puedes
+                  Instancia de WhatsApp: <span className="text-slate-500 font-mono">{botConfig.instance_name}</span>. También puedes
                   escribir "activar bot" / "apagar bot" desde el propio WhatsApp para controlarlo.
                 </p>
               </div>
@@ -1337,14 +1337,14 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 <p className="text-slate-500">Después de eso, los mensajes entrantes crean oportunidades y el bot responde solo si está activo.</p>
               </div>
 
-              <div className="bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs">
+              <div className="bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs">
                 <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold">Prompt del bot</h3>
                 <textarea
                   value={promptDraft}
                   onChange={(e) => setPromptDraft(e.target.value)}
                   rows={6}
                   placeholder="Eres el asistente de ventas de Ferova Agency..."
-                  className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2.5 rounded text-white"
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2.5 rounded text-white"
                 />
                 <button
                   onClick={handleSavePrompt}
@@ -1357,7 +1357,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
             </div>
 
             <div className="lg:col-span-7 space-y-4">
-              <form onSubmit={handleAddKnowledge} className="bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs">
+              <form onSubmit={handleAddKnowledge} className="bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs">
                 <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold">Entrenar con nueva información</h3>
                 <textarea
                   value={newKnowledge}
@@ -1365,13 +1365,13 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   rows={3}
                   placeholder="Ej: Nuestros precios son... / Horario de atención... / Política de reembolsos..."
                   required
-                  className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2.5 rounded text-white"
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2.5 rounded text-white"
                 />
                 <input
                   value={newKnowledgeSource}
                   onChange={(e) => setNewKnowledgeSource(e.target.value)}
                   placeholder="Fuente (opcional, ej. 'Página de precios')"
-                  className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
                 />
                 <button
                   type="submit"
@@ -1387,9 +1387,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   <p className="text-[#8a8377] text-xs font-mono text-center py-6">Sin conocimiento entrenado todavía.</p>
                 )}
                 {knowledge.map((k) => (
-                  <div key={k.id} className="bg-[#161412] border border-[#2a2620] rounded-lg p-3 flex items-start gap-3 text-xs">
+                  <div key={k.id} className="bg-white border border-slate-200 rounded-lg p-3 flex items-start gap-3 text-xs">
                     <div className="flex-1">
-                      <p className="text-[#e8e3d8]">{k.content}</p>
+                      <p className="text-slate-900">{k.content}</p>
                       {k.source && <span className="text-[#8a8377] font-mono text-[10px] block mt-1">Fuente: {k.source}</span>}
                     </div>
                     <button onClick={() => handleDeleteKnowledge(k.id)} className="text-[#c97a61] hover:text-[#e08970] shrink-0">
@@ -1405,7 +1405,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
         {tab === 'resenas' && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-              <div className="xl:col-span-7 bg-[#161412] border border-[#2a2620] rounded-lg p-5 flex flex-wrap items-center gap-3">
+              <div className="xl:col-span-7 bg-white border border-slate-200 rounded-lg p-5 flex flex-wrap items-center gap-3">
               <div className="flex-1 min-w-[240px]">
                 <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
                   <Star className="w-3.5 h-3.5" /> Panel consolidado de reseñas
@@ -1424,7 +1424,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               </button>
               </div>
 
-              <form onSubmit={handleAddReviewSource} className="xl:col-span-5 bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs">
+              <form onSubmit={handleAddReviewSource} className="xl:col-span-5 bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs">
                 <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
                   <Link2 className="w-3.5 h-3.5" /> Fuentes y perfiles de reseñas
                 </h3>
@@ -1435,7 +1435,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                       setSourcePlatform(e.target.value);
                       if (!sourceName.trim()) setSourceName(e.target.value);
                     }}
-                    className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                    className="bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
                   >
                     <option value="google">Google</option>
                     <option value="clutch">Clutch</option>
@@ -1450,7 +1450,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                     onChange={(e) => setSourceName(e.target.value)}
                     placeholder="Nombre visible"
                     required
-                    className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                    className="bg-slate-50/50 border border-slate-200 p-2 rounded text-white"
                   />
                 </div>
                 <input
@@ -1459,13 +1459,13 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   onChange={(e) => setSourceUrl(e.target.value)}
                   placeholder="Link del perfil/directorio donde respondes reseñas"
                   required
-                  className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white font-mono"
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white font-mono"
                 />
                 <input
                   value={sourceQuery}
                   onChange={(e) => setSourceQuery(e.target.value)}
                   placeholder="Filtro Gmail opcional: from:... OR subject:review"
-                  className="w-full bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white font-mono"
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-white font-mono"
                 />
                 <button
                   type="submit"
@@ -1478,12 +1478,12 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
             </div>
 
             {reviewSources.length > 0 && (
-              <div className="bg-[#161412] border border-[#2a2620] rounded-lg p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+              <div className="bg-white border border-slate-200 rounded-lg p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
                 {reviewSources.map((source) => (
-                  <div key={source.id} className="bg-[#0f0e0c]/50 border border-[#2a2620] rounded p-3 text-xs space-y-1.5">
+                  <div key={source.id} className="bg-slate-50/50 border border-slate-200 rounded p-3 text-xs space-y-1.5">
                     <div className="flex items-center gap-2">
                       <span className="text-[9px] uppercase font-mono text-[#c9a961]">{source.plataforma}</span>
-                      <span className="text-[#e8e3d8] font-semibold truncate">{source.nombre}</span>
+                      <span className="text-slate-900 font-semibold truncate">{source.nombre}</span>
                       <button onClick={() => handleDeleteReviewSource(source.id)} className="ml-auto text-[#c97a61] hover:text-[#e08970]">
                         <Trash2 className="w-3 h-3" />
                       </button>
@@ -1505,7 +1505,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 <p className="text-[#8a8377] text-xs font-mono text-center py-10">Sin reseñas detectadas todavía. Toca "Buscar reseñas nuevas".</p>
               )}
               {resenas.map((r) => (
-                <div key={r.id} className="bg-[#161412] border border-[#2a2620] rounded-lg p-4 space-y-2 text-xs">
+                <div key={r.id} className="bg-white border border-slate-200 rounded-lg p-4 space-y-2 text-xs">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="uppercase font-mono text-[10px] px-2 py-0.5 rounded bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/40">
                       {r.plataforma}
@@ -1515,13 +1515,13 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                         <Star className="w-3 h-3 fill-[#e8c481]" /> {r.calificacion}/5
                       </span>
                     )}
-                    {r.resenador && <span className="text-[#a39d8e] font-mono text-[10px]">por {r.resenador}</span>}
+                    {r.resenador && <span className="text-slate-500 font-mono text-[10px]">por {r.resenador}</span>}
                     <span className="text-[#8a8377] font-mono text-[10px] ml-auto">{new Date(r.detectada_en).toLocaleString('es-CO')}</span>
                     <span className={`px-2 py-0.5 rounded font-mono text-[9px] uppercase border ${r.respondida ? 'bg-[#a8c98a]/15 text-[#a8c98a] border-[#a8c98a]/40' : 'bg-[#c97a61]/15 text-[#c97a61] border-[#c97a61]/40'}`}>
                       {r.respondida ? 'Respondida' : 'Sin responder'}
                     </span>
                   </div>
-                  {r.texto && <p className="text-[#e8e3d8] leading-relaxed whitespace-pre-wrap">{r.texto}</p>}
+                  {r.texto && <p className="text-slate-900 leading-relaxed whitespace-pre-wrap">{r.texto}</p>}
                   {r.email_subject && <p className="text-[#8a8377] font-mono text-[10px]">✉ {r.email_subject}</p>}
                   <div className="flex items-center gap-3 pt-1">
                     {r.link && (
@@ -1548,7 +1548,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
 function PlaybookCard({ label, text, onCopy, accent }: { label: string; text: string; onCopy: (t: string) => void; accent: string }) {
   return (
-    <div className="bg-[#0f0e0c]/70 border rounded p-3" style={{ borderColor: `${accent}44` }}>
+    <div className="bg-slate-50/70 border rounded p-3" style={{ borderColor: `${accent}44` }}>
       <div className="flex items-center justify-between mb-1.5">
         <span className="text-[9px] font-mono uppercase tracking-wider font-bold" style={{ color: accent }}>{label}</span>
         <button
@@ -1559,7 +1559,7 @@ function PlaybookCard({ label, text, onCopy, accent }: { label: string; text: st
           <Copy className="w-2.5 h-2.5" /> Copiar
         </button>
       </div>
-      <p className="text-[#e8e3d8] text-[11px] whitespace-pre-wrap leading-relaxed">{text}</p>
+      <p className="text-slate-900 text-[11px] whitespace-pre-wrap leading-relaxed">{text}</p>
     </div>
   );
 }
