@@ -385,6 +385,20 @@ export default function ConfigAdmin({
                   Abrir última hoja respaldada ↗
                 </a>
               )}
+
+              <div className="border-t border-[#2a2620] pt-4 mt-2 space-y-2">
+                <p className="text-[10px] text-[#8a8377] uppercase tracking-widest font-mono">Importar desde Sheets</p>
+                <p className="text-[11px] text-[#a39d8e] leading-relaxed">
+                  Trae toda tu información financiera desde la hoja "Ferova_OS_Financiero" de tu Drive hacia Ferova OS. Reemplazará los datos actuales.
+                </p>
+                <button
+                  onClick={onImportFromSheets}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#c9a961] hover:bg-[#b09252] text-black rounded font-bold font-display shadow transition cursor-pointer text-[11px]"
+                >
+                  <FolderSync className="w-4 h-4" />
+                  {hasGoogleToken ? 'Importar mi Google Sheet' : 'Conectar Google e importar'}
+                </button>
+              </div>
             </div>
           </div>
 
