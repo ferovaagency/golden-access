@@ -23,11 +23,11 @@ const EMBED_MODEL = "google/gemini-embedding-001";
 const evoHeaders = { "Content-Type": "application/json", apikey: EVOLUTION_API_KEY };
 const aiHeaders = { "Content-Type": "application/json", "Lovable-API-Key": LOVABLE_API_KEY, "X-Lovable-AIG-SDK": "manual-fetch" };
 
-async function sendWhatsapp(to: string, text: string) {
-  if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY || !EVOLUTION_INSTANCE_NAME) {
-    throw new Error("WhatsApp no está configurado: faltan EVOLUTION_API_URL, EVOLUTION_API_KEY o EVOLUTION_INSTANCE_NAME.");
+async function sendWhatsapp(instanceName: string, to: string, text: string) {
+  if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY || !instanceName) {
+    throw new Error("WhatsApp no está configurado: faltan EVOLUTION_API_URL, EVOLUTION_API_KEY o instancia.");
   }
-  const res = await fetch(`${EVOLUTION_API_URL}/message/sendText/${EVOLUTION_INSTANCE_NAME}`, {
+  const res = await fetch(`${EVOLUTION_API_URL}/message/sendText/${instanceName}`, {
     method: "POST",
     headers: evoHeaders,
     body: JSON.stringify({ number: to, text }),
@@ -179,7 +179,7 @@ Deno.serve(async (req: Request) => {
     if (cmd === "activar bot" || cmd === "apagar bot") {
       const enable = cmd === "activar bot";
       await admin.from("crm_bot_config").update({ bot_enabled: enable, updated_at: new Date().toISOString() }).eq("id", true);
-      await sendWhatsapp(remoteJid, enable ? "✅ Bot activado." : "⏸️ Bot desactivado.");
+      await sendWhatsapp(instanceName, remoteJid, enable ? "✅ Bot activado." : "⏸️ Bot desactivado.");
     } else if (messageText && phone && !remoteJid.endsWith("@g.us")) {
       const { data: oportunidad } = await admin.from("crm_oportunidades").select("id").eq("telefono", phone).maybeSingle();
       if (oportunidad) {
@@ -262,7 +262,7 @@ Deno.serve(async (req: Request) => {
       : `${basePrompt}\n\nResponde en el mismo idioma del cliente, se conciso (maximo 3 parrafos cortos).`;
 
     const reply = await generateReply(systemPrompt, history);
-    await sendWhatsapp(remoteJid, reply);
+    await sendWhatsapp(instanceName, remoteJid, reply);
     await admin.from("crm_interacciones").insert({
       oportunidad_id: oportunidad.id,
       canal: "whatsapp",

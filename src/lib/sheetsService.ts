@@ -343,7 +343,7 @@ function cleanId(value: unknown): string {
   const raw = text(value);
   if (!raw) return '';
   const num = Number(raw);
-  if (Number.isFinite(num) && /^\d+(\.0+)?(e\+?\d+)?$/i.test(raw)) {
+  if (Number.isFinite(num) && (/^[+-]?\d+(\.0+)?$/i.test(raw) || /^[+-]?\d+(\.\d+)?e[+-]?\d+$/i.test(raw))) {
     return Math.trunc(num).toLocaleString('fullwide', { useGrouping: false });
   }
   return raw;
