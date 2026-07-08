@@ -731,6 +731,25 @@ export default function App() {
                     ))}
                   </nav>
                 </div>
+
+                {isTeam && CRM_GROWTH_TABS.length > 0 && (
+                  <div className="pt-2 border-t border-[#2a2620]/45">
+                    <span className="text-[9px] uppercase tracking-wider text-[#a8c98a]/80 block font-bold mb-1.5 font-mono">3. GROWTH · CRM INTERNO</span>
+                    <nav className="space-y-1">
+                      {CRM_GROWTH_TABS.map(tab => (
+                        <button
+                          key={tab.id}
+                          onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false); }}
+                          className={`w-full text-left px-3 py-1.5 rounded transition ${
+                            activeTab === tab.id ? 'bg-[#a8c98a]/10 text-[#a8c98a] font-semibold' : 'text-[#a39d8e] hover:text-white'
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </nav>
+                  </div>
+                )}
               </div>
 
             </div>
