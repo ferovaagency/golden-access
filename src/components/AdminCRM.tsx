@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles } from 'lucide-react';
+import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles, Download, MessageSquare } from 'lucide-react';
 import { logout } from '../lib/supabase';
 import {
   isTeamMember,
@@ -20,6 +20,7 @@ import {
   cancelCita,
   analyzeContenido,
   listServiciosCatalogo,
+  fetchSubredditPosts,
   ServicioCatalogo,
   Oportunidad,
   CitaDiagnostico,
@@ -27,17 +28,25 @@ import {
   EstadoOportunidad,
   BotConfig,
   KnowledgeItem,
+  RedditPost,
 } from '../lib/crmService';
 
 const ESTADOS: EstadoOportunidad[] = ['nuevo', 'contactado', 'calificando', 'propuesta_enviada', 'negociacion', 'ganado', 'perdido'];
 
+export type CRMTab = 'pipeline' | 'citas' | 'contenido' | 'bot';
+
 interface Props {
   user: User;
+  embedded?: boolean;
+  tab?: CRMTab;
+  onTabChange?: (t: CRMTab) => void;
 }
 
-export default function AdminCRM({ user }: Props) {
+export default function AdminCRM({ user, embedded = false, tab: controlledTab, onTabChange }: Props) {
   const [authorized, setAuthorized] = useState<boolean | null>(null);
-  const [tab, setTab] = useState<'pipeline' | 'citas' | 'contenido' | 'bot'>('pipeline');
+  const [internalTab, setInternalTab] = useState<CRMTab>('pipeline');
+  const tab: CRMTab = controlledTab ?? internalTab;
+  const setTab = (t: CRMTab) => { if (onTabChange) onTabChange(t); else setInternalTab(t); };
   const [oportunidades, setOportunidades] = useState<Oportunidad[]>([]);
   const [citas, setCitas] = useState<CitaDiagnostico[]>([]);
   const [contenido, setContenido] = useState<ContenidoPotencial[]>([]);
