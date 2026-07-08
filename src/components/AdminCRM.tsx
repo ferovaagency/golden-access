@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles } from 'lucide-react';
+import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles, Download, MessageSquare } from 'lucide-react';
 import { logout } from '../lib/supabase';
 import {
   isTeamMember,
@@ -20,6 +20,7 @@ import {
   cancelCita,
   analyzeContenido,
   listServiciosCatalogo,
+  fetchSubredditPosts,
   ServicioCatalogo,
   Oportunidad,
   CitaDiagnostico,
@@ -27,17 +28,25 @@ import {
   EstadoOportunidad,
   BotConfig,
   KnowledgeItem,
+  RedditPost,
 } from '../lib/crmService';
 
 const ESTADOS: EstadoOportunidad[] = ['nuevo', 'contactado', 'calificando', 'propuesta_enviada', 'negociacion', 'ganado', 'perdido'];
 
+export type CRMTab = 'pipeline' | 'citas' | 'contenido' | 'bot';
+
 interface Props {
   user: User;
+  embedded?: boolean;
+  tab?: CRMTab;
+  onTabChange?: (t: CRMTab) => void;
 }
 
-export default function AdminCRM({ user }: Props) {
+export default function AdminCRM({ user, embedded = false, tab: controlledTab, onTabChange }: Props) {
   const [authorized, setAuthorized] = useState<boolean | null>(null);
-  const [tab, setTab] = useState<'pipeline' | 'citas' | 'contenido' | 'bot'>('pipeline');
+  const [internalTab, setInternalTab] = useState<CRMTab>('pipeline');
+  const tab: CRMTab = controlledTab ?? internalTab;
+  const setTab = (t: CRMTab) => { if (onTabChange) onTabChange(t); else setInternalTab(t); };
   const [oportunidades, setOportunidades] = useState<Oportunidad[]>([]);
   const [citas, setCitas] = useState<CitaDiagnostico[]>([]);
   const [contenido, setContenido] = useState<ContenidoPotencial[]>([]);
@@ -81,6 +90,15 @@ export default function AdminCRM({ user }: Props) {
   const [anaPlataforma, setAnaPlataforma] = useState<'linkedin' | 'reddit'>('linkedin');
   const [anaTexto, setAnaTexto] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
+
+  // Reddit subreddit fetcher
+  const [subInput, setSubInput] = useState('');
+  const [subListing, setSubListing] = useState<'new' | 'hot' | 'top' | 'rising'>('new');
+  const [subLimit, setSubLimit] = useState(15);
+  const [subTimeframe, setSubTimeframe] = useState<'hour' | 'day' | 'week' | 'month' | 'year' | 'all'>('week');
+  const [subPosts, setSubPosts] = useState<RedditPost[]>([]);
+  const [fetchingSub, setFetchingSub] = useState(false);
+  const [analyzingPostId, setAnalyzingPostId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -236,6 +254,39 @@ export default function AdminCRM({ user }: Props) {
     }
   };
 
+  const handleFetchSubreddit = async () => {
+    const sub = subInput.trim().replace(/^r\//i, '');
+    if (!sub) { alert('Escribe el nombre del subreddit (ej. SEO, digitalmarketing, colombia).'); return; }
+    setFetchingSub(true);
+    try {
+      const posts = await fetchSubredditPosts({ subreddit: sub, listing: subListing, limit: subLimit, timeframe: subTimeframe });
+      setSubPosts(posts);
+    } catch (err: any) {
+      alert(`Error trayendo r/${sub}: ${err.message || err}`);
+    } finally {
+      setFetchingSub(false);
+    }
+  };
+
+  const handleAnalyzeRedditPost = async (post: RedditPost) => {
+    const texto = `${post.title}\n\n${post.selftext || '(publicación sin texto propio; probable link o imagen)'}`;
+    if (texto.length < 30) { alert('La publicación es demasiado corta para analizar.'); return; }
+    setAnalyzingPostId(post.id);
+    try {
+      const created = await analyzeContenido({
+        plataforma: 'reddit',
+        url_publicacion: post.url,
+        autor: `u/${post.author} · r/${post.subreddit}`,
+        texto,
+      });
+      setContenido([created, ...contenido]);
+    } catch (err: any) {
+      alert(`Error analizando: ${err.message || err}`);
+    } finally {
+      setAnalyzingPostId(null);
+    }
+  };
+
   const handleCreateOportunidad = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nombreContacto.trim()) return;
@@ -294,7 +345,7 @@ export default function AdminCRM({ user }: Props) {
 
   if (authorized === null) {
     return (
-      <div className="min-h-screen bg-[#0f0e0c] flex items-center justify-center text-[#e8e3d8]">
+      <div className={`${embedded ? 'py-12' : 'min-h-screen'} bg-[#0f0e0c] flex items-center justify-center text-[#e8e3d8]`}>
         <Loader2 className="w-8 h-8 animate-spin text-[#c9a961]" />
       </div>
     );
@@ -302,48 +353,58 @@ export default function AdminCRM({ user }: Props) {
 
   if (!authorized) {
     return (
-      <div className="min-h-screen bg-[#0f0e0c] flex flex-col items-center justify-center gap-4 text-[#e8e3d8] p-6 text-center">
+      <div className={`${embedded ? 'py-12' : 'min-h-screen'} bg-[#0f0e0c] flex flex-col items-center justify-center gap-4 text-[#e8e3d8] p-6 text-center`}>
         <Ban className="w-10 h-10 text-[#c97a61]" />
         <p className="font-mono text-sm">No autorizado. {user.email} no está en el equipo de Ferova.</p>
-        <button onClick={() => logout()} className="text-[#c9a961] underline text-xs font-mono">
-          Cerrar sesión
-        </button>
+        {!embedded && (
+          <button onClick={() => logout()} className="text-[#c9a961] underline text-xs font-mono">
+            Cerrar sesión
+          </button>
+        )}
       </div>
     );
   }
 
+  const bodyClass = embedded ? '' : 'p-6 max-w-6xl mx-auto';
+  const outerClass = embedded ? '' : 'min-h-screen bg-[#0f0e0c] bg-gradient-to-br from-[#0f0e0c] to-[#1a1815] text-[#e8e3d8] font-sans';
+
   return (
-    <div className="min-h-screen bg-[#0f0e0c] bg-gradient-to-br from-[#0f0e0c] to-[#1a1815] text-[#e8e3d8] font-sans">
-      <header className="bg-[#11100e] border-b border-[#2a2620] px-6 py-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-display font-bold text-[#c9a961]">Ferova Growth OS</h1>
-          <span className="text-[10px] font-mono text-[#8a8377] uppercase tracking-wider">CRM interno · no visible para clientes</span>
-        </div>
-        <button onClick={() => logout()} className="text-[#8a8377] hover:text-[#c97a61] flex items-center gap-1 text-xs font-mono">
-          <LogOut className="w-3.5 h-3.5" /> Cerrar sesión
-        </button>
-      </header>
+    <div className={outerClass}>
+      {!embedded && (
+        <>
+          <header className="bg-[#11100e] border-b border-[#2a2620] px-6 py-4 flex items-center justify-between">
+            <div>
+              <h1 className="text-lg font-display font-bold text-[#c9a961]">Ferova Growth OS</h1>
+              <span className="text-[10px] font-mono text-[#8a8377] uppercase tracking-wider">CRM interno · no visible para clientes</span>
+            </div>
+            <button onClick={() => logout()} className="text-[#8a8377] hover:text-[#c97a61] flex items-center gap-1 text-xs font-mono">
+              <LogOut className="w-3.5 h-3.5" /> Cerrar sesión
+            </button>
+          </header>
 
-      <nav className="flex gap-2 px-6 py-3 border-b border-[#2a2620] text-xs font-mono">
-        {(['pipeline', 'citas', 'contenido', 'bot'] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-3 py-1.5 rounded uppercase tracking-wider font-semibold ${
-              tab === t ? 'bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/40' : 'text-[#a39d8e] hover:text-white'
-            }`}
-          >
-            {t === 'pipeline' ? 'Pipeline' : t === 'citas' ? 'Citas de diagnóstico' : t === 'contenido' ? 'Contenido con potencial' : 'Bot de WhatsApp'}
-          </button>
-        ))}
-      </nav>
+          <nav className="flex gap-2 px-6 py-3 border-b border-[#2a2620] text-xs font-mono">
+            {(['pipeline', 'citas', 'contenido', 'bot'] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`px-3 py-1.5 rounded uppercase tracking-wider font-semibold ${
+                  tab === t ? 'bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/40' : 'text-[#a39d8e] hover:text-white'
+                }`}
+              >
+                {t === 'pipeline' ? 'Pipeline' : t === 'citas' ? 'Citas de diagnóstico' : t === 'contenido' ? 'Contenido con potencial' : 'Bot de WhatsApp'}
+              </button>
+            ))}
+          </nav>
+        </>
+      )}
 
-      <main className="p-6 max-w-6xl mx-auto">
+      <main className={bodyClass}>
         {loading && (
           <div className="flex items-center gap-2 text-[#c9a961] text-xs font-mono mb-4">
             <Loader2 className="w-4 h-4 animate-spin" /> Sincronizando...
           </div>
         )}
+
 
         {tab === 'pipeline' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -670,7 +731,99 @@ export default function AdminCRM({ user }: Props) {
               </button>
             </form>
 
-            <div className="lg:col-span-7 space-y-2">
+            <div className="lg:col-span-5 bg-[#161412] border border-[#2a2620] rounded-lg p-5 space-y-3 text-xs h-fit">
+              <h3 className="text-[#c9a961] font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
+                <Download className="w-3.5 h-3.5" /> Traer hilos de un subreddit
+              </h3>
+              <p className="text-[#8a8377] font-mono text-[10px] leading-relaxed">
+                Escribe el nombre de una comunidad (ej. <span className="text-[#c9a961]">SEO</span>, <span className="text-[#c9a961]">digitalmarketing</span>, <span className="text-[#c9a961]">emprendedores</span>). Traemos los hilos más recientes/populares y podés analizar cualquiera con un click.
+              </p>
+              <div className="flex gap-2">
+                <span className="bg-[#0f0e0c]/50 border border-r-0 border-[#2a2620] p-2 rounded-l text-[#8a8377] font-mono">r/</span>
+                <input
+                  value={subInput}
+                  onChange={(e) => setSubInput(e.target.value)}
+                  placeholder="SEO"
+                  className="flex-1 bg-[#0f0e0c]/50 border border-[#2a2620] border-l-0 p-2 rounded-r text-white font-mono"
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <select
+                  value={subListing}
+                  onChange={(e) => setSubListing(e.target.value as any)}
+                  className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                >
+                  <option value="new">Nuevos</option>
+                  <option value="hot">Hot</option>
+                  <option value="top">Top</option>
+                  <option value="rising">Rising</option>
+                </select>
+                {subListing === 'top' ? (
+                  <select
+                    value={subTimeframe}
+                    onChange={(e) => setSubTimeframe(e.target.value as any)}
+                    className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                  >
+                    <option value="day">Hoy</option>
+                    <option value="week">Semana</option>
+                    <option value="month">Mes</option>
+                    <option value="year">Año</option>
+                    <option value="all">Siempre</option>
+                  </select>
+                ) : (
+                  <div className="bg-[#0f0e0c]/20 border border-dashed border-[#2a2620] p-2 rounded text-[#8a8377] font-mono text-[10px] text-center">—</div>
+                )}
+                <input
+                  type="number"
+                  min={1}
+                  max={50}
+                  value={subLimit}
+                  onChange={(e) => setSubLimit(Math.max(1, Math.min(50, Number(e.target.value) || 15)))}
+                  className="bg-[#0f0e0c]/50 border border-[#2a2620] p-2 rounded text-white"
+                />
+              </div>
+              <button
+                onClick={handleFetchSubreddit}
+                disabled={fetchingSub}
+                className="w-full bg-[#a8c98a] hover:bg-[#96b579] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                <Download className={`w-3.5 h-3.5 ${fetchingSub ? 'animate-pulse' : ''}`} /> {fetchingSub ? 'Trayendo...' : 'Traer hilos'}
+              </button>
+
+              {subPosts.length > 0 && (
+                <div className="pt-2 border-t border-[#2a2620] space-y-2 max-h-[520px] overflow-y-auto">
+                  <p className="text-[9px] font-mono uppercase text-[#8a8377]">{subPosts.length} hilos · r/{subPosts[0]?.subreddit}</p>
+                  {subPosts.map((p) => (
+                    <div key={p.id} className="bg-[#0f0e0c]/50 border border-[#2a2620] rounded p-3 space-y-1.5">
+                      <a href={p.url} target="_blank" rel="noreferrer" className="text-[#e8e3d8] hover:text-[#c9a961] font-semibold text-[11px] leading-snug block">
+                        {p.title}
+                      </a>
+                      <div className="flex items-center gap-3 text-[9px] font-mono text-[#8a8377] flex-wrap">
+                        <span>u/{p.author}</span>
+                        <span>▲ {p.score}</span>
+                        <span className="flex items-center gap-0.5"><MessageSquare className="w-2.5 h-2.5" /> {p.num_comments}</span>
+                        <span>{Math.round(p.upvote_ratio * 100)}% ↑</span>
+                        {p.link_flair_text && <span className="bg-[#c9a961]/10 text-[#c9a961] px-1.5 rounded">{p.link_flair_text}</span>}
+                        {!p.is_self && <span className="text-[#c97a61]">link externo</span>}
+                      </div>
+                      {p.selftext && <p className="text-[10px] text-[#a39d8e] line-clamp-3">{p.selftext.slice(0, 260)}{p.selftext.length > 260 ? '…' : ''}</p>}
+                      <button
+                        onClick={() => handleAnalyzeRedditPost(p)}
+                        disabled={analyzingPostId === p.id}
+                        className="w-full mt-1 px-2 py-1 bg-[#c9a961]/15 border border-[#c9a961]/40 text-[#c9a961] rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
+                      >
+                        <Sparkles className="w-2.5 h-2.5" /> {analyzingPostId === p.id ? 'Analizando...' : 'Analizar con IA'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="lg:col-span-12 space-y-2">
+              <h3 className="text-[#a39d8e] font-mono uppercase text-[10px] tracking-wider font-semibold border-b border-[#2a2620] pb-2">
+                Historial analizado ({contenido.length})
+              </h3>
               {contenido.length === 0 && !loading && (
                 <p className="text-[#8a8377] text-xs font-mono text-center py-10">
                   Sin contenido analizado todavía. Usá el formulario de la izquierda para pegar una publicación.

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { initAuth, googleSignIn, linkGoogleIdentity, logout, getAccessToken, checkSubscription } from './lib/supabase';
-import { backupAppDataToSheets, findSpreadsheet, fetchSpreadsheetData } from './lib/sheetsService';
+import { backupAppDataToSheets, importSheetByUrl } from './lib/sheetsService';
 import * as financeService from './lib/financeService';
+import { isTeamMember } from './lib/crmService';
 import { Config, AppData, Cliente, Servicio, Herramienta, OtroGasto, Venta, Hora, PagoEgreso } from './types';
 import { calcularMétricasFinancieras } from './lib/calculations';
 
@@ -22,7 +23,7 @@ import ProyectosAdmin from './components/ProyectosAdmin';
 import PagosEgresosAdmin from './components/PagosEgresosAdmin';
 import AuthScreen from './components/AuthScreen';
 import Paywall from './components/Paywall';
-import AdminCRM from './components/AdminCRM';
+import AdminCRM, { CRMTab } from './components/AdminCRM';
 
 
 import { 
@@ -37,10 +38,13 @@ import {
   X
 } from 'lucide-react';
 
+const CRM_TAB_IDS: CRMTab[] = ['pipeline', 'citas', 'contenido', 'bot'];
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [hasPaid, setHasPaid] = useState(false);
+  const [isTeam, setIsTeam] = useState(false);
   const [checkingPayment, setCheckingPayment] = useState(false);
 
 
@@ -76,16 +80,21 @@ export default function App() {
         setUser(fUser);
         setAuthLoading(false);
         setCheckingPayment(true);
-        const paid = await checkSubscription(fUser.id);
-        setHasPaid(paid);
+        const [paid, team] = await Promise.all([
+          checkSubscription(fUser.id),
+          isTeamMember(fUser.email || '').catch(() => false),
+        ]);
+        setHasPaid(paid || team);
+        setIsTeam(team);
         setCheckingPayment(false);
-        if (paid) {
+        if (paid || team) {
           bootstrapFinanceData(fUser.id);
         }
       },
       () => {
         setUser(null);
         setHasPaid(false);
+        setIsTeam(false);
         setAuthLoading(false);
         setAppData(null);
       }
@@ -158,38 +167,16 @@ export default function App() {
     }
   };
 
-  // Import from a Google Sheet by pasting its URL (or ID). Uses the current Google token.
+  // Import from a Google Sheet by pasting its URL. Uses backend edge function that reads
+  // the public CSV export (sheet must be shared as "Anyone with the link can view").
   const handleImportFromSheetsUrl = async (rawUrl: string) => {
     if (!user) return;
     const url = (rawUrl || '').trim();
-    if (!url) {
-      alert('Pega el link de tu Google Sheet.');
-      return;
-    }
-    // Extract spreadsheet ID from full URL, or accept a bare ID
-    const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
-    const spreadsheetId = match ? match[1] : (/^[a-zA-Z0-9-_]{20,}$/.test(url) ? url : null);
-    if (!spreadsheetId) {
-      alert('No pude extraer el ID del link. Debe verse como https://docs.google.com/spreadsheets/d/XXXXXX/edit');
-      return;
-    }
-    let token = getAccessToken();
-    if (!token) {
-      try {
-        if (user?.identities?.some((i) => i.provider === 'google')) {
-          await googleSignIn();
-        } else {
-          await linkGoogleIdentity();
-        }
-      } catch (err: any) {
-        alert(`No se pudo conectar con Google: ${err.message || err}`);
-      }
-      return;
-    }
-    if (!confirm('Esto reemplazará tus datos actuales con lo que tengas en la hoja indicada. ¿Continuar?')) return;
+    if (!url) { alert('Pega el link de tu Google Sheet.'); return; }
+    if (!confirm('Esto reemplazará tus datos actuales con los de la hoja indicada. ¿Continuar?')) return;
     setSheetsLoading(true);
     try {
-      const data = await fetchSpreadsheetData(spreadsheetId, token);
+      const data = await importSheetByUrl(url);
       await Promise.all([
         financeService.saveConfig(user.id, data.config),
         financeService.saveClientes(user.id, data.clientes),
@@ -202,58 +189,20 @@ export default function App() {
       ]);
       const fresh = await financeService.loadFinanceData(user.id);
       setAppData(fresh);
-      alert('✨ Importación desde tu Google Sheet completada.');
+      alert('✨ Importación completada.');
     } catch (err: any) {
-      alert(`Fallo al importar desde el link: ${err.message || err}\n\nRevisa que la hoja tenga las pestañas: Config, Clientes, Servicios, Herramientas, OtrosGastos, Ventas, Horas, PagosEgresos.`);
+      alert(`Fallo al importar: ${err.message || err}\n\nAsegúrate de:\n1) Compartir la hoja con "Cualquier persona con el link puede ver".\n2) Que tenga las pestañas: Config, Clientes, Servicios, Herramientas, OtrosGastos, Ventas, Horas, PagosEgresos.`);
     } finally {
       setSheetsLoading(false);
     }
   };
 
-  // Import all finance data from user's Google Sheet into DB (one-shot)
+  // Deprecated (dejado para compatibilidad con el botón "Importar mi Google Sheet" existente):
+  // ahora redirige al flujo del link.
   const handleImportFromSheets = async () => {
-    if (!user) return;
-    let token = getAccessToken();
-    if (!token) {
-      try {
-        if (user?.identities?.some((i) => i.provider === 'google')) {
-          await googleSignIn();
-        } else {
-          await linkGoogleIdentity();
-        }
-      } catch (err: any) {
-        alert(`No se pudo conectar con Google: ${err.message || err}`);
-      }
-      return;
-    }
-    if (!confirm('Esto reemplazará tus datos actuales con lo que tengas en Google Sheets (Ferova_OS_Financiero). ¿Continuar?')) return;
-    setSheetsLoading(true);
-    try {
-      const ss = await findSpreadsheet(token);
-      if (!ss) {
-        alert('No se encontró un archivo llamado "Ferova_OS_Financiero" en tu Google Drive.');
-        return;
-      }
-      const data = await fetchSpreadsheetData(ss.id, token);
-      await Promise.all([
-        financeService.saveConfig(user.id, data.config),
-        financeService.saveClientes(user.id, data.clientes),
-        financeService.saveServicios(user.id, data.servicios),
-        financeService.saveHerramientas(user.id, data.herramientas),
-        financeService.saveOtrosGastos(user.id, data.otrosGastos),
-        financeService.savePagosEgresos(user.id, data.pagosEgresos || []),
-        financeService.saveVentas(user.id, data.ventas),
-        financeService.saveHoras(user.id, data.horas),
-      ]);
-      const fresh = await financeService.loadFinanceData(user.id);
-      setAppData(fresh);
-      alert('✨ Importación desde Google Sheets completada.');
-    } catch (err: any) {
-      alert(`Fallo al importar desde Sheets: ${err.message || err}`);
-    } finally {
-      setSheetsLoading(false);
-    }
+    alert('Pega el link de tu Google Sheet en el campo de abajo — asegurate de que esté compartida como "Cualquier persona con el link puede ver".');
   };
+
 
   // --- PERSISTENCE HANDLERS ---
   const handleSaveClientes = async (updatedClientes: Cliente[]) => {
@@ -450,7 +399,14 @@ export default function App() {
     { id: 'ajustes', label: '13. Base de Datos / Ajustes' }
   ];
 
-  const TAB_SET = [...GESTION_OPERATIVA_TABS, ...GESTION_FINANCIERA_TABS];
+  const CRM_GROWTH_TABS = isTeam ? [
+    { id: 'crm-pipeline', label: '↗ Pipeline de Ventas' },
+    { id: 'crm-citas', label: '↗ Citas + Calendar' },
+    { id: 'crm-contenido', label: '↗ LinkedIn + Reddit' },
+    { id: 'crm-bot', label: '↗ Bot WhatsApp' },
+  ] : [];
+
+  const TAB_SET = [...GESTION_OPERATIVA_TABS, ...GESTION_FINANCIERA_TABS, ...CRM_GROWTH_TABS];
 
   return (
     <div className="min-h-screen bg-[#0f0e0c] bg-gradient-to-br from-[#0f0e0c] to-[#1a1815] flex flex-col text-[#e8e3d8] font-sans">
@@ -697,6 +653,29 @@ export default function App() {
             </nav>
           </div>
 
+          {isTeam && CRM_GROWTH_TABS.length > 0 && (
+            <div className="pt-2 border-t border-[#2a2620]/45">
+              <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-[#a8c98a] block px-3 mb-2 font-black border-l-2 border-l-[#a8c98a] pl-2">
+                Growth · CRM Interno
+              </span>
+              <nav className="space-y-1 text-xs font-mono font-semibold">
+                {CRM_GROWTH_TABS.map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`w-full text-left px-3.5 py-2 rounded transition ${
+                      activeTab === tab.id
+                        ? 'bg-[#a8c98a]/10 text-[#a8c98a] border-l-3 border-l-[#a8c98a] font-semibold'
+                        : 'text-[#a39d8e] hover:text-white hover:bg-white/[0.02]'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </nav>
+            </div>
+          )}
+
         </aside>
 
         {/* Responsive Mobile Drawer menu (controlled by trigger button) */}
@@ -752,6 +731,25 @@ export default function App() {
                     ))}
                   </nav>
                 </div>
+
+                {isTeam && CRM_GROWTH_TABS.length > 0 && (
+                  <div className="pt-2 border-t border-[#2a2620]/45">
+                    <span className="text-[9px] uppercase tracking-wider text-[#a8c98a]/80 block font-bold mb-1.5 font-mono">3. GROWTH · CRM INTERNO</span>
+                    <nav className="space-y-1">
+                      {CRM_GROWTH_TABS.map(tab => (
+                        <button
+                          key={tab.id}
+                          onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false); }}
+                          className={`w-full text-left px-3 py-1.5 rounded transition ${
+                            activeTab === tab.id ? 'bg-[#a8c98a]/10 text-[#a8c98a] font-semibold' : 'text-[#a39d8e] hover:text-white'
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </nav>
+                  </div>
+                )}
               </div>
 
             </div>
@@ -942,6 +940,15 @@ export default function App() {
                   onImportFromSheets={handleImportFromSheets}
                   onImportFromSheetsUrl={handleImportFromSheetsUrl}
                   formatCop={formatCop}
+                />
+              )}
+
+              {isTeam && activeTab.startsWith('crm-') && (
+                <AdminCRM
+                  user={user}
+                  embedded
+                  tab={activeTab.replace('crm-', '') as CRMTab}
+                  onTabChange={(t) => setActiveTab(`crm-${t}`)}
                 />
               )}
 
