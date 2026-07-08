@@ -162,38 +162,16 @@ export default function App() {
     }
   };
 
-  // Import from a Google Sheet by pasting its URL (or ID). Uses the current Google token.
+  // Import from a Google Sheet by pasting its URL. Uses backend edge function that reads
+  // the public CSV export (sheet must be shared as "Anyone with the link can view").
   const handleImportFromSheetsUrl = async (rawUrl: string) => {
     if (!user) return;
     const url = (rawUrl || '').trim();
-    if (!url) {
-      alert('Pega el link de tu Google Sheet.');
-      return;
-    }
-    // Extract spreadsheet ID from full URL, or accept a bare ID
-    const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
-    const spreadsheetId = match ? match[1] : (/^[a-zA-Z0-9-_]{20,}$/.test(url) ? url : null);
-    if (!spreadsheetId) {
-      alert('No pude extraer el ID del link. Debe verse como https://docs.google.com/spreadsheets/d/XXXXXX/edit');
-      return;
-    }
-    let token = getAccessToken();
-    if (!token) {
-      try {
-        if (user?.identities?.some((i) => i.provider === 'google')) {
-          await googleSignIn();
-        } else {
-          await linkGoogleIdentity();
-        }
-      } catch (err: any) {
-        alert(`No se pudo conectar con Google: ${err.message || err}`);
-      }
-      return;
-    }
-    if (!confirm('Esto reemplazará tus datos actuales con lo que tengas en la hoja indicada. ¿Continuar?')) return;
+    if (!url) { alert('Pega el link de tu Google Sheet.'); return; }
+    if (!confirm('Esto reemplazará tus datos actuales con los de la hoja indicada. ¿Continuar?')) return;
     setSheetsLoading(true);
     try {
-      const data = await fetchSpreadsheetData(spreadsheetId, token);
+      const data = await importSheetByUrl(url);
       await Promise.all([
         financeService.saveConfig(user.id, data.config),
         financeService.saveClientes(user.id, data.clientes),
@@ -206,58 +184,20 @@ export default function App() {
       ]);
       const fresh = await financeService.loadFinanceData(user.id);
       setAppData(fresh);
-      alert('✨ Importación desde tu Google Sheet completada.');
+      alert('✨ Importación completada.');
     } catch (err: any) {
-      alert(`Fallo al importar desde el link: ${err.message || err}\n\nRevisa que la hoja tenga las pestañas: Config, Clientes, Servicios, Herramientas, OtrosGastos, Ventas, Horas, PagosEgresos.`);
+      alert(`Fallo al importar: ${err.message || err}\n\nAsegúrate de:\n1) Compartir la hoja con "Cualquier persona con el link puede ver".\n2) Que tenga las pestañas: Config, Clientes, Servicios, Herramientas, OtrosGastos, Ventas, Horas, PagosEgresos.`);
     } finally {
       setSheetsLoading(false);
     }
   };
 
-  // Import all finance data from user's Google Sheet into DB (one-shot)
+  // Deprecated (dejado para compatibilidad con el botón "Importar mi Google Sheet" existente):
+  // ahora redirige al flujo del link.
   const handleImportFromSheets = async () => {
-    if (!user) return;
-    let token = getAccessToken();
-    if (!token) {
-      try {
-        if (user?.identities?.some((i) => i.provider === 'google')) {
-          await googleSignIn();
-        } else {
-          await linkGoogleIdentity();
-        }
-      } catch (err: any) {
-        alert(`No se pudo conectar con Google: ${err.message || err}`);
-      }
-      return;
-    }
-    if (!confirm('Esto reemplazará tus datos actuales con lo que tengas en Google Sheets (Ferova_OS_Financiero). ¿Continuar?')) return;
-    setSheetsLoading(true);
-    try {
-      const ss = await findSpreadsheet(token);
-      if (!ss) {
-        alert('No se encontró un archivo llamado "Ferova_OS_Financiero" en tu Google Drive.');
-        return;
-      }
-      const data = await fetchSpreadsheetData(ss.id, token);
-      await Promise.all([
-        financeService.saveConfig(user.id, data.config),
-        financeService.saveClientes(user.id, data.clientes),
-        financeService.saveServicios(user.id, data.servicios),
-        financeService.saveHerramientas(user.id, data.herramientas),
-        financeService.saveOtrosGastos(user.id, data.otrosGastos),
-        financeService.savePagosEgresos(user.id, data.pagosEgresos || []),
-        financeService.saveVentas(user.id, data.ventas),
-        financeService.saveHoras(user.id, data.horas),
-      ]);
-      const fresh = await financeService.loadFinanceData(user.id);
-      setAppData(fresh);
-      alert('✨ Importación desde Google Sheets completada.');
-    } catch (err: any) {
-      alert(`Fallo al importar desde Sheets: ${err.message || err}`);
-    } finally {
-      setSheetsLoading(false);
-    }
+    alert('Pega el link de tu Google Sheet en el campo de abajo — asegurate de que esté compartida como "Cualquier persona con el link puede ver".');
   };
+
 
   // --- PERSISTENCE HANDLERS ---
   const handleSaveClientes = async (updatedClientes: Cliente[]) => {
