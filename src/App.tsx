@@ -158,6 +158,58 @@ export default function App() {
     }
   };
 
+  // Import from a Google Sheet by pasting its URL (or ID). Uses the current Google token.
+  const handleImportFromSheetsUrl = async (rawUrl: string) => {
+    if (!user) return;
+    const url = (rawUrl || '').trim();
+    if (!url) {
+      alert('Pega el link de tu Google Sheet.');
+      return;
+    }
+    // Extract spreadsheet ID from full URL, or accept a bare ID
+    const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+    const spreadsheetId = match ? match[1] : (/^[a-zA-Z0-9-_]{20,}$/.test(url) ? url : null);
+    if (!spreadsheetId) {
+      alert('No pude extraer el ID del link. Debe verse como https://docs.google.com/spreadsheets/d/XXXXXX/edit');
+      return;
+    }
+    let token = getAccessToken();
+    if (!token) {
+      try {
+        if (user?.identities?.some((i) => i.provider === 'google')) {
+          await googleSignIn();
+        } else {
+          await linkGoogleIdentity();
+        }
+      } catch (err: any) {
+        alert(`No se pudo conectar con Google: ${err.message || err}`);
+      }
+      return;
+    }
+    if (!confirm('Esto reemplazará tus datos actuales con lo que tengas en la hoja indicada. ¿Continuar?')) return;
+    setSheetsLoading(true);
+    try {
+      const data = await fetchSpreadsheetData(spreadsheetId, token);
+      await Promise.all([
+        financeService.saveConfig(user.id, data.config),
+        financeService.saveClientes(user.id, data.clientes),
+        financeService.saveServicios(user.id, data.servicios),
+        financeService.saveHerramientas(user.id, data.herramientas),
+        financeService.saveOtrosGastos(user.id, data.otrosGastos),
+        financeService.savePagosEgresos(user.id, data.pagosEgresos || []),
+        financeService.saveVentas(user.id, data.ventas),
+        financeService.saveHoras(user.id, data.horas),
+      ]);
+      const fresh = await financeService.loadFinanceData(user.id);
+      setAppData(fresh);
+      alert('✨ Importación desde tu Google Sheet completada.');
+    } catch (err: any) {
+      alert(`Fallo al importar desde el link: ${err.message || err}\n\nRevisa que la hoja tenga las pestañas: Config, Clientes, Servicios, Herramientas, OtrosGastos, Ventas, Horas, PagosEgresos.`);
+    } finally {
+      setSheetsLoading(false);
+    }
+  };
+
   // Import all finance data from user's Google Sheet into DB (one-shot)
   const handleImportFromSheets = async () => {
     if (!user) return;
