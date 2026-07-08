@@ -158,6 +158,51 @@ export default function App() {
     }
   };
 
+  // Import all finance data from user's Google Sheet into DB (one-shot)
+  const handleImportFromSheets = async () => {
+    if (!user) return;
+    let token = getAccessToken();
+    if (!token) {
+      try {
+        if (user?.identities?.some((i) => i.provider === 'google')) {
+          await googleSignIn();
+        } else {
+          await linkGoogleIdentity();
+        }
+      } catch (err: any) {
+        alert(`No se pudo conectar con Google: ${err.message || err}`);
+      }
+      return;
+    }
+    if (!confirm('Esto reemplazará tus datos actuales con lo que tengas en Google Sheets (Ferova_OS_Financiero). ¿Continuar?')) return;
+    setSheetsLoading(true);
+    try {
+      const ss = await findSpreadsheet(token);
+      if (!ss) {
+        alert('No se encontró un archivo llamado "Ferova_OS_Financiero" en tu Google Drive.');
+        return;
+      }
+      const data = await fetchSpreadsheetData(ss.id, token);
+      await Promise.all([
+        financeService.saveConfig(user.id, data.config),
+        financeService.saveClientes(user.id, data.clientes),
+        financeService.saveServicios(user.id, data.servicios),
+        financeService.saveHerramientas(user.id, data.herramientas),
+        financeService.saveOtrosGastos(user.id, data.otrosGastos),
+        financeService.savePagosEgresos(user.id, data.pagosEgresos || []),
+        financeService.saveVentas(user.id, data.ventas),
+        financeService.saveHoras(user.id, data.horas),
+      ]);
+      const fresh = await financeService.loadFinanceData(user.id);
+      setAppData(fresh);
+      alert('✨ Importación desde Google Sheets completada.');
+    } catch (err: any) {
+      alert(`Fallo al importar desde Sheets: ${err.message || err}`);
+    } finally {
+      setSheetsLoading(false);
+    }
+  };
+
   // --- PERSISTENCE HANDLERS ---
   const handleSaveClientes = async (updatedClientes: Cliente[]) => {
     if (!appData || !user) return;
