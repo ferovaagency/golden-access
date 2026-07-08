@@ -346,6 +346,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     try { await navigator.clipboard.writeText(text); } catch { /**/ }
   };
 
+  const handleCreateOportunidad = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nombreContacto.trim()) return;
     try {
