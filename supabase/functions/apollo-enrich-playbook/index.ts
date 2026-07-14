@@ -12,7 +12,8 @@
 //   email?: string,
 //   canal_origen?: 'linkedin'|'reddit'|'otro'|... (default 'otro'),
 //   fuente_url?: string,
-//   contexto_publicacion?: string      // texto original del post/comentario que originó el lead
+//   contexto_publicacion?: string,     // texto original del post/comentario que originó el lead
+//   score_potencial?: number           // score 0-100 del análisis de contenido que originó el lead (se guarda en probabilidad si aún no tiene)
 // }
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
@@ -27,6 +28,7 @@ interface Body {
   canal_origen?: string;
   fuente_url?: string;
   contexto_publicacion?: string;
+  score_potencial?: number;
 }
 
 async function apolloPeopleMatch(apiKey: string, params: {
@@ -292,6 +294,11 @@ Servicios de Ferova a mencionar solo si son relevantes al dolor detectado: SEO, 
     if (foundEmail && (!oportunidad || !oportunidad.email)) patch.email = foundEmail;
     if (foundPhone && (!oportunidad || !oportunidad.telefono)) patch.telefono = foundPhone;
     if (foundCompany && (!oportunidad || !oportunidad.empresa)) patch.empresa = foundCompany;
+    // Score del contenido que originó el lead, para la clasificación Hot/Warm/Cold del
+    // pipeline (no lo sobreescribimos si el equipo ya puso su propia probabilidad manual).
+    if (typeof body.score_potencial === 'number' && (!oportunidad || oportunidad.probabilidad == null)) {
+      patch.probabilidad = Math.max(0, Math.min(100, Math.round(body.score_potencial)));
+    }
 
     let saved: any;
     if (oportunidad?.id) {
