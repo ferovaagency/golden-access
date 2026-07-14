@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
+import QRCode from 'qrcode';
 import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles, Download, MessageSquare, Zap, Copy, Search, Star, RefreshCw, CheckCircle2, Link2, Bell } from 'lucide-react';
 import { getAccessToken, googleSignIn, logout } from '../lib/supabase';
 import { copyText } from '../lib/clipboard';
@@ -112,6 +113,8 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const [whatsappDrafts, setWhatsappDrafts] = useState<Record<string, string>>({});
   const [sendingWhatsapp, setSendingWhatsapp] = useState<string | null>(null);
   const [whatsappInstance, setWhatsappInstance] = useState<WhatsappInstance | null>(null);
+  const [whatsappQrSrc, setWhatsappQrSrc] = useState<string | null>(null);
+  const [whatsappQrError, setWhatsappQrError] = useState<string | null>(null);
   const [connectingWhatsapp, setConnectingWhatsapp] = useState(false);
   const [notifyPhoneInput, setNotifyPhoneInput] = useState('');
   const [notifyPhoneSaved, setNotifyPhoneSaved] = useState<string | null>(null);
@@ -416,6 +419,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
   const handleConnectWhatsapp = async () => {
     setConnectingWhatsapp(true);
+    setWhatsappQrError(null);
     try {
       const instance = await connectWhatsappInstance();
       setWhatsappInstance(instance);
@@ -425,6 +429,42 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setConnectingWhatsapp(false);
     }
   };
+
+  useEffect(() => {
+    let cancelled = false;
+    const value = whatsappInstance?.qr_code?.trim();
+    setWhatsappQrError(null);
+
+    if (!value) {
+      setWhatsappQrSrc(null);
+      return;
+    }
+
+    if (value.startsWith('data:image/')) {
+      setWhatsappQrSrc(value);
+      return;
+    }
+
+    const compact = value.replace(/\s/g, '');
+    const looksLikeImageBase64 = /^(iVBORw0KGgo|\/9j\/|R0lGODlh|R0lGODdh|PHN2Zy)/.test(compact);
+    if (looksLikeImageBase64) {
+      setWhatsappQrSrc(`data:image/png;base64,${compact}`);
+      return;
+    }
+
+    QRCode.toDataURL(value, { width: 240, margin: 1, errorCorrectionLevel: 'M' })
+      .then((src) => {
+        if (!cancelled) setWhatsappQrSrc(src);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setWhatsappQrSrc(null);
+          setWhatsappQrError('El servidor devolvió el código de conexión, pero no pude convertirlo en QR visible. Pulsa “Actualizar QR”.');
+        }
+      });
+
+    return () => { cancelled = true; };
+  }, [whatsappInstance?.qr_code]);
 
   const handleSaveNotifyPhone = async () => {
     setSavingNotifyPhone(true);
@@ -753,9 +793,6 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
   const bodyClass = embedded ? '' : 'p-6 max-w-6xl mx-auto';
   const outerClass = embedded ? '' : 'ferova-light-theme min-h-screen bg-[#f7f8fb] text-slate-900 font-sans';
-  const qrSrc = whatsappInstance?.qr_code
-    ? (whatsappInstance.qr_code.startsWith('data:') ? whatsappInstance.qr_code : `data:image/png;base64,${whatsappInstance.qr_code}`)
-    : null;
   const kpis = [
     { label: 'Pipeline', value: oportunidades.length, accent: '#c9a961' },
     { label: 'Citas activas', value: citas.filter((c) => c.estado !== 'cancelada').length, accent: '#7ab5c9' },
@@ -1648,13 +1685,18 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   className="w-full rounded-xl bg-blue-600 px-4 py-2.5 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${connectingWhatsapp ? 'animate-spin' : ''}`} />
-                  {connectingWhatsapp ? 'Generando QR...' : qrSrc ? 'Actualizar QR' : 'Generar QR de conexión'}
+                  {connectingWhatsapp ? 'Generando QR...' : whatsappQrSrc ? 'Actualizar QR' : 'Generar QR de conexión'}
                 </button>
-                {qrSrc && (
+                {whatsappQrSrc && (
                   <div className="rounded-2xl bg-white border border-blue-100 p-4 text-center space-y-2">
-                    <img src={qrSrc} alt="QR para conectar WhatsApp" className="mx-auto h-48 w-48 rounded-xl border border-slate-200 object-contain" />
+                    <img src={whatsappQrSrc} alt="QR para conectar WhatsApp" className="mx-auto h-48 w-48 rounded-xl border border-slate-200 object-contain" />
                     <p className="text-[10px] font-mono text-slate-500">Abre WhatsApp → Dispositivos vinculados → Vincular dispositivo.</p>
                   </div>
+                )}
+                {whatsappQrError && (
+                  <p className="rounded-xl border border-red-100 bg-red-50 p-3 text-[10px] font-mono text-red-600">
+                    {whatsappQrError}
+                  </p>
                 )}
                 {whatsappInstance && (
                   <div className="rounded-xl bg-white/70 border border-blue-100 p-3 text-[10px] font-mono text-slate-600 space-y-1">
