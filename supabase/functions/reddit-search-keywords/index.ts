@@ -121,14 +121,52 @@ Deno.serve(async (req) => {
     url.searchParams.set('limit', String(limit));
     url.searchParams.set('restrict_sr', 'false');
 
+    // Reddit recomienda identificar el cliente como "plataforma:app-id:version (by /u/usuario)"
+    // en vez de simular un navegador -- un user-agent que finge ser Chrome/Firefox suele
+    // disparar el rate-limiting/bloqueo de bots más rápido que uno transparente.
+    const REDDIT_UA = 'web:ferova-crm-search:1.0.0 (by /u/ferova_agency)';
+
     const res = await fetch(url.toString(), {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; FerovaOS/1.0; +https://ferova.agency)',
+        'User-Agent': REDDIT_UA,
         'Accept': 'application/json,text/plain,*/*',
       },
     });
 
-    if (!res.ok) {
+    // Nota: se cae a los fallbacks tanto si la petición falla (!res.ok) como si
+    // Reddit responde 200 con 0 resultados (búsqueda demasiado estrecha, o el
+    // endpoint público de search.json simplemente no indexó nada reciente para
+    // esa combinación de keywords) -- antes solo se activaba con !res.ok, así que
+    // una búsqueda "vacía pero válida" nunca llegaba a los fallbacks más amplios.
+    let primaryPosts: any[] = [];
+    if (res.ok) {
+      const data = await res.json();
+      primaryPosts = (data?.data?.children || []).map((c: any) => {
+        const p = c.data || {};
+        return {
+          id: p.id,
+          title: p.title || '',
+          selftext: (p.selftext || '').slice(0, 4000),
+          author: p.author || 'anon',
+          subreddit: p.subreddit || '',
+          num_comments: p.num_comments || 0,
+          score: p.score || 0,
+          upvote_ratio: p.upvote_ratio || 0,
+          created_utc: p.created_utc || 0,
+          url: `https://www.reddit.com${p.permalink}`,
+          link_flair_text: p.link_flair_text || null,
+          is_self: !!p.is_self,
+        };
+      });
+    }
+
+    if (primaryPosts.length > 0) {
+      return new Response(JSON.stringify({ ok: true, query: q, count: primaryPosts.length, posts: primaryPosts, mode: 'reddit_search' }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    {
       const arcticCollected: any[] = [];
       const arcticTargets = subreddits.length ? subreddits : ['SEO', 'digitalmarketing', 'ecommerce', 'shopify', 'marketing', 'Entrepreneur'];
       for (const keyword of keywords.slice(0, 6)) {
@@ -224,35 +262,19 @@ Deno.serve(async (req) => {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      const body = await res.text();
-      console.error(`[reddit-search-keywords] Reddit ${res.status}: ${body.slice(0, 200)}`);
-      return new Response(JSON.stringify({ ok: false, message: `Reddit bloqueó la búsqueda pública (${res.status}). Prueba con comunidades específicas o menos palabras clave.`, details: body.slice(0, 300) }), {
-        status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      // Si res.ok era true pero no vino ningún post (búsqueda válida pero vacía), el
+      // body ya se leyó arriba con res.json() -- no volver a leerlo, solo reportar.
+      const details = res.ok ? 'Reddit no devolvió resultados para esta combinación de palabras clave/subreddits.' : (await res.text()).slice(0, 300);
+      console.error(`[reddit-search-keywords] sin resultados tras todos los fallbacks (status ${res.status})`);
+      return new Response(JSON.stringify({
+        ok: true,
+        query: q,
+        count: 0,
+        posts: [],
+        warning: 'Ninguna fuente (Reddit, arctic-shift, pullpush, RSS) devolvió publicaciones para estas palabras clave. Prueba con comunidades más específicas o menos/otras palabras clave.',
+        details,
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
-
-    const data = await res.json();
-    const posts = (data?.data?.children || []).map((c: any) => {
-      const p = c.data || {};
-      return {
-        id: p.id,
-        title: p.title || '',
-        selftext: (p.selftext || '').slice(0, 4000),
-        author: p.author || 'anon',
-        subreddit: p.subreddit || '',
-        num_comments: p.num_comments || 0,
-        score: p.score || 0,
-        upvote_ratio: p.upvote_ratio || 0,
-        created_utc: p.created_utc || 0,
-        url: `https://www.reddit.com${p.permalink}`,
-        link_flair_text: p.link_flair_text || null,
-        is_self: !!p.is_self,
-      };
-    });
-
-    return new Response(JSON.stringify({ ok: true, query: q, count: posts.length, posts }), {
-      status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
   } catch (err) {
     console.error('[reddit-search-keywords] error:', err);
     return new Response(JSON.stringify({ ok: false, message: (err as Error).message }), {

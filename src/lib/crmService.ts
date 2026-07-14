@@ -250,21 +250,21 @@ export async function searchRedditByKeywords(payload: {
   sort?: 'relevance' | 'new' | 'hot' | 'top' | 'comments';
   timeframe?: 'hour' | 'day' | 'week' | 'month' | 'year' | 'all';
   limit?: number;
-}): Promise<RedditPost[]> {
+}): Promise<{ posts: RedditPost[]; warning: string | null }> {
   const { data, error } = await supabase.functions.invoke('reddit-search-keywords', { body: payload });
   if (error) throw error;
   if (!data?.ok) throw new Error(data?.message || 'No se pudo buscar en Reddit.');
-  return data.posts as RedditPost[];
+  return { posts: data.posts as RedditPost[], warning: data.warning || null };
 }
 
 export async function searchLinkedInByKeywords(payload: {
   keywords: string[];
   limit?: number;
-}): Promise<LinkedInSearchResult[]> {
+}): Promise<{ results: LinkedInSearchResult[]; warning: string | null }> {
   const { data, error } = await supabase.functions.invoke('linkedin-search-keywords', { body: payload });
   if (error) throw error;
   if (!data?.ok) throw new Error(data?.message || 'No se pudo buscar en LinkedIn.');
-  return data.results as LinkedInSearchResult[];
+  return { results: data.results as LinkedInSearchResult[], warning: data.warning || null };
 }
 
 export async function enrichOportunidadApollo(payload: {

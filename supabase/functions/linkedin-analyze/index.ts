@@ -56,12 +56,43 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Aprendizaje por resultados: no requiere ninguna tabla/columna nueva, se calcula
+    // en caliente sobre crm_oportunidades ya existente (estado ganado/perdido por canal).
+    // Se usa como contexto para que el score se ajuste con la experiencia real del negocio,
+    // no solo con el criterio genérico de la IA.
+    let winRateContext = 'Sin historial de oportunidades cerradas todavía (usa solo tu criterio).';
+    try {
+      const { data: closedRows } = await supabase
+        .from('crm_oportunidades')
+        .select('canal_origen, estado')
+        .in('estado', ['ganado', 'perdido']);
+      const statsByCanal: Record<string, { won: number; lost: number }> = {};
+      for (const row of closedRows || []) {
+        const c = (row as any).canal_origen || 'otro';
+        if (!statsByCanal[c]) statsByCanal[c] = { won: 0, lost: 0 };
+        if ((row as any).estado === 'ganado') statsByCanal[c].won++; else statsByCanal[c].lost++;
+      }
+      const lines = Object.entries(statsByCanal).map(([canal, s]) => {
+        const total = s.won + s.lost;
+        const pct = total > 0 ? Math.round((s.won / total) * 100) : null;
+        return `- ${canal}: ${pct !== null ? `${pct}% de conversión histórica` : 'sin datos suficientes'} (${s.won} ganados / ${s.lost} perdidos, de un total de ${total} oportunidades cerradas)`;
+      });
+      if (lines.length) winRateContext = lines.join('\n');
+    } catch (err) {
+      console.warn('[linkedin-analyze] no se pudo calcular win-rate histórico:', err);
+    }
+
     const systemPrompt = `Eres un analista de prospección B2B para Ferova Agency (agencia de marketing digital, SEO/GEO, desarrollo web y automatización con IA en Colombia). Analiza publicaciones de ${plataforma} para detectar oportunidades comerciales.
 
+IMPORTANTE: no busques solo publicaciones que pidan explícitamente un servicio ("busco quien me haga..."). También detecta cuando alguien describe un PROBLEMA o dolor que los servicios de Ferova resuelven, aunque no lo pida directamente (ej. "pierdo horas metiendo pedidos a mano", "mi tienda nunca aparece en Google", "no doy abasto respondiendo mensajes de clientes", "mi web se ve anticuada"). Ese tipo de publicación suele ser una oportunidad tan buena o mejor que una solicitud explícita, porque hay menos competencia respondiéndola.
+
+CONTEXTO DE CONVERSIÓN HISTÓRICA POR CANAL (ajusta el score con esto, no lo ignores):
+${winRateContext}
+
 Devuelves EXCLUSIVAMENTE un JSON con estas claves:
-- "score_potencial": entero 0-100 (qué tan buena oportunidad comercial es para Ferova).
+- "score_potencial": entero 0-100 (qué tan buena oportunidad comercial es para Ferova, ya ajustado por la conversión histórica del canal si hay datos suficientes).
 - "resumen": 1-2 frases explicando de qué habla la publicación.
-- "razon": 1 frase justificando el score (dolor detectado, señal de compra, autoridad del autor).
+- "razon": 1 frase justificando el score (dolor detectado -explícito o implícito-, señal de compra, autoridad del autor, y si el ajuste histórico del canal subió o bajó el score).
 - "comentario_sugerido": comentario breve (máx 400 caracteres), en español neutro, útil, sin ser vendedor. Aporta valor primero, menciona a Ferova solo si es natural. Nada de emojis excesivos. Nada de "excelente publicación".`;
 
     const userPrompt = `URL: ${body.url_publicacion}
