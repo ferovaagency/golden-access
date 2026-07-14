@@ -36,6 +36,70 @@ export async function findSpreadsheet(accessToken: string): Promise<{ id: string
 }
 
 /**
+ * Busca (o crea si no existe) la carpeta "Ferova_OS_Comprobantes" en el Drive
+ * del propio usuario -- ahi se guardan las facturas/comprobantes que suben
+ * desde Gastos y Pagos. Mismo patron find-or-create que findSpreadsheet/
+ * createSpreadsheet, pero para una carpeta en vez de una hoja.
+ */
+export async function findOrCreateComprobantesFolder(accessToken: string): Promise<string> {
+  const q = encodeURIComponent("name = 'Ferova_OS_Comprobantes' and mimeType = 'application/vnd.google-apps.folder' and trashed = false");
+  const url = `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('UNAUTHORIZED');
+    throw new Error(`Error buscando la carpeta de comprobantes: ${res.statusText}`);
+  }
+  const data = await res.json();
+  if (data.files && data.files.length > 0) return data.files[0].id;
+
+  const createRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: 'Ferova_OS_Comprobantes', mimeType: 'application/vnd.google-apps.folder' }),
+  });
+  if (!createRes.ok) {
+    if (createRes.status === 401) throw new Error('UNAUTHORIZED');
+    throw new Error(`Error creando la carpeta de comprobantes: ${createRes.statusText}`);
+  }
+  const created = await createRes.json();
+  return created.id as string;
+}
+
+/**
+ * Sube un archivo (imagen o PDF de una factura/comprobante) al Drive del
+ * propio usuario, dentro de la carpeta de comprobantes. Usa el scope
+ * drive.file ya pedido en el login -- no hace falta permiso adicional ni
+ * cuenta de servicio. Solo el link se guarda en Supabase; el archivo vive
+ * en el Drive del usuario.
+ */
+export async function uploadFileToDrive(file: File, accessToken: string, folderId: string): Promise<{ fileId: string; webViewLink: string }> {
+  const boundary = `ferova_${Date.now()}`;
+  const metadata = { name: file.name, parents: [folderId] };
+  const fileBytes = new Uint8Array(await file.arrayBuffer());
+  const body = new Blob([
+    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`,
+    `--${boundary}\r\nContent-Type: ${file.type || 'application/octet-stream'}\r\n\r\n`,
+    fileBytes,
+    `\r\n--${boundary}--`,
+  ]);
+
+  const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': `multipart/related; boundary=${boundary}`,
+    },
+    body,
+  });
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('UNAUTHORIZED');
+    throw new Error(`Error subiendo el archivo a Drive: ${res.statusText}`);
+  }
+  const data = await res.json();
+  return { fileId: data.id, webViewLink: data.webViewLink };
+}
+
+/**
  * Creates a brand new "Ferova_OS_Financiero" spreadsheet with all 8 sheets and returns its ID.
  */
 export async function createSpreadsheet(accessToken: string): Promise<string> {
@@ -525,6 +589,8 @@ export function mapValuesToAppData(valuesBySheet: Record<string, any[][]>): AppD
     monto: toNumber(get(['monto', 'valor'], 2)) || 0,
     moneda: normalizeMoneda(get(['moneda'], 3)),
     categoria: normalizeOtroGastoCategoria(get(['categoria', 'categoría'], 4)),
+    comprobante_url: text(get(['comprobante_url', 'comprobante'], 5)) || undefined,
+    comprobante_nombre: text(get(['comprobante_nombre'], 6)) || undefined,
   }));
 
   // 6. Ventas mapping
@@ -588,6 +654,8 @@ export function mapValuesToAppData(valuesBySheet: Record<string, any[][]>): AppD
     moneda: normalizeMoneda(get(['moneda'], 5)),
     metodo_pago: text(get(['metodo_pago', 'método_pago', 'metodo', 'método'], 6)),
     notas: text(get(['notas'], 7)),
+    comprobante_url: text(get(['comprobante_url', 'comprobante'], 8)) || undefined,
+    comprobante_nombre: text(get(['comprobante_nombre'], 9)) || undefined,
   }));
 
   return {
@@ -812,9 +880,9 @@ export async function restoreFromBackup(
 
   // Write OtrosGastos
   {
-    const headers = ['id', 'nombre', 'monto', 'moneda', 'categoria'];
+    const headers = ['id', 'nombre', 'monto', 'moneda', 'categoria', 'comprobante_url', 'comprobante_nombre'];
     const rows = backupData.otrosGastos.map(g => [
-      g.id, g.nombre, g.monto, g.moneda, g.categoria
+      g.id, g.nombre, g.monto, g.moneda, g.categoria, g.comprobante_url || '', g.comprobante_nombre || ''
     ]);
     await saveSheetTable(activeSpreadsheetId, accessToken, 'OtrosGastos', headers, rows);
   }
@@ -853,9 +921,9 @@ export async function restoreFromBackup(
 
   // Write PagosEgresos
   {
-    const headers = ['id', 'fecha', 'concepto', 'categoria', 'monto', 'moneda', 'metodo_pago', 'notas'];
+    const headers = ['id', 'fecha', 'concepto', 'categoria', 'monto', 'moneda', 'metodo_pago', 'notas', 'comprobante_url', 'comprobante_nombre'];
     const rows = (backupData.pagosEgresos || []).map(p => [
-      p.id, p.fecha, p.concepto, p.categoria, p.monto, p.moneda, p.metodo_pago, p.notas || ''
+      p.id, p.fecha, p.concepto, p.categoria, p.monto, p.moneda, p.metodo_pago, p.notas || '', p.comprobante_url || '', p.comprobante_nombre || ''
     ]);
     await saveSheetTable(activeSpreadsheetId, accessToken, 'PagosEgresos', headers, rows);
   }
@@ -908,8 +976,8 @@ export async function backupAppDataToSheets(
   );
 
   await saveSheetTable(sheetId, accessToken, 'OtrosGastos',
-    ['id', 'nombre', 'monto', 'moneda', 'categoria'],
-    appData.otrosGastos.map(g => [g.id, g.nombre, g.monto, g.moneda, g.categoria])
+    ['id', 'nombre', 'monto', 'moneda', 'categoria', 'comprobante_url', 'comprobante_nombre'],
+    appData.otrosGastos.map(g => [g.id, g.nombre, g.monto, g.moneda, g.categoria, g.comprobante_url || '', g.comprobante_nombre || ''])
   );
 
   await saveSheetTable(sheetId, accessToken, 'Ventas',
@@ -927,8 +995,8 @@ export async function backupAppDataToSheets(
   );
 
   await saveSheetTable(sheetId, accessToken, 'PagosEgresos',
-    ['id', 'fecha', 'concepto', 'categoria', 'monto', 'moneda', 'metodo_pago', 'notas'],
-    appData.pagosEgresos.map(p => [p.id, p.fecha, p.concepto, p.categoria, p.monto, p.moneda, p.metodo_pago, p.notas || ''])
+    ['id', 'fecha', 'concepto', 'categoria', 'monto', 'moneda', 'metodo_pago', 'notas', 'comprobante_url', 'comprobante_nombre'],
+    appData.pagosEgresos.map(p => [p.id, p.fecha, p.concepto, p.categoria, p.monto, p.moneda, p.metodo_pago, p.notas || '', p.comprobante_url || '', p.comprobante_nombre || ''])
   );
 
   return { sheetId, sheetLink };
