@@ -141,6 +141,8 @@ export async function loadFinanceData(userId: string): Promise<AppData> {
     monto: Number(g.monto),
     moneda: g.moneda,
     categoria: g.categoria,
+    comprobante_url: g.comprobante_url ?? undefined,
+    comprobante_nombre: g.comprobante_nombre ?? undefined,
   }));
 
   const pagosEgresos: PagoEgreso[] = pagosEgresosRaw.map((p) => ({
@@ -152,6 +154,8 @@ export async function loadFinanceData(userId: string): Promise<AppData> {
     moneda: p.moneda,
     metodo_pago: p.metodo_pago ?? '',
     notas: p.notas ?? undefined,
+    comprobante_url: p.comprobante_url ?? undefined,
+    comprobante_nombre: p.comprobante_nombre ?? undefined,
   }));
 
   const ventas: Venta[] = ventasRaw.map((v) => ({
@@ -276,6 +280,8 @@ export async function saveOtrosGastos(userId: string, list: OtroGasto[]) {
     monto: g.monto,
     moneda: g.moneda,
     categoria: g.categoria,
+    comprobante_url: g.comprobante_url || null,
+    comprobante_nombre: g.comprobante_nombre || null,
   })));
 }
 
@@ -289,6 +295,8 @@ export async function savePagosEgresos(userId: string, list: PagoEgreso[]) {
     moneda: p.moneda,
     metodo_pago: p.metodo_pago || null,
     notas: p.notas || null,
+    comprobante_url: p.comprobante_url || null,
+    comprobante_nombre: p.comprobante_nombre || null,
   })));
 }
 
