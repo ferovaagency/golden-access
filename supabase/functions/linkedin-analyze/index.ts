@@ -5,6 +5,12 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { z } from 'npm:zod';
+import { notifyHotLeadWhatsapp } from '../_shared/notify-team.ts';
+
+// Umbral "Hot" del mismo marco Hot/Warm/Cold que ya usa el badge del Pipeline
+// (AdminCRM.tsx) -- se repite aca como constante en vez de importarla porque
+// una Edge Function no puede importar codigo del bundle de React.
+const HOT_SCORE_THRESHOLD = 70;
 
 // url_publicacion se deja como string libre (no .url() estricto): es un campo
 // pegado a mano y no vale la pena rechazar un link sin "https://" cuando el resto
@@ -170,6 +176,19 @@ ${body.texto.slice(0, 6000)}
       return new Response(JSON.stringify({ ok: false, message: insErr.message }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // Alerta proactiva por WhatsApp si el score es "Hot" -- no bloquea ni rompe
+    // la respuesta si el envio falla (best-effort, ver notify-team.ts).
+    if (typeof inserted.score_potencial === 'number' && inserted.score_potencial >= HOT_SCORE_THRESHOLD) {
+      try {
+        await notifyHotLeadWhatsapp(
+          supabase,
+          `🔥 Lead Hot detectado (score ${inserted.score_potencial}/100) en ${plataforma}.\n${inserted.resumen || ''}\n${body.url_publicacion}`,
+        );
+      } catch (err) {
+        console.warn('[linkedin-analyze] no se pudo enviar alerta de WhatsApp:', err);
+      }
     }
 
     return new Response(JSON.stringify({ ok: true, contenido: inserted }), {
