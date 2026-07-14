@@ -17,25 +17,34 @@
 // }
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { z } from 'npm:zod';
+import { fetchWithRetry } from '../_shared/fetch-retry.ts';
 
-interface Body {
-  oportunidad_id?: string;
-  nombre_contacto?: string;
-  empresa?: string;
-  dominio?: string;
-  linkedin_url?: string;
-  email?: string;
-  canal_origen?: string;
-  fuente_url?: string;
-  contexto_publicacion?: string;
-  score_potencial?: number;
-}
+// Nota: linkedin_url/fuente_url/email se dejan como string libre (no .url()/.email()
+// estrictos) a propósito -- el formulario manual de "Enrich" en el pipeline permite
+// pegar valores sin protocolo (ej. "linkedin.com/in/juan" sin "https://"), y forzar
+// el formato estricto aquí rechazaría entradas válidas que el resto del código ya
+// tolera. zod sigue protegiendo tipos y tamaños, que es lo que importa a este nivel.
+const BodySchema = z.object({
+  oportunidad_id: z.string().uuid().optional(),
+  nombre_contacto: z.string().trim().min(1).max(200).optional(),
+  empresa: z.string().trim().max(200).optional(),
+  dominio: z.string().trim().max(255).optional(),
+  linkedin_url: z.string().trim().max(500).optional(),
+  email: z.string().trim().max(255).optional(),
+  canal_origen: z.string().trim().max(40).optional(),
+  fuente_url: z.string().trim().max(500).optional(),
+  contexto_publicacion: z.string().trim().max(6000).optional(),
+  score_potencial: z.number().min(0).max(100).optional(),
+});
 
 async function apolloPeopleMatch(apiKey: string, params: {
   first_name?: string; last_name?: string; name?: string;
   email?: string; linkedin_url?: string; organization_name?: string; domain?: string;
 }) {
-  const res = await fetch('https://api.apollo.io/api/v1/people/match?reveal_personal_emails=true&reveal_phone_number=false', {
+  // Reintenta hasta 2 veces (con backoff) si Apollo responde 429/5xx o hay un fallo
+  // de red transitorio -- antes un solo hiccup tumbaba todo el enriquecimiento.
+  const res = await fetchWithRetry('https://api.apollo.io/api/v1/people/match?reveal_personal_emails=true&reveal_phone_number=false', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache', 'x-api-key': apiKey },
     body: JSON.stringify(params),
@@ -51,7 +60,7 @@ async function apolloPeopleMatch(apiKey: string, params: {
 async function apolloOrgEnrich(apiKey: string, domain: string) {
   const url = new URL('https://api.apollo.io/api/v1/organizations/enrich');
   url.searchParams.set('domain', domain);
-  const res = await fetch(url.toString(), {
+  const res = await fetchWithRetry(url.toString(), {
     method: 'GET',
     headers: { 'Cache-Control': 'no-cache', 'x-api-key': apiKey },
   });
@@ -112,7 +121,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    const body = (await req.json()) as Body;
+    const parsedBody = BodySchema.safeParse(await req.json());
+    if (!parsedBody.success) {
+      return new Response(JSON.stringify({ ok: false, message: 'Parámetros inválidos', errors: parsedBody.error.flatten().fieldErrors }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const body = parsedBody.data;
 
     // Cargar oportunidad si viene el id
     let oportunidad: any = null;

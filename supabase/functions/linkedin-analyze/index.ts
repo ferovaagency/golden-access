@@ -4,13 +4,17 @@
 // - Guarda el resultado en crm_contenido_potencial.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { z } from 'npm:zod';
 
-interface Body {
-  plataforma?: 'linkedin' | 'reddit';
-  url_publicacion: string;
-  autor?: string | null;
-  texto: string;
-}
+// url_publicacion se deja como string libre (no .url() estricto): es un campo
+// pegado a mano y no vale la pena rechazar un link sin "https://" cuando el resto
+// del flujo lo tolera igual.
+const BodySchema = z.object({
+  plataforma: z.enum(['linkedin', 'reddit']).optional(),
+  url_publicacion: z.string().trim().min(3).max(500),
+  autor: z.string().trim().max(200).nullable().optional(),
+  texto: z.string().trim().min(30, 'texto debe tener al menos 30 caracteres').max(20000),
+});
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -41,12 +45,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    const body = (await req.json()) as Body;
-    if (!body?.url_publicacion || !body?.texto || body.texto.length < 30) {
-      return new Response(JSON.stringify({ ok: false, message: 'url_publicacion y texto (≥30 chars) son requeridos' }), {
+    const parsedBody = BodySchema.safeParse(await req.json());
+    if (!parsedBody.success) {
+      return new Response(JSON.stringify({ ok: false, message: 'Parámetros inválidos', errors: parsedBody.error.flatten().fieldErrors }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    const body = parsedBody.data;
     const plataforma = body.plataforma || (body.url_publicacion.includes('reddit.com') ? 'reddit' : 'linkedin');
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
