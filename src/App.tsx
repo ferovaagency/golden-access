@@ -5,6 +5,8 @@ import { backupAppDataToSheets, importSheetByUrl } from './lib/sheetsService';
 import * as financeService from './lib/financeService';
 import { isTeamMember } from './lib/crmService';
 import { getModules, PlanId } from './lib/planService';
+import { getBusinessProfile, BusinessProfile } from './lib/businessProfileService';
+import OnboardingChat from './components/OnboardingChat';
 import { Config, AppData, Cliente, Servicio, Herramienta, OtroGasto, Venta, Hora, PagoEgreso } from './types';
 import { calcularMétricasFinancieras } from './lib/calculations';
 
@@ -57,6 +59,7 @@ export default function App() {
   const [sheetsLoading, setSheetsLoading] = useState(false);
   const [appData, setAppData] = useState<AppData | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
 
   // Google Sheets backup (optional, manual)
   const [isBackingUpToSheets, setIsBackingUpToSheets] = useState(false);
@@ -134,8 +137,13 @@ export default function App() {
     setSheetsLoading(true);
     setErrorMsg(null);
     try {
-      const data = await financeService.loadFinanceData(userId);
-      await hydrateGoogleWorkspaceConnection(userId);
+      const [data] = await Promise.all([
+        financeService.loadFinanceData(userId),
+        hydrateGoogleWorkspaceConnection(userId),
+        getBusinessProfile(userId).then(setBusinessProfile).catch((err) => {
+          console.error('[App] getBusinessProfile error:', err);
+        }),
+      ]);
       setAppData(data);
     } catch (err: any) {
       console.error('Finance data bootstrap error:', err);
@@ -395,9 +403,15 @@ export default function App() {
     );
   }
 
+  // Estado 2.5: pagó pero todavía no completó el onboarding de su negocio.
+  // Los miembros del equipo de Ferova (isTeam) no son clientes reales, no pasan por esto.
+  const isReady = appData !== null;
+  if (isReady && !isTeam && !businessProfile?.onboarding_completado) {
+    return <OnboardingChat user={user} onDone={(profile) => setBusinessProfile(profile)} />;
+  }
+
   // Estado 3: Pagado => Dashboard (los datos viven en Supabase, Google es solo respaldo opcional)
 
-  const isReady = appData !== null;
   const metrics = isReady ? calcularMétricasFinancieras(appData, selectedMonth) : null;
 
   // Visual Tab Categorization - Separates Operational Management from Financial Control
