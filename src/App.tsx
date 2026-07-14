@@ -29,6 +29,7 @@ import AuthScreen from './components/AuthScreen';
 import Paywall from './components/Paywall';
 import AdminCRM, { CRMTab } from './components/AdminCRM';
 import BusinessAssistant from './components/BusinessAssistant';
+import CustomerCRM from './components/CustomerCRM';
 
 
 import { 
@@ -114,6 +115,17 @@ export default function App() {
 
     return () => unsubscribe();
   }, []);
+
+  // Si el cliente no tiene el módulo Financiero (plan solo "CRM y Ventas"),
+  // ninguna de estas pestañas existe para él -- redirige a su módulo real.
+  // Cubre tanto el tab inicial por defecto como un cambio de plan en caliente.
+  const FINANCIERO_TAB_IDS = ['dashboard', 'ventas', 'pagosEgresos', 'gastos', 'equilibrioGlobal', 'equilibrioServicio', 'iva', 'alertas', 'ajustes', 'proyectos', 'horas', 'clientes', 'servicios'];
+  useEffect(() => {
+    if (!appData) return;
+    if (!modules.financiero && FINANCIERO_TAB_IDS.includes(activeTab)) {
+      setActiveTab(modules.crm_ventas ? 'ventas-crm' : activeTab);
+    }
+  }, [appData, modules.financiero, modules.crm_ventas, activeTab]);
 
   const handleLogin = async () => {
     try {
@@ -416,14 +428,15 @@ export default function App() {
   const metrics = isReady ? calcularMétricasFinancieras(appData, selectedMonth) : null;
 
   // Visual Tab Categorization - Separates Operational Management from Financial Control
-  const GESTION_OPERATIVA_TABS = [
+  // Ambos bloques solo se muestran si el plan del cliente incluye el módulo Financiero.
+  const GESTION_OPERATIVA_TABS = modules.financiero ? [
     { id: 'proyectos', label: 'Proyectos', hint: 'KPIs y ejecución' },
     { id: 'horas', label: 'Horas', hint: 'Rentabilidad por tiempo' },
     { id: 'clientes', label: 'Clientes', hint: 'Cuentas activas' },
     { id: 'servicios', label: 'Servicios', hint: 'Catálogo y costos' }
-  ];
+  ] : [];
 
-  const GESTION_FINANCIERA_TABS = [
+  const GESTION_FINANCIERA_TABS = modules.financiero ? [
     { id: 'dashboard', label: 'Inicio financiero', hint: 'Vista ejecutiva' },
     { id: 'ventas', label: 'Ingresos', hint: 'Ventas y abonos' },
     { id: 'pagosEgresos', label: 'Pagos', hint: 'Egresos registrados' },
@@ -433,7 +446,12 @@ export default function App() {
     { id: 'iva', label: 'IVA', hint: 'Control tributario' },
     { id: 'alertas', label: 'Alertas', hint: 'Riesgos y topes' },
     { id: 'ajustes', label: 'Ajustes', hint: 'Google Sheets y datos' }
-  ];
+  ] : [];
+
+  // Módulo "CRM y Ventas" propio del cliente -- distinto del CRM interno de Ferova (abajo).
+  const VENTAS_TABS = modules.crm_ventas ? [
+    { id: 'ventas-crm', label: 'CRM y Ventas', hint: 'Tu pipeline propio' },
+  ] : [];
 
   const CRM_GROWTH_TABS = isTeam ? [
     { id: 'crm-pipeline', label: 'Pipeline', hint: 'Prospectos y playbooks' },
@@ -443,7 +461,7 @@ export default function App() {
     { id: 'crm-resenas', label: 'Reseñas', hint: 'Gmail y fuentes' },
   ] : [];
 
-  const TAB_SET = [...GESTION_OPERATIVA_TABS, ...GESTION_FINANCIERA_TABS, ...CRM_GROWTH_TABS];
+  const TAB_SET = [...GESTION_OPERATIVA_TABS, ...GESTION_FINANCIERA_TABS, ...VENTAS_TABS, ...CRM_GROWTH_TABS];
 
   return (
     <div className="ferova-light-theme min-h-screen bg-[#f7f8fb] flex flex-col text-[#1f2937] font-sans">
@@ -654,7 +672,8 @@ export default function App() {
         
         {/* Navigation Sidebar menu (lg+) */}
         <aside className="lg:w-72 shrink-0 space-y-5 hidden lg:block select-none">
-          
+
+          {modules.financiero && (
           <div>
             <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-blue-600 block px-3 mb-2 font-black border-l-2 border-l-[#c9a961] pl-2">
               Gestión Operativa
@@ -665,8 +684,8 @@ export default function App() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full text-left px-4 py-3 rounded-2xl transition border ${
-                    activeTab === tab.id 
-                      ? 'bg-blue-50 text-blue-700 border-blue-100 shadow-sm' 
+                    activeTab === tab.id
+                      ? 'bg-blue-50 text-blue-700 border-blue-100 shadow-sm'
                       : 'text-slate-600 border-transparent hover:text-slate-900 hover:bg-white hover:border-slate-200'
                   }`}
                 >
@@ -676,7 +695,9 @@ export default function App() {
               ))}
             </nav>
           </div>
+          )}
 
+          {modules.financiero && (
           <div className="pt-2 border-t border-slate-200/45">
             <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-slate-500 block px-3 mb-2 font-black border-l-2 border-l-[#a39d8e] pl-2">
               Control Financiero
@@ -687,8 +708,8 @@ export default function App() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full text-left px-4 py-3 rounded-2xl transition border ${
-                    activeTab === tab.id 
-                      ? 'bg-blue-50 text-blue-700 border-blue-100 shadow-sm' 
+                    activeTab === tab.id
+                      ? 'bg-blue-50 text-blue-700 border-blue-100 shadow-sm'
                       : 'text-slate-600 border-transparent hover:text-slate-900 hover:bg-white hover:border-slate-200'
                   }`}
                 >
@@ -698,6 +719,31 @@ export default function App() {
               ))}
             </nav>
           </div>
+          )}
+
+          {modules.crm_ventas && VENTAS_TABS.length > 0 && (
+            <div className="pt-2 border-t border-slate-200/45">
+              <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-violet-600 block px-3 mb-2 font-black border-l-2 border-l-violet-400 pl-2">
+                Ventas
+              </span>
+              <nav className="space-y-1 text-sm font-semibold">
+                {VENTAS_TABS.map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`w-full text-left px-4 py-3 rounded-2xl transition border ${
+                      activeTab === tab.id
+                        ? 'bg-violet-50 text-violet-700 border-violet-100 shadow-sm'
+                        : 'text-slate-600 border-transparent hover:text-slate-900 hover:bg-white hover:border-slate-200'
+                    }`}
+                  >
+                    <span className="block">{tab.label}</span>
+                    <span className="block text-xs font-normal opacity-70">{tab.hint}</span>
+                  </button>
+                ))}
+              </nav>
+            </div>
+          )}
 
           {isTeam && CRM_GROWTH_TABS.length > 0 && (
             <div className="pt-2 border-t border-slate-200/45">
@@ -735,6 +781,7 @@ export default function App() {
               </div>
               
               <div className="space-y-4 text-left">
+                {modules.financiero && (
                 <div>
                   <span className="text-[9px] uppercase tracking-wider text-blue-600/70 block font-bold mb-1.5 font-mono">1. GESTIÓN OPERATIVA</span>
                   <nav className="space-y-1">
@@ -746,8 +793,8 @@ export default function App() {
                           setIsMobileMenuOpen(false);
                         }}
                         className={`w-full text-left px-3 py-1.5 rounded transition ${
-                          activeTab === tab.id 
-                            ? 'bg-blue-50 text-blue-600 font-semibold' 
+                          activeTab === tab.id
+                            ? 'bg-blue-50 text-blue-600 font-semibold'
                             : 'text-slate-500 hover:text-slate-900'
                         }`}
                       >
@@ -756,7 +803,9 @@ export default function App() {
                     ))}
                   </nav>
                 </div>
+                )}
 
+                {modules.financiero && (
                 <div className="pt-2 border-t border-slate-200/45">
                   <span className="text-[9px] uppercase tracking-wider text-slate-500/70 block font-bold mb-1.5 font-mono">2. CONTROL FINANCIERO</span>
                   <nav className="space-y-1">
@@ -768,8 +817,8 @@ export default function App() {
                           setIsMobileMenuOpen(false);
                         }}
                         className={`w-full text-left px-3 py-1.5 rounded transition ${
-                          activeTab === tab.id 
-                            ? 'bg-blue-50 text-blue-600 font-semibold' 
+                          activeTab === tab.id
+                            ? 'bg-blue-50 text-blue-600 font-semibold'
                             : 'text-slate-500 hover:text-slate-900'
                         }`}
                       >
@@ -778,6 +827,26 @@ export default function App() {
                     ))}
                   </nav>
                 </div>
+                )}
+
+                {modules.crm_ventas && VENTAS_TABS.length > 0 && (
+                  <div className="pt-2 border-t border-slate-200/45">
+                    <span className="text-[9px] uppercase tracking-wider text-violet-600/80 block font-bold mb-1.5 font-mono">VENTAS</span>
+                    <nav className="space-y-1">
+                      {VENTAS_TABS.map(tab => (
+                        <button
+                          key={tab.id}
+                          onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false); }}
+                          className={`w-full text-left px-3 py-1.5 rounded transition ${
+                            activeTab === tab.id ? 'bg-violet-50 text-violet-600 font-semibold' : 'text-slate-500 hover:text-slate-900'
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </nav>
+                  </div>
+                )}
 
                 {isTeam && CRM_GROWTH_TABS.length > 0 && (
                   <div className="pt-2 border-t border-slate-200/45">
@@ -988,6 +1057,10 @@ export default function App() {
                   onImportFromSheetsUrl={handleImportFromSheetsUrl}
                   formatCop={formatCop}
                 />
+              )}
+
+              {activeTab === 'ventas-crm' && modules.crm_ventas && (
+                <CustomerCRM user={user} />
               )}
 
               {isTeam && activeTab.startsWith('crm-') && (
