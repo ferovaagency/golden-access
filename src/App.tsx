@@ -7,6 +7,7 @@ import { isTeamMember } from './lib/crmService';
 import { getModules, PlanId } from './lib/planService';
 import { getBusinessProfile, BusinessProfile } from './lib/businessProfileService';
 import OnboardingChat from './components/OnboardingChat';
+import FeedbackWidget from './components/FeedbackWidget';
 import { Config, AppData, Cliente, Servicio, Herramienta, OtroGasto, Venta, Hora, PagoEgreso } from './types';
 import { calcularMétricasFinancieras } from './lib/calculations';
 
@@ -553,6 +554,9 @@ export default function App() {
                 <span className="hidden sm:inline">Respaldo en Sheets</span>
               </a>
             )}
+
+            {/* Feedback del cliente (no para el equipo interno de Ferova) */}
+            {!isTeam && <FeedbackWidget user={user} />}
 
             {/* Profile component user info */}
               <button onClick={() => setAssistantOpen(true)} className="hidden md:flex items-center gap-2 rounded-2xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700">
