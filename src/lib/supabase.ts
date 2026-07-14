@@ -10,6 +10,7 @@
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../integrations/supabase/client';
 import { lovable } from '../integrations/lovable/index';
+import type { PlanId } from './planService';
 
 export { supabase };
 export type AuthUser = User;
@@ -187,4 +188,37 @@ export const checkSubscription = async (userId: string): Promise<boolean> => {
   if (!data) return false;
   if (data.expires_at && new Date(data.expires_at) < new Date()) return false;
   return true;
+};
+
+// Resuelve acceso + plan en un solo paso: primero una suscripcion activa
+// (paga), y si no hay, un acceso de cortesia otorgado por email (cubre tanto
+// clientes que ya se registraron como los que aun no -- ver
+// courtesy_access_grants, RLS acotado a auth.email()). Deliberadamente
+// separado de crm_team_members: esa tabla es el allowlist del equipo interno
+// de Ferova y no debe mezclarse con el acceso de un cliente real.
+export const resolveAccess = async (userId: string, email: string): Promise<{ hasPaid: boolean; plan: PlanId }> => {
+  const { data: sub, error: subError } = await (supabase as any)
+    .from('user_subscriptions')
+    .select('id, status, expires_at, plan')
+    .eq('user_id', userId)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (subError) console.error('[supabase] resolveAccess subscription error:', subError);
+  if (sub && !(sub.expires_at && new Date(sub.expires_at) < new Date())) {
+    return { hasPaid: true, plan: (sub.plan || 'financiero') as PlanId };
+  }
+
+  if (email) {
+    const { data: courtesy, error: courtesyError } = await (supabase as any)
+      .from('courtesy_access_grants')
+      .select('plan')
+      .eq('email', email)
+      .maybeSingle();
+    if (courtesyError) console.error('[supabase] resolveAccess courtesy error:', courtesyError);
+    if (courtesy) return { hasPaid: true, plan: (courtesy.plan || 'completo') as PlanId };
+  }
+
+  return { hasPaid: false, plan: 'financiero' };
 };
