@@ -113,6 +113,23 @@ export async function isTeamMember(email: string): Promise<boolean> {
   return !!data;
 }
 
+export async function getMyNotificationPhone(email: string): Promise<string | null> {
+  const { data, error } = await (supabase as any)
+    .from('crm_team_members')
+    .select('telefono_notificaciones')
+    .eq('email', email)
+    .maybeSingle();
+  if (error) throw new Error(`[crmService] getMyNotificationPhone: ${error.message}`);
+  return data?.telefono_notificaciones || null;
+}
+
+export async function setMyNotificationPhone(telefono: string): Promise<string | null> {
+  const { data, error } = await supabase.functions.invoke('crm-set-notification-phone', { body: { telefono } });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo guardar el teléfono de notificaciones.');
+  return data.team_member?.telefono_notificaciones || null;
+}
+
 export async function listOportunidades(): Promise<Oportunidad[]> {
   const { data, error } = await supabase
     .from('crm_oportunidades')

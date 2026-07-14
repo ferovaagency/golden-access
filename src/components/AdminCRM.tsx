@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles, Download, MessageSquare, Zap, Copy, Search, Star, RefreshCw, CheckCircle2, Link2 } from 'lucide-react';
+import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles, Download, MessageSquare, Zap, Copy, Search, Star, RefreshCw, CheckCircle2, Link2, Bell } from 'lucide-react';
 import { getAccessToken, googleSignIn, logout } from '../lib/supabase';
 import { copyText } from '../lib/clipboard';
 import {
@@ -46,6 +46,8 @@ import {
   getWhatsappInstance,
   connectWhatsappInstance,
   WhatsappInstance,
+  getMyNotificationPhone,
+  setMyNotificationPhone,
 } from '../lib/crmService';
 
 const ESTADOS: EstadoOportunidad[] = ['nuevo', 'contactado', 'calificando', 'propuesta_enviada', 'negociacion', 'ganado', 'perdido'];
@@ -100,6 +102,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const [sendingWhatsapp, setSendingWhatsapp] = useState<string | null>(null);
   const [whatsappInstance, setWhatsappInstance] = useState<WhatsappInstance | null>(null);
   const [connectingWhatsapp, setConnectingWhatsapp] = useState(false);
+  const [notifyPhoneInput, setNotifyPhoneInput] = useState('');
+  const [notifyPhoneSaved, setNotifyPhoneSaved] = useState<string | null>(null);
+  const [savingNotifyPhone, setSavingNotifyPhone] = useState(false);
 
   // Booking form
   const [bookNombre, setBookNombre] = useState('');
@@ -217,7 +222,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const refreshAll = async () => {
     setLoading(true);
     try {
-      const [o, c, k, bc, kn, srv, r, rs, wi] = await Promise.all([
+      const [o, c, k, bc, kn, srv, r, rs, wi, notifyPhone] = await Promise.all([
         listOportunidades(),
         listCitas(),
         listContenidoPotencial(),
@@ -227,6 +232,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
         listResenas().catch(() => [] as Resena[]),
         listReviewSources().catch(() => [] as ReviewSource[]),
         getWhatsappInstance().catch(() => null),
+        getMyNotificationPhone(user.email || '').catch(() => null),
       ]);
       setOportunidades(o);
       setCitas(c);
@@ -238,6 +244,8 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setResenas(r);
       setReviewSources(rs);
       setWhatsappInstance(wi);
+      setNotifyPhoneSaved(notifyPhone);
+      setNotifyPhoneInput(notifyPhone || '');
     } catch (err: any) {
       alert(`Error cargando el CRM: ${err.message || err}`);
     } finally {
@@ -367,6 +375,19 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       alert(`Error generando QR: ${err.message || err}`);
     } finally {
       setConnectingWhatsapp(false);
+    }
+  };
+
+  const handleSaveNotifyPhone = async () => {
+    setSavingNotifyPhone(true);
+    try {
+      const saved = await setMyNotificationPhone(notifyPhoneInput.trim());
+      setNotifyPhoneSaved(saved);
+      setNotifyPhoneInput(saved || '');
+    } catch (err: any) {
+      alert(`Error guardando el teléfono de notificaciones: ${err.message || err}`);
+    } finally {
+      setSavingNotifyPhone(false);
     }
   };
 
@@ -1555,6 +1576,35 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                     <p>Estado: <span className="text-blue-700">{whatsappInstance.status}</span></p>
                     {whatsappInstance.last_error && <p className="text-red-600 break-words">{whatsappInstance.last_error}</p>}
                   </div>
+                )}
+              </div>
+
+              <div className="bg-amber-50 border border-amber-100 rounded-lg p-5 space-y-2 text-xs text-slate-700">
+                <h3 className="text-amber-700 font-semibold flex items-center gap-1.5">
+                  <Bell className="w-3.5 h-3.5" /> Alerta de leads Hot por WhatsApp
+                </h3>
+                <p className="text-slate-600 leading-relaxed">
+                  Si pones tu número aquí, te llega un WhatsApp automático cada vez que el análisis de contenido detecta un lead con score ≥ 70 (Hot) — no tienes que estar revisando el Pipeline.
+                </p>
+                <label htmlFor="notify-phone" className="block text-[10px] font-mono uppercase tracking-wider text-slate-500">Tu número (solo dígitos, con indicativo)</label>
+                <div className="flex gap-2">
+                  <input
+                    id="notify-phone"
+                    value={notifyPhoneInput}
+                    onChange={(e) => setNotifyPhoneInput(e.target.value.replace(/[^\d]/g, ''))}
+                    placeholder="573001234567"
+                    className="flex-1 bg-white border border-amber-200 p-2 rounded text-slate-900"
+                  />
+                  <button
+                    onClick={handleSaveNotifyPhone}
+                    disabled={savingNotifyPhone}
+                    className="rounded-lg bg-amber-600 hover:bg-amber-700 px-4 text-white font-semibold disabled:opacity-50"
+                  >
+                    {savingNotifyPhone ? 'Guardando...' : 'Guardar'}
+                  </button>
+                </div>
+                {notifyPhoneSaved && (
+                  <p className="text-[10px] font-mono text-amber-700">✓ Alertas activas a {notifyPhoneSaved}</p>
                 )}
               </div>
 
