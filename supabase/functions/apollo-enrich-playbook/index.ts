@@ -150,6 +150,7 @@ Deno.serve(async (req) => {
 
     const person = await apolloPeopleMatch(APOLLO_API_KEY, peopleParams);
     let org: any = null;
+    let orgFromCache = false;
     const orgDomain = person.ok
       ? (person.data?.person?.organization?.primary_domain || person.data?.person?.organization?.website_url || dominio)
       : dominio;
@@ -158,7 +159,32 @@ Deno.serve(async (req) => {
       try { orgDomainClean = orgDomain.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]; } catch { /**/ }
     }
     if (orgDomainClean) {
-      org = await apolloOrgEnrich(APOLLO_API_KEY, orgDomainClean);
+      // Cache por dominio: si ya enriquecimos esta empresa en los últimos 30 días (para
+      // otra oportunidad), reutilizamos ese resultado en vez de gastar un crédito nuevo
+      // de Apollo -- las organizaciones no cambian de un día para otro.
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      try {
+        const { data: cached } = await supabase
+          .from('crm_oportunidades')
+          .select('apollo_data, apollo_enriched_at')
+          .gte('apollo_enriched_at', thirtyDaysAgo)
+          .not('apollo_data', 'is', null)
+          .order('apollo_enriched_at', { ascending: false })
+          .limit(50);
+        const hit = (cached || []).find((row: any) => {
+          const rowDomain = row.apollo_data?.organization?.primary_domain || row.apollo_data?.inputs?.dominio;
+          return rowDomain && rowDomain.toLowerCase() === orgDomainClean!.toLowerCase();
+        });
+        if (hit?.apollo_data?.organization && !hit.apollo_data.organization.error) {
+          org = { ok: true, data: { organization: hit.apollo_data.organization } };
+          orgFromCache = true;
+        }
+      } catch (err) {
+        console.warn('[apollo-enrich-playbook] no se pudo revisar cache de dominio:', err);
+      }
+      if (!org) {
+        org = await apolloOrgEnrich(APOLLO_API_KEY, orgDomainClean);
+      }
     }
 
     const apollo_data = {
@@ -166,12 +192,19 @@ Deno.serve(async (req) => {
       inputs: { nombre_contacto, empresa, dominio, linkedin_url, email: emailIn },
       person: person.ok ? person.data?.person || person.data : { error: person.error, status: (person as any).status },
       organization: org?.ok ? org.data?.organization || org.data : (org ? { error: org.error, status: (org as any).status } : null),
+      organization_from_cache: orgFromCache,
     };
 
     // Extraer datos útiles
     const p = person.ok ? (person.data?.person || {}) : {};
     const o = org?.ok ? (org.data?.organization || {}) : {};
     const foundEmail: string | undefined = p.email || (p.contact_emails?.[0]?.email) || emailIn;
+    // Apollo marca cada email como 'verified' (confirmado real), 'guessed' (adivinado por
+    // patrón, ej. nombre.apellido@dominio) o 'unavailable'. Priorizamos avisar a la IA/al
+    // equipo cuando el email es solo una suposición, para no dañar la reputación del
+    // dominio de correo propio enviando a direcciones que probablemente reboten.
+    const emailStatus: string = p.email_status || (foundEmail === emailIn ? 'aportado_manualmente' : 'desconocido');
+    const emailVerified = emailStatus === 'verified';
     const foundPhone: string | undefined = p.phone_numbers?.[0]?.sanitized_number || p.mobile_phone || p.organization?.phone;
     const foundLinkedin: string | undefined = p.linkedin_url || linkedin_url;
     const foundTitle: string | undefined = p.title;
@@ -196,7 +229,7 @@ Cargo: ${foundTitle || 'desconocido'}
 Empresa: ${foundCompany || 'desconocida'}
 Industria: ${foundIndustry || 'desconocida'}
 Tamaño empresa: ${foundSize || 'desconocido'}
-Email: ${foundEmail || 'no disponible'}
+Email: ${foundEmail || 'no disponible'} (estado Apollo: ${emailStatus}${emailVerified ? ', confirmado real' : ', NO confirmado -- si lo usas en el correo, adviértelo brevemente al final como nota interna entre paréntesis para que el equipo verifique antes de enviar'})
 Teléfono: ${foundPhone || 'no disponible'}
 LinkedIn: ${foundLinkedin || 'no disponible'}
 Canal de origen del lead: ${canal_origen}
@@ -282,7 +315,17 @@ Servicios de Ferova a mencionar solo si son relevantes al dolor detectado: SEO, 
       saved = data;
     }
 
-    return new Response(JSON.stringify({ ok: true, oportunidad: saved, apollo: { person_found: !!p?.id, org_found: !!o?.id } }), {
+    return new Response(JSON.stringify({
+      ok: true,
+      oportunidad: saved,
+      apollo: {
+        person_found: !!p?.id,
+        org_found: !!o?.id,
+        org_from_cache: orgFromCache,
+        email_status: emailStatus,
+        email_verified: emailVerified,
+      },
+    }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {

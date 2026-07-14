@@ -145,6 +145,8 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const [liLimit, setLiLimit] = useState(12);
   const [liResults, setLiResults] = useState<LinkedInSearchResult[]>([]);
   const [searchingLi, setSearchingLi] = useState(false);
+  const [liWarning, setLiWarning] = useState<string | null>(null);
+  const [kwWarning, setKwWarning] = useState<string | null>(null);
 
   // Apollo + playbook por oportunidad
   const [enrichingId, setEnrichingId] = useState<string | null>(null);
@@ -153,6 +155,55 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const getEnrichInput = (id: string) => enrichInputs[id] || { linkedin_url: '', dominio: '', contexto: '' };
   const setEnrichInput = (id: string, patch: Partial<{ linkedin_url: string; dominio: string; contexto: string }>) =>
     setEnrichInputs({ ...enrichInputs, [id]: { ...getEnrichInput(id), ...patch } });
+
+  // Auto-enriquecimiento con Apollo tras analizar contenido calificado
+  const APOLLO_AUTO_THRESHOLD = 60;
+  const [autoEnriching, setAutoEnriching] = useState(false);
+  const [autoEnrichNotice, setAutoEnrichNotice] = useState<string | null>(null);
+
+  const looksLikeRealName = (autor: string | null | undefined): boolean => {
+    if (!autor) return false;
+    const a = autor.trim();
+    if (!a) return false;
+    // Descarta handles tipo "u/usuario · r/subreddit" — no son nombres reales, Apollo no los puede enriquecer.
+    if (/^u\//i.test(a)) return false;
+    return true;
+  };
+
+  // Si el análisis detectó una oportunidad calificada (score alto) y tenemos un
+  // nombre de autor usable, dispara automáticamente el enriquecimiento con Apollo
+  // + generación de playbook, en vez de dejarlo como un paso manual separado.
+  const maybeAutoEnrichApollo = async (opts: {
+    plataforma: 'linkedin' | 'reddit';
+    url: string;
+    autor: string | null | undefined;
+    texto: string;
+    score: number | null;
+  }) => {
+    if (opts.score === null || opts.score < APOLLO_AUTO_THRESHOLD) return;
+    if (!looksLikeRealName(opts.autor)) {
+      setAutoEnrichNotice('Score alto, pero no hay un nombre de contacto identificable para enriquecer con Apollo automáticamente. Créalo manualmente en el Pipeline si tienes más datos.');
+      return;
+    }
+    setAutoEnriching(true);
+    setAutoEnrichNotice(null);
+    try {
+      const updated = await enrichOportunidadApollo({
+        nombre_contacto: opts.autor!.trim(),
+        linkedin_url: opts.plataforma === 'linkedin' ? opts.url : undefined,
+        fuente_url: opts.url,
+        canal_origen: opts.plataforma,
+        contexto_publicacion: opts.texto,
+      });
+      setOportunidades((prev) => [updated, ...prev.filter((x) => x.id !== updated.id)]);
+      setExpandedPlaybookId(updated.id);
+      setAutoEnrichNotice(`✓ "${updated.nombre_contacto}" enriquecido con Apollo y playbook generado — revísalo en la pestaña Pipeline.`);
+    } catch (err: any) {
+      setAutoEnrichNotice(`No se pudo enriquecer automáticamente con Apollo: ${err.message || err}`);
+    } finally {
+      setAutoEnriching(false);
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -333,7 +384,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
         texto: anaTexto.trim(),
       });
       setContenido([created, ...contenido]);
+      const { url: capturedUrl, autor: capturedAutor, texto: capturedTexto } = { url: anaUrl.trim(), autor: anaAutor.trim() || null, texto: anaTexto.trim() };
       setAnaUrl(''); setAnaAutor(''); setAnaTexto('');
+      await maybeAutoEnrichApollo({ plataforma: anaPlataforma, url: capturedUrl, autor: capturedAutor, texto: capturedTexto, score: created.score_potencial });
     } catch (err: any) {
       alert(`Error analizando: ${err.message || err}`);
     } finally {
@@ -367,6 +420,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
         texto,
       });
       setContenido([created, ...contenido]);
+      // Los handles de Reddit (u/usuario) no son nombres reales: maybeAutoEnrichApollo
+      // los descarta automáticamente y solo avisa si el score era alto.
+      await maybeAutoEnrichApollo({ plataforma: 'reddit', url: post.url, autor: `u/${post.author}`, texto, score: created.score_potencial });
     } catch (err: any) {
       alert(`Error analizando: ${err.message || err}`);
     } finally {
@@ -379,9 +435,11 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     if (keywords.length === 0) { alert('Escribe al menos una palabra clave.'); return; }
     const subreddits = kwSubs.split(',').map((s) => s.trim().replace(/^r\//i, '')).filter(Boolean);
     setSearchingKw(true);
+    setKwWarning(null);
     try {
-      const posts = await searchRedditByKeywords({ keywords, subreddits, sort: kwSort, timeframe: kwTimeframe, limit: kwLimit });
+      const { posts, warning } = await searchRedditByKeywords({ keywords, subreddits, sort: kwSort, timeframe: kwTimeframe, limit: kwLimit });
       setKwPosts(posts);
+      setKwWarning(warning);
     } catch (err: any) {
       alert(`Error buscando: ${err.message || err}`);
     } finally {
@@ -393,9 +451,11 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     const keywords = liInput.split(',').map((s) => s.trim()).filter(Boolean);
     if (keywords.length === 0) { alert('Escribe al menos una palabra clave.'); return; }
     setSearchingLi(true);
+    setLiWarning(null);
     try {
-      const results = await searchLinkedInByKeywords({ keywords, limit: liLimit });
+      const { results, warning } = await searchLinkedInByKeywords({ keywords, limit: liLimit });
       setLiResults(results);
+      setLiWarning(warning);
     } catch (err: any) {
       alert(`Error buscando en LinkedIn: ${err.message || err}`);
     } finally {
@@ -415,6 +475,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
         texto,
       });
       setContenido([created, ...contenido]);
+      await maybeAutoEnrichApollo({ plataforma: 'linkedin', url: result.url, autor: result.author, texto, score: created.score_potencial });
     } catch (err: any) {
       alert(`Error analizando: ${err.message || err}`);
     } finally {
@@ -1018,6 +1079,18 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
         {tab === 'contenido' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {(autoEnriching || autoEnrichNotice) && (
+              <div className="lg:col-span-12 bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs flex items-center gap-2">
+                {autoEnriching ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
+                    <span className="text-blue-700">Score alto detectado — enriqueciendo con Apollo y generando playbook automáticamente...</span>
+                  </>
+                ) : (
+                  <span className="text-blue-700">{autoEnrichNotice}</span>
+                )}
+              </div>
+            )}
             <div className="lg:col-span-12 bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs">
               <h3 className="text-blue-600 font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
                 <Search className="w-3.5 h-3.5" /> Buscar publicaciones públicas de LinkedIn
@@ -1048,6 +1121,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   <Search className={`w-3.5 h-3.5 ${searchingLi ? 'animate-pulse' : ''}`} /> {searchingLi ? 'Buscando...' : 'Buscar LinkedIn'}
                 </button>
               </div>
+              {liWarning && (
+                <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 leading-relaxed">{liWarning}</p>
+              )}
               {liResults.length > 0 && (
                 <div className="pt-2 border-t border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[420px] overflow-y-auto">
                   <p className="md:col-span-2 text-[9px] font-mono uppercase text-[#8a8377]">{liResults.length} resultados públicos</p>
@@ -1129,6 +1205,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   <Search className={`w-3.5 h-3.5 ${searchingKw ? 'animate-pulse' : ''}`} /> {searchingKw ? 'Buscando...' : 'Buscar'}
                 </button>
               </div>
+              {kwWarning && (
+                <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 leading-relaxed">{kwWarning}</p>
+              )}
               {kwPosts.length > 0 && (
                 <div className="pt-2 border-t border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[520px] overflow-y-auto">
                   <p className="md:col-span-2 text-[9px] font-mono uppercase text-[#8a8377]">{kwPosts.length} resultados</p>
