@@ -194,6 +194,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
         fuente_url: opts.url,
         canal_origen: opts.plataforma,
         contexto_publicacion: opts.texto,
+        score_potencial: opts.score ?? undefined,
       });
       setOportunidades((prev) => [updated, ...prev.filter((x) => x.id !== updated.id)]);
       setExpandedPlaybookId(updated.id);
@@ -715,67 +716,97 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <form onSubmit={handleCreateOportunidad} className="lg:col-span-4 bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs h-fit">
               <h3 className="text-blue-600 font-mono uppercase text-[10px] tracking-wider font-bold">Nueva oportunidad</h3>
-              <input
-                value={nombreContacto}
-                onChange={(e) => setNombreContacto(e.target.value)}
-                placeholder="Nombre de contacto"
-                required
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
-              />
-              <input
-                value={empresa}
-                onChange={(e) => setEmpresa(e.target.value)}
-                placeholder="Empresa (opcional)"
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
-              />
-              <select
-                value={canalOrigen}
-                onChange={(e) => setCanalOrigen(e.target.value)}
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
-              >
-                {['linkedin', 'whatsapp', 'email', 'reddit', 'web', 'googlemaps', 'referido', 'otro'].map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-              <input
-                value={fuenteUrl}
-                onChange={(e) => setFuenteUrl(e.target.value)}
-                placeholder="Link de la publicación/perfil (opcional)"
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
-              />
-              <input
-                value={telefono}
-                onChange={(e) => setTelefono(e.target.value)}
-                placeholder="WhatsApp (ej. 573001234567, opcional)"
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
-              />
-              <select
-                value={nuevaServicioId}
-                onChange={(e) => setNuevaServicioId(e.target.value)}
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
-              >
-                <option value="">Servicio del catálogo (opcional)</option>
-                {servicios.map((s) => (
-                  <option key={s.id} value={s.id}>{s.nombre}</option>
-                ))}
-              </select>
-              <div className="flex gap-2">
+              <div>
+                <label htmlFor="op-nombre" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Nombre de contacto</label>
                 <input
-                  type="number"
-                  min={0}
-                  value={nuevaValorEstimado}
-                  onChange={(e) => setNuevaValorEstimado(e.target.value)}
-                  placeholder="Valor estimado (opcional)"
-                  className="flex-1 bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
+                  id="op-nombre"
+                  value={nombreContacto}
+                  onChange={(e) => setNombreContacto(e.target.value)}
+                  placeholder="Nombre de contacto"
+                  required
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
                 />
+              </div>
+              <div>
+                <label htmlFor="op-empresa" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Empresa (opcional)</label>
+                <input
+                  id="op-empresa"
+                  value={empresa}
+                  onChange={(e) => setEmpresa(e.target.value)}
+                  placeholder="Empresa"
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
+                />
+              </div>
+              <div>
+                <label htmlFor="op-canal" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Canal de origen</label>
                 <select
-                  value={nuevaMoneda}
-                  onChange={(e) => setNuevaMoneda(e.target.value as 'COP' | 'USD')}
-                  className="bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
+                  id="op-canal"
+                  value={canalOrigen}
+                  onChange={(e) => setCanalOrigen(e.target.value)}
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
                 >
-                  <option value="COP">COP</option>
-                  <option value="USD">USD</option>
+                  {['linkedin', 'whatsapp', 'email', 'reddit', 'web', 'googlemaps', 'referido', 'otro'].map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
                 </select>
+              </div>
+              <div>
+                <label htmlFor="op-fuente" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Link de la publicación/perfil (opcional)</label>
+                <input
+                  id="op-fuente"
+                  value={fuenteUrl}
+                  onChange={(e) => setFuenteUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
+                />
+              </div>
+              <div>
+                <label htmlFor="op-telefono" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">WhatsApp (opcional)</label>
+                <input
+                  id="op-telefono"
+                  value={telefono}
+                  onChange={(e) => setTelefono(e.target.value)}
+                  placeholder="573001234567"
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
+                />
+              </div>
+              <div>
+                <label htmlFor="op-servicio" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Servicio del catálogo (opcional)</label>
+                <select
+                  id="op-servicio"
+                  value={nuevaServicioId}
+                  onChange={(e) => setNuevaServicioId(e.target.value)}
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
+                >
+                  <option value="">Sin servicio asociado</option>
+                  {servicios.map((s) => (
+                    <option key={s.id} value={s.id}>{s.nombre}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="op-valor" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Valor estimado (opcional)</label>
+                <div className="flex gap-2">
+                  <input
+                    id="op-valor"
+                    type="number"
+                    min={0}
+                    value={nuevaValorEstimado}
+                    onChange={(e) => setNuevaValorEstimado(e.target.value)}
+                    placeholder="0"
+                    aria-label="Valor estimado"
+                    className="flex-1 bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
+                  />
+                  <select
+                    value={nuevaMoneda}
+                    onChange={(e) => setNuevaMoneda(e.target.value as 'COP' | 'USD')}
+                    aria-label="Moneda"
+                    className="bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
+                  >
+                    <option value="COP">COP</option>
+                    <option value="USD">USD</option>
+                  </select>
+                </div>
               </div>
               <button type="submit" className="w-full bg-[#c9a961] hover:bg-[#b09252] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5">
                 <Plus className="w-3.5 h-3.5" /> Crear
@@ -800,11 +831,33 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   m === 'USD'
                     ? `US$ ${n.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
                     : `$ ${n.toLocaleString('es-CO', { maximumFractionDigits: 0 })}`;
+                // Clasificación Hot/Warm/Cold (marco del skill de prospecting): Hot >=70,
+                // Warm 40-69, Cold <40. Usa `probabilidad`, que se llena sola con el
+                // score_potencial del análisis de contenido que originó el lead (si vino
+                // de ahí) o manualmente por el equipo.
+                const tier = o.probabilidad == null
+                  ? null
+                  : o.probabilidad >= 70
+                    ? { label: 'Hot', color: '#c97a61' }
+                    : o.probabilidad >= 40
+                      ? { label: 'Warm', color: '#c9a961' }
+                      : { label: 'Cold', color: '#8a8377' };
                 return (
                   <div key={o.id} className="bg-white border border-slate-200 rounded-lg p-4 space-y-3 text-xs">
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="flex-1 min-w-[160px]">
-                        <div className="font-semibold text-slate-900">{o.nombre_contacto}</div>
+                        <div className="font-semibold text-slate-900 flex items-center gap-1.5">
+                          {o.nombre_contacto}
+                          {tier && (
+                            <span
+                              className="text-[8px] font-mono font-bold uppercase px-1.5 py-0.5 rounded border"
+                              style={{ color: tier.color, borderColor: `${tier.color}66` }}
+                              title={`Score/probabilidad: ${o.probabilidad}`}
+                            >
+                              {tier.label}
+                            </span>
+                          )}
+                        </div>
                         <div className="text-[#8a8377] font-mono text-[10px]">
                           {o.empresa || 'Sin empresa'} · {o.canal_origen}{o.telefono ? ` · ${o.telefono}` : ''}
                         </div>
@@ -1244,36 +1297,52 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 Pegá el link y el texto de una publicación de LinkedIn o Reddit. La IA la puntúa (0-100), explica por qué y redacta un comentario sugerido para que lo publiques manualmente.
               </p>
               <div className="flex gap-2">
-                <select
-                  value={anaPlataforma}
-                  onChange={(e) => setAnaPlataforma(e.target.value as 'linkedin' | 'reddit')}
-                  className="bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
-                >
-                  <option value="linkedin">LinkedIn</option>
-                  <option value="reddit">Reddit</option>
-                </select>
+                <div>
+                  <label htmlFor="ana-plataforma" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Plataforma</label>
+                  <select
+                    id="ana-plataforma"
+                    value={anaPlataforma}
+                    onChange={(e) => setAnaPlataforma(e.target.value as 'linkedin' | 'reddit')}
+                    className="bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
+                  >
+                    <option value="linkedin">LinkedIn</option>
+                    <option value="reddit">Reddit</option>
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label htmlFor="ana-autor" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Autor (opcional)</label>
+                  <input
+                    id="ana-autor"
+                    value={anaAutor}
+                    onChange={(e) => setAnaAutor(e.target.value)}
+                    placeholder="Nombre del autor"
+                    className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="ana-url" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">URL de la publicación</label>
                 <input
-                  value={anaAutor}
-                  onChange={(e) => setAnaAutor(e.target.value)}
-                  placeholder="Autor (opcional)"
-                  className="flex-1 bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
+                  id="ana-url"
+                  value={anaUrl}
+                  onChange={(e) => setAnaUrl(e.target.value)}
+                  placeholder="https://..."
+                  required
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
                 />
               </div>
-              <input
-                value={anaUrl}
-                onChange={(e) => setAnaUrl(e.target.value)}
-                placeholder="URL de la publicación"
-                required
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
-              />
-              <textarea
-                value={anaTexto}
-                onChange={(e) => setAnaTexto(e.target.value)}
-                rows={8}
-                placeholder="Pegá acá el texto completo de la publicación..."
-                required
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900 font-mono text-[11px] leading-relaxed"
-              />
+              <div>
+                <label htmlFor="ana-texto" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Texto de la publicación</label>
+                <textarea
+                  id="ana-texto"
+                  value={anaTexto}
+                  onChange={(e) => setAnaTexto(e.target.value)}
+                  rows={8}
+                  placeholder="Pegá acá el texto completo de la publicación..."
+                  required
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900 font-mono text-[11px] leading-relaxed"
+                />
+              </div>
               <button
                 type="submit"
                 disabled={analyzing}

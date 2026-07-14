@@ -277,6 +277,7 @@ export async function enrichOportunidadApollo(payload: {
   canal_origen?: string;
   fuente_url?: string;
   contexto_publicacion?: string;
+  score_potencial?: number;
 }): Promise<Oportunidad> {
   const { data, error } = await supabase.functions.invoke('apollo-enrich-playbook', { body: payload });
   if (error) throw error;

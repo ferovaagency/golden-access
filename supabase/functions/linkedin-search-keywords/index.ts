@@ -4,68 +4,41 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { z } from 'npm:zod';
+import * as cheerio from 'npm:cheerio@1';
 
 const BodySchema = z.object({
   keywords: z.array(z.string().trim().min(1).max(80)).min(1).max(10),
   limit: z.number().int().min(1).max(30).default(12),
 });
 
-function decodeHtml(input: string): string {
-  return input
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#x27;/g, "'")
-    .replace(/&#39;/g, "'")
-    .replace(/\s+/g, ' ')
-    .trim();
+function cleanText(input: string): string {
+  return input.replace(/\s+/g, ' ').trim();
 }
 
-function extractBingResults(html: string, limit: number) {
-  const results: any[] = [];
-  const blocks = [...html.matchAll(/<li class="b_algo"[\s\S]*?(?=<li class="b_algo"|<\/ol>)/g)].map((m) => m[0]);
-  for (const block of blocks) {
-    const hrefRaw = block.match(/<h2[^>]*>\s*<a[^>]+href="([^"]+)"/)?.[1];
-    const titleRaw = block.match(/<h2[^>]*>\s*<a[^>]*>([\s\S]*?)<\/a>/)?.[1];
-    const snippetRaw = block.match(/class="b_caption"[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>/)?.[1] || '';
-    if (!hrefRaw || !titleRaw) continue;
-    const url = decodeHtml(hrefRaw);
-    if (!url.includes('linkedin.com/')) continue;
-    const title = decodeHtml(titleRaw.replace(/<[^>]+>/g, ''));
-    const snippet = decodeHtml(snippetRaw.replace(/<[^>]+>/g, ''));
-    results.push({
-      id: crypto.randomUUID(),
-      title,
-      snippet,
-      url,
-      author: title.split(' | ')[0]?.split(' - ')[0] || null,
-      source: 'linkedin_public_search_bing',
-    });
-    if (results.length >= limit) break;
-  }
-  return results;
-}
-
+// Parsea el HTML de resultados de DuckDuckGo con selectores CSS reales (cheerio) en
+// vez de regex a mano -- mucho más resistente a pequeños cambios de markup que un
+// parseo posicional con regex (que se rompía silenciosamente).
 function extractDuckResults(html: string, limit: number) {
+  const $ = cheerio.load(html);
   const results: any[] = [];
-  const blocks = [...html.matchAll(/<div[^>]+result__body[\s\S]*?(?=<div[^>]+result__body|<\/body>)/g)].map((m) => m[0]);
-  for (const block of blocks) {
-    const hrefRaw = block.match(/class="result__a"[^>]+href="([^"]+)"/)?.[1];
-    const titleRaw = block.match(/class="result__a"[^>]*>([\s\S]*?)<\/a>/)?.[1];
-    const snippetRaw = block.match(/class="result__snippet"[^>]*>([\s\S]*?)<\/a>/)?.[1]
-      || block.match(/class="result__snippet"[^>]*>([\s\S]*?)<\/div>/)?.[1]
-      || '';
-    if (!hrefRaw || !titleRaw) continue;
-    let url = decodeHtml(hrefRaw);
+
+  $('.result__body, .web-result').each((_, el) => {
+    if (results.length >= limit) return false;
+    const anchor = $(el).find('a.result__a').first();
+    if (anchor.length === 0) return;
+
+    let url = anchor.attr('href') || '';
     try {
       const parsed = new URL(url, 'https://duckduckgo.com');
       const uddg = parsed.searchParams.get('uddg');
       if (uddg) url = decodeURIComponent(uddg);
-    } catch { /**/ }
-    if (!url.includes('linkedin.com/')) continue;
-    const title = decodeHtml(titleRaw.replace(/<[^>]+>/g, ''));
-    const snippet = decodeHtml(snippetRaw.replace(/<[^>]+>/g, ''));
+    } catch { /* keep raw url */ }
+    if (!url.includes('linkedin.com/')) return;
+
+    const title = cleanText(anchor.text());
+    const snippet = cleanText($(el).find('.result__snippet').first().text());
+    if (!title) return;
+
     results.push({
       id: crypto.randomUUID(),
       title,
@@ -74,8 +47,39 @@ function extractDuckResults(html: string, limit: number) {
       author: title.split(' | ')[0]?.split(' - ')[0] || null,
       source: 'linkedin_public_search',
     });
-    if (results.length >= limit) break;
-  }
+  });
+
+  return results;
+}
+
+// Igual, pero para el markup de resultados de Bing (fallback cuando DuckDuckGo no
+// devuelve nada -- bloqueo temporal o simplemente sin resultados indexados).
+function extractBingResults(html: string, limit: number) {
+  const $ = cheerio.load(html);
+  const results: any[] = [];
+
+  $('li.b_algo').each((_, el) => {
+    if (results.length >= limit) return false;
+    const anchor = $(el).find('h2 a').first();
+    if (anchor.length === 0) return;
+
+    const url = anchor.attr('href') || '';
+    if (!url.includes('linkedin.com/')) return;
+
+    const title = cleanText(anchor.text());
+    const snippet = cleanText($(el).find('.b_caption p').first().text());
+    if (!title) return;
+
+    results.push({
+      id: crypto.randomUUID(),
+      title,
+      snippet,
+      url,
+      author: title.split(' | ')[0]?.split(' - ')[0] || null,
+      source: 'linkedin_public_search_bing',
+    });
+  });
+
   return results;
 }
 
