@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Config, Venta, Cliente, Hora } from '../types';
 import { convertToCop } from '../lib/calculations';
-import { Settings, Save, RefreshCw, FolderSync, Clipboard } from 'lucide-react';
+import { fetchOfficialTrm } from '../lib/financeService';
+import { Settings, Save, RefreshCw, FolderSync, Clipboard, Landmark } from 'lucide-react';
 import { copyText } from '../lib/clipboard';
 
 interface ConfigAdminProps {
@@ -37,6 +38,8 @@ export default function ConfigAdmin({
   const [copiedStatus, setCopiedStatus] = useState<string | null>(null);
   const [sheetUrl, setSheetUrl] = useState('');
   const [isImportingUrl, setIsImportingUrl] = useState(false);
+  const [fetchingTrm, setFetchingTrm] = useState(false);
+  const [trmNotice, setTrmNotice] = useState<string | null>(null);
 
   // Form State
   const [trm, setTrm] = useState(config.trm);
@@ -52,6 +55,20 @@ export default function ConfigAdmin({
 
   const [tarifaRetDeclarante, setTarifaRetDeclarante] = useState(config.tarifa_ret_declarante || 0.04);
   const [tarifaRetNoDeclarante, setTarifaRetNoDeclarante] = useState(config.tarifa_ret_no_declarante || 0.06);
+
+  const handleFetchOfficialTrm = async () => {
+    setFetchingTrm(true);
+    setTrmNotice(null);
+    try {
+      const official = await fetchOfficialTrm();
+      setTrm(official.trm);
+      setTrmNotice(`TRM oficial: $${official.trm.toLocaleString('es-CO')} (${official.source}${official.vigente_desde ? `, vigente desde ${official.vigente_desde.slice(0, 10)}` : ''}). Revisa y pulsa "Actualizar Parámetros" para guardarla.`);
+    } catch (err: any) {
+      setTrmNotice(`No se pudo obtener la TRM oficial: ${err.message || err}`);
+    } finally {
+      setFetchingTrm(false);
+    }
+  };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -204,14 +221,28 @@ export default function ConfigAdmin({
 
                 <div>
                   <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">TRM Dolar Estimada</label>
-                  <input 
-                    type="number" 
-                    value={trm}
-                    onChange={(e) => setTrm(Number(e.target.value))}
-                    required
-                    className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded font-mono focus:outline-none"
-                  />
+                  <div className="flex gap-1.5">
+                    <input
+                      type="number"
+                      value={trm}
+                      onChange={(e) => setTrm(Number(e.target.value))}
+                      required
+                      className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded font-mono focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleFetchOfficialTrm}
+                      disabled={fetchingTrm}
+                      title="Traer TRM oficial de datos.gov.co"
+                      className="shrink-0 px-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded text-slate-600 disabled:opacity-50"
+                    >
+                      <Landmark className={`w-4 h-4 ${fetchingTrm ? 'animate-pulse' : ''}`} />
+                    </button>
+                  </div>
                   <span className="text-[10px] text-slate-400 block mt-1">COP por cada USD</span>
+                  {trmNotice && (
+                    <p className="text-[10px] text-blue-600 bg-blue-50 border border-blue-200 rounded p-1.5 mt-1.5 leading-relaxed">{trmNotice}</p>
+                  )}
                 </div>
               </div>
             </div>
