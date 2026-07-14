@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { initAuth, googleSignIn, linkGoogleIdentity, logout, getAccessToken, checkSubscription, hydrateGoogleWorkspaceConnection } from './lib/supabase';
+import { initAuth, googleSignIn, linkGoogleIdentity, logout, getAccessToken, resolveAccess, hydrateGoogleWorkspaceConnection } from './lib/supabase';
 import { backupAppDataToSheets, importSheetByUrl } from './lib/sheetsService';
 import * as financeService from './lib/financeService';
 import { isTeamMember } from './lib/crmService';
+import { getModules, PlanId } from './lib/planService';
 import { Config, AppData, Cliente, Servicio, Herramienta, OtroGasto, Venta, Hora, PagoEgreso } from './types';
 import { calcularMétricasFinancieras } from './lib/calculations';
 
@@ -46,7 +47,9 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
   const [hasPaid, setHasPaid] = useState(false);
   const [isTeam, setIsTeam] = useState(false);
+  const [plan, setPlan] = useState<PlanId>('financiero');
   const [checkingPayment, setCheckingPayment] = useState(false);
+  const modules = React.useMemo(() => getModules(plan, isTeam), [plan, isTeam]);
 
 
   
@@ -82,14 +85,15 @@ export default function App() {
         setUser(fUser);
         setAuthLoading(false);
         setCheckingPayment(true);
-        const [paid, team] = await Promise.all([
-          checkSubscription(fUser.id),
+        const [access, team] = await Promise.all([
+          resolveAccess(fUser.id, fUser.email || ''),
           isTeamMember(fUser.email || '').catch(() => false),
         ]);
-        setHasPaid(paid || team);
+        setHasPaid(access.hasPaid || team);
+        setPlan(access.plan);
         setIsTeam(team);
         setCheckingPayment(false);
-        if (paid || team) {
+        if (access.hasPaid || team) {
           bootstrapFinanceData(fUser.id);
         }
       },
@@ -97,6 +101,7 @@ export default function App() {
         setUser(null);
         setHasPaid(false);
         setIsTeam(false);
+        setPlan('financiero');
         setAuthLoading(false);
         setAppData(null);
       }
