@@ -11,7 +11,7 @@ type FeedbackRow = {
   created_at: string;
 };
 
-type EventRow = { module: string; event: string; created_at: string; user_id: string | null };
+type EventRow = { module: string; event_type: string; created_at: string; user_id: string | null };
 
 export default function AdminFeedbackPanel() {
   const [feedback, setFeedback] = useState<FeedbackRow[]>([]);
@@ -25,7 +25,7 @@ export default function AdminFeedbackPanel() {
     try {
       const [f, ev] = await Promise.all([
         supabase.functions.invoke('admin-list-feedback'),
-        (supabase as any).from('saas_user_events').select('module, event, created_at, user_id').order('created_at', { ascending: false }).limit(500),
+        (supabase as any).from('saas_user_events').select('module, event_type, created_at, user_id').order('created_at', { ascending: false }).limit(500),
       ]);
       if (f.error) throw f.error;
       if ((f.data as any)?.ok === false) throw new Error((f.data as any).message);

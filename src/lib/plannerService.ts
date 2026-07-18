@@ -48,7 +48,13 @@ export interface PlannerTask {
   ai_notes: string | null;
   completed_at: string | null;
   postponed_count: number;
+  recurrence_days: number[];
+  recurrence_until: string | null;
+  sync_to_google_calendar: boolean;
+  google_calendar_event_id: string | null;
 }
+
+export interface PlannerClient { id: string; nombre: string; }
 
 export interface PlannerBlock {
   id: string;
@@ -100,11 +106,18 @@ export interface CreatePlannerBlockInput {
 
 export interface UpdatePlannerTaskInput {
   title: string;
+  category: PlannerCategory;
+  priority: PlannerPriority;
+  client_ref: string | null;
+  deadline: string | null;
   estimated_minutes: number;
   actual_minutes: number | null;
   scheduled_for: string | null;
   schedule_time?: string | null;
   protected?: boolean;
+  recurrence_days: number[];
+  recurrence_until: string | null;
+  sync_to_google_calendar: boolean;
 }
 
 const anyDb = () => supabase as any;
@@ -160,49 +173,21 @@ export const plannerService = {
   async completeTask(id: string, actualMinutes?: number) {
     await anyDb().from('planner_tasks').update({ status: 'done', completed_at: new Date().toISOString(), actual_minutes: actualMinutes ?? null }).eq('id', id);
   },
-  async updateTask(id: string, input: UpdatePlannerTaskInput): Promise<void> {
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError) throw authError;
-    if (!user) throw new Error('Debes iniciar sesión para editar una tarea.');
-
-    const { error: taskError } = await anyDb().from('planner_tasks').update({
-      title: input.title.trim(),
-      estimated_minutes: input.estimated_minutes,
-      actual_minutes: input.actual_minutes,
-      scheduled_for: input.scheduled_for,
-    }).eq('id', id);
-    if (taskError) throw taskError;
-
-    // A task becomes a protected calendar block only when it has an explicit
-    // time. This keeps unscheduled tasks flexible for the daily planner.
-    if (!input.scheduled_for || !input.schedule_time) return;
-    const [hours, minutes] = input.schedule_time.split(':').map(Number);
-    const startsAt = new Date(`${input.scheduled_for}T00:00:00`);
-    startsAt.setHours(hours, minutes, 0, 0);
-    const endsAt = new Date(startsAt.getTime() + input.estimated_minutes * 60_000);
-    const { data: existing, error: blockLookupError } = await anyDb()
-      .from('planner_blocks')
-      .select('id, task_ids')
-      .contains('task_ids', [id])
-      .maybeSingle();
-    if (blockLookupError) throw blockLookupError;
-    const block = {
-      title: input.title.trim(),
-      starts_at: startsAt.toISOString(),
-      ends_at: endsAt.toISOString(),
-      category: 'admin',
-      protected: input.protected ?? false,
-      source: 'manual',
-      task_ids: existing?.task_ids?.length ? existing.task_ids : [id],
-    };
-    const { error: blockError } = existing
-      ? await anyDb().from('planner_blocks').update(block).eq('id', existing.id)
-      : await anyDb().from('planner_blocks').insert({ user_id: user.id, ...block });
-    if (blockError) throw blockError;
+  async listClients(): Promise<PlannerClient[]> {
+    const { data, error } = await anyDb().from('finance_clientes').select('id, nombre').order('nombre');
+    if (error) { log.error(error); return []; }
+    return data || [];
+  },
+  async updateTask(id: string, input: UpdatePlannerTaskInput): Promise<{ synced: boolean; message: string }> {
+    const { data, error } = await supabase.functions.invoke('planner-save-task', { body: { id, ...input } });
+    if (error) throw error;
+    if (!data?.ok) throw new Error(data?.message || 'No fue posible guardar la tarea.');
+    return data.calendar || { synced: false, message: 'Tarea guardada.' };
   },
   async postponeTask(id: string) {
     const { data } = await anyDb().from('planner_tasks').select('postponed_count').eq('id', id).maybeSingle();
-    await anyDb().from('planner_tasks').update({ status: 'postponed', postponed_count: (data?.postponed_count ?? 0) + 1 }).eq('id', id);
+    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+    await anyDb().from('planner_tasks').update({ status: 'postponed', scheduled_for: tomorrow.toISOString().slice(0, 10), postponed_count: (data?.postponed_count ?? 0) + 1 }).eq('id', id);
   },
   async deleteTask(id: string) { await anyDb().from('planner_tasks').delete().eq('id', id); },
   async deleteInboxEntry(id: string) { await anyDb().from('planner_inbox').delete().eq('id', id); },

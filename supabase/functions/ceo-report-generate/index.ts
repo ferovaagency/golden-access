@@ -82,10 +82,30 @@ Deno.serve(async (req) => {
 
     const revenue = salesNow.reduce((a, s) => a + toCop(s.precio_venta_unitario * s.cantidad, s.moneda, trm), 0);
     const revenuePrev = salesPrev.reduce((a, s) => a + toCop(s.precio_venta_unitario * s.cantidad, s.moneda, trm), 0);
-    const expenses = expNow.reduce((a, e) => a + toCop(e.monto, e.moneda, trm), 0);
-    const expensesPrev = expPrev.reduce((a, e) => a + toCop(e.monto, e.moneda, trm), 0);
-    const cash = revenue - expenses;
-    const cashPrev = revenuePrev - expensesPrev;
+    const directCosts = salesNow.reduce((a, s) => a + toCop(s.costo_unitario * s.cantidad, s.moneda, trm), 0);
+    const directCostsPrev = salesPrev.reduce((a, s) => a + toCop(s.costo_unitario * s.cantidad, s.moneda, trm), 0);
+    const paidExpenses = expNow.reduce((a, e) => a + toCop(e.monto, e.moneda, trm), 0);
+    const paidExpensesPrev = expPrev.reduce((a, e) => a + toCop(e.monto, e.moneda, trm), 0);
+    const inRangeAmount = (items: Array<{ fecha: string; monto: number; moneda: string }>, windowStart: Date, windowEnd: Date) =>
+      items.filter((item) => inRange(item.fecha, windowStart, windowEnd)).reduce((total, item) => total + toCop(item.monto, item.moneda, trm), 0);
+    const salesCollections = inRangeAmount(ctx.salesPayments.map((payment) => ({ ...payment, moneda: "COP" })), start, end);
+    const salesCollectionsPrev = inRangeAmount(ctx.salesPayments.map((payment) => ({ ...payment, moneda: "COP" })), prevStart, prevEnd);
+    const receivableCollections = inRangeAmount(ctx.receivablePayments, start, end);
+    const receivableCollectionsPrev = inRangeAmount(ctx.receivablePayments, prevStart, prevEnd);
+    const payablePayments = inRangeAmount(ctx.payablePayments, start, end);
+    const payablePaymentsPrev = inRangeAmount(ctx.payablePayments, prevStart, prevEnd);
+    const debtPayments = inRangeAmount(ctx.debtPayments, start, end);
+    const debtPaymentsPrev = inRangeAmount(ctx.debtPayments, prevStart, prevEnd);
+    const cashIn = salesCollections + receivableCollections;
+    const cashInPrev = salesCollectionsPrev + receivableCollectionsPrev;
+    const cashOut = paidExpenses + payablePayments + debtPayments;
+    const cashOutPrev = paidExpensesPrev + payablePaymentsPrev + debtPaymentsPrev;
+    const cash = cashIn - cashOut;
+    const cashPrev = cashInPrev - cashOutPrev;
+    const grossMargin = revenue - directCosts;
+    const operatingResult = grossMargin - paidExpenses;
+    const outstandingReceivables = ctx.receivables.filter((item) => !["pagada", "cancelada"].includes((item.estado || "").toLowerCase())).reduce((total, item) => total + toCop(item.valor, item.moneda, trm), 0);
+    const outstandingPayables = ctx.payables.filter((item) => !["pagada", "cancelada"].includes((item.estado || "").toLowerCase())).reduce((total, item) => total + toCop(Math.max(0, item.valor - (item.monto_pagado || 0)), item.moneda, trm), 0);
     const growth = revenuePrev > 0 ? (revenue - revenuePrev) / revenuePrev : (revenue > 0 ? 1 : 0);
     const hoursTotal = hoursNow.reduce((a, h) => a + Number(h.horas || 0), 0);
     const newClients = new Set(salesNow.map((s) => s.cliente_id).filter(Boolean)).size;
@@ -105,10 +125,19 @@ Deno.serve(async (req) => {
       revenue_cop: Math.round(revenue),
       revenue_prev_cop: Math.round(revenuePrev),
       revenue_growth: Number(growth.toFixed(3)),
-      expenses_cop: Math.round(expenses),
-      expenses_prev_cop: Math.round(expensesPrev),
+      direct_costs_cop: Math.round(directCosts),
+      direct_costs_prev_cop: Math.round(directCostsPrev),
+      gross_margin_cop: Math.round(grossMargin),
+      gross_margin_pct: revenue > 0 ? Number((grossMargin / revenue).toFixed(3)) : null,
+      expenses_cop: Math.round(paidExpenses),
+      expenses_prev_cop: Math.round(paidExpensesPrev),
+      operating_result_cop: Math.round(operatingResult),
+      cash_in_cop: Math.round(cashIn),
+      cash_out_cop: Math.round(cashOut),
       cash_cop: Math.round(cash),
       cash_prev_cop: Math.round(cashPrev),
+      outstanding_receivables_cop: Math.round(outstandingReceivables),
+      outstanding_payables_cop: Math.round(outstandingPayables),
       hours_worked: Math.round(hoursTotal * 10) / 10,
       new_clients: newClients,
       active_opportunities: activeOpps,
@@ -122,7 +151,13 @@ Deno.serve(async (req) => {
       period,
       profile: ctx.profile,
       metrics,
-      top_services: ctx.services.slice(0, 5),
+      top_services: Object.values(salesNow.reduce((grouped: Record<string, any>, sale) => {
+        const entry = grouped[sale.servicio_id] || { servicio: sale.servicio_nombre, ingresos_cop: 0, costo_directo_cop: 0, horas: 0 };
+        entry.ingresos_cop += toCop(sale.precio_venta_unitario * sale.cantidad, sale.moneda, trm);
+        entry.costo_directo_cop += toCop(sale.costo_unitario * sale.cantidad, sale.moneda, trm);
+        grouped[sale.servicio_id] = entry;
+        return grouped;
+      }, {})).sort((a: any, b: any) => b.ingresos_cop - a.ingresos_cop).slice(0, 5),
       recent_opps: ctx.opportunities.slice(0, 10),
       recent_reviews: ctx.reviews.slice(0, 5),
       health_score: healthRow?.score ?? null,
@@ -135,7 +170,7 @@ Deno.serve(async (req) => {
       period_start: metrics.period_start,
       period_end: metrics.period_end,
       headline: narrative?.headline || `Ingresos ${period}: $${Math.round(revenue).toLocaleString("es-CO")} COP`,
-      summary_md: narrative?.summary_md || `Ingresos ${Math.round(revenue).toLocaleString("es-CO")} COP vs ${Math.round(revenuePrev).toLocaleString("es-CO")} previo. Caja neta ${Math.round(cash).toLocaleString("es-CO")} COP.`,
+      summary_md: narrative?.summary_md || `Facturación ${Math.round(revenue).toLocaleString("es-CO")} COP vs ${Math.round(revenuePrev).toLocaleString("es-CO")} previo. Margen bruto ${Math.round(grossMargin).toLocaleString("es-CO")} COP. Flujo de caja neto ${Math.round(cash).toLocaleString("es-CO")} COP (cobrado menos pagos reales).`,
       wins: narrative?.wins || [],
       risks: narrative?.risks || [],
       priorities: narrative?.priorities || [],

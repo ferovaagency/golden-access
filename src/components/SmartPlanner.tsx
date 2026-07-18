@@ -17,6 +17,8 @@ const categoryMeta: Record<PlannerCategory, { label: string; tone: string }> = {
 
 const energyIcon: Record<PlannerEnergy, any> = { high: Zap, medium: Battery, low: BatteryLow };
 const priorityTone: Record<string, string> = { urgent: 'bg-red-100 text-red-700', high: 'bg-amber-100 text-amber-700', medium: 'bg-slate-100 text-slate-600', low: 'bg-slate-50 text-slate-500' };
+const clientTones = ['bg-violet-100 text-violet-700 border-violet-200', 'bg-sky-100 text-sky-700 border-sky-200', 'bg-emerald-100 text-emerald-700 border-emerald-200', 'bg-pink-100 text-pink-700 border-pink-200', 'bg-amber-100 text-amber-800 border-amber-200'];
+function clientTone(id?: string | null) { return clientTones[Math.abs(Array.from(id || '').reduce((sum, char) => sum + char.charCodeAt(0), 0)) % clientTones.length]; }
 
 function fmtTime(iso: string) { return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
 
@@ -34,6 +36,14 @@ export default function SmartPlanner() {
   const [taskEstimatedMinutes, setTaskEstimatedMinutes] = useState(30);
   const [taskActualMinutes, setTaskActualMinutes] = useState<number | ''>('');
   const [taskProtected, setTaskProtected] = useState(false);
+  const [taskDeadline, setTaskDeadline] = useState('');
+  const [taskPriority, setTaskPriority] = useState<PlannerTask['priority']>('medium');
+  const [taskCategory, setTaskCategory] = useState<PlannerCategory>('admin');
+  const [taskClientId, setTaskClientId] = useState('');
+  const [taskRepeatDays, setTaskRepeatDays] = useState<number[]>([]);
+  const [taskRepeatUntil, setTaskRepeatUntil] = useState('');
+  const [taskSyncGoogle, setTaskSyncGoogle] = useState(false);
+  const [taskSaveNotice, setTaskSaveNotice] = useState<string | null>(null);
 
   const submitDump = async () => {
     const text = dump.trim();
@@ -65,19 +75,34 @@ export default function SmartPlanner() {
     setTaskEstimatedMinutes(task.estimated_minutes);
     setTaskActualMinutes(task.actual_minutes ?? '');
     setTaskProtected(linkedBlock?.protected ?? false);
+    setTaskDeadline(task.deadline?.slice(0, 10) || '');
+    setTaskPriority(task.priority);
+    setTaskCategory(task.category);
+    setTaskClientId(task.client_ref || '');
+    setTaskRepeatDays(task.recurrence_days || []);
+    setTaskRepeatUntil(task.recurrence_until || '');
+    setTaskSyncGoogle(task.sync_to_google_calendar || false);
   };
 
   const saveTaskEditor = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!editingTask || !taskTitle.trim() || taskEstimatedMinutes < 5) return;
-    await p.updateTask(editingTask.id, {
+    const result = await p.updateTask(editingTask.id, {
       title: taskTitle,
+      category: taskCategory,
+      priority: taskPriority,
+      client_ref: taskClientId || null,
+      deadline: taskDeadline || null,
       estimated_minutes: taskEstimatedMinutes,
       actual_minutes: taskActualMinutes === '' ? null : Number(taskActualMinutes),
       scheduled_for: taskDate || null,
       schedule_time: taskTime || null,
       protected: taskProtected,
+      recurrence_days: taskRepeatDays,
+      recurrence_until: taskRepeatDays.length ? (taskRepeatUntil || null) : null,
+      sync_to_google_calendar: taskSyncGoogle,
     });
+    if (taskSyncGoogle) setTaskSaveNotice(result?.message || 'Tarea guardada.');
     setEditingTask(null);
   };
 
@@ -219,14 +244,15 @@ export default function SmartPlanner() {
           </div>
         ) : (
           <ul className="space-y-2">
-            {p.blocks.map((b) => <BlockRow key={b.id} block={b} tasks={p.tasks} onComplete={p.completeTask} />)}
+            {p.blocks.map((b) => <BlockRow key={b.id} block={b} tasks={p.tasks} clients={p.clients} onComplete={p.completeTask} />)}
           </ul>
         )}
       </section>
 
       {/* Tasks queue */}
       <section>
-        <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500">Bandeja de tareas · {openTasks.length}</h2><span className="text-[11px] text-slate-400">Edita día, hora, duración y protección.</span></div>
+        <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500">Bandeja de tareas · {openTasks.length}</h2><span className="text-[11px] text-slate-400">Edita agenda, entrega, prioridad, cliente y recurrencia.</span></div>
+        {taskSaveNotice && <div className="mb-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">{taskSaveNotice}</div>}
         {editingTask && (
           <form onSubmit={saveTaskEditor} className="mb-3 rounded-2xl border border-blue-200 bg-blue-50 p-4">
             <div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-sm font-semibold text-slate-900">Editar tarea</p><p className="text-[11px] text-slate-600">Una hora crea o actualiza su bloque de agenda.</p></div><button type="button" onClick={() => setEditingTask(null)} className="text-slate-500 hover:text-slate-900" aria-label="Cerrar edición"><X className="h-4 w-4" /></button></div>
@@ -234,9 +260,14 @@ export default function SmartPlanner() {
               <label className="sm:col-span-2 text-xs text-slate-600">Tarea<input required value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" /></label>
               <label className="text-xs text-slate-600">Día<input type="date" value={taskDate} onChange={(event) => setTaskDate(event.target.value)} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" /></label>
               <label className="text-xs text-slate-600">Hora<input type="time" value={taskTime} onChange={(event) => setTaskTime(event.target.value)} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" /></label>
+              <label className="text-xs text-slate-600">Fecha de entrega<input type="date" value={taskDeadline} onChange={(event) => setTaskDeadline(event.target.value)} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" /></label>
+              <label className="text-xs text-slate-600">Prioridad<select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as PlannerTask['priority'])} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm"><option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option><option value="urgent">Urgente</option></select></label>
+              <label className="text-xs text-slate-600">Categoría<select value={taskCategory} onChange={(event) => setTaskCategory(event.target.value as PlannerCategory)} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm">{Object.entries(categoryMeta).map(([value, meta]) => <option key={value} value={value}>{meta.label}</option>)}</select></label>
+              <label className="text-xs text-slate-600">Cliente<select value={taskClientId} onChange={(event) => setTaskClientId(event.target.value)} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm"><option value="">Sin cliente</option>{p.clients.map((client) => <option key={client.id} value={client.id}>{client.nombre}</option>)}</select></label>
               <label className="text-xs text-slate-600">Duración estimada (min)<input type="number" min="5" step="5" value={taskEstimatedMinutes} onChange={(event) => setTaskEstimatedMinutes(Number(event.target.value))} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" /></label>
               <label className="text-xs text-slate-600">Tiempo dedicado (min)<input type="number" min="0" step="5" value={taskActualMinutes} onChange={(event) => setTaskActualMinutes(event.target.value === '' ? '' : Number(event.target.value))} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" /></label>
               <label className="flex items-end gap-2 pb-2 text-xs text-slate-700"><input type="checkbox" checked={taskProtected} disabled={!taskTime} onChange={(event) => setTaskProtected(event.target.checked)} className="h-4 w-4 rounded border-blue-300 text-blue-600" /><span>Bloque protegido</span></label>
+              <fieldset className="sm:col-span-2 lg:col-span-4 rounded-lg border border-blue-200 bg-white p-3"><legend className="px-1 text-xs text-slate-600">Repetir semanalmente</legend><div className="flex flex-wrap gap-2">{[['D',0],['L',1],['M',2],['X',3],['J',4],['V',5],['S',6]].map(([label, day]) => <button type="button" key={String(day)} onClick={() => setTaskRepeatDays((days) => days.includes(Number(day)) ? days.filter((value) => value !== Number(day)) : [...days, Number(day)].sort())} className={`h-8 w-8 rounded-full text-xs font-semibold ${taskRepeatDays.includes(Number(day)) ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}`}>{label}</button>)}<label className="ml-2 text-xs text-slate-600">Hasta<input type="date" disabled={!taskRepeatDays.length} value={taskRepeatUntil} onChange={(event) => setTaskRepeatUntil(event.target.value)} className="ml-2 rounded border border-blue-200 px-2 py-1" /></label><label className="ml-auto flex items-center gap-2 text-xs text-slate-700"><input type="checkbox" checked={taskSyncGoogle} disabled={!taskDate || !taskTime} onChange={(event) => setTaskSyncGoogle(event.target.checked)} /> Sincronizar con Google Calendar</label></div></fieldset>
               <div className="flex items-end gap-2"><button type="submit" disabled={p.busy === 'task'} className="rounded-lg bg-blue-700 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-50">{p.busy === 'task' ? 'Guardando…' : 'Guardar tarea'}</button><button type="button" onClick={() => setEditingTask(null)} className="rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Cancelar</button></div>
             </div>
           </form>
@@ -245,7 +276,7 @@ export default function SmartPlanner() {
           <p className="text-xs text-slate-400 italic">Bandeja vacía.</p>
         ) : (
           <ul className="space-y-1.5">
-            {openTasks.map((t) => <TaskRow key={t.id} task={t} isProtected={p.blocks.some((block) => block.task_ids?.includes(t.id) && block.protected)} onEdit={openTaskEditor} onComplete={p.completeTask} onPostpone={p.postponeTask} onDelete={p.deleteTask} />)}
+            {openTasks.map((t) => <TaskRow key={t.id} task={t} clientName={p.clients.find((client) => client.id === t.client_ref)?.nombre} isProtected={p.blocks.some((block) => block.task_ids?.includes(t.id) && block.protected)} onEdit={openTaskEditor} onComplete={p.completeTask} onPostpone={p.postponeTask} onDelete={p.deleteTask} />)}
           </ul>
         )}
       </section>
@@ -266,7 +297,7 @@ export default function SmartPlanner() {
   );
 }
 
-function BlockRow({ block, tasks, onComplete }: { block: PlannerBlock; tasks: PlannerTask[]; onComplete: (id: string) => void }) {
+function BlockRow({ block, tasks, clients, onComplete }: { block: PlannerBlock; tasks: PlannerTask[]; clients: Array<{ id: string; nombre: string }>; onComplete: (id: string) => void }) {
   const meta = categoryMeta[block.category];
   const linked = tasks.filter((t) => block.task_ids?.includes(t.id));
   return (
@@ -281,6 +312,7 @@ function BlockRow({ block, tasks, onComplete }: { block: PlannerBlock; tasks: Pl
             <div className="flex items-center gap-2 flex-wrap">
               <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${meta.tone}`}>{meta.label}</span>
               <p className="text-sm font-semibold text-slate-900">{block.title}</p>
+              {linked[0]?.client_ref && <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${clientTone(linked[0].client_ref)}`}>● {clients.find((client) => client.id === linked[0].client_ref)?.nombre || 'Cliente'}</span>}
               {block.protected && (
                 <span title="Bloque protegido: no se moverá al reorganizar el día." className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] border-amber-200 bg-amber-50 text-amber-700">
                   <Lock className="h-3 w-3" /> Protegido
@@ -306,7 +338,7 @@ function BlockRow({ block, tasks, onComplete }: { block: PlannerBlock; tasks: Pl
   );
 }
 
-function TaskRow({ task, isProtected, onEdit, onComplete, onPostpone, onDelete }: { task: PlannerTask; isProtected: boolean; onEdit: (task: PlannerTask) => void; onComplete: (id: string) => void; onPostpone: (id: string) => void; onDelete: (id: string) => void }) {
+function TaskRow({ task, clientName, isProtected, onEdit, onComplete, onPostpone, onDelete }: { task: PlannerTask; clientName?: string; isProtected: boolean; onEdit: (task: PlannerTask) => void; onComplete: (id: string) => void; onPostpone: (id: string) => void; onDelete: (id: string) => void }) {
   const EIcon = energyIcon[task.energy_required];
   return (
     <li className="group flex items-center gap-2 rounded-xl border border-[var(--line)] bg-white px-3 py-2">
@@ -317,12 +349,13 @@ function TaskRow({ task, isProtected, onEdit, onComplete, onPostpone, onDelete }
       <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] ${categoryMeta[task.category].tone}`}>{categoryMeta[task.category].label}</span>
       <span className="inline-flex items-center gap-1 text-[10px] text-slate-500"><EIcon className="h-3 w-3" /> {task.energy_required}</span>
       <span className="text-sm text-slate-800 flex-1 truncate">{task.title}</span>
+      {clientName && <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${clientTone(task.client_ref)}`}>● {clientName}</span>}
       <span className="text-[10px] text-slate-400 inline-flex items-center gap-1"><Clock className="h-3 w-3" /> {task.estimated_minutes}m</span>
       {isProtected && <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] text-amber-700"><Lock className="h-3 w-3" /> Protegido</span>}
       {task.deadline && <span className="text-[10px] text-amber-700 bg-amber-50 rounded-full px-2 py-0.5">⏰ {new Date(task.deadline).toLocaleDateString()}</span>}
       <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1">
         <button onClick={() => onEdit(task)} title="Editar tarea" className="text-slate-400 hover:text-blue-700"><Edit2 className="h-3.5 w-3.5" /></button>
-        <button onClick={() => onPostpone(task.id)} title="Postergar" className="text-[10px] text-slate-400 hover:text-slate-700 px-1.5 py-0.5 rounded"><ChevronRight className="h-3.5 w-3.5" /></button>
+        <button onClick={() => onPostpone(task.id)} title="Programar para mañana" className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-slate-500 hover:bg-slate-100 hover:text-slate-800"><ChevronRight className="h-3.5 w-3.5" /> Mañana</button>
         <button onClick={() => onDelete(task.id)} title="Eliminar" className="text-slate-400 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
       </div>
     </li>

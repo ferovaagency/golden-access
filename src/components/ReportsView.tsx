@@ -203,11 +203,12 @@ function ReportCard({ report }: { report: CeoReport }) {
           </div>
         )}
       </header>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
         <Metric label="Ingresos" value={formatCop(m.revenue_cop)} delta={growth} />
-        <Metric label="Gastos" value={formatCop(m.expenses_cop)} />
+        <Metric label="Costo directo" value={formatCop(m.direct_costs_cop)} />
+        <Metric label="Margen bruto" value={formatCop(m.gross_margin_cop)} delta={m.gross_margin_pct} />
+        <Metric label="Pagos reales" value={formatCop(m.cash_out_cop ?? m.expenses_cop)} />
         <Metric label="Caja neta" value={formatCop(m.cash_cop)} />
-        <Metric label="Horas" value={String(m.hours_worked ?? '—')} />
       </div>
       {report.summary_md && <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{report.summary_md}</p>}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
