@@ -6,6 +6,7 @@ import { getAccessToken, googleSignIn, logout } from '../lib/supabase';
 import { copyText } from '../lib/clipboard';
 import { PIPELINE_STAGES } from './crm/constants';
 import { PlaybookCard } from './crm/PlaybookCard';
+import AdminFeedbackPanel from './AdminFeedbackPanel';
 import {
   isTeamMember,
   listOportunidades,
@@ -2121,6 +2122,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
             </div>
           </div>
         )}
+        {tab === 'feedback' && <AdminFeedbackPanel />}
       </main>
     </div>
   );
