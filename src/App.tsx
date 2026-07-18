@@ -34,6 +34,9 @@ import SmartPlanner from './components/SmartPlanner';
 import ReportsView from './components/ReportsView';
 import CommandPalette from './components/CommandPalette';
 import TopBar from './components/TopBar';
+import FinanceOperativa from './components/FinanceOperativa';
+import MarketingROI from './components/MarketingROI';
+import AdminCourtesyPanel from './components/AdminCourtesyPanel';
 
 import {
   FolderKanban,
