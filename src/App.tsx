@@ -10,6 +10,7 @@ import OnboardingChat from './components/OnboardingChat';
 import FeedbackWidget from './components/FeedbackWidget';
 import { Config, AppData, Cliente, Servicio, Herramienta, OtroGasto, Venta, Hora, PagoEgreso } from './types';
 import { calcularMétricasFinancieras } from './lib/calculations';
+import { useFiscalProfile } from './hooks/useFiscalProfile';
 
 // Unified Premium View Components
 import Home from './components/Home';
@@ -73,6 +74,7 @@ export default function App() {
   const [appData, setAppData] = useState<AppData | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
+  const { profile: fiscalProfile } = useFiscalProfile(user?.id);
 
   // Google Sheets backup (optional, manual)
   const [isBackingUpToSheets, setIsBackingUpToSheets] = useState(false);
@@ -443,7 +445,7 @@ export default function App() {
 
   // Estado 3: Pagado => Dashboard (los datos viven en Supabase, Google es solo respaldo opcional)
 
-  const metrics = isReady ? calcularMétricasFinancieras(appData, selectedMonth) : null;
+  const metrics = isReady ? calcularMétricasFinancieras(appData, selectedMonth, fiscalProfile) : null;
 
   // Visual Tab Categorization - Separates Operational Management from Financial Control
   // Ambos bloques solo se muestran si el plan del cliente incluye el módulo Financiero.
@@ -813,7 +815,7 @@ export default function App() {
                 <PagosEgresosAdmin pagosEgresos={appData.pagosEgresos || []} config={appData.config} onSavePagosEgresos={handleSavePagosEgresos} />
               )}
               {activeTab === 'gastos' && (
-                <GastosAdmin herramientas={appData.herramientas} otrosGastos={appData.otrosGastos} servicios={appData.servicios} clientes={appData.clientes} config={appData.config} onSaveHerramientas={handleSaveHerramientas} onSaveOtrosGastos={handleSaveOtrosGastos} onSaveConfig={handleSaveConfig} formatCop={formatCop} formatUsd={formatUsd} />
+                <GastosAdmin herramientas={appData.herramientas} otrosGastos={appData.otrosGastos} servicios={appData.servicios} clientes={appData.clientes} config={appData.config} fiscalProfile={fiscalProfile} onSaveHerramientas={handleSaveHerramientas} onSaveOtrosGastos={handleSaveOtrosGastos} onSaveConfig={handleSaveConfig} formatCop={formatCop} formatUsd={formatUsd} />
               )}
               {activeTab === 'equilibrioGlobal' && <EquilibrioGlobal metrics={metrics} formatCop={formatCop} />}
               {activeTab === 'equilibrioServicio' && (

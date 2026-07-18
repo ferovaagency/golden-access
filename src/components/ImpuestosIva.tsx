@@ -42,6 +42,23 @@ export default function ImpuestosIva({ data, metrics, formatCop }: ImpuestosIvaP
   const esSaldoAPagar = saldoIvaNettoValue > 0;
   const esSaldoAFavor = saldoIvaNettoValue < 0;
 
+  // Fuera de Colombia no aplicamos el Estatuto Tributario ni el cruce de IVA.
+  if (metrics.fiscalApplies === false) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div className="border-b border-slate-200 pb-5">
+          <h2 className="text-xl font-display font-medium text-slate-900">Control de IVA y Obligaciones DIAN</h2>
+          <p className="text-xs text-slate-500 font-mono mt-1">Reglas tributarias locales aún no configuradas</p>
+        </div>
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 text-sm text-amber-800">
+          <p className="font-semibold mb-1">Configuración fiscal pendiente</p>
+          <p>{metrics.fiscalNotice || `Las reglas del país ${metrics.fiscalCountry} no están cargadas. IVA, retenciones y topes se ocultan hasta cargar el régimen local.`}</p>
+          <p className="mt-2 text-xs">Ajusta tu país en <b>Configuración → Perfil fiscal</b> o vuelve a Colombia (CO) para ver el Estatuto Tributario y el simulador de IVA.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-fade-in text-[#e8e3d8]">
 

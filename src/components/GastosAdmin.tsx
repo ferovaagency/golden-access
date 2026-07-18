@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Herramienta, OtroGasto, Servicio, Cliente, Config } from '../types';
-import { convertToCop, calcularPrestaciones, calcularCostosHerramientas } from '../lib/calculations';
-import { Trash2, ShieldAlert, Plus, HelpCircle, PenTool, LayoutGrid, Edit2, X, Check, Paperclip } from 'lucide-react';
+import { convertToCop, calcularPrestaciones, calcularCostosHerramientas, isColombiaFiscal, type FiscalContext } from '../lib/calculations';
+import { Trash2, ShieldAlert, Plus, HelpCircle, PenTool, LayoutGrid, Edit2, X, Check, Paperclip, Info } from 'lucide-react';
 import ComprobanteUpload from './ComprobanteUpload';
 
 interface GastosAdminProps {
@@ -10,6 +10,7 @@ interface GastosAdminProps {
   servicios: Servicio[];
   clientes: Cliente[];
   config: Config;
+  fiscalProfile?: FiscalContext;
   onSaveHerramientas: (updated: Herramienta[]) => Promise<void>;
   onSaveOtrosGastos: (updated: OtroGasto[]) => Promise<void>;
   onSaveConfig: (updated: Partial<Config>) => Promise<void>;
@@ -23,6 +24,7 @@ export default function GastosAdmin({
   servicios,
   clientes,
   config,
+  fiscalProfile,
   onSaveHerramientas,
   onSaveOtrosGastos,
   onSaveConfig,
@@ -55,8 +57,10 @@ export default function GastosAdmin({
   // --- CALCULATIONS ---
   const clientesActivosCount = clientes.filter(c => c.activo).length;
 
-  // Prestaciones
-  const prestaciones = calcularPrestaciones(config.salario_propuesto, config.smmlv);
+  // Prestaciones: sólo aplican en CO. Para otros países la función devuelve
+  // ceros con applies=false y renderizamos un aviso de configuración pendiente.
+  const prestaciones = calcularPrestaciones(config.salario_propuesto, config.smmlv, fiscalProfile);
+  const fiscalCO = isColombiaFiscal(fiscalProfile);
 
   // Herramientas costs
   const toolsComputed = calcularCostosHerramientas(herramientas, clientesActivosCount, config.trm);
@@ -318,32 +322,28 @@ export default function GastosAdmin({
             </button>
           </form>
 
-          {/* Prestaciones display box */}
+          {/* Prestaciones display box — sólo Colombia. */}
+          {fiscalCO ? (
           <div className="bg-[#13110f] border border-slate-200 p-4 rounded-lg space-y-3.5 text-xs text-slate-500 font-sans">
             <div className="flex justify-between items-center border-b border-slate-200/60 pb-2">
               <span>Ingreso Base de Cotización (IBC 40%):</span>
               <span className="font-mono text-slate-900 font-medium">{formatCop(prestaciones.ibc)}</span>
             </div>
-
             <div className="flex justify-between items-center">
               <span>Salud mensual aportes (12.5%):</span>
               <span className="font-mono text-[#c97a61]">{formatCop(prestaciones.salud)}</span>
             </div>
-
             <div className="flex justify-between items-center border-b border-slate-200/40 pb-2">
               <span>Pensión pensión contribución (16%):</span>
               <span className="font-mono text-[#c97a61]">{formatCop(prestaciones.pension)}</span>
             </div>
-
             <div className="flex justify-between items-center text-slate-900 font-bold">
               <span>Liquidación Prestaciones Totales:</span>
               <span className="font-mono text-[#c97a61]">{formatCop(prestaciones.totalPrestaciones)}</span>
             </div>
-
             <div className="bg-[#a8c98a]/5 border border-[#a8c98a]/10 p-3 rounded text-center text-[11px] leading-normal text-[#a8c98a]">
               <span>Salario Neto Retirable (Libre de prestaciones): <strong>{formatCop(prestaciones.salarioNeto)}</strong></span>
             </div>
-
             <div className="bg-blue-600/5 border border-[#c9a961]/10 p-3.5 rounded text-left text-[11px] leading-relaxed text-blue-600 space-y-1.5">
               <span className="font-semibold block font-mono uppercase tracking-wide text-[9px]">Diferencia de Concepto Salarial:</span>
               <p className="text-slate-500">
@@ -354,6 +354,12 @@ export default function GastosAdmin({
               </p>
             </div>
           </div>
+          ) : (
+            <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg text-xs text-amber-800 flex gap-2">
+              <Info className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>Las prestaciones sociales (salud/pensión) se calculan sólo con reglas colombianas. Tu perfil fiscal está en <b>{(fiscalProfile?.country || '').toUpperCase() || 'otro país'}</b>: configura tus reglas locales para verlas.</span>
+            </div>
+          )}
         </div>
 
         {/* B. Herramientas form */}
