@@ -276,7 +276,7 @@ export default function SmartPlanner() {
           <p className="text-xs text-slate-400 italic">Bandeja vacía.</p>
         ) : (
           <ul className="space-y-1.5">
-            {openTasks.map((t) => <TaskRow key={t.id} task={t} clientName={p.clients.find((client) => client.id === t.client_ref)?.nombre} isProtected={p.blocks.some((block) => block.task_ids?.includes(t.id) && block.protected)} onEdit={openTaskEditor} onComplete={p.completeTask} onPostpone={p.postponeTask} onDelete={p.deleteTask} />)}
+            {openTasks.map((t) => <TaskRow key={t.id} task={t} clientName={p.clients.find((client) => client.id === t.client_ref)?.nombre} isProtected={p.blocks.some((block) => block.task_ids?.includes(t.id) && block.protected)} onEdit={openTaskEditor} onComplete={p.completeTask} onPostpone={async (id) => { await p.postponeTask(id); setTaskSaveNotice('Tarea reprogramada para mañana.'); setTimeout(() => setTaskSaveNotice(null), 2500); }} onDelete={p.deleteTask} />)}
           </ul>
         )}
       </section>
@@ -338,25 +338,26 @@ function BlockRow({ block, tasks, clients, onComplete }: { block: PlannerBlock; 
   );
 }
 
-function TaskRow({ task, clientName, isProtected, onEdit, onComplete, onPostpone, onDelete }: { task: PlannerTask; clientName?: string; isProtected: boolean; onEdit: (task: PlannerTask) => void; onComplete: (id: string) => void; onPostpone: (id: string) => void; onDelete: (id: string) => void }) {
+function TaskRow({ task, clientName, isProtected, onEdit, onComplete, onPostpone, onDelete }: { task: PlannerTask; clientName?: string; isProtected: boolean; onEdit: (task: PlannerTask) => void; onComplete: (id: string) => void; onPostpone: (id: string) => void | Promise<void>; onDelete: (id: string) => void }) {
   const EIcon = energyIcon[task.energy_required];
   return (
-    <li className="group flex items-center gap-2 rounded-xl border border-[var(--line)] bg-white px-3 py-2">
-      <button onClick={() => onComplete(task.id)} className="grid h-5 w-5 place-items-center rounded-md border border-slate-300 hover:border-emerald-400 hover:bg-emerald-50">
+    <li className="group flex flex-wrap items-center gap-2 rounded-xl border border-[var(--line)] bg-white px-3 py-2">
+      <button onClick={() => onComplete(task.id)} aria-label="Marcar como completada" title="Completar" className="grid h-5 w-5 place-items-center rounded-md border border-slate-300 hover:border-emerald-400 hover:bg-emerald-50">
         <Check className="h-3 w-3 text-transparent group-hover:text-emerald-400" />
       </button>
       <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${priorityTone[task.priority] || priorityTone.medium}`}>{task.priority}</span>
       <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] ${categoryMeta[task.category].tone}`}>{categoryMeta[task.category].label}</span>
-      <span className="inline-flex items-center gap-1 text-[10px] text-slate-500"><EIcon className="h-3 w-3" /> {task.energy_required}</span>
-      <span className="text-sm text-slate-800 flex-1 truncate">{task.title}</span>
+      <span className="inline-flex items-center gap-1 text-[10px] text-slate-500"><EIcon className="h-3 w-3" aria-hidden /> {task.energy_required}</span>
+      <span className="text-sm text-slate-800 flex-1 min-w-[8rem] truncate">{task.title}</span>
       {clientName && <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${clientTone(task.client_ref)}`}>● {clientName}</span>}
-      <span className="text-[10px] text-slate-400 inline-flex items-center gap-1"><Clock className="h-3 w-3" /> {task.estimated_minutes}m</span>
-      {isProtected && <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] text-amber-700"><Lock className="h-3 w-3" /> Protegido</span>}
+      <span className="text-[10px] text-slate-400 inline-flex items-center gap-1"><Clock className="h-3 w-3" aria-hidden /> {task.estimated_minutes}m</span>
+      {isProtected && <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] text-amber-700"><Lock className="h-3 w-3" aria-hidden /> Protegido</span>}
       {task.deadline && <span className="text-[10px] text-amber-700 bg-amber-50 rounded-full px-2 py-0.5">⏰ {new Date(task.deadline).toLocaleDateString()}</span>}
-      <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1">
-        <button onClick={() => onEdit(task)} title="Editar tarea" className="text-slate-400 hover:text-blue-700"><Edit2 className="h-3.5 w-3.5" /></button>
-        <button onClick={() => onPostpone(task.id)} title="Programar para mañana" className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-slate-500 hover:bg-slate-100 hover:text-slate-800"><ChevronRight className="h-3.5 w-3.5" /> Mañana</button>
-        <button onClick={() => onDelete(task.id)} title="Eliminar" className="text-slate-400 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
+      {/* Actions: always visible on touch/mobile, subtle on desktop hover. */}
+      <div className="flex items-center gap-1 sm:opacity-70 sm:group-hover:opacity-100 transition-opacity">
+        <button onClick={() => onEdit(task)} aria-label="Editar tarea" title="Editar tarea" className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-blue-700"><Edit2 className="h-3.5 w-3.5" /></button>
+        <button onClick={() => onPostpone(task.id)} aria-label="Posponer a mañana" title="Posponer a mañana" className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900"><ChevronRight className="h-3.5 w-3.5" aria-hidden /> Mañana</button>
+        <button onClick={() => onDelete(task.id)} aria-label="Eliminar tarea" title="Eliminar tarea" className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-red-50 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
       </div>
     </li>
   );

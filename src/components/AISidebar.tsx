@@ -62,10 +62,27 @@ export default function AISidebar({ user, collapsed, onToggle, width, onResize, 
       headers.set('apikey', SUPABASE_PUBLISHABLE_KEY);
       if (data.session?.access_token) headers.set('Authorization', `Bearer ${data.session.access_token}`);
       if (currentArea) headers.set('X-Ferova-Context-Area', currentArea);
-      const response = await fetch(input, { ...init, headers });
+      let response: Response;
+      try {
+        response = await fetch(input, { ...init, headers });
+      } catch {
+        throw new Error('El asistente no está disponible temporalmente. Revisa tu conexión; las demás funciones siguen operando.');
+      }
       if (!response.ok) {
-        const payload = await response.clone().json().catch(() => null) as { message?: string } | null;
-        throw new Error(payload?.message || `El asistente no pudo responder (HTTP ${response.status}).`);
+        const status = response.status;
+        // Never surface raw provider errors ("LOVABLE_API_KEY missing", "Failed to fetch").
+        // Map HTTP status to a functional Spanish message.
+        const friendly =
+          status === 401 || status === 403
+            ? 'Tu sesión expiró. Recarga la página para volver a iniciar sesión.'
+            : status === 404
+              ? 'El asistente no está disponible temporalmente. Las demás funciones siguen operando.'
+              : status === 429
+                ? 'El asistente recibió muchas consultas seguidas. Intenta de nuevo en un minuto.'
+                : status >= 500
+                  ? 'El asistente no está disponible temporalmente. Las demás funciones siguen operando.'
+                  : 'El asistente no pudo responder ahora. Intenta reformular tu pregunta.';
+        throw new Error(friendly);
       }
       return response;
     },
