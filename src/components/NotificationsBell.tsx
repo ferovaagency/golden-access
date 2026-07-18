@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Bell, AlertTriangle, TrendingDown, Zap, CheckCircle2, X } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '../lib/supabase';
 
 type Notif = {
   id: string;
