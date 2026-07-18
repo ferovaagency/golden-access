@@ -42,7 +42,6 @@ export default function SmartPlanner() {
       starts_at: `${p.date}T${blockStart}:00`,
       ends_at: `${p.date}T${blockEnd}:00`,
       category: 'meetings',
-      is_locked: true,
       protected: true,
     });
     setBlockTitle('');
