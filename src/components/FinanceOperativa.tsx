@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import type { AppData } from '../types';
-import { listPaymentMethods, createPaymentMethod, deletePaymentMethod, type PaymentMethod, type PaymentMethodType } from '../lib/paymentMethodsService';
+import { listPaymentMethods, createPaymentMethod, deletePaymentMethod, updatePaymentMethod, type PaymentMethod, type PaymentMethodType } from '../lib/paymentMethodsService';
 import { listAccounts, createAccount, deleteAccount, updateAccount, type FinanceAccount, type AccountType } from '../lib/accountsService';
-import { listDebts, listDebtPayments, createDebt, deleteDebt, addDebtPayment, debtBalance, type Debt, type DebtPayment, type DebtStatus } from '../lib/debtsService';
-import { listReceivables, listReceivablePayments, createReceivable, deleteReceivable, addReceivablePayment, receivableBalance, type Receivable, type ReceivablePayment, type ReceivableStatus } from '../lib/receivablesService';
+import { listDebts, listDebtPayments, createDebt, deleteDebt, updateDebt, addDebtPayment, debtBalance, type Debt, type DebtPayment, type DebtStatus } from '../lib/debtsService';
+import { listReceivables, listReceivablePayments, createReceivable, deleteReceivable, updateReceivable, addReceivablePayment, receivableBalance, type Receivable, type ReceivablePayment, type ReceivableStatus } from '../lib/receivablesService';
 import { listPayables, createPayable, deletePayable, updatePayable, payableDifference, type Payable, type PayableStatus } from '../lib/payablesService';
 import { listBudget, upsertBudgetLine, deleteBudgetLine, seedBudget, type BudgetLine } from '../lib/budgetService';
 import { buildCashflow, type CashflowSnapshot } from '../lib/cashflowService';
-import { Loader2, Plus, Trash2, AlertTriangle, RefreshCcw } from 'lucide-react';
+import { Loader2, Plus, Trash2, AlertTriangle, RefreshCcw, Edit2, X } from 'lucide-react';
 
 type SubTab = 'cuentas' | 'metodos' | 'deudas' | 'cobrar' | 'pagar' | 'presupuesto' | 'flujo';
 
@@ -45,7 +45,7 @@ export default function FinanceOperativa({ user, appData, formatCop }: { user: U
         </div>
       </div>
 
-      {tab === 'flujo' && <FlujoTab userId={user.id} periodo={periodo} formatCop={formatCop} />}
+      {tab === 'flujo' && <FlujoTab userId={user.id} periodo={periodo} appData={appData} formatCop={formatCop} />}
       {tab === 'cuentas' && <AccountsTab userId={user.id} formatCop={formatCop} />}
       {tab === 'metodos' && <PaymentMethodsTab userId={user.id} />}
       {tab === 'deudas' && <DebtsTab userId={user.id} formatCop={formatCop} />}
@@ -67,13 +67,13 @@ const labels: Record<SubTab, string> = {
 };
 
 /* ------------------ FLUJO ------------------ */
-function FlujoTab({ userId, periodo, formatCop }: { userId: string; periodo: string; formatCop: (n: number) => string }) {
+function FlujoTab({ userId, periodo, appData, formatCop }: { userId: string; periodo: string; appData: AppData; formatCop: (n: number) => string }) {
   const [snap, setSnap] = useState<CashflowSnapshot | null>(null);
   const [loading, setLoading] = useState(false);
   useEffect(() => {
     setLoading(true);
-    buildCashflow(userId, periodo).then(setSnap).finally(() => setLoading(false));
-  }, [userId, periodo]);
+    buildCashflow(userId, periodo, appData).then(setSnap).finally(() => setLoading(false));
+  }, [userId, periodo, appData]);
   if (loading || !snap) return <Loader />;
   const kpis: Array<[string, string, string?]> = [
     ['Saldo actual estimado', formatCop(snap.saldo_actual)],
@@ -124,24 +124,31 @@ function FlujoTab({ userId, periodo, formatCop }: { userId: string; periodo: str
 function AccountsTab({ userId, formatCop }: { userId: string; formatCop: (n: number) => string }) {
   const [items, setItems] = useState<FinanceAccount[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ nombre: '', tipo: 'banco' as AccountType, saldo_inicial: 0, moneda: 'COP', cupo: '', corte_dia: '', pago_dia: '' });
   const reload = () => { setLoading(true); listAccounts(userId).then(setItems).finally(() => setLoading(false)); };
   useEffect(() => { reload(); }, [userId]);
-  const add = async () => {
+  const resetForm = () => {
+    setEditingId(null);
+    setForm({ nombre: '', tipo: 'banco', saldo_inicial: 0, moneda: 'COP', cupo: '', corte_dia: '', pago_dia: '' });
+  };
+  const save = async () => {
     if (!form.nombre.trim()) return;
-    await createAccount(userId, {
+    const input = {
       nombre: form.nombre.trim(), tipo: form.tipo, saldo_inicial: Number(form.saldo_inicial) || 0, moneda: form.moneda,
       cupo: form.cupo ? Number(form.cupo) : null, corte_dia: form.corte_dia ? Number(form.corte_dia) : null, pago_dia: form.pago_dia ? Number(form.pago_dia) : null,
       activo: true,
-    });
-    setForm({ nombre: '', tipo: 'banco', saldo_inicial: 0, moneda: 'COP', cupo: '', corte_dia: '', pago_dia: '' });
+    };
+    if (editingId) await updateAccount(editingId, input);
+    else await createAccount(userId, input);
+    resetForm();
     reload();
   };
   if (loading) return <Loader />;
   return (
     <div className="space-y-4">
       <div className={cardClass}>
-        <h3 className="font-semibold text-slate-900 mb-3">Nueva cuenta</h3>
+        <h3 className="font-semibold text-slate-900 mb-3">{editingId ? 'Editar cuenta' : 'Nueva cuenta'}</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
           <input className={inputClass} placeholder="Nombre" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} />
           <select className={inputClass} value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value as AccountType })}>
@@ -158,7 +165,8 @@ function AccountsTab({ userId, formatCop }: { userId: string; formatCop: (n: num
               <input className={inputClass} placeholder="Día de pago" type="number" value={form.pago_dia} onChange={(e) => setForm({ ...form, pago_dia: e.target.value })} />
             </>
           )}
-          <button onClick={add} className={btnPrimary}><Plus className="w-3.5 h-3.5" /> Agregar</button>
+          <button onClick={save} className={btnPrimary}>{editingId ? <Edit2 className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />} {editingId ? 'Guardar' : 'Agregar'}</button>
+          {editingId && <button onClick={resetForm} className={btnGhost}><X className="w-3.5 h-3.5" /> Cancelar</button>}
         </div>
       </div>
       <div className={cardClass}>
@@ -170,7 +178,10 @@ function AccountsTab({ userId, formatCop }: { userId: string; formatCop: (n: num
                 <td className="py-2 font-medium">{a.nombre}</td><td className="text-slate-500">{a.tipo}</td>
                 <td className="text-right">{formatCop(a.saldo_inicial)}</td>
                 <td className="text-right">{a.cupo ? formatCop(a.cupo) : '—'}</td>
-                <td className="text-right"><button onClick={() => deleteAccount(a.id).then(reload)} className="text-red-600 hover:text-red-700"><Trash2 className="w-4 h-4" /></button></td>
+                <td className="text-right space-x-2">
+                  <button onClick={() => { setEditingId(a.id); setForm({ nombre: a.nombre, tipo: a.tipo, saldo_inicial: a.saldo_inicial, moneda: a.moneda, cupo: a.cupo?.toString() || '', corte_dia: a.corte_dia?.toString() || '', pago_dia: a.pago_dia?.toString() || '' }); }} className="text-blue-600 hover:text-blue-700" title="Editar cuenta"><Edit2 className="w-4 h-4 inline" /></button>
+                  <button onClick={() => deleteAccount(a.id).then(reload)} className="text-red-600 hover:text-red-700" title="Eliminar cuenta"><Trash2 className="w-4 h-4 inline" /></button>
+                </td>
               </tr>
             ))}
             {items.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-slate-400 text-sm">Sin cuentas aún.</td></tr>}
@@ -185,20 +196,30 @@ function AccountsTab({ userId, formatCop }: { userId: string; formatCop: (n: num
 function PaymentMethodsTab({ userId }: { userId: string }) {
   const [items, setItems] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ nombre: '', tipo: 'transferencia' as PaymentMethodType });
   const reload = () => { setLoading(true); listPaymentMethods(userId).then(setItems).finally(() => setLoading(false)); };
   useEffect(() => { reload(); }, [userId]);
+  const resetForm = () => { setEditingId(null); setForm({ nombre: '', tipo: 'transferencia' }); };
+  const save = async () => {
+    if (!form.nombre.trim()) return;
+    if (editingId) await updatePaymentMethod(editingId, { ...form, activo: true });
+    else await createPaymentMethod(userId, { ...form, activo: true });
+    resetForm();
+    reload();
+  };
   if (loading) return <Loader />;
   return (
     <div className="space-y-4">
       <div className={cardClass}>
-        <h3 className="font-semibold text-slate-900 mb-3">Nuevo método de pago</h3>
+        <h3 className="font-semibold text-slate-900 mb-3">{editingId ? 'Editar método de pago' : 'Nuevo método de pago'}</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
           <input className={inputClass} placeholder="Nombre (ej. Bancolombia débito)" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} />
           <select className={inputClass} value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value as PaymentMethodType })}>
             <option value="credito">Crédito</option><option value="debito">Débito</option><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="otro">Otro</option>
           </select>
-          <button onClick={async () => { if (!form.nombre.trim()) return; await createPaymentMethod(userId, { ...form, activo: true }); setForm({ nombre: '', tipo: 'transferencia' }); reload(); }} className={btnPrimary}><Plus className="w-3.5 h-3.5" /> Agregar</button>
+          <button onClick={save} className={btnPrimary}>{editingId ? <Edit2 className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />} {editingId ? 'Guardar' : 'Agregar'}</button>
+          {editingId && <button onClick={resetForm} className={btnGhost}><X className="w-3.5 h-3.5" /> Cancelar</button>}
         </div>
       </div>
       <div className={cardClass}>
@@ -206,7 +227,7 @@ function PaymentMethodsTab({ userId }: { userId: string }) {
           <thead><tr className="text-left text-xs text-slate-500 border-b border-slate-200"><th className="py-2">Nombre</th><th>Tipo</th><th></th></tr></thead>
           <tbody>
             {items.map((m) => (
-              <tr key={m.id} className="border-b border-slate-100"><td className="py-2 font-medium">{m.nombre}</td><td className="text-slate-500">{m.tipo}</td><td className="text-right"><button onClick={() => deletePaymentMethod(m.id).then(reload)} className="text-red-600"><Trash2 className="w-4 h-4" /></button></td></tr>
+              <tr key={m.id} className="border-b border-slate-100"><td className="py-2 font-medium">{m.nombre}</td><td className="text-slate-500">{m.tipo}</td><td className="text-right space-x-2"><button onClick={() => { setEditingId(m.id); setForm({ nombre: m.nombre, tipo: m.tipo }); }} className="text-blue-600" title="Editar método"><Edit2 className="w-4 h-4 inline" /></button><button onClick={() => deletePaymentMethod(m.id).then(reload)} className="text-red-600" title="Eliminar método"><Trash2 className="w-4 h-4 inline" /></button></td></tr>
             ))}
             {items.length === 0 && <tr><td colSpan={3} className="py-6 text-center text-slate-400 text-sm">Sin métodos aún.</td></tr>}
           </tbody>
@@ -221,14 +242,24 @@ function DebtsTab({ userId, formatCop }: { userId: string; formatCop: (n: number
   const [items, setItems] = useState<Debt[]>([]);
   const [payments, setPayments] = useState<DebtPayment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ nombre: '', saldo_inicial: 0, tasa: '', cuotas: '', fecha_corte: '', fecha_limite: '', estado: 'activo' as DebtStatus, moneda: 'COP' });
   const reload = () => { setLoading(true); Promise.all([listDebts(userId), listDebtPayments(userId)]).then(([d, p]) => { setItems(d); setPayments(p); }).finally(() => setLoading(false)); };
   useEffect(() => { reload(); }, [userId]);
+  const resetForm = () => { setEditingId(null); setForm({ nombre: '', saldo_inicial: 0, tasa: '', cuotas: '', fecha_corte: '', fecha_limite: '', estado: 'activo', moneda: 'COP' }); };
+  const save = async () => {
+    if (!form.nombre.trim()) return;
+    const input = { nombre: form.nombre, saldo_inicial: Number(form.saldo_inicial), tasa: form.tasa ? Number(form.tasa) : null, cuotas: form.cuotas ? Number(form.cuotas) : null, fecha_corte: form.fecha_corte || null, fecha_limite: form.fecha_limite || null, estado: form.estado, moneda: form.moneda };
+    if (editingId) await updateDebt(editingId, input);
+    else await createDebt(userId, input);
+    resetForm();
+    reload();
+  };
   if (loading) return <Loader />;
   return (
     <div className="space-y-4">
       <div className={cardClass}>
-        <h3 className="font-semibold text-slate-900 mb-3">Nueva deuda</h3>
+        <h3 className="font-semibold text-slate-900 mb-3">{editingId ? 'Editar deuda' : 'Nueva deuda'}</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
           <input className={inputClass} placeholder="Nombre" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} />
           <input className={inputClass} type="number" placeholder="Saldo inicial" value={form.saldo_inicial} onChange={(e) => setForm({ ...form, saldo_inicial: Number(e.target.value) })} />
@@ -236,12 +267,8 @@ function DebtsTab({ userId, formatCop }: { userId: string; formatCop: (n: number
           <input className={inputClass} type="number" placeholder="Cuotas" value={form.cuotas} onChange={(e) => setForm({ ...form, cuotas: e.target.value })} />
           <input className={inputClass} type="date" placeholder="Fecha corte" value={form.fecha_corte} onChange={(e) => setForm({ ...form, fecha_corte: e.target.value })} />
           <input className={inputClass} type="date" placeholder="Fecha límite" value={form.fecha_limite} onChange={(e) => setForm({ ...form, fecha_limite: e.target.value })} />
-          <button onClick={async () => {
-            if (!form.nombre.trim()) return;
-            await createDebt(userId, { nombre: form.nombre, saldo_inicial: Number(form.saldo_inicial), tasa: form.tasa ? Number(form.tasa) : null, cuotas: form.cuotas ? Number(form.cuotas) : null, fecha_corte: form.fecha_corte || null, fecha_limite: form.fecha_limite || null, estado: form.estado, moneda: form.moneda });
-            setForm({ nombre: '', saldo_inicial: 0, tasa: '', cuotas: '', fecha_corte: '', fecha_limite: '', estado: 'activo', moneda: 'COP' });
-            reload();
-          }} className={btnPrimary}><Plus className="w-3.5 h-3.5" /> Agregar</button>
+          <button onClick={save} className={btnPrimary}>{editingId ? <Edit2 className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />} {editingId ? 'Guardar' : 'Agregar'}</button>
+          {editingId && <button onClick={resetForm} className={btnGhost}><X className="w-3.5 h-3.5" /> Cancelar</button>}
         </div>
       </div>
       <div className={cardClass}>
@@ -260,6 +287,7 @@ function DebtsTab({ userId, formatCop }: { userId: string; formatCop: (n: number
                   <td className="text-slate-500">{d.fecha_limite || '—'}</td>
                   <td className="text-slate-500">{d.estado}</td>
                   <td className="text-right space-x-2">
+                    <button onClick={() => { setEditingId(d.id); setForm({ nombre: d.nombre, saldo_inicial: d.saldo_inicial, tasa: d.tasa?.toString() || '', cuotas: d.cuotas?.toString() || '', fecha_corte: d.fecha_corte || '', fecha_limite: d.fecha_limite || '', estado: d.estado, moneda: d.moneda }); }} className="text-blue-600 text-xs font-semibold" title="Editar deuda">Editar</button>
                     <button onClick={async () => {
                       const monto = Number(prompt('Monto del pago:') || '0');
                       if (monto > 0) { await addDebtPayment(userId, { debt_id: d.id, fecha: new Date().toISOString().slice(0, 10), monto }); reload(); }
@@ -282,14 +310,24 @@ function ReceivablesTab({ userId, appData, formatCop }: { userId: string; appDat
   const [items, setItems] = useState<Receivable[]>([]);
   const [payments, setPayments] = useState<ReceivablePayment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ cliente_id: '', factura: '', concepto: '', valor: 0, moneda: 'COP', vencimiento: '', estado: 'pendiente' as ReceivableStatus });
   const reload = () => { setLoading(true); Promise.all([listReceivables(userId), listReceivablePayments(userId)]).then(([r, p]) => { setItems(r); setPayments(p); }).finally(() => setLoading(false)); };
   useEffect(() => { reload(); }, [userId]);
+  const resetForm = () => { setEditingId(null); setForm({ cliente_id: '', factura: '', concepto: '', valor: 0, moneda: 'COP', vencimiento: '', estado: 'pendiente' }); };
+  const save = async () => {
+    if (!form.concepto.trim() || !form.valor) return;
+    const input = { cliente_id: form.cliente_id || null, factura: form.factura || null, concepto: form.concepto, valor: form.valor, moneda: form.moneda, vencimiento: form.vencimiento || null, estado: form.estado };
+    if (editingId) await updateReceivable(editingId, input);
+    else await createReceivable(userId, input);
+    resetForm();
+    reload();
+  };
   if (loading) return <Loader />;
   return (
     <div className="space-y-4">
       <div className={cardClass}>
-        <h3 className="font-semibold text-slate-900 mb-3">Nueva cuenta por cobrar</h3>
+        <h3 className="font-semibold text-slate-900 mb-3">{editingId ? 'Editar cuenta por cobrar' : 'Nueva cuenta por cobrar'}</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
           <select className={inputClass} value={form.cliente_id} onChange={(e) => setForm({ ...form, cliente_id: e.target.value })}>
             <option value="">— Cliente —</option>
@@ -300,12 +338,8 @@ function ReceivablesTab({ userId, appData, formatCop }: { userId: string; appDat
           <input className={inputClass} type="number" placeholder="Valor" value={form.valor} onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })} />
           <input className={inputClass} type="date" value={form.vencimiento} onChange={(e) => setForm({ ...form, vencimiento: e.target.value })} />
           <select className={inputClass} value={form.moneda} onChange={(e) => setForm({ ...form, moneda: e.target.value })}><option>COP</option><option>USD</option></select>
-          <button onClick={async () => {
-            if (!form.concepto.trim() || !form.valor) return;
-            await createReceivable(userId, { cliente_id: form.cliente_id || null, factura: form.factura || null, concepto: form.concepto, valor: form.valor, moneda: form.moneda, vencimiento: form.vencimiento || null, estado: form.estado });
-            setForm({ cliente_id: '', factura: '', concepto: '', valor: 0, moneda: 'COP', vencimiento: '', estado: 'pendiente' });
-            reload();
-          }} className={btnPrimary}><Plus className="w-3.5 h-3.5" /> Agregar</button>
+          <button onClick={save} className={btnPrimary}>{editingId ? <Edit2 className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />} {editingId ? 'Guardar' : 'Agregar'}</button>
+          {editingId && <button onClick={resetForm} className={btnGhost}><X className="w-3.5 h-3.5" /> Cancelar</button>}
         </div>
       </div>
       <div className={cardClass}>
@@ -324,6 +358,7 @@ function ReceivablesTab({ userId, appData, formatCop }: { userId: string; appDat
                   <td className="text-slate-500">{r.vencimiento || '—'}</td>
                   <td className="text-slate-500">{r.estado}</td>
                   <td className="text-right space-x-2">
+                    <button onClick={() => { setEditingId(r.id); setForm({ cliente_id: r.cliente_id || '', factura: r.factura || '', concepto: r.concepto, valor: r.valor, moneda: r.moneda, vencimiento: r.vencimiento || '', estado: r.estado }); }} className="text-blue-600 text-xs font-semibold">Editar</button>
                     <button onClick={async () => {
                       const monto = Number(prompt('Monto del abono:') || '0');
                       if (monto > 0) { await addReceivablePayment(userId, { receivable_id: r.id, fecha: new Date().toISOString().slice(0, 10), monto }); reload(); }
@@ -345,14 +380,24 @@ function ReceivablesTab({ userId, appData, formatCop }: { userId: string; appDat
 function PayablesTab({ userId, formatCop }: { userId: string; formatCop: (n: number) => string }) {
   const [items, setItems] = useState<Payable[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ proveedor: '', factura: '', concepto: '', valor: 0, moneda: 'COP', vencimiento: '', estado: 'pendiente' as PayableStatus });
   const reload = () => { setLoading(true); listPayables(userId).then(setItems).finally(() => setLoading(false)); };
   useEffect(() => { reload(); }, [userId]);
+  const resetForm = () => { setEditingId(null); setForm({ proveedor: '', factura: '', concepto: '', valor: 0, moneda: 'COP', vencimiento: '', estado: 'pendiente' }); };
+  const save = async () => {
+    if (!form.proveedor.trim() || !form.valor) return;
+    const input = { proveedor: form.proveedor, factura: form.factura || null, concepto: form.concepto || null, valor: form.valor, moneda: form.moneda, vencimiento: form.vencimiento || null, estado: form.estado };
+    if (editingId) await updatePayable(editingId, input);
+    else await createPayable(userId, input);
+    resetForm();
+    reload();
+  };
   if (loading) return <Loader />;
   return (
     <div className="space-y-4">
       <div className={cardClass}>
-        <h3 className="font-semibold text-slate-900 mb-3">Nueva cuenta por pagar</h3>
+        <h3 className="font-semibold text-slate-900 mb-3">{editingId ? 'Editar cuenta por pagar' : 'Nueva cuenta por pagar'}</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
           <input className={inputClass} placeholder="Proveedor" value={form.proveedor} onChange={(e) => setForm({ ...form, proveedor: e.target.value })} />
           <input className={inputClass} placeholder="Factura #" value={form.factura} onChange={(e) => setForm({ ...form, factura: e.target.value })} />
@@ -360,12 +405,8 @@ function PayablesTab({ userId, formatCop }: { userId: string; formatCop: (n: num
           <input className={inputClass} type="number" placeholder="Valor" value={form.valor} onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })} />
           <input className={inputClass} type="date" value={form.vencimiento} onChange={(e) => setForm({ ...form, vencimiento: e.target.value })} />
           <select className={inputClass} value={form.moneda} onChange={(e) => setForm({ ...form, moneda: e.target.value })}><option>COP</option><option>USD</option></select>
-          <button onClick={async () => {
-            if (!form.proveedor.trim() || !form.valor) return;
-            await createPayable(userId, { proveedor: form.proveedor, factura: form.factura || null, concepto: form.concepto || null, valor: form.valor, moneda: form.moneda, vencimiento: form.vencimiento || null, estado: form.estado });
-            setForm({ proveedor: '', factura: '', concepto: '', valor: 0, moneda: 'COP', vencimiento: '', estado: 'pendiente' });
-            reload();
-          }} className={btnPrimary}><Plus className="w-3.5 h-3.5" /> Agregar</button>
+          <button onClick={save} className={btnPrimary}>{editingId ? <Edit2 className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />} {editingId ? 'Guardar' : 'Agregar'}</button>
+          {editingId && <button onClick={resetForm} className={btnGhost}><X className="w-3.5 h-3.5" /> Cancelar</button>}
         </div>
       </div>
       <div className={cardClass}>
@@ -382,6 +423,7 @@ function PayablesTab({ userId, formatCop }: { userId: string; formatCop: (n: num
                 <td className="text-slate-500">{p.vencimiento || '—'}</td>
                 <td className="text-slate-500">{p.estado}</td>
                 <td className="text-right space-x-2">
+                  <button onClick={() => { setEditingId(p.id); setForm({ proveedor: p.proveedor, factura: p.factura || '', concepto: p.concepto || '', valor: p.valor, moneda: p.moneda, vencimiento: p.vencimiento || '', estado: p.estado }); }} className="text-blue-600 text-xs font-semibold">Editar</button>
                   <button onClick={async () => {
                     const monto = Number(prompt('Monto pagado:', String(p.valor)) || '0');
                     if (monto > 0) { await updatePayable(p.id, { monto_pagado: monto, fecha_pago_real: new Date().toISOString().slice(0, 10), estado: 'pagada' }); reload(); }
@@ -402,6 +444,7 @@ function PayablesTab({ userId, formatCop }: { userId: string; formatCop: (n: num
 function BudgetTab({ userId, appData, periodo, formatCop }: { userId: string; appData: AppData; periodo: string; formatCop: (n: number) => string }) {
   const [items, setItems] = useState<BudgetLine[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingLine, setEditingLine] = useState<BudgetLine | null>(null);
   const [form, setForm] = useState({ categoria: '', monto_presupuestado: 0 });
   const reload = () => { setLoading(true); listBudget(userId, periodo).then(setItems).finally(() => setLoading(false)); };
   useEffect(() => { reload(); }, [userId, periodo]);
@@ -418,10 +461,13 @@ function BudgetTab({ userId, appData, periodo, formatCop }: { userId: string; ap
           <input className={inputClass} type="number" placeholder="Monto presupuestado" value={form.monto_presupuestado} onChange={(e) => setForm({ ...form, monto_presupuestado: Number(e.target.value) })} />
           <button onClick={async () => {
             if (!form.categoria.trim()) return;
+            if (editingLine && editingLine.categoria !== form.categoria) await deleteBudgetLine(editingLine.id);
             await upsertBudgetLine(userId, { periodo, categoria: form.categoria, monto_presupuestado: form.monto_presupuestado, moneda: 'COP', origen: 'manual' });
             setForm({ categoria: '', monto_presupuestado: 0 });
+            setEditingLine(null);
             reload();
-          }} className={btnPrimary}><Plus className="w-3.5 h-3.5" /> Guardar</button>
+          }} className={btnPrimary}>{editingLine ? <Edit2 className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />} {editingLine ? 'Guardar cambios' : 'Guardar'}</button>
+          {editingLine && <button onClick={() => { setEditingLine(null); setForm({ categoria: '', monto_presupuestado: 0 }); }} className={btnGhost}><X className="w-3.5 h-3.5" /> Cancelar</button>}
         </div>
         <table className="w-full text-sm">
           <thead><tr className="text-left text-xs text-slate-500 border-b border-slate-200"><th className="py-2">Categoría</th><th className="text-right">Presupuestado</th><th>Origen</th><th></th></tr></thead>
@@ -431,7 +477,7 @@ function BudgetTab({ userId, appData, periodo, formatCop }: { userId: string; ap
                 <td className="py-2 font-medium">{b.categoria}</td>
                 <td className="text-right">{formatCop(b.monto_presupuestado)}</td>
                 <td className="text-slate-500">{b.origen}</td>
-                <td className="text-right"><button onClick={() => deleteBudgetLine(b.id).then(reload)} className="text-red-600"><Trash2 className="w-4 h-4" /></button></td>
+                <td className="text-right space-x-2"><button onClick={() => { setEditingLine(b); setForm({ categoria: b.categoria, monto_presupuestado: b.monto_presupuestado }); }} className="text-blue-600" title="Editar presupuesto"><Edit2 className="w-4 h-4 inline" /></button><button onClick={() => deleteBudgetLine(b.id).then(reload)} className="text-red-600" title="Eliminar presupuesto"><Trash2 className="w-4 h-4 inline" /></button></td>
               </tr>
             ))}
             {items.length === 0 && <tr><td colSpan={4} className="py-6 text-center text-slate-400 text-sm">Sin presupuesto para este periodo.</td></tr>}

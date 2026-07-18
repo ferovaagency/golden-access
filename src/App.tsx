@@ -501,6 +501,9 @@ export default function App() {
 
   const handleNavigate = (tab: string) => {
     if (tab === '__ai') { setAiCollapsed(false); return; }
+    // The internal SaaS console has its own protected route so it can keep
+    // authorization and loading states isolated from the customer workspace.
+    if (tab === 'admin') { window.location.assign('/admin'); return; }
     setActiveTab(tab);
   };
 
@@ -529,12 +532,16 @@ export default function App() {
       ] : []),
       ...CRM_GROWTH_TABS,
     ] },
-    { id: 'settings', label: 'Settings', icon: Settings, items: modules.financiero ? [{ id: 'ajustes', label: 'Configuración', hint: 'Datos y Google Sheets' }] : [] },
+    { id: 'settings', label: 'Settings', icon: Settings, items: [
+      ...(modules.financiero ? [{ id: 'ajustes', label: 'Configuración', hint: 'Datos y Google Sheets' }] : []),
+      ...(isTeam ? [{ id: 'admin', label: 'Administración Ferova', hint: 'Usuarios, planes, feedback y operaciones' }] : []),
+    ] },
   ];
 
   const activeSectionId = NAVIGATION_SECTIONS.find((section) => section.items.some((item) => item.id === activeTab))?.id ?? 'home';
   const visibleNavigationSections = NAVIGATION_SECTIONS.filter((section) => section.items.length > 0);
   const navigateTo = (tab: string) => {
+    if (tab === 'admin') { window.location.assign('/admin'); return; }
     setActiveTab(tab);
     setIsMobileMenuOpen(false);
   };

@@ -16,6 +16,8 @@ import {
   ArrowDownCircle,
   TrendingDown,
   Paperclip,
+  Edit2,
+  X,
 } from 'lucide-react';
 import ComprobanteUpload from './ComprobanteUpload';
 
@@ -28,6 +30,7 @@ interface PagosEgresosAdminProps {
 export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePagosEgresos }: PagosEgresosAdminProps) {
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
   
   // Form state
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
@@ -39,6 +42,19 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
   const [notas, setNotas] = useState('');
   const [comprobanteUrl, setComprobanteUrl] = useState<string | undefined>(undefined);
   const [comprobanteNombre, setComprobanteNombre] = useState<string | undefined>(undefined);
+
+  const resetForm = () => {
+    setEditingId(null);
+    setFecha(new Date().toISOString().split('T')[0]);
+    setConcepto('');
+    setCategoria('Salarios');
+    setMonto('');
+    setMoneda('COP');
+    setMetodoPago('Bancolombia');
+    setNotas('');
+    setComprobanteUrl(undefined);
+    setComprobanteNombre(undefined);
+  };
 
   // Filters state
   const [searchTerm, setSearchTerm] = useState('');
@@ -75,7 +91,7 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
     setSuccessMsg('');
 
     const newPago: PagoEgreso = {
-      id: `p_${Date.now().toString().slice(-6)}`,
+      id: editingId || `p_${Date.now().toString().slice(-6)}`,
       fecha,
       concepto: concepto.trim(),
       categoria,
@@ -87,24 +103,33 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
       comprobante_nombre: comprobanteNombre,
     };
 
-    const updated = [newPago, ...pagosEgresos];
+    const updated = editingId
+      ? pagosEgresos.map((p) => p.id === editingId ? newPago : p)
+      : [newPago, ...pagosEgresos];
 
     try {
       await onSavePagosEgresos(updated);
-      setSuccessMsg('¡Pago registrado con éxito y sincronizado con Sheets!');
-
-      // Reset form fields
-      setConcepto('');
-      setMonto('');
-      setNotas('');
-      setComprobanteUrl(undefined);
-      setComprobanteNombre(undefined);
+      setSuccessMsg(editingId ? 'Pago actualizado con éxito.' : '¡Pago registrado con éxito y sincronizado con Sheets!');
+      resetForm();
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err: any) {
       alert(`Error al registrar pago: ${err.message || err}`);
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleEditPago = (pago: PagoEgreso) => {
+    setEditingId(pago.id);
+    setFecha(pago.fecha);
+    setConcepto(pago.concepto);
+    setCategoria(pago.categoria);
+    setMonto(pago.monto);
+    setMoneda(pago.moneda);
+    setMetodoPago(pago.metodo_pago);
+    setNotas(pago.notas || '');
+    setComprobanteUrl(pago.comprobante_url);
+    setComprobanteNombre(pago.comprobante_nombre);
   };
 
   const handleDeletePago = async (id: string) => {
@@ -219,7 +244,7 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
         <div className="lg:col-span-4 bg-[#161412] border border-[#2a2620] p-5 rounded-lg space-y-4">
           <div className="flex items-center gap-2 border-b border-[#2a2620] pb-3">
             <ArrowDownCircle className="w-4h-4 text-[#c9a961]" />
-            <span className="text-xs font-mono uppercase tracking-widest text-[#a39d8e] font-bold">Registrar Desembolso</span>
+            <span className="text-xs font-mono uppercase tracking-widest text-[#a39d8e] font-bold">{editingId ? 'Editar Desembolso' : 'Registrar Desembolso'}</span>
           </div>
 
           <form onSubmit={handleAddPago} className="space-y-4 text-xs">
@@ -345,8 +370,9 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
               disabled={saving}
               className="w-full bg-[#c9a961] hover:bg-[#b09252] disabled:bg-[#2a2620] text-black font-semibold font-mono tracking-wide py-2.5 rounded transition font-bold cursor-pointer"
             >
-              {saving ? 'Registrando...' : 'Registrar Pago de Egreso'}
+              {saving ? 'Guardando...' : editingId ? 'Guardar Cambios' : 'Registrar Pago de Egreso'}
             </button>
+            {editingId && <button type="button" onClick={resetForm} className="w-full border border-[#2a2620] text-[#a39d8e] hover:text-white font-mono py-2 rounded transition inline-flex items-center justify-center gap-2"><X className="w-3.5 h-3.5" /> Cancelar edición</button>}
 
           </form>
         </div>
@@ -475,6 +501,14 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
                             {p.metodo_pago}
                           </td>
                           <td className="p-3 text-right pr-4">
+                            <button
+                              type="button"
+                              onClick={() => handleEditPago(p)}
+                              className="text-[#8a8377] hover:text-[#c9a961] p-1.5 transition rounded hover:bg-[#c9a961]/5 inline-flex cursor-pointer"
+                              title="Editar este pago de egreso"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
                             <button 
                               type="button"
                               onClick={() => handleDeletePago(p.id)}

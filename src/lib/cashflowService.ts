@@ -3,6 +3,8 @@ import { listPayables } from './payablesService';
 import { listDebts, listDebtPayments, debtBalance } from './debtsService';
 import { listAccounts } from './accountsService';
 import { listBudget } from './budgetService';
+import type { AppData, Venta } from '../types';
+import { convertToCop } from './calculations';
 
 export interface CashflowSnapshot {
   ingresos_reales: number;
@@ -24,7 +26,36 @@ function daysUntil(dateStr?: string | null): number | null {
   return Math.round((d.getTime() - now.getTime()) / 86400000);
 }
 
-export async function buildCashflow(userId: string, periodo: string): Promise<CashflowSnapshot> {
+function isInPeriod(date: string | null | undefined, periodo: string): boolean {
+  return Boolean(date && date.startsWith(periodo));
+}
+
+function receivedFromSale(venta: Venta, periodo: string): number {
+  const payments = venta.abonos || [];
+  // New sales always have a dated first payment. Older records may only have
+  // `adelanto`, so retain that value as a backwards-compatible fallback.
+  if (payments.length > 0) {
+    return payments
+      .filter((payment) => isInPeriod(payment.fecha, periodo))
+      .reduce((sum, payment) => sum + payment.monto, 0);
+  }
+  return isInPeriod(venta.fecha, periodo) ? venta.adelanto : 0;
+}
+
+function outstandingFromSale(venta: Venta): number {
+  const paid = (venta.abonos || []).length > 0
+    ? (venta.abonos || []).reduce((sum, payment) => sum + payment.monto, 0)
+    : venta.adelanto;
+  return Math.max(0, venta.cantidad * venta.precio_venta_unitario - paid);
+}
+
+/**
+ * Consolidates operational controls with the established finance modules.
+ * FinanceOperativa remains a register for accounts, debts and invoices; it
+ * reads the existing sales and disbursements instead of copying them to a
+ * second table (which would double count cash).
+ */
+export async function buildCashflow(userId: string, periodo: string, appData?: AppData): Promise<CashflowSnapshot> {
   const [receivables, recvPayments, payables, debts, debtPayments, accounts, budget] = await Promise.all([
     listReceivables(userId),
     listReceivablePayments(userId),
@@ -35,13 +66,25 @@ export async function buildCashflow(userId: string, periodo: string): Promise<Ca
     listBudget(userId, periodo),
   ]);
 
-  const ingresos_reales = recvPayments.reduce((s, p) => s + p.monto, 0);
+  const legacyReceipts = (appData?.ventas || []).reduce((sum, sale) => {
+    return sum + convertToCop(receivedFromSale(sale, periodo), sale.moneda, appData!.config.trm);
+  }, 0);
+  const legacyPending = (appData?.ventas || []).reduce((sum, sale) => {
+    return sum + convertToCop(outstandingFromSale(sale), sale.moneda, appData!.config.trm);
+  }, 0);
+  const legacyExpenses = (appData?.pagosEgresos || [])
+    .filter((payment) => isInPeriod(payment.fecha, periodo))
+    .reduce((sum, payment) => sum + convertToCop(payment.monto, payment.moneda, appData!.config.trm), 0);
+
+  const ingresos_reales = recvPayments
+    .filter((payment) => isInPeriod(payment.fecha, periodo))
+    .reduce((s, p) => s + p.monto, 0) + legacyReceipts;
   const ingresos_pendientes = receivables
     .filter((r) => r.estado !== 'pagada' && r.estado !== 'cancelada')
-    .reduce((s, r) => s + receivableBalance(r, recvPayments), 0);
+    .reduce((s, r) => s + receivableBalance(r, recvPayments), 0) + legacyPending;
   const gastos_reales = payables
-    .filter((p) => p.estado === 'pagada')
-    .reduce((s, p) => s + (p.monto_pagado || p.valor), 0);
+    .filter((p) => p.estado === 'pagada' && isInPeriod(p.fecha_pago_real, periodo))
+    .reduce((s, p) => s + (p.monto_pagado || p.valor), 0) + legacyExpenses;
   const obligaciones_proximas = payables
     .filter((p) => p.estado !== 'pagada' && p.estado !== 'cancelada')
     .reduce((s, p) => s + p.valor, 0);

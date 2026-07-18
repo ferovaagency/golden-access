@@ -43,14 +43,16 @@ Deno.serve(async (req) => {
     if (entries.length === 0) return json({ ok: false, message: "Sin entradas" }, 400);
 
     const key = Deno.env.get("LOVABLE_API_KEY");
-    if (!key) return json({ ok: false, message: "LOVABLE_API_KEY missing" }, 500);
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const gateway = createLovableAiGatewayProvider(key);
+    // AI enrichment is optional at runtime. A missing hosted key must never
+    // block the owner from turning a brain dump into editable planner tasks.
+    const gateway = key ? createLovableAiGatewayProvider(key) : null;
 
     const results = [] as any[];
     for (const line of entries.slice(0, 20)) {
       let extracted: z.infer<typeof ClassifySchema> | null = null;
       try {
+        if (!gateway) throw new Error("AI gateway is not configured");
         const { output } = await generateText({
           model: gateway("google/gemini-3.5-flash"),
           output: Output.object({ schema: ClassifySchema }),
@@ -71,7 +73,7 @@ Deno.serve(async (req) => {
         detected_client: null,
         detected_project: null,
         title: line,
-        reasoning: "Fallback classification.",
+        reasoning: key ? "Fallback classification after AI response failure." : "Clasificación básica: la IA aún no está configurada en este despliegue.",
         confidence: 0.3,
       };
       const c = extracted ?? fallback;
