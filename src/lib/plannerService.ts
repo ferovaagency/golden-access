@@ -129,8 +129,7 @@ export const plannerService = {
       starts_at: input.starts_at,
       ends_at: input.ends_at,
       category: input.category ?? 'meetings',
-      is_locked: input.is_locked ?? true,
-      protected: input.protected ?? false,
+      protected: input.protected ?? true,
       notes: input.notes?.trim() || null,
       source: 'manual',
     });
