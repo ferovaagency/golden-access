@@ -32,6 +32,7 @@ import AISidebar from './components/AISidebar';
 import CustomerCRM from './components/CustomerCRM';
 import Home from './components/Home';
 import SmartPlanner from './components/SmartPlanner';
+import ReportsView from './components/ReportsView';
 
 import {
   Home as HomeIcon,
