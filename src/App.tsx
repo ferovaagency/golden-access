@@ -684,6 +684,16 @@ export default function App() {
 
       {/* RIGHT AI SIDEBAR */}
       <AISidebar user={user} collapsed={aiCollapsed} onToggle={() => setAiCollapsed((v) => !v)} width={aiWidth} onResize={setAiWidth} />
+
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        onNavigate={handleNavigate}
+        isTeam={isTeam}
+        hasFinance={!!modules.financiero}
+        onOpenAI={() => setAiCollapsed(false)}
+        onOpenNotifications={() => handleNavigate('home')}
+      />
     </div>
   );
 }
