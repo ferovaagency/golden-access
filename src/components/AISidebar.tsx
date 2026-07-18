@@ -55,18 +55,34 @@ export default function AISidebar({ user, collapsed, onToggle, width, onResize, 
   const transport = useMemo(() => new DefaultChatTransport({
     api: getSupabaseFunctionUrl('business-assistant-chat'),
     fetch: async (input, init) => {
-      const { data } = await supabase.auth.getSession();
-      const headers = new Headers(init?.headers);
-      // Direct streaming requests do not use the Supabase client's global fetch,
-      // so the publishable key must be attached explicitly for the Functions gateway.
-      headers.set('apikey', SUPABASE_PUBLISHABLE_KEY);
-      if (data.session?.access_token) headers.set('Authorization', `Bearer ${data.session.access_token}`);
-      if (currentArea) headers.set('X-Ferova-Context-Area', currentArea);
+      const attempt = async () => {
+        const { data } = await supabase.auth.getSession();
+        const headers = new Headers(init?.headers);
+        // Direct streaming requests do not use the Supabase client's global fetch,
+        // so the publishable key must be attached explicitly for the Functions gateway.
+        headers.set('apikey', SUPABASE_PUBLISHABLE_KEY);
+        if (data.session?.access_token) headers.set('Authorization', `Bearer ${data.session.access_token}`);
+        if (currentArea) headers.set('X-Ferova-Context-Area', currentArea);
+        return fetch(input, { ...init, headers });
+      };
       let response: Response;
       try {
-        response = await fetch(input, { ...init, headers });
+        response = await attempt();
       } catch {
         throw new Error('El asistente no está disponible temporalmente. Revisa tu conexión; las demás funciones siguen operando.');
+      }
+      if (response.status === 401) {
+        // The access token can expire or get rotated (e.g. another tab refreshing
+        // the session) right before this request goes out. Force a refresh and
+        // retry once before surfacing an error.
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        if (!refreshError) {
+          try {
+            response = await attempt();
+          } catch {
+            throw new Error('El asistente no está disponible temporalmente. Revisa tu conexión; las demás funciones siguen operando.');
+          }
+        }
       }
       if (!response.ok) {
         const status = response.status;

@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
     const initialRunId = getLovableAiGatewayRunId(req);
     const gateway = createLovableAiGatewayProvider(LOVABLE_API_KEY, initialRunId);
     const result = streamText({
-      model: gateway("google/gemini-3-flash-preview"),
+      model: gateway("google/gemini-2.5-flash"),
       system: `Sos un asistente de bienvenida de Ferova OS, hablás con el dueño de un negocio pequeño que probablemente NO sabe de tecnología. Tu único trabajo es ayudarlo a completar los datos básicos de su negocio, UNA pregunta a la vez, en español simple y cercano (nunca uses jerga técnica). No respondas nada de finanzas, ventas ni otro tema -- si preguntan otra cosa, decí amablemente que para eso está el "Asistente Ferova" una vez termine este paso.
 
 Campos que todavía faltan por preguntar: ${missingFieldsLabel(profileAfterExtract)}.

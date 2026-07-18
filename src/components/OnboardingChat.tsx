@@ -77,10 +77,21 @@ export default function OnboardingChat({ user, onDone }: Props) {
   const transport = useMemo(() => new DefaultChatTransport({
     api: getSupabaseFunctionUrl('onboarding-chat'),
     fetch: async (input, init) => {
-      const { data } = await supabase.auth.getSession();
-      const headers = new Headers(init?.headers);
-      if (data.session?.access_token) headers.set('Authorization', `Bearer ${data.session.access_token}`);
-      return fetch(input, { ...init, headers });
+      const attempt = async () => {
+        const { data } = await supabase.auth.getSession();
+        const headers = new Headers(init?.headers);
+        if (data.session?.access_token) headers.set('Authorization', `Bearer ${data.session.access_token}`);
+        return fetch(input, { ...init, headers });
+      };
+      let response = await attempt();
+      if (response.status === 401) {
+        // The access token can expire or get rotated (e.g. another tab refreshing
+        // the session) right before this request goes out. Force a refresh and
+        // retry once before surfacing an error.
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        if (!refreshError) response = await attempt();
+      }
+      return response;
     },
   }), []);
 

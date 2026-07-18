@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
     const initialRunId = getLovableAiGatewayRunId(req);
     const gateway = createLovableAiGatewayProvider(apiKey, initialRunId);
     const result = streamText({
-      model: gateway("google/gemini-3-flash-preview"),
+      model: gateway("google/gemini-2.5-flash"),
       system: `Sos el asesor financiero y gerencial experto de ${businessProfile?.nombre_negocio || "este negocio"} dentro de Ferova OS. Tu rol es el de un consultor de confianza: das recomendaciones concretas y accionables, no solo reportas números. Respondé en español claro, cercano y sin jerga técnica innecesaria (quien te lee puede no saber de finanzas ni de tecnología).
 
 REGLA INQUEBRANTABLE: Usá EXCLUSIVAMENTE el contexto JSON de negocio provisto abajo y el historial del chat -- ninguna otra fuente. Si falta un dato para responder algo, decí exactamente qué falta y dónde cargarlo (ej. "no tengo tus gastos de este mes, cárgalos en Costos"); nunca inventes cifras, clientes, reseñas, servicios ni estados, y nunca des cifras de referencia genéricas del mercado como si fueran datos reales de este negocio.
