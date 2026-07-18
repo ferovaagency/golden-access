@@ -1,7 +1,21 @@
 import { Config, AppData, Cliente, Servicio, Herramienta, OtroGasto, Venta, Hora, Respaldo } from '../types';
+import type { FiscalProfile } from './fiscalProfileService';
 
 /**
- * Calculates Independent Contractor (Persona Natural) Social Security obligations
+ * FiscalContext identifica el país activo y decide si aplicar reglas tributarias
+ * colombianas (DIAN) o marcar los cálculos fiscales como "pendientes de
+ * configuración" para otros países. Nunca inventar impuestos fuera de CO.
+ */
+export type FiscalContext = Pick<FiscalProfile, 'country' | 'person_type' | 'regime'> | null | undefined;
+
+export function isColombiaFiscal(ctx: FiscalContext): boolean {
+  if (!ctx) return true; // default histórico: CO
+  return (ctx.country || 'CO').toUpperCase() === 'CO';
+}
+
+/**
+ * Calculates Independent Contractor (Persona Natural) Social Security obligations.
+ * Solo aplica en Colombia; para otros países devuelve ceros y `applies=false`.
  */
 export interface PrestacionesSociales {
   ibc: number;
@@ -9,16 +23,24 @@ export interface PrestacionesSociales {
   pension: number;
   totalPrestaciones: number;
   salarioNeto: number;
+  applies: boolean;
 }
 
-export function calcularPrestaciones(salarioPropuesto: number, smmlv: number): PrestacionesSociales {
+export function calcularPrestaciones(
+  salarioPropuesto: number,
+  smmlv: number,
+  ctx?: FiscalContext,
+): PrestacionesSociales {
+  if (!isColombiaFiscal(ctx)) {
+    return { ibc: 0, salud: 0, pension: 0, totalPrestaciones: 0, salarioNeto: salarioPropuesto, applies: false };
+  }
   const ibc = Math.max(salarioPropuesto * 0.40, smmlv);
   const salud = ibc * 0.125;
   const pension = ibc * 0.16;
   const totalPrestaciones = salud + pension;
   const salarioNeto = salarioPropuesto - totalPrestaciones;
 
-  return { ibc, salud, pension, totalPrestaciones, salarioNeto };
+  return { ibc, salud, pension, totalPrestaciones, salarioNeto, applies: true };
 }
 
 /**
