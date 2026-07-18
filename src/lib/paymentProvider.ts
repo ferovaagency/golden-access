@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 // Contrato agnóstico de proveedor de pagos.
 // Hoy: Paddle (preparado, en modo `awaiting_configuration` mientras faltan
 // credenciales). Mañana: Stripe, PayPal, etc. sin tocar la UI.
@@ -65,4 +66,72 @@ export function getActivePaymentProvider(): PaymentProvider {
   const publicClientToken = (import.meta as any).env?.VITE_PADDLE_CLIENT_TOKEN as string | undefined;
   const priceId = (import.meta as any).env?.VITE_PADDLE_PRICE_ID as string | undefined;
   return createPaddleAdapter({ publicClientToken, priceId });
+=======
+export type PaymentProviderStatus = 'ready' | 'awaiting_configuration' | 'unavailable';
+
+export interface CheckoutRequest {
+  priceId: string;
+  customerEmail?: string;
+  customerId?: string;
+}
+
+export interface CheckoutResult {
+  status: PaymentProviderStatus;
+  message?: string;
+}
+
+interface PaddleJs {
+  Initialize(options: { token: string; pwCustomer?: { id: string } }): void;
+  Checkout: { open(options: { items: Array<{ priceId: string; quantity: number }>; customer?: { email?: string } }): void };
+}
+
+declare global {
+  interface Window { Paddle?: PaddleJs; }
+}
+
+let paddleLoad: Promise<PaddleJs> | null = null;
+let initializedToken: string | null = null;
+
+function loadPaddle(): Promise<PaddleJs> {
+  if (window.Paddle) return Promise.resolve(window.Paddle);
+  if (paddleLoad) return paddleLoad;
+
+  paddleLoad = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.paddle.com/paddle/v2/paddle.js';
+    script.async = true;
+    script.onload = () => window.Paddle ? resolve(window.Paddle) : reject(new Error('Paddle.js no se cargó correctamente.'));
+    script.onerror = () => reject(new Error('No fue posible cargar Paddle.js.'));
+    document.head.appendChild(script);
+  });
+  return paddleLoad;
+}
+
+export function getPaddleStatus(): PaymentProviderStatus {
+  const token = import.meta.env.VITE_PADDLE_CLIENT_TOKEN;
+  const priceId = import.meta.env.VITE_PADDLE_DEFAULT_PRICE_ID;
+  return token?.startsWith('live_') && priceId?.startsWith('pri_') ? 'ready' : 'awaiting_configuration';
+}
+
+export async function openPaddleCheckout(request: CheckoutRequest): Promise<CheckoutResult> {
+  const token = import.meta.env.VITE_PADDLE_CLIENT_TOKEN;
+  if (getPaddleStatus() !== 'ready' || !token) {
+    return { status: 'awaiting_configuration', message: 'Paddle live todavía no está configurado para este entorno.' };
+  }
+
+  try {
+    const paddle = await loadPaddle();
+    if (initializedToken !== token) {
+      paddle.Initialize({ token, ...(request.customerId ? { pwCustomer: { id: request.customerId } } : {}) });
+      initializedToken = token;
+    }
+    paddle.Checkout.open({
+      items: [{ priceId: request.priceId, quantity: 1 }],
+      ...(request.customerEmail ? { customer: { email: request.customerEmail } } : {}),
+    });
+    return { status: 'ready' };
+  } catch (error) {
+    return { status: 'unavailable', message: error instanceof Error ? error.message : 'No fue posible abrir Paddle Checkout.' };
+  }
+>>>>>>> Stashed changes
 }

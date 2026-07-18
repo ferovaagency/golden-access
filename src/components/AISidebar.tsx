@@ -8,6 +8,7 @@ import { Conversation, ConversationContent } from './ai-elements/conversation';
 import { Message, MessageContent, MessageResponse } from './ai-elements/message';
 import { PromptInput, PromptInputFooter, PromptInputSubmit, PromptInputTextarea } from './ai-elements/prompt-input';
 import { Shimmer } from './ai-elements/shimmer';
+import { AiDisclosure } from './AiDisclosure';
 
 interface Props {
   user: User;
@@ -145,6 +146,7 @@ export default function AISidebar({ user, collapsed, onToggle, width, onResize, 
       </header>
 
       <div className="flex-1 min-h-0 flex flex-col px-3">
+        <div className="pt-3"><AiDisclosure variant="banner" /></div>
         <Conversation>
           <ConversationContent>
             {!loaded && <Shimmer>Cargando historial…</Shimmer>}
@@ -157,6 +159,7 @@ export default function AISidebar({ user, collapsed, onToggle, width, onResize, 
               <Message key={m.id} from={m.role}>
                 <MessageContent from={m.role}>
                   <MessageResponse>{getText(m)}</MessageResponse>
+                  {m.role === 'assistant' && <AiDisclosure />}
                 </MessageContent>
               </Message>
             ))}

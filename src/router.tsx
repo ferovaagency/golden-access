@@ -9,6 +9,8 @@ import MaintenancePage from './components/MaintenancePage';
 // (App.tsx) for now — turn 5 will split it into per-module routes.
 const App = lazy(() => import('./App'));
 const AdminCRMRoute = lazy(() => import('./routes/AdminRoute'));
+const Privacidad = lazy(() => import('./routes/Privacidad'));
+const Terminos = lazy(() => import('./routes/Terminos'));
 
 function RouteFallback() {
   return (
@@ -33,6 +35,8 @@ export default function Router() {
       <ErrorBoundary>
         <Suspense fallback={<RouteFallback />}>
           <Routes>
+            <Route path="/privacidad" element={<Privacidad />} />
+            <Route path="/terminos" element={<Terminos />} />
             <Route path="/admin/*" element={<AdminCRMRoute />} />
             <Route path="/maintenance" element={<MaintenancePage />} />
             <Route path="/" element={<App />} />

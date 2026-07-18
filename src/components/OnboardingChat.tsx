@@ -9,6 +9,7 @@ import { Conversation, ConversationContent } from './ai-elements/conversation';
 import { Message, MessageContent, MessageResponse } from './ai-elements/message';
 import { PromptInput, PromptInputFooter, PromptInputSubmit, PromptInputTextarea } from './ai-elements/prompt-input';
 import { Shimmer } from './ai-elements/shimmer';
+import { AiDisclosure } from './AiDisclosure';
 
 interface Props {
   user: User;
@@ -174,6 +175,7 @@ export default function OnboardingChat({ user, onDone }: Props) {
 
         {/* Chat o formulario manual */}
         <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 flex flex-col min-h-[520px] order-1 lg:order-2">
+          <AiDisclosure variant="banner" />
           {manualMode ? (
             <form onSubmit={handleManualSave} className="space-y-4">
               <h3 className="font-display font-semibold text-slate-900">Datos de tu negocio</h3>

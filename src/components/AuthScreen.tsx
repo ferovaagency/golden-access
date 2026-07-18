@@ -122,8 +122,9 @@ export default function AuthScreen() {
             : '¿Ya tienes cuenta? Inicia sesión'}
         </button>
 
-        <p className="text-xs text-slate-400 text-center pt-2">
-          Mafe © 2026 | Bogotá D.C., Colombia
+        <p className="text-xs text-slate-400 text-center pt-2 leading-relaxed">
+          Al usar Ferova OS puedes consultar la <a href="/privacidad" target="_blank" rel="noreferrer" className="underline hover:text-blue-700">Política de Tratamiento de Datos</a> y los <a href="/terminos" target="_blank" rel="noreferrer" className="underline hover:text-blue-700">Términos y Condiciones</a>.<br />
+          Mafe © 2026 · Bogotá D.C., Colombia
         </p>
       </div>
     </div>

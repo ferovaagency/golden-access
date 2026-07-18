@@ -2,20 +2,28 @@ import React, { useState } from 'react';
 import { Loader2, ShieldCheck, LogOut } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { logout, checkSubscription } from '../lib/supabase';
+import { getPaddleStatus, openPaddleCheckout } from '../lib/paymentProvider';
 
 interface PaywallProps {
   user: User;
   onPaid: () => void;
 }
 
-const PRICE_USD = Number(import.meta.env.VITE_PAYWALL_PRICE_USD || '50.00');
-const HOSTED_BUTTON_ID = '362RRUB6YWWNW';
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const NOTIFY_URL = SUPABASE_URL ? `${SUPABASE_URL}/functions/v1/paypal-ipn` : undefined;
-
 export default function Paywall({ user, onPaid }: PaywallProps) {
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const paddleStatus = getPaddleStatus();
+
+  const handleCheckout = async () => {
+    setError(null);
+    const priceId = import.meta.env.VITE_PADDLE_DEFAULT_PRICE_ID;
+    if (!priceId) {
+      setError('Los pagos con Paddle todavía no están configurados para este entorno.');
+      return;
+    }
+    const result = await openPaddleCheckout({ priceId, customerEmail: user.email });
+    if (result.status !== 'ready') setError(result.message || 'No fue posible abrir el checkout.');
+  };
 
   const handleCheckPayment = async () => {
     setChecking(true);
@@ -25,7 +33,7 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
       if (paid) {
         onPaid();
       } else {
-        setError('Todavía no vemos tu pago confirmado. PayPal puede tardar unos segundos en notificarnos — intenta de nuevo en un momento.');
+        setError('Todavía no vemos una suscripción confirmada. Cuando Paddle confirme el pago, tu acceso se activará automáticamente.');
       }
     } catch (e: any) {
       setError(`Error verificando el pago: ${e.message || e}`);
@@ -47,15 +55,12 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
             Activa tu Licencia
           </h1>
           <p className="text-xs text-[#a39d8e] font-mono uppercase tracking-wider">
-            Acceso completo a Ferova OS Financiero
+            Acceso a Ferova OS
           </p>
         </div>
 
         <div className="border-t border-b border-[#2a2620] py-5 space-y-3">
-          <div className="flex items-baseline justify-center gap-1">
-            <span className="text-4xl font-bold text-white">${PRICE_USD.toFixed(2)}</span>
-            <span className="text-xs text-[#8a8377] font-mono">USD / mes</span>
-          </div>
+          <p className="text-center text-sm font-semibold text-white">El precio y los impuestos se muestran de forma segura en Paddle.</p>
           <ul className="text-xs text-[#a39d8e] space-y-1.5 pl-4">
             <li>• Dashboard ejecutivo + KPIs en tiempo real</li>
             <li>• Sincronización con Google Sheets / Drive</li>
@@ -71,26 +76,16 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
             </p>
           )}
 
-          <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank" className="flex justify-center">
-            <input type="hidden" name="cmd" value="_s-xclick" />
-            <input type="hidden" name="hosted_button_id" value={HOSTED_BUTTON_ID} />
-            <input type="hidden" name="currency_code" value="USD" />
-            {/* Identifica al usuario de Supabase: el webhook de IPN lo usa para activar su suscripción */}
-            <input type="hidden" name="custom" value={user.id} />
-            {NOTIFY_URL && <input type="hidden" name="notify_url" value={NOTIFY_URL} />}
-            <input type="hidden" name="return" value={typeof window !== 'undefined' ? window.location.origin : ''} />
-            <input
-              type="image"
-              src="https://www.paypalobjects.com/es_XC/i/btn/btn_subscribe_LG.gif"
-              style={{ border: 0 }}
-              name="submit"
-              title="PayPal es una forma segura y fácil de pagar en línea."
-              alt="Suscribirse"
-            />
-          </form>
+          <button
+            onClick={handleCheckout}
+            disabled={paddleStatus !== 'ready'}
+            className="w-full flex items-center justify-center gap-2 bg-[#c9a961] hover:bg-[#b09252] text-black font-semibold font-display py-2.5 rounded transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {paddleStatus === 'ready' ? 'Continuar con Paddle' : 'Paddle pendiente de configuración'}
+          </button>
 
           <p className="text-[10px] text-[#8a8377] font-mono text-center leading-relaxed">
-            Se abre PayPal en una pestaña nueva. Cuando termines de suscribirte, vuelve aquí y pulsa el botón de abajo.
+            Paddle procesa la suscripción, factura y calcula los impuestos aplicables. Ferova OS no recibe ni almacena datos de pago. Al continuar aceptas los <a href="/terminos" className="underline hover:text-white">Términos</a> y la <a href="/privacidad" className="underline hover:text-white">Política de Privacidad</a>.
           </p>
 
           <button

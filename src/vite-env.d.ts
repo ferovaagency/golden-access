@@ -6,6 +6,10 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_PROJECT_ID: string;
   readonly VITE_PAYPAL_CLIENT_ID?: string;
   readonly VITE_PAYWALL_PRICE_USD?: string;
+  /** Paddle client-side token. Use a `live_` token only in the live build. */
+  readonly VITE_PADDLE_CLIENT_TOKEN?: string;
+  /** Live Paddle price ID; this identifies a catalog price, not its amount. */
+  readonly VITE_PADDLE_DEFAULT_PRICE_ID?: string;
 }
 
 interface ImportMeta {

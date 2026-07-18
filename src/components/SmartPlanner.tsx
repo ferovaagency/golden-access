@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Sparkles, Wand2, Loader2, Check, Clock, Zap, Battery, BatteryLow, Trash2, ChevronRight, Sunrise, AlertTriangle, Lightbulb, TrendingUp, Info, Lock } from 'lucide-react';
 import { usePlanner } from '../hooks/usePlanner';
 import type { PlannerBlock, PlannerCategory, PlannerEnergy, PlannerTask } from '../lib/plannerService';
+import { AiDisclosure } from './AiDisclosure';
 
 const categoryMeta: Record<PlannerCategory, { label: string; tone: string }> = {
   deep_work: { label: 'Deep Work', tone: 'bg-violet-50 text-violet-700 border-violet-200' },
@@ -76,6 +77,8 @@ export default function SmartPlanner() {
           </button>
         </div>
       </header>
+
+      <AiDisclosure />
 
       {p.error && <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{p.error}</div>}
 

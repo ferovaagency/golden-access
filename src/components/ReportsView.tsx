@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { FileText, Loader2, Sparkles, TrendingUp, AlertTriangle, CheckCircle2, Target, RefreshCw, Calculator } from 'lucide-react';
 import { CeoReport, DecisionSimulation, ReportPeriod, generateReport, listReports, listSimulations, runSimulation } from '../lib/reportsService';
+import { AiDisclosure } from './AiDisclosure';
 
 const periodLabel: Record<ReportPeriod, string> = { daily: 'Diario', weekly: 'Semanal', monthly: 'Mensual' };
 
@@ -100,6 +101,8 @@ export default function ReportsView({ user }: { user: User }) {
           <button onClick={() => setTab('decisions')} className={`px-3 py-1.5 text-xs font-semibold rounded-lg ${tab==='decisions'?'bg-blue-600 text-white':'text-slate-600'}`}>Simulador</button>
         </div>
       </header>
+
+      <AiDisclosure variant="report" />
 
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 flex items-start gap-2">

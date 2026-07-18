@@ -844,7 +844,7 @@ export default function App() {
 
       {/* 4. Footer */}
       <footer className="bg-white border-t border-slate-200 py-6 text-center text-[10px] font-mono text-slate-400 shrink-0 uppercase tracking-widest mt-12">
-        Ferova OS © 2026 • Finanzas, Growth CRM y asistente IA con datos reales
+        Ferova OS © 2026 • Finanzas, Growth CRM y asistente IA con datos reales • <a href="/privacidad" className="underline hover:text-slate-700">Privacidad</a> • <a href="/terminos" className="underline hover:text-slate-700">Términos</a>
       </footer>
 
       <CommandPalette
