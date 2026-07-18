@@ -1,4 +1,4 @@
-project_id = "izkhdzzyqfopjveaagwk"
+project_id = "rrjyfyihdnbvbtdxygyp"
 
 [functions.paddle-webhook]
 verify_jwt = false
