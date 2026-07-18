@@ -338,7 +338,7 @@ function BlockRow({ block, tasks, clients, onComplete }: { block: PlannerBlock; 
   );
 }
 
-function TaskRow({ task, clientName, isProtected, onEdit, onComplete, onPostpone, onDelete }: { task: PlannerTask; clientName?: string; isProtected: boolean; onEdit: (task: PlannerTask) => void; onComplete: (id: string) => void; onPostpone: (id: string) => void; onDelete: (id: string) => void }) {
+function TaskRow({ task, clientName, isProtected, onEdit, onComplete, onPostpone, onDelete }: { task: PlannerTask; clientName?: string; isProtected: boolean; onEdit: (task: PlannerTask) => void; onComplete: (id: string) => void; onPostpone: (id: string) => void | Promise<void>; onDelete: (id: string) => void }) {
   const EIcon = energyIcon[task.energy_required];
   return (
     <li className="group flex flex-wrap items-center gap-2 rounded-xl border border-[var(--line)] bg-white px-3 py-2">
