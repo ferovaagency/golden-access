@@ -67,6 +67,9 @@ export default function Home({ appData, formatCop, onNavigate, userName }: Props
         </ul>
       </section>
 
+      <InsightsCard onNavigate={onNavigate} />
+
+
       <section>
         <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-500">Salud del negocio</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
