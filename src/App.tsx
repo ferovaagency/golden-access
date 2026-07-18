@@ -8,7 +8,7 @@ import { Config, AppData, Cliente, Servicio, Herramienta, OtroGasto, Venta, Hora
 import { calcularMétricasFinancieras } from './lib/calculations';
 
 // Unified Premium View Components
-import Dashboard from './components/Dashboard';
+import Home from './components/Home';
 import ClientesAdmin from './components/ClientesAdmin';
 import ServiciosAdmin from './components/ServiciosAdmin';
 import VentasAdmin from './components/VentasAdmin';
@@ -35,11 +35,19 @@ import {
   Calendar, 
   Loader2, 
   AlertCircle,
+  Boxes,
+  FolderKanban,
+  Grid2X2,
+  LayoutDashboard,
   Menu,
+  Settings,
   X
 } from 'lucide-react';
 
 const CRM_TAB_IDS: CRMTab[] = ['pipeline', 'citas', 'contenido', 'bot', 'resenas'];
+
+type NavigationItem = { id: string; label: string; hint: string };
+type NavigationSection = { id: string; label: string; icon: React.ComponentType<{ className?: string }>; items: NavigationItem[] };
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -63,7 +71,7 @@ export default function App() {
   const [selectedMonth, setSelectedMonth] = useState<string>('Todos');
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [assistantOpen, setAssistantOpen] = useState(false);
+  const [assistantCollapsed, setAssistantCollapsed] = useState(false);
 
   // Header TRM Quick Edit
   const [headerTrm, setHeaderTrm] = useState<string>('');
@@ -425,8 +433,35 @@ export default function App() {
 
   const TAB_SET = [...GESTION_OPERATIVA_TABS, ...GESTION_FINANCIERA_TABS, ...CRM_GROWTH_TABS];
 
+  const NAVIGATION_SECTIONS: NavigationSection[] = [
+    { id: 'home', label: 'Home', icon: LayoutDashboard, items: [{ id: 'dashboard', label: 'Executive Control Center', hint: 'Vista ejecutiva y prioridades' }] },
+    { id: 'workspace', label: 'Workspace', icon: Boxes, items: [
+      { id: 'clientes', label: 'Clientes', hint: 'Cuentas activas' },
+      { id: 'servicios', label: 'Servicios', hint: 'Catálogo y costos' },
+      { id: 'horas', label: 'Horas', hint: 'Capacidad y rentabilidad' },
+    ] },
+    { id: 'projects', label: 'Projects', icon: FolderKanban, items: [{ id: 'proyectos', label: 'Proyectos', hint: 'KPIs y ejecución' }] },
+    { id: 'modules', label: 'Modules', icon: Grid2X2, items: [
+      { id: 'ventas', label: 'Ingresos', hint: 'Ventas y abonos' },
+      { id: 'pagosEgresos', label: 'Pagos', hint: 'Egresos registrados' },
+      { id: 'gastos', label: 'Costos', hint: 'Herramientas y gastos' },
+      { id: 'equilibrioGlobal', label: 'Equilibrio', hint: 'Punto global' },
+      { id: 'equilibrioServicio', label: 'Por servicio', hint: 'Margen unitario' },
+      { id: 'iva', label: 'IVA', hint: 'Control tributario' },
+      { id: 'alertas', label: 'Alertas', hint: 'Riesgos y topes' },
+      ...CRM_GROWTH_TABS,
+    ] },
+    { id: 'settings', label: 'Settings', icon: Settings, items: [{ id: 'ajustes', label: 'Configuración', hint: 'Datos y Google Sheets' }] },
+  ];
+
+  const activeSectionId = NAVIGATION_SECTIONS.find((section) => section.items.some((item) => item.id === activeTab))?.id ?? 'home';
+  const navigateTo = (tab: string) => {
+    setActiveTab(tab);
+    setIsMobileMenuOpen(false);
+  };
+
   return (
-    <div className="ferova-light-theme min-h-screen bg-[#f7f8fb] flex flex-col text-[#1f2937] font-sans">
+    <div className={`ferova-light-theme min-h-screen bg-[#f7f8fb] flex flex-col text-[#1f2937] font-sans transition-[padding] ${assistantCollapsed ? '' : 'xl:pr-[360px]'}`}>
       
       {/* 1. Header component */}
       <header className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-[#dbe4ee] relative z-20">
@@ -536,8 +571,8 @@ export default function App() {
             )}
 
             {/* Profile component user info */}
-              <button onClick={() => setAssistantOpen(true)} className="hidden md:flex items-center gap-2 rounded-2xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700">
-                Asistente IA
+              <button onClick={() => setAssistantCollapsed((value) => !value)} className="hidden md:flex items-center gap-2 rounded-2xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700">
+                {assistantCollapsed ? 'Abrir asistente' : 'Colapsar asistente'}
               </button>
 
               <div className="flex items-center gap-2.5 bg-white p-1.5 pr-3.5 rounded-2xl border border-slate-200 shadow-sm">
@@ -629,8 +664,36 @@ export default function App() {
       {/* 3. Main layout tabs container */}
        <div className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-6 flex flex-col lg:flex-row gap-6">
         
-        {/* Navigation Sidebar menu (lg+) */}
-        <aside className="lg:w-72 shrink-0 space-y-5 hidden lg:block select-none">
+        {/* Top-level navigation: every existing page lives inside one of five sections. */}
+        <aside className="hidden shrink-0 lg:block lg:w-72">
+          <nav className="space-y-2 rounded-3xl border border-slate-200 bg-white p-3 shadow-sm shadow-slate-200/30">
+            {NAVIGATION_SECTIONS.map((section) => {
+              const Icon = section.icon;
+              const isActive = section.id === activeSectionId;
+              return (
+                <div key={section.id} className="rounded-2xl">
+                  <button onClick={() => navigateTo(section.items[0].id)} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold transition ${isActive ? 'bg-slate-950 text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'}`}>
+                    <Icon className="h-4 w-4" />
+                    {section.label}
+                  </button>
+                  {isActive && (
+                    <div className="space-y-1 px-2 pb-2 pt-2">
+                      {section.items.map((item) => (
+                        <button key={item.id} onClick={() => navigateTo(item.id)} className={`w-full rounded-lg px-3 py-2 text-left transition ${activeTab === item.id ? 'bg-blue-50 text-blue-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}>
+                          <span className="block text-xs font-semibold">{item.label}</span>
+                          <span className="block pt-0.5 text-[11px] font-normal opacity-70">{item.hint}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </nav>
+        </aside>
+
+        {/* Legacy navigation retained temporarily for tab compatibility; not rendered. */}
+        <aside className="hidden">
           
           <div>
             <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-blue-600 block px-3 mb-2 font-black border-l-2 border-l-[#c9a961] pl-2">
@@ -702,8 +765,23 @@ export default function App() {
 
         </aside>
 
-        {/* Responsive Mobile Drawer menu (controlled by trigger button) */}
         {isMobileMenuOpen && (
+          <div className="fixed inset-0 z-40 flex justify-end bg-slate-900/20 lg:hidden" onClick={() => setIsMobileMenuOpen(false)}>
+            <div className="h-full w-72 overflow-y-auto border-l border-slate-200 bg-white p-5" onClick={(event) => event.stopPropagation()}>
+              <div className="mb-5 flex items-center justify-between"><span className="text-sm font-semibold text-slate-900">Navigation</span><button onClick={() => setIsMobileMenuOpen(false)} className="text-xs font-medium text-slate-500">Cerrar</button></div>
+              <nav className="space-y-2">
+                {NAVIGATION_SECTIONS.map((section) => {
+                  const Icon = section.icon;
+                  const isActive = section.id === activeSectionId;
+                  return <div key={section.id}><button onClick={() => navigateTo(section.items[0].id)} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold ${isActive ? 'bg-slate-950 text-white' : 'text-slate-600'}`}><Icon className="h-4 w-4" />{section.label}</button>{isActive && <div className="space-y-1 px-2 pb-2 pt-2">{section.items.map((item) => <button key={item.id} onClick={() => navigateTo(item.id)} className={`w-full rounded-lg px-3 py-2 text-left text-xs ${activeTab === item.id ? 'bg-blue-50 font-semibold text-blue-700' : 'text-slate-500'}`}>{item.label}</button>)}</div>}</div>;
+                })}
+              </nav>
+            </div>
+          </div>
+        )}
+
+        {/* Legacy mobile navigation retained temporarily for tab compatibility; not rendered. */}
+        {false && isMobileMenuOpen && (
           <div className="lg:hidden fixed inset-0 z-35 bg-slate-900/20 flex justify-end" onClick={() => setIsMobileMenuOpen(false)}>
             <div className="w-64 bg-white border-l border-slate-200 h-full p-5 space-y-4 text-xs font-mono overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-2">
@@ -824,12 +902,12 @@ export default function App() {
             <div className="min-h-[500px]">
               
               {activeTab === 'dashboard' && (
-                <Dashboard 
+                <Home
                   data={appData} 
                   metrics={metrics} 
                   selectedMonth={selectedMonth} 
                   formatCop={formatCop} 
-                  formatUsd={formatUsd} 
+                  onNavigate={setActiveTab}
                 />
               )}
 
@@ -874,8 +952,7 @@ export default function App() {
 
               {activeTab === 'proyectos' && (
                 <ProyectosAdmin 
-                  clientes={appData.clientes}
-                  config={appData.config}
+                  projectData={appData}
                   onSaveClientes={handleSaveClientes}
                 />
               )}
@@ -988,7 +1065,7 @@ export default function App() {
         Ferova OS © 2026 • Finanzas, Growth CRM y asistente IA con datos reales
       </footer>
 
-      {user && <BusinessAssistant user={user} open={assistantOpen} onToggle={() => setAssistantOpen((v) => !v)} />}
+      {user && <BusinessAssistant user={user} collapsed={assistantCollapsed} onToggleCollapsed={() => setAssistantCollapsed((value) => !value)} />}
 
     </div>
   );

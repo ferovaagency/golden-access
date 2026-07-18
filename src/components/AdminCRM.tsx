@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles, Download, MessageSquare, Zap, Copy, Search, Star, RefreshCw, CheckCircle2, Link2 } from 'lucide-react';
+import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles, Download, MessageSquare, Zap, Search, Star, RefreshCw, CheckCircle2, Link2 } from 'lucide-react';
 import { getAccessToken, googleSignIn, logout } from '../lib/supabase';
 import { copyText } from '../lib/clipboard';
+import { PIPELINE_STAGES } from './crm/constants';
+import { PlaybookCard } from './crm/PlaybookCard';
 import {
   isTeamMember,
   listOportunidades,
@@ -30,7 +32,6 @@ import {
   Oportunidad,
   CitaDiagnostico,
   ContenidoPotencial,
-  EstadoOportunidad,
   BotConfig,
   KnowledgeItem,
   RedditPost,
@@ -47,8 +48,6 @@ import {
   connectWhatsappInstance,
   WhatsappInstance,
 } from '../lib/crmService';
-
-const ESTADOS: EstadoOportunidad[] = ['nuevo', 'contactado', 'calificando', 'propuesta_enviada', 'negociacion', 'ganado', 'perdido'];
 
 export type CRMTab = 'pipeline' | 'citas' | 'contenido' | 'bot' | 'resenas';
 
@@ -775,7 +774,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                         onChange={(e) => handleChangeEstado(o, e.target.value as EstadoOportunidad)}
                         className="bg-slate-50/60 border border-slate-200 rounded px-2 py-1 text-slate-500 font-mono text-[10px]"
                       >
-                        {ESTADOS.map((s) => (
+                        {PIPELINE_STAGES.map((s) => (
                           <option key={s} value={s}>{s}</option>
                         ))}
                       </select>
@@ -1615,24 +1614,6 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
           </div>
         )}
       </main>
-    </div>
-  );
-}
-
-function PlaybookCard({ label, text, onCopy, accent }: { label: string; text: string; onCopy: (t: string) => void; accent: string }) {
-  return (
-    <div className="bg-slate-50/70 border rounded p-3" style={{ borderColor: `${accent}44` }}>
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[9px] font-mono uppercase tracking-wider font-bold" style={{ color: accent }}>{label}</span>
-        <button
-          onClick={() => onCopy(text)}
-          className="text-[9px] font-mono uppercase flex items-center gap-1 hover:opacity-80"
-          style={{ color: accent }}
-        >
-          <Copy className="w-2.5 h-2.5" /> Copiar
-        </button>
-      </div>
-      <p className="text-slate-900 text-[11px] whitespace-pre-wrap leading-relaxed">{text}</p>
     </div>
   );
 }

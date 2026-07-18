@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Cliente, Config } from '../types';
+import { AppData, Cliente } from '../types';
+import { updateProjectClient } from '../domains/projects/projectService';
+import type { ProjectDeliverable, ProjectKpi, ProjectObjective } from '../domains/projects/types';
+import { useProjectPortfolio } from '../hooks/useProjectPortfolio';
 import { 
   Target, 
   TrendingUp, 
@@ -19,35 +22,13 @@ import {
 } from 'lucide-react';
 
 interface ProyectosAdminProps {
-  clientes: Cliente[];
-  config: Config;
+  projectData: Pick<AppData, 'clientes' | 'servicios' | 'ventas' | 'horas'>;
   onSaveClientes: (updated: Cliente[]) => Promise<void>;
 }
 
-interface ObjectiveItem {
-  id: string;
-  text: string;
-  completado: boolean;
-  metaFecha?: string;
-}
-
-interface KPIItem {
-  id: string;
-  nombre: string;
-  meta: string;
-  actual: string;
-  tendencia: 'Subiendo' | 'Estable' | 'Bajando';
-}
-
-interface DeliverableItem {
-  id: string;
-  nombre: string;
-  estado: 'Pendiente' | 'En Progreso' | 'Cumplido';
-  fecha?: string;
-}
-
-export default function ProyectosAdmin({ clientes, config, onSaveClientes }: ProyectosAdminProps) {
-  const activeClientes = clientes.filter(c => c.activo);
+export default function ProyectosAdmin({ projectData, onSaveClientes }: ProyectosAdminProps) {
+  const projects = useProjectPortfolio(projectData);
+  const activeClientes = projects.map((project) => project.client);
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   
   // Brand Fields
@@ -56,9 +37,9 @@ export default function ProyectosAdmin({ clientes, config, onSaveClientes }: Pro
   const [progreso, setProgreso] = useState(0);
   
   // Lists
-  const [objectives, setObjectives] = useState<ObjectiveItem[]>([]);
-  const [kpis, setKpis] = useState<KPIItem[]>([]);
-  const [deliverables, setDeliverables] = useState<DeliverableItem[]>([]);
+  const [objectives, setObjectives] = useState<ProjectObjective[]>([]);
+  const [kpis, setKpis] = useState<ProjectKpi[]>([]);
+  const [deliverables, setDeliverables] = useState<ProjectDeliverable[]>([]);
   
   // Form add states
   const [newObjective, setNewObjective] = useState('');
@@ -81,49 +62,18 @@ export default function ProyectosAdmin({ clientes, config, onSaveClientes }: Pro
     if (activeClientes.length > 0 && !selectedClientId) {
       setSelectedClientId(activeClientes[0].id);
     }
-  }, [clientes]);
+  }, [activeClientes, selectedClientId]);
 
   // Load selected client project details
   useEffect(() => {
-    const client = clientes.find(c => c.id === selectedClientId);
-    if (client) {
-      setMarcaConcepto(client.marca_info || '');
-      setResponsable(client.responsable || '');
-      setProgreso(client.progreso || 0);
-      
-      // Parse objectives JSON safely
-      try {
-        if (client.objetivos) {
-          setObjectives(JSON.parse(client.objetivos));
-        } else {
-          setObjectives([]);
-        }
-      } catch (e) {
-        // Fallback to text lines if not valid JSON
-        setObjectives([]);
-      }
-
-      // Parse KPIs JSON safely
-      try {
-        if (client.kpis) {
-          setKpis(JSON.parse(client.kpis));
-        } else {
-          setKpis([]);
-        }
-      } catch (e) {
-        setKpis([]);
-      }
-
-      // Parse Deliverables JSON safely
-      try {
-        if (client.entregables) {
-          setDeliverables(JSON.parse(client.entregables));
-        } else {
-          setDeliverables([]);
-        }
-      } catch (e) {
-        setDeliverables([]);
-      }
+    const project = projects.find((item) => item.id === selectedClientId);
+    if (project) {
+      setMarcaConcepto(project.client.marca_info || '');
+      setResponsable(project.client.responsable || '');
+      setProgreso(project.client.progreso || 0);
+      setObjectives(project.objectives);
+      setKpis(project.kpis);
+      setDeliverables(project.deliverables);
     } else {
       setMarcaConcepto('');
       setResponsable('');
@@ -133,26 +83,20 @@ export default function ProyectosAdmin({ clientes, config, onSaveClientes }: Pro
       setDeliverables([]);
     }
     setSuccessMsg('');
-  }, [selectedClientId, clientes]);
+  }, [selectedClientId, projects]);
 
   const handleSaveProjectData = async () => {
     if (!selectedClientId) return;
     setSaving(true);
     setSuccessMsg('');
     try {
-      const updated = clientes.map(c => {
-        if (c.id === selectedClientId) {
-          return {
-            ...c,
-            marca_info: marcaConcepto,
-            responsable: responsable,
-            progreso: Number(progreso),
-            objetivos: JSON.stringify(objectives),
-            kpis: JSON.stringify(kpis),
-            entregables: JSON.stringify(deliverables)
-          };
-        }
-        return c;
+      const updated = updateProjectClient(projectData.clientes, selectedClientId, {
+        marcaInfo: marcaConcepto,
+        responsable,
+        progreso: Number(progreso),
+        objectives,
+        kpis,
+        deliverables,
       });
       await onSaveClientes(updated);
       setSuccessMsg('¡Seguimiento de proyecto guardado y sincronizado con Sheets!');
@@ -168,7 +112,7 @@ export default function ProyectosAdmin({ clientes, config, onSaveClientes }: Pro
   // 1. Objectives
   const addObjective = () => {
     if (!newObjective.trim()) return;
-    const item: ObjectiveItem = {
+    const item: ProjectObjective = {
       id: `obj_${Date.now()}`,
       text: newObjective.trim(),
       completado: false,
@@ -190,7 +134,7 @@ export default function ProyectosAdmin({ clientes, config, onSaveClientes }: Pro
   // 2. KPIs
   const addKpi = () => {
     if (!newKpiNombre.trim()) return;
-    const item: KPIItem = {
+    const item: ProjectKpi = {
       id: `kpi_${Date.now()}`,
       nombre: newKpiNombre.trim(),
       meta: newKpiMeta.trim() || 'N/A',
@@ -211,7 +155,7 @@ export default function ProyectosAdmin({ clientes, config, onSaveClientes }: Pro
   // 3. Deliverables (Cumplimiento de Servicio)
   const addDeliverable = () => {
     if (!newDeliverableNombre.trim()) return;
-    const item: DeliverableItem = {
+    const item: ProjectDeliverable = {
       id: `del_${Date.now()}`,
       nombre: newDeliverableNombre.trim(),
       estado: newDeliverableEstado,
