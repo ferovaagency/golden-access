@@ -97,11 +97,8 @@ export default function App() {
   useEffect(() => { localStorage.setItem('ferova.ai.width', String(aiWidth)); }, [aiWidth]);
 
 
-  useEffect(() => {
-    if (appData?.config?.trm) {
-      setHeaderTrm(String(appData.config.trm));
-    }
-  }, [appData?.config?.trm]);
+  // (TRM quick-edit was moved out of the shell; kept in Ajustes.)
+
 
   useEffect(() => {
     // Listen for Auth events (Supabase)
