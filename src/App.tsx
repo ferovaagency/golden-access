@@ -473,6 +473,7 @@ export default function App() {
 
   const modulesGroup: NavItem[] = [];
   modulesGroup.push({ id: 'planner', label: 'Planificador', icon: CalendarCheck });
+  modulesGroup.push({ id: 'reports', label: 'Reportes CEO', icon: FileText });
   modulesGroup.push({ id: 'proyectos', label: 'Proyectos', icon: FolderKanban });
   if (modules.financiero) {
     modulesGroup.push({ id: 'dashboard', label: 'Finanzas', icon: TrendingUp });
