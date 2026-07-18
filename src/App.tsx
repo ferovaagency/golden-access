@@ -40,6 +40,7 @@ import {
   FolderKanban,
   Settings as SettingsIcon,
   CalendarCheck,
+  FileText,
   TrendingUp,
   Wallet,
   Users as UsersIcon,
