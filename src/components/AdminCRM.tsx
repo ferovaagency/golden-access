@@ -31,6 +31,8 @@ import {
   searchRedditByKeywords,
   searchLinkedInByKeywords,
   enrichOportunidadApollo,
+  importApolloList,
+  ApolloImportResult,
   ServicioCatalogo,
   EstadoOportunidad,
   Oportunidad,
@@ -195,6 +197,13 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   // Apollo + playbook por oportunidad
   const [enrichingId, setEnrichingId] = useState<string | null>(null);
   const [expandedPlaybookId, setExpandedPlaybookId] = useState<string | null>(null);
+  const [apolloTitles, setApolloTitles] = useState('');
+  const [apolloKeywords, setApolloKeywords] = useState('');
+  const [apolloDomains, setApolloDomains] = useState('');
+  const [apolloLocations, setApolloLocations] = useState('');
+  const [apolloMaxResults, setApolloMaxResults] = useState(25);
+  const [importingApollo, setImportingApollo] = useState(false);
+  const [apolloImportResult, setApolloImportResult] = useState<ApolloImportResult | null>(null);
   const [enrichInputs, setEnrichInputs] = useState<Record<string, { linkedin_url: string; dominio: string; contexto: string }>>({});
   const getEnrichInput = (id: string) => enrichInputs[id] || { linkedin_url: '', dominio: '', contexto: '' };
   const setEnrichInput = (id: string, patch: Partial<{ linkedin_url: string; dominio: string; contexto: string }>) =>
@@ -664,6 +673,34 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     }
   };
 
+  const handleImportApollo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const titles = apolloTitles.split(',').map((t) => t.trim()).filter(Boolean);
+    const domains = apolloDomains.split(',').map((d) => d.trim()).filter(Boolean);
+    const locations = apolloLocations.split(',').map((l) => l.trim()).filter(Boolean);
+    if (!titles.length && !apolloKeywords.trim() && !domains.length && !locations.length) {
+      alert('Define al menos un filtro: cargo, palabra clave, dominio o ubicación.');
+      return;
+    }
+    setImportingApollo(true);
+    setApolloImportResult(null);
+    try {
+      const result = await importApolloList({
+        titles: titles.length ? titles : undefined,
+        keywords: apolloKeywords.trim() || undefined,
+        domains: domains.length ? domains : undefined,
+        locations: locations.length ? locations : undefined,
+        max_results: apolloMaxResults,
+      });
+      setApolloImportResult(result);
+      if (result.oportunidades.length) setOportunidades([...result.oportunidades, ...oportunidades]);
+    } catch (err: any) {
+      alert(`Error importando de Apollo: ${err.message || err}`);
+    } finally {
+      setImportingApollo(false);
+    }
+  };
+
   const copyToClipboard = async (text: string) => {
     await copyText(text);
   };
@@ -911,6 +948,47 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
 
         {tab === 'pipeline' && (
+          <div className="space-y-6">
+          <form onSubmit={handleImportApollo} className="bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs">
+            <div className="flex items-center gap-2 text-blue-600 font-mono uppercase text-[10px] tracking-wider font-bold">
+              <Search className="w-3.5 h-3.5" /> Importar lista desde Apollo
+            </div>
+            <p className="text-[10px] text-slate-400">Busca prospectos en Apollo.io por cargo, palabra clave, dominio o ubicación, y los agrega al pipeline evitando duplicados por email/LinkedIn/nombre+dominio. No genera el playbook automáticamente — eso se hace por oportunidad con "Enriquecer con Apollo".</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Cargos (separados por coma)</label>
+                <input value={apolloTitles} onChange={(e) => setApolloTitles(e.target.value)} placeholder="CEO, Director de Marketing" className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900" />
+              </div>
+              <div>
+                <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Palabras clave</label>
+                <input value={apolloKeywords} onChange={(e) => setApolloKeywords(e.target.value)} placeholder="agencia SEO Colombia" className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900" />
+              </div>
+              <div>
+                <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Dominios (separados por coma)</label>
+                <input value={apolloDomains} onChange={(e) => setApolloDomains(e.target.value)} placeholder="empresa.com" className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900" />
+              </div>
+              <div>
+                <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Ubicaciones (separadas por coma)</label>
+                <input value={apolloLocations} onChange={(e) => setApolloLocations(e.target.value)} placeholder="Bogotá, Colombia" className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900" />
+              </div>
+            </div>
+            <div className="flex items-end gap-3">
+              <div>
+                <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Máximo de resultados</label>
+                <input type="number" min={1} max={100} value={apolloMaxResults} onChange={(e) => setApolloMaxResults(Math.max(1, Math.min(100, Number(e.target.value) || 25)))} className="w-24 bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900" />
+              </div>
+              <button type="submit" disabled={importingApollo} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded disabled:opacity-50 flex items-center gap-2">
+                {importingApollo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+                {importingApollo ? 'Importando…' : 'Buscar e importar'}
+              </button>
+            </div>
+            {apolloImportResult && (
+              <div className="rounded-lg bg-blue-50 border border-blue-100 px-3 py-2 text-[11px] text-blue-800">
+                {apolloImportResult.imported} importado(s) de {apolloImportResult.fetched} encontrado(s) ({apolloImportResult.total_found} disponibles en Apollo) · {apolloImportResult.skipped_duplicates} duplicado(s) omitido(s).
+              </div>
+            )}
+          </form>
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <form onSubmit={handleCreateOportunidad} className="lg:col-span-4 bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs h-fit">
               <h3 className="text-blue-600 font-mono uppercase text-[10px] tracking-wider font-bold">Nueva oportunidad</h3>
@@ -1215,6 +1293,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 );
               })}
             </div>
+          </div>
           </div>
         )}
 

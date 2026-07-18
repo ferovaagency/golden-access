@@ -346,6 +346,27 @@ export async function enrichOportunidadApollo(payload: {
   return data.oportunidad as Oportunidad;
 }
 
+export interface ApolloImportResult {
+  total_found: number;
+  fetched: number;
+  imported: number;
+  skipped_duplicates: number;
+  oportunidades: Oportunidad[];
+}
+
+export async function importApolloList(payload: {
+  titles?: string[];
+  keywords?: string;
+  domains?: string[];
+  locations?: string[];
+  max_results?: number;
+}): Promise<ApolloImportResult> {
+  const { data, error } = await supabase.functions.invoke('apollo-import-list', { body: payload });
+  if (error) throw await functionErrorMessage(error, 'No se pudo importar la lista de Apollo.');
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo importar la lista de Apollo.');
+  return data as ApolloImportResult;
+}
+
 export async function listContenidoPotencial(): Promise<ContenidoPotencial[]> {
   const { data, error } = await supabase
     .from('crm_contenido_potencial')
