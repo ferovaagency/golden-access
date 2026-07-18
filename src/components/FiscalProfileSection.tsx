@@ -1,7 +1,13 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useFiscalProfile } from '../hooks/useFiscalProfile';
+import { supabase } from '../lib/supabase';
 
-export default function FiscalProfileSection({ userId }: { userId: string }) {
+export default function FiscalProfileSection({ userId: userIdProp }: { userId?: string } = {}) {
+  const [userId, setUserId] = useState<string | undefined>(userIdProp);
+  useEffect(() => {
+    if (userIdProp) return;
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id));
+  }, [userIdProp]);
   const { profile, save, loading } = useFiscalProfile(userId);
   if (loading || !profile) return null;
   return (
