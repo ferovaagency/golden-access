@@ -41,6 +41,117 @@ export type Database = {
         }
         Relationships: []
       }
+      business_blindspots: {
+        Row: {
+          action: string
+          action_route: string | null
+          category: Database["public"]["Enums"]["blindspot_category"]
+          created_at: string
+          detected_at: string
+          dismissed_at: string | null
+          entity_id: string | null
+          entity_type: string | null
+          fingerprint: string
+          id: string
+          impact: string
+          metric_label: string | null
+          metric_value: number | null
+          resolved_at: string | null
+          title: string
+          updated_at: string
+          urgency: Database["public"]["Enums"]["blindspot_urgency"]
+          user_id: string
+          why: string
+        }
+        Insert: {
+          action: string
+          action_route?: string | null
+          category: Database["public"]["Enums"]["blindspot_category"]
+          created_at?: string
+          detected_at?: string
+          dismissed_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          fingerprint: string
+          id?: string
+          impact: string
+          metric_label?: string | null
+          metric_value?: number | null
+          resolved_at?: string | null
+          title: string
+          updated_at?: string
+          urgency?: Database["public"]["Enums"]["blindspot_urgency"]
+          user_id: string
+          why: string
+        }
+        Update: {
+          action?: string
+          action_route?: string | null
+          category?: Database["public"]["Enums"]["blindspot_category"]
+          created_at?: string
+          detected_at?: string
+          dismissed_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          fingerprint?: string
+          id?: string
+          impact?: string
+          metric_label?: string | null
+          metric_value?: number | null
+          resolved_at?: string | null
+          title?: string
+          updated_at?: string
+          urgency?: Database["public"]["Enums"]["blindspot_urgency"]
+          user_id?: string
+          why?: string
+        }
+        Relationships: []
+      }
+      business_health_snapshots: {
+        Row: {
+          computed_at: string
+          created_at: string
+          delta: number
+          id: string
+          narrative: string | null
+          previous_score: number | null
+          score: number
+          snapshot_date: string
+          sub_scores: Json
+          top_reasons: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          computed_at?: string
+          created_at?: string
+          delta?: number
+          id?: string
+          narrative?: string | null
+          previous_score?: number | null
+          score: number
+          snapshot_date?: string
+          sub_scores?: Json
+          top_reasons?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          computed_at?: string
+          created_at?: string
+          delta?: number
+          id?: string
+          narrative?: string | null
+          previous_score?: number | null
+          score?: number
+          snapshot_date?: string
+          sub_scores?: Json
+          top_reasons?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       crm_bot_config: {
         Row: {
           bot_enabled: boolean
@@ -1384,6 +1495,22 @@ export type Database = {
       is_team_member: { Args: never; Returns: boolean }
     }
     Enums: {
+      blindspot_category:
+        | "client_at_risk"
+        | "revenue_concentration"
+        | "cash_risk"
+        | "late_invoice"
+        | "project_hours_overrun"
+        | "low_margin_project"
+        | "employee_overload"
+        | "unused_capacity"
+        | "no_followup"
+        | "postponed_task"
+        | "marketing_inactive"
+        | "low_sales_activity"
+        | "bottleneck"
+        | "opportunity"
+      blindspot_urgency: "critical" | "high" | "medium" | "low"
       planner_category:
         | "deep_work"
         | "meetings"
@@ -1547,6 +1674,23 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      blindspot_category: [
+        "client_at_risk",
+        "revenue_concentration",
+        "cash_risk",
+        "late_invoice",
+        "project_hours_overrun",
+        "low_margin_project",
+        "employee_overload",
+        "unused_capacity",
+        "no_followup",
+        "postponed_task",
+        "marketing_inactive",
+        "low_sales_activity",
+        "bottleneck",
+        "opportunity",
+      ],
+      blindspot_urgency: ["critical", "high", "medium", "low"],
       planner_category: [
         "deep_work",
         "meetings",
