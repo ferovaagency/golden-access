@@ -66,3 +66,40 @@ export async function updateFeedbackStatus(id: string, estado: FeedbackItem['est
   if (error) throw error;
   if (!data?.ok) throw new Error(data?.message || 'No se pudo actualizar el estado.');
 }
+
+export interface DeepAnalyticsCustomer {
+  user_id: string;
+  email: string;
+  nombre_negocio: string | null;
+  plan: PlanId;
+  estado_suscripcion: 'activo' | 'cortesia' | 'sin_pago';
+  planner: { totalTasks: number; completedTasks: number; completionRate: number | null; avgActualVsEstimatedRatio: number | null; lastTaskAt: string | null };
+  finance: {
+    entriesLast30d: number; lastEntryAt: string | null; budgetsSet: number; cashBalance: number;
+    overdueReceivables: { count: number; total: number };
+    overduePayables: { count: number; total: number };
+  };
+  crm: { totalContacts: number; byStage: Record<string, number>; withNextAction: number };
+  engagement: { totalEvents: number; moduleDiversity: number; lastActiveAt: string | null; inactiveDays: number | null };
+  risk: { level: 'alto' | 'medio' | 'bajo'; points: number; reasons: string[] };
+  crossSell: string[];
+}
+
+export interface DeepAnalyticsPortfolio {
+  totalCustomers: number;
+  altoRiesgo: number;
+  medioRiesgo: number;
+  bajoRiesgo: number;
+  carteraVencidaTotal: number;
+  porPagarVencidoTotal: number;
+  sinPlanner: number;
+  sinCrm: number;
+  generatedAt: string;
+}
+
+export async function fetchDeepAnalytics(): Promise<{ portfolio: DeepAnalyticsPortfolio; customers: DeepAnalyticsCustomer[] }> {
+  const { data, error } = await supabase.functions.invoke('admin-analytics-deep', { body: {} });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo cargar la analítica.');
+  return { portfolio: data.portfolio, customers: data.customers };
+}
