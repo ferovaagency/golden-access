@@ -43,6 +43,7 @@ export default function SmartPlanner() {
       ends_at: `${p.date}T${blockEnd}:00`,
       category: 'meetings',
       is_locked: true,
+      protected: true,
     });
     setBlockTitle('');
     setShowBlockForm(false);
