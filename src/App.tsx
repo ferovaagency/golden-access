@@ -494,6 +494,8 @@ export default function App() {
       { id: 'reports', label: 'Reportes CEO', hint: 'Seguimiento ejecutivo' },
       ...(modules.crm_ventas ? [{ id: 'ventas-crm', label: 'CRM y Ventas', hint: 'Tu pipeline propio' }] : []),
       ...(modules.financiero ? [
+      { id: 'finops', label: 'Finanzas operativas', hint: 'Cuentas, deudas, flujo' },
+      { id: 'marketingRoi', label: 'Marketing ROI', hint: 'Campañas y calculadora' },
       { id: 'ventas', label: 'Ingresos', hint: 'Ventas y abonos' },
       { id: 'pagosEgresos', label: 'Pagos', hint: 'Egresos registrados' },
       { id: 'gastos', label: 'Costos', hint: 'Herramientas y gastos' },
@@ -502,6 +504,7 @@ export default function App() {
       { id: 'iva', label: 'IVA', hint: 'Control tributario' },
       { id: 'alertas', label: 'Alertas', hint: 'Riesgos y topes' },
       ] : []),
+      ...(isTeam ? [{ id: 'admin-cortesias', label: 'Cortesías y planes', hint: 'Acceso gratis y precios' }] : []),
       ...CRM_GROWTH_TABS,
     ] },
     { id: 'settings', label: 'Settings', icon: Settings, items: modules.financiero ? [{ id: 'ajustes', label: 'Configuración', hint: 'Datos y Google Sheets' }] : [] },
