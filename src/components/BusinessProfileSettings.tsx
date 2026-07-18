@@ -1,0 +1,65 @@
+import React, { useEffect, useState } from 'react';
+import { Building2, CheckCircle2, Loader2, Save } from 'lucide-react';
+import { BusinessProfile, upsertBusinessProfile } from '../lib/businessProfileService';
+
+interface Props {
+  userId: string;
+  profile: BusinessProfile | null;
+  onUpdated: (profile: BusinessProfile) => void;
+}
+
+const emptyForm = { nombre_negocio: '', industria: '', tipo_negocio: '', tamano_equipo: '', ciudad: '', telefono_contacto: '' };
+
+export default function BusinessProfileSettings({ userId, profile, onUpdated }: Props) {
+  const [form, setForm] = useState(emptyForm);
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    setForm({
+      nombre_negocio: profile?.nombre_negocio || '', industria: profile?.industria || '',
+      tipo_negocio: profile?.tipo_negocio || '', tamano_equipo: profile?.tamano_equipo || '',
+      ciudad: profile?.ciudad || '', telefono_contacto: profile?.telefono_contacto || '',
+    });
+  }, [profile]);
+
+  const update = (field: keyof typeof form, value: string) => {
+    setForm((current) => ({ ...current, [field]: value }));
+    setNotice(null);
+  };
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!form.nombre_negocio.trim()) { setNotice('Ingresa el nombre comercial del negocio.'); return; }
+    setSaving(true); setNotice(null);
+    try {
+      const saved = await upsertBusinessProfile(userId, { ...form, nombre_negocio: form.nombre_negocio.trim() });
+      onUpdated(saved);
+      setNotice('Perfil comercial actualizado. El nombre ya aparece en la cabecera.');
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message.replace('[businessProfileService] upsertBusinessProfile: ', '') : 'No se pudo guardar el perfil comercial.');
+    } finally { setSaving(false); }
+  };
+
+  const fieldClass = 'mt-1.5 block w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-400 focus:bg-white';
+  return (
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-start gap-3 border-b border-slate-100 px-5 py-4">
+        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-700"><Building2 className="h-5 w-5" /></div>
+        <div><h3 className="text-sm font-semibold text-slate-900">Identidad del negocio</h3><p className="mt-0.5 text-xs text-slate-500">Personaliza el nombre comercial y el contexto que utiliza Ferova One.</p></div>
+      </div>
+      <form onSubmit={submit} className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3">
+        <label className="text-xs font-medium text-slate-600">Nombre comercial<input value={form.nombre_negocio} onChange={(e) => update('nombre_negocio', e.target.value)} required maxLength={120} placeholder="Ej. SEO para Ecommerce" className={fieldClass} /></label>
+        <label className="text-xs font-medium text-slate-600">Industria o sector<input value={form.industria} onChange={(e) => update('industria', e.target.value)} maxLength={120} placeholder="Ej. Marketing digital" className={fieldClass} /></label>
+        <label className="text-xs font-medium text-slate-600">Tipo de negocio<input value={form.tipo_negocio} onChange={(e) => update('tipo_negocio', e.target.value)} maxLength={120} placeholder="Ej. Agencia B2B" className={fieldClass} /></label>
+        <label className="text-xs font-medium text-slate-600">Tamaño del equipo<input value={form.tamano_equipo} onChange={(e) => update('tamano_equipo', e.target.value)} maxLength={80} placeholder="Ej. 1–5 personas" className={fieldClass} /></label>
+        <label className="text-xs font-medium text-slate-600">Ciudad<input value={form.ciudad} onChange={(e) => update('ciudad', e.target.value)} maxLength={100} placeholder="Ej. Bogotá" className={fieldClass} /></label>
+        <label className="text-xs font-medium text-slate-600">Teléfono de contacto<input type="tel" value={form.telefono_contacto} onChange={(e) => update('telefono_contacto', e.target.value)} maxLength={40} placeholder="Ej. +57 300 000 0000" className={fieldClass} /></label>
+        <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:col-span-2 sm:flex-row sm:items-center sm:justify-between lg:col-span-3">
+          <div aria-live="polite" className="min-h-5 text-xs text-slate-600">{notice && <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-600" />{notice}</span>}</div>
+          <button disabled={saving} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Guardar identidad</button>
+        </div>
+      </form>
+    </section>
+  );
+}

@@ -1,7 +1,8 @@
 import type { Cliente, Hora, Servicio, Venta } from '../../types';
 
-export interface ProjectObjective { id: string; text: string; completado: boolean; metaFecha?: string; }
-export interface ProjectKpi { id: string; nombre: string; meta: string; actual: string; tendencia: 'Subiendo' | 'Estable' | 'Bajando'; }
+export interface ProjectObjective { id: string; text: string; completado: boolean; metaFecha?: string; progreso?: number; }
+export interface ProjectKpiHistory { fecha: string; valor: number; }
+export interface ProjectKpi { id: string; nombre: string; meta: string; actual: string; tendencia: 'Subiendo' | 'Estable' | 'Bajando'; objetivo_id?: string; historial?: ProjectKpiHistory[]; }
 export interface ProjectDeliverable { id: string; nombre: string; estado: 'Pendiente' | 'En Progreso' | 'Cumplido'; fecha?: string; }
 
 /** Current projects are delivery contexts persisted on a client record. */

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Loader2, MessageSquare, Bug, Lightbulb, HelpCircle } from 'lucide-react';
+import { Loader2, MessageSquare, Bug, Lightbulb, HelpCircle, Send, Users } from 'lucide-react';
+import { listCustomers, type AdminCustomer } from '../lib/adminService';
+import { sendUserNotification } from '../lib/userEngagementService';
 
 type FeedbackRow = {
   id: string;
@@ -16,22 +18,31 @@ type EventRow = { module: string; event_type: string; created_at: string; user_i
 export default function AdminFeedbackPanel() {
   const [feedback, setFeedback] = useState<FeedbackRow[]>([]);
   const [events, setEvents] = useState<EventRow[]>([]);
+  const [customers, setCustomers] = useState<AdminCustomer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'todos' | FeedbackRow['estado']>('todos');
+  const [segmentFilter, setSegmentFilter] = useState('todos');
+  const [targetUserId, setTargetUserId] = useState('');
+  const [notificationTitle, setNotificationTitle] = useState('Un consejo de María Fernanda');
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const [notificationTab, setNotificationTab] = useState('dashboard');
+  const [sending, setSending] = useState(false);
 
   const load = async () => {
     setLoading(true);
     try {
-      const [f, ev] = await Promise.all([
+      const [f, ev, customerRows] = await Promise.all([
         supabase.functions.invoke('admin-list-feedback'),
         (supabase as any).from('saas_user_events').select('module, event_type, created_at, user_id').order('created_at', { ascending: false }).limit(500),
+        listCustomers().catch(() => []),
       ]);
       if (f.error) throw f.error;
       if ((f.data as any)?.ok === false) throw new Error((f.data as any).message);
       setFeedback(((f.data as any).feedback || []) as FeedbackRow[]);
       if (ev.error) throw ev.error;
       setEvents((ev.data || []) as EventRow[]);
+      setCustomers(customerRows);
       setError(null);
     } catch (e) {
       setError((e as Error).message);
@@ -71,6 +82,38 @@ export default function AdminFeedbackPanel() {
     };
   }, [feedback, events]);
 
+  const customerInsights = useMemo(() => customers.map((customer) => {
+    const own = events.filter((event) => event.user_id === customer.user_id);
+    const counts = own.reduce<Record<string, number>>((acc, event) => { const area = moduleArea(event.module); acc[area] = (acc[area] || 0) + 1; return acc; }, {});
+    const topArea = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Sin uso';
+    const lastActive = own[0]?.created_at || null;
+    const inactiveDays = lastActive ? Math.floor((Date.now() - new Date(lastActive).getTime()) / 86_400_000) : null;
+    const segments = [
+      ...(!customer.onboarding_completado ? ['Configuración incompleta'] : []),
+      ...(inactiveDays == null ? ['Sin actividad medida'] : inactiveDays > 14 ? ['En riesgo de abandono'] : inactiveDays <= 7 ? ['Activo 7 días'] : []),
+      ...(topArea !== 'Sin uso' ? [`Foco ${topArea}`] : []),
+      ...(customer.estado_suscripcion === 'sin_pago' ? ['Sin pago'] : []),
+    ];
+    return { customer, events: own.length, lastActive, topArea, segments };
+  }), [customers, events]);
+
+  const segmentOptions = useMemo(() => Array.from(new Set(customerInsights.flatMap((insight) => insight.segments))).sort(), [customerInsights]);
+  const visibleInsights = segmentFilter === 'todos' ? customerInsights : customerInsights.filter((insight) => insight.segments.includes(segmentFilter));
+
+  const sendNotification = async () => {
+    if (!targetUserId || !notificationTitle.trim() || !notificationMessage.trim()) return;
+    setSending(true);
+    try {
+      await sendUserNotification(targetUserId, notificationTitle.trim(), notificationMessage.trim(), notificationTab);
+      setNotificationMessage('');
+      alert('Notificación enviada al panel del usuario.');
+    } catch (error: any) {
+      alert(`No se pudo enviar: ${error?.message || error}`);
+    } finally {
+      setSending(false);
+    }
+  };
+
   if (loading) return <div className="flex items-center justify-center p-16"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>;
 
   return (
@@ -98,6 +141,26 @@ export default function AdminFeedbackPanel() {
           </div>
         </div>
       )}
+
+      <div className="grid gap-4 xl:grid-cols-[1.5fr_1fr]">
+        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+          <div className="flex flex-col gap-2 border-b border-slate-200 px-5 py-3 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-center gap-2 text-sm font-semibold text-slate-800"><Users className="h-4 w-4" />Microsegmentos de comportamiento</div><select value={segmentFilter} onChange={(event) => setSegmentFilter(event.target.value)} className="rounded border border-slate-200 px-2 py-1 text-xs"><option value="todos">Todos</option>{segmentOptions.map((segment) => <option key={segment} value={segment}>{segment}</option>)}</select></div>
+          <div className="max-h-[430px] overflow-auto"><table className="w-full min-w-[680px] text-xs"><thead className="sticky top-0 bg-slate-50 text-left text-slate-500"><tr><th className="p-3">Usuario</th><th>Actividad</th><th>Foco</th><th>Segmentos</th><th></th></tr></thead><tbody>{visibleInsights.map(({ customer, events: count, lastActive, topArea, segments }) => <tr key={customer.user_id} className="border-t border-slate-100"><td className="p-3"><p className="font-semibold text-slate-800">{customer.nombre_negocio || customer.email}</p><p className="text-[10px] text-slate-400">{customer.plan} · {customer.estado_suscripcion}</p></td><td><p>{count} eventos</p><p className="text-[10px] text-slate-400">{lastActive ? new Date(lastActive).toLocaleDateString('es-CO') : 'Sin registro'}</p></td><td>{topArea}</td><td><div className="flex max-w-xs flex-wrap gap-1">{segments.map((segment) => <span key={segment} className="rounded-full bg-blue-50 px-2 py-0.5 text-[9px] font-semibold text-blue-700">{segment}</span>)}</div></td><td className="pr-3"><button type="button" onClick={() => setTargetUserId(customer.user_id)} className="text-[10px] font-semibold text-blue-700 hover:underline">Escribir</button></td></tr>)}</tbody></table></div>
+          <p className="border-t border-slate-100 px-5 py-3 text-[10px] leading-4 text-slate-400">Los segmentos usan navegación registrada desde esta versión. Son señales orientativas, no diagnósticos financieros ni personales.</p>
+        </section>
+
+        <section className="rounded-lg border border-slate-200 bg-white p-5">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-800"><Send className="h-4 w-4" />Mensaje personal al panel</div>
+          <p className="mt-1 text-[11px] leading-5 text-slate-500">Se mostrará como enviado por María Fernanda. No envía correo automáticamente.</p>
+          <div className="mt-4 space-y-3">
+            <label className="block text-[10px] font-semibold uppercase text-slate-500">Usuario<select value={targetUserId} onChange={(event) => setTargetUserId(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 p-2 text-xs normal-case text-slate-900"><option value="">Selecciona…</option>{customers.map((customer) => <option key={customer.user_id} value={customer.user_id}>{customer.nombre_negocio || customer.email}</option>)}</select></label>
+            <label className="block text-[10px] font-semibold uppercase text-slate-500">Título<input value={notificationTitle} onChange={(event) => setNotificationTitle(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 p-2 text-xs normal-case text-slate-900" /></label>
+            <label className="block text-[10px] font-semibold uppercase text-slate-500">Mensaje<textarea rows={5} value={notificationMessage} onChange={(event) => setNotificationMessage(event.target.value)} placeholder="Tip, recurso o recomendación concreta…" className="mt-1 w-full rounded-lg border border-slate-200 p-2 text-xs normal-case text-slate-900" /></label>
+            <label className="block text-[10px] font-semibold uppercase text-slate-500">Abrir módulo<select value={notificationTab} onChange={(event) => setNotificationTab(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 p-2 text-xs normal-case text-slate-900"><option value="dashboard">Inicio</option><option value="proyectos">Proyectos</option><option value="finops">Finanzas</option><option value="planner">Planner</option><option value="ventas-crm">Ventas</option><option value="ajustes">Ajustes</option></select></label>
+            <button type="button" onClick={sendNotification} disabled={sending || !targetUserId || !notificationMessage.trim()} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-40"><Send className="h-3.5 w-3.5" />{sending ? 'Enviando…' : 'Enviar al panel'}</button>
+          </div>
+        </section>
+      </div>
 
       <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
         <div className="px-5 py-3 border-b border-slate-200 flex items-center justify-between">
@@ -137,6 +200,14 @@ export default function AdminFeedbackPanel() {
       </div>
     </div>
   );
+}
+
+function moduleArea(module: string): string {
+  if (['ventas', 'gastos', 'pagosEgresos', 'equilibrioGlobal', 'equilibrioServicio', 'iva', 'alertas', 'finops', 'marketingRoi'].includes(module)) return 'Finanzas';
+  if (module === 'planner') return 'Planner';
+  if (module.includes('crm') || module === 'ventas-crm') return 'Ventas';
+  if (['proyectos', 'clientes', 'servicios', 'horas'].includes(module)) return 'Proyectos';
+  return 'Inicio';
 }
 
 function Stat({ label, value, tone }: { label: string; value: number; tone?: 'danger' | 'accent' }) {

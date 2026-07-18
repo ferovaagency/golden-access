@@ -2,11 +2,16 @@ import React, { useState } from 'react';
 import { Config, Venta, Cliente, Hora } from '../types';
 import { convertToCop } from '../lib/calculations';
 import { fetchOfficialTrm } from '../lib/financeService';
-import { Settings, Save, RefreshCw, FolderSync, Clipboard, Landmark } from 'lucide-react';
+import { Settings, Save, RefreshCw, FolderSync, Clipboard, Landmark, Route } from 'lucide-react';
 import { copyText } from '../lib/clipboard';
 import FiscalProfileSection from './FiscalProfileSection';
+import BusinessProfileSettings from './BusinessProfileSettings';
+import type { BusinessProfile } from '../lib/businessProfileService';
 
 interface ConfigAdminProps {
+  userId: string;
+  businessProfile: BusinessProfile | null;
+  onBusinessProfileUpdated: (profile: BusinessProfile) => void;
   config: Config;
   ventas: Venta[];
   clientes: Cliente[];
@@ -22,6 +27,9 @@ interface ConfigAdminProps {
 }
 
 export default function ConfigAdmin({
+  userId,
+  businessProfile,
+  onBusinessProfileUpdated,
   config,
   ventas,
   clientes,
@@ -173,10 +181,13 @@ export default function ConfigAdmin({
     <div className="space-y-8 animate-fade-in text-slate-900">
       
       {/* Header */}
-      <div className="border-b border-slate-200 pb-5">
-        <h2 className="text-xl font-display font-medium text-[#c9a961]">Configuración del Sistema</h2>
-        <p className="text-xs text-slate-500 font-mono mt-1">Límites DIAN, constantes 2026, respaldos y copias contables para fijos de operación</p>
+      <div className="flex flex-col gap-3 border-b border-slate-200 pb-5 sm:flex-row sm:items-start sm:justify-between">
+        <div><h2 className="text-xl font-display font-medium text-[#c9a961]">Configuración de Ferova One</h2>
+        <p className="text-xs text-slate-500 font-mono mt-1">Identidad, perfil fiscal, personalización y conexiones del negocio.</p></div>
+        <button type="button" onClick={() => window.dispatchEvent(new Event('ferova:start-tour'))} className="inline-flex items-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"><Route className="h-4 w-4" />Repetir recorrido</button>
       </div>
+
+      <BusinessProfileSettings userId={userId} profile={businessProfile} onUpdated={onBusinessProfileUpdated} />
 
       <FiscalProfileSection />
 
@@ -397,7 +408,7 @@ export default function ConfigAdmin({
 
             <div className="p-5 space-y-4 font-sans text-xs">
               <p className="text-slate-500 leading-relaxed text-[11px]">
-                Tu contabilidad vive en Ferova OS. Este respaldo es opcional: copia todo lo actual hacia tu propia hoja "Ferova_OS_Financiero" en Google Drive.
+                Tu contabilidad vive en Ferova One. Este respaldo es opcional: copia todo lo actual hacia tu propia hoja "Ferova_OS_Financiero" en Google Drive.
               </p>
 
               {!hasGoogleToken && (

@@ -49,6 +49,7 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
   const [newKpiMeta, setNewKpiMeta] = useState('');
   const [newKpiActual, setNewKpiActual] = useState('');
   const [newKpiTendencia, setNewKpiTendencia] = useState<'Subiendo' | 'Estable' | 'Bajando'>('Estable');
+  const [newKpiObjectiveId, setNewKpiObjectiveId] = useState('');
 
   const [newDeliverableNombre, setNewDeliverableNombre] = useState('');
   const [newDeliverableEstado, setNewDeliverableEstado] = useState<'Pendiente' | 'En Progreso' | 'Cumplido'>('Pendiente');
@@ -117,6 +118,7 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
       text: newObjective.trim(),
       completado: false,
       metaFecha: newObjectiveDate || undefined
+      ,progreso: 0
     };
     setObjectives([...objectives, item]);
     setNewObjective('');
@@ -128,28 +130,56 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
   };
 
   const toggleObjective = (id: string) => {
-    setObjectives(objectives.map(o => o.id === id ? { ...o, completado: !o.completado } : o));
+    setObjectives(objectives.map(o => o.id === id ? { ...o, completado: !o.completado, progreso: !o.completado ? 100 : 0 } : o));
+  };
+
+  const updateObjectiveProgress = (id: string, value: number) => {
+    const progress = Math.max(0, Math.min(100, value));
+    setObjectives(objectives.map((objective) => objective.id === id ? { ...objective, progreso: progress, completado: progress === 100 } : objective));
   };
 
   // 2. KPIs
   const addKpi = () => {
     if (!newKpiNombre.trim()) return;
+    if (objectives.length > 0 && !newKpiObjectiveId) {
+      alert('Selecciona el objetivo al que aporta este KPI.');
+      return;
+    }
+    const initialValue = Number(newKpiActual.replace(/[^0-9.-]/g, ''));
     const item: ProjectKpi = {
       id: `kpi_${Date.now()}`,
       nombre: newKpiNombre.trim(),
       meta: newKpiMeta.trim() || 'N/A',
       actual: newKpiActual.trim() || 'N/A',
-      tendencia: newKpiTendencia
+      tendencia: newKpiTendencia,
+      objetivo_id: newKpiObjectiveId || undefined,
+      historial: Number.isFinite(initialValue) ? [{ fecha: new Date().toISOString().slice(0, 10), valor: initialValue }] : [],
     };
     setKpis([...kpis, item]);
     setNewKpiNombre('');
     setNewKpiMeta('');
     setNewKpiActual('');
     setNewKpiTendencia('Estable');
+    setNewKpiObjectiveId('');
   };
 
   const removeKpi = (id: string) => {
     setKpis(kpis.filter(k => k.id !== id));
+  };
+
+  const updateKpiActual = (id: string, actual: string) => {
+    setKpis((current) => current.map((kpi) => {
+      if (kpi.id !== id) return kpi;
+      const numeric = Number(actual.replace(/[^0-9.-]/g, ''));
+      if (!Number.isFinite(numeric)) return { ...kpi, actual };
+      const history = kpi.historial || [];
+      const last = history[history.length - 1];
+      const nextHistory = last?.valor === numeric ? history : [...history, { fecha: new Date().toISOString().slice(0, 10), valor: numeric }].slice(-24);
+      const target = Number(kpi.meta.replace(/[^0-9.-]/g, ''));
+      const previous = last?.valor;
+      const tendencia = previous == null || numeric === previous ? 'Estable' : numeric > previous ? 'Subiendo' : 'Bajando';
+      return { ...kpi, actual, historial: nextHistory, tendencia, ...(Number.isFinite(target) ? {} : {}) };
+    }));
   };
 
   // 3. Deliverables (Cumplimiento de Servicio)
@@ -424,6 +454,10 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                             {obj.metaFecha && (
                               <span className="block text-[9px] font-mono text-[#8a8377] mt-0.5">Meta: {obj.metaFecha}</span>
                             )}
+                            <div className="mt-2 flex items-center gap-2">
+                              <input type="range" min="0" max="100" step="5" value={obj.progreso ?? (obj.completado ? 100 : 0)} onChange={(event) => updateObjectiveProgress(obj.id, Number(event.target.value))} className="h-1.5 w-28 accent-emerald-500" aria-label={`Progreso de ${obj.text}`} />
+                              <span className="text-[9px] font-mono text-emerald-400">{obj.progreso ?? (obj.completado ? 100 : 0)}%</span>
+                            </div>
                           </div>
                         </div>
 
@@ -592,6 +626,13 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                       className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2 text-xs rounded focus:outline-none"
                     />
                   </div>
+                  <div className="sm:col-span-4">
+                    <label className="block text-[9px] font-mono uppercase tracking-wider text-[#a39d8e] mb-1">Objetivo relacionado</label>
+                    <select value={newKpiObjectiveId} onChange={(event) => setNewKpiObjectiveId(event.target.value)} className="w-full bg-[#0f0e0c] text-white border border-[#2a2620] p-2 text-xs rounded focus:outline-none" required={objectives.length > 0}>
+                      <option value="">{objectives.length ? 'Selecciona un objetivo' : 'Crea primero un objetivo'}</option>
+                      {objectives.map((objective) => <option key={objective.id} value={objective.id}>{objective.text}</option>)}
+                    </select>
+                  </div>
                   <div className="sm:col-span-2">
                     <button 
                       type="button"
@@ -623,16 +664,18 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                           </button>
                         </div>
                         
+                        <div className="mb-2 text-[10px] text-blue-300">Objetivo: {objectives.find((objective) => objective.id === k.objetivo_id)?.text || 'Sin relación (dato anterior)'}</div>
                         <div className="grid grid-cols-2 gap-2 text-xs border-t border-[#2a2620]/40 pt-2">
                           <div>
                             <span className="text-[10px] text-[#8a8377] font-mono uppercase">Actual:</span>
-                            <span className="block font-bold text-[#c9a961]">{k.actual}</span>
+                            <input value={k.actual} onChange={(event) => setKpis((current) => current.map((item) => item.id === k.id ? { ...item, actual: event.target.value } : item))} onBlur={(event) => updateKpiActual(k.id, event.target.value)} className="mt-1 w-full rounded border border-[#2a2620] bg-black/20 px-2 py-1 font-bold text-[#c9a961] outline-none focus:border-[#c9a961]" aria-label={`Valor actual de ${k.nombre}`} />
                           </div>
                           <div>
                             <span className="text-[10px] text-[#8a8377] font-mono uppercase">Meta:</span>
                             <span className="block font-bold text-white">{k.meta}</span>
                           </div>
                         </div>
+                        <KpiProgress kpi={k} />
                       </div>
                     ))}
                   </div>
@@ -648,4 +691,28 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
 
     </div>
   );
+}
+
+function numericValue(value: string): number | null {
+  const number = Number(value.replace(/[^0-9.-]/g, ''));
+  return Number.isFinite(number) ? number : null;
+}
+
+function KpiProgress({ kpi }: { kpi: ProjectKpi }) {
+  const actual = numericValue(kpi.actual);
+  const target = numericValue(kpi.meta);
+  const progress = actual != null && target != null && target !== 0 ? Math.max(0, Math.min(100, (actual / target) * 100)) : null;
+  const history = kpi.historial || [];
+  const points = history.length > 1 ? history.map((entry, index) => {
+    const values = history.map((item) => item.valor);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const x = (index / Math.max(1, history.length - 1)) * 100;
+    const y = max === min ? 18 : 34 - ((entry.valor - min) / (max - min)) * 30;
+    return `${x},${y}`;
+  }).join(' ') : '';
+  return <div className="mt-3">
+    {progress != null && <><div className="mb-1 flex justify-between text-[9px] font-mono text-[#8a8377]"><span>Avance hacia la meta</span><span>{progress.toFixed(0)}%</span></div><div className="h-1.5 overflow-hidden rounded bg-[#2a2620]"><div className="h-full rounded bg-emerald-500 transition-all" style={{ width: `${progress}%` }} /></div></>}
+    {points && <div className="mt-3"><svg viewBox="0 0 100 38" className="h-12 w-full" role="img" aria-label={`Tendencia histórica de ${kpi.nombre}`}><polyline fill="none" stroke="#60a5fa" strokeWidth="2" points={points} vectorEffect="non-scaling-stroke" /></svg><p className="text-[9px] text-[#8a8377]">{history.length} actualizaciones · {kpi.tendencia}</p></div>}
+  </div>;
 }

@@ -8,9 +8,13 @@ import { listReceivables, listReceivablePayments, createReceivable, deleteReceiv
 import { listPayables, createPayable, deletePayable, updatePayable, payableDifference, type Payable, type PayableStatus } from '../lib/payablesService';
 import { listBudget, upsertBudgetLine, deleteBudgetLine, seedBudget, type BudgetLine } from '../lib/budgetService';
 import { buildCashflow, type CashflowSnapshot } from '../lib/cashflowService';
-import { Loader2, Plus, Trash2, AlertTriangle, RefreshCcw, Edit2, X } from 'lucide-react';
+import { Loader2, Plus, Trash2, AlertTriangle, RefreshCcw, Edit2, X, ExternalLink } from 'lucide-react';
+import ComprobanteUpload from './ComprobanteUpload';
+import { getAccessToken } from '../lib/supabase';
+import { syncPayablesToSheets, syncReceivablesToSheets } from '../lib/sheetsService';
+import FinancialStatement from './FinancialStatement';
 
-type SubTab = 'cuentas' | 'metodos' | 'deudas' | 'cobrar' | 'pagar' | 'presupuesto' | 'flujo';
+type SubTab = 'estado' | 'cuentas' | 'metodos' | 'deudas' | 'cobrar' | 'pagar' | 'presupuesto' | 'flujo';
 
 const cardClass = 'rounded-2xl border border-slate-200 bg-white p-4 shadow-sm';
 const inputClass = 'w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500';
@@ -34,7 +38,7 @@ export default function FinanceOperativa({ user, appData, formatCop }: { user: U
       </div>
 
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2">
-        {(['flujo','cuentas','metodos','deudas','cobrar','pagar','presupuesto'] as SubTab[]).map((t) => (
+        {(['flujo','estado','cuentas','metodos','deudas','cobrar','pagar','presupuesto'] as SubTab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${tab === t ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
             {labels[t]}
           </button>
@@ -46,6 +50,7 @@ export default function FinanceOperativa({ user, appData, formatCop }: { user: U
       </div>
 
       {tab === 'flujo' && <FlujoTab userId={user.id} periodo={periodo} appData={appData} formatCop={formatCop} />}
+      {tab === 'estado' && <FinancialStatement userId={user.id} appData={appData} period={periodo} formatCop={formatCop} />}
       {tab === 'cuentas' && <AccountsTab userId={user.id} formatCop={formatCop} />}
       {tab === 'metodos' && <PaymentMethodsTab userId={user.id} />}
       {tab === 'deudas' && <DebtsTab userId={user.id} formatCop={formatCop} />}
@@ -58,6 +63,7 @@ export default function FinanceOperativa({ user, appData, formatCop }: { user: U
 
 const labels: Record<SubTab, string> = {
   flujo: 'Flujo de caja',
+  estado: 'Estado financiero',
   cuentas: 'Cuentas',
   metodos: 'Métodos de pago',
   deudas: 'Deudas',
@@ -311,13 +317,13 @@ function ReceivablesTab({ userId, appData, formatCop }: { userId: string; appDat
   const [payments, setPayments] = useState<ReceivablePayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ cliente_id: '', factura: '', concepto: '', valor: 0, moneda: 'COP', vencimiento: '', estado: 'pendiente' as ReceivableStatus });
-  const reload = () => { setLoading(true); Promise.all([listReceivables(userId), listReceivablePayments(userId)]).then(([r, p]) => { setItems(r); setPayments(p); }).finally(() => setLoading(false)); };
+  const [form, setForm] = useState({ cliente_id: '', factura: '', concepto: '', valor: 0, moneda: 'COP', vencimiento: '', estado: 'pendiente' as ReceivableStatus, documento_url: '', documento_nombre: '' });
+  const reload = () => { setLoading(true); Promise.all([listReceivables(userId), listReceivablePayments(userId)]).then(([r, p]) => { setItems(r); setPayments(p); const token = getAccessToken(); if (token) void syncReceivablesToSheets(token, r).catch((error) => console.error('[FinanceOperativa] Sheets PorCobrar:', error)); }).finally(() => setLoading(false)); };
   useEffect(() => { reload(); }, [userId]);
-  const resetForm = () => { setEditingId(null); setForm({ cliente_id: '', factura: '', concepto: '', valor: 0, moneda: 'COP', vencimiento: '', estado: 'pendiente' }); };
+  const resetForm = () => { setEditingId(null); setForm({ cliente_id: '', factura: '', concepto: '', valor: 0, moneda: 'COP', vencimiento: '', estado: 'pendiente', documento_url: '', documento_nombre: '' }); };
   const save = async () => {
     if (!form.concepto.trim() || !form.valor) return;
-    const input = { cliente_id: form.cliente_id || null, factura: form.factura || null, concepto: form.concepto, valor: form.valor, moneda: form.moneda, vencimiento: form.vencimiento || null, estado: form.estado };
+    const input = { cliente_id: form.cliente_id || null, factura: form.factura || null, concepto: form.concepto, valor: form.valor, moneda: form.moneda, vencimiento: form.vencimiento || null, estado: form.estado, documento_url: form.documento_url || null, documento_nombre: form.documento_nombre || null };
     if (editingId) await updateReceivable(editingId, input);
     else await createReceivable(userId, input);
     resetForm();
@@ -338,6 +344,9 @@ function ReceivablesTab({ userId, appData, formatCop }: { userId: string; appDat
           <input className={inputClass} type="number" placeholder="Valor" value={form.valor} onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })} />
           <input className={inputClass} type="date" value={form.vencimiento} onChange={(e) => setForm({ ...form, vencimiento: e.target.value })} />
           <select className={inputClass} value={form.moneda} onChange={(e) => setForm({ ...form, moneda: e.target.value })}><option>COP</option><option>USD</option></select>
+          <div className="md:col-span-2">
+            <ComprobanteUpload currentUrl={form.documento_url} currentNombre={form.documento_nombre} label="Subir factura a Drive" onUploaded={(url, nombre) => setForm({ ...form, documento_url: url, documento_nombre: nombre })} />
+          </div>
           <button onClick={save} className={btnPrimary}>{editingId ? <Edit2 className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />} {editingId ? 'Guardar' : 'Agregar'}</button>
           {editingId && <button onClick={resetForm} className={btnGhost}><X className="w-3.5 h-3.5" /> Cancelar</button>}
         </div>
@@ -358,7 +367,8 @@ function ReceivablesTab({ userId, appData, formatCop }: { userId: string; appDat
                   <td className="text-slate-500">{r.vencimiento || '—'}</td>
                   <td className="text-slate-500">{r.estado}</td>
                   <td className="text-right space-x-2">
-                    <button onClick={() => { setEditingId(r.id); setForm({ cliente_id: r.cliente_id || '', factura: r.factura || '', concepto: r.concepto, valor: r.valor, moneda: r.moneda, vencimiento: r.vencimiento || '', estado: r.estado }); }} className="text-blue-600 text-xs font-semibold">Editar</button>
+                    {r.documento_url && <a href={r.documento_url} target="_blank" rel="noreferrer" className="text-emerald-600" title={r.documento_nombre || 'Ver factura en Drive'}><ExternalLink className="w-4 h-4 inline" /></a>}
+                    <button onClick={() => { setEditingId(r.id); setForm({ cliente_id: r.cliente_id || '', factura: r.factura || '', concepto: r.concepto, valor: r.valor, moneda: r.moneda, vencimiento: r.vencimiento || '', estado: r.estado, documento_url: r.documento_url || '', documento_nombre: r.documento_nombre || '' }); }} className="text-blue-600 text-xs font-semibold">Editar</button>
                     <button onClick={async () => {
                       const monto = Number(prompt('Monto del abono:') || '0');
                       if (monto > 0) { await addReceivablePayment(userId, { receivable_id: r.id, fecha: new Date().toISOString().slice(0, 10), monto }); reload(); }
@@ -381,13 +391,13 @@ function PayablesTab({ userId, formatCop }: { userId: string; formatCop: (n: num
   const [items, setItems] = useState<Payable[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ proveedor: '', factura: '', concepto: '', valor: 0, moneda: 'COP', vencimiento: '', estado: 'pendiente' as PayableStatus });
-  const reload = () => { setLoading(true); listPayables(userId).then(setItems).finally(() => setLoading(false)); };
+  const [form, setForm] = useState({ proveedor: '', factura: '', concepto: '', valor: 0, moneda: 'COP', vencimiento: '', estado: 'pendiente' as PayableStatus, documento_url: '', documento_nombre: '' });
+  const reload = () => { setLoading(true); listPayables(userId).then((rows) => { setItems(rows); const token = getAccessToken(); if (token) void syncPayablesToSheets(token, rows).catch((error) => console.error('[FinanceOperativa] Sheets PorPagar:', error)); }).finally(() => setLoading(false)); };
   useEffect(() => { reload(); }, [userId]);
-  const resetForm = () => { setEditingId(null); setForm({ proveedor: '', factura: '', concepto: '', valor: 0, moneda: 'COP', vencimiento: '', estado: 'pendiente' }); };
+  const resetForm = () => { setEditingId(null); setForm({ proveedor: '', factura: '', concepto: '', valor: 0, moneda: 'COP', vencimiento: '', estado: 'pendiente', documento_url: '', documento_nombre: '' }); };
   const save = async () => {
     if (!form.proveedor.trim() || !form.valor) return;
-    const input = { proveedor: form.proveedor, factura: form.factura || null, concepto: form.concepto || null, valor: form.valor, moneda: form.moneda, vencimiento: form.vencimiento || null, estado: form.estado };
+    const input = { proveedor: form.proveedor, factura: form.factura || null, concepto: form.concepto || null, valor: form.valor, moneda: form.moneda, vencimiento: form.vencimiento || null, estado: form.estado, documento_url: form.documento_url || null, documento_nombre: form.documento_nombre || null };
     if (editingId) await updatePayable(editingId, input);
     else await createPayable(userId, input);
     resetForm();
@@ -405,6 +415,9 @@ function PayablesTab({ userId, formatCop }: { userId: string; formatCop: (n: num
           <input className={inputClass} type="number" placeholder="Valor" value={form.valor} onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })} />
           <input className={inputClass} type="date" value={form.vencimiento} onChange={(e) => setForm({ ...form, vencimiento: e.target.value })} />
           <select className={inputClass} value={form.moneda} onChange={(e) => setForm({ ...form, moneda: e.target.value })}><option>COP</option><option>USD</option></select>
+          <div className="md:col-span-2">
+            <ComprobanteUpload currentUrl={form.documento_url} currentNombre={form.documento_nombre} label="Subir factura o soporte a Drive" onUploaded={(url, nombre) => setForm({ ...form, documento_url: url, documento_nombre: nombre })} />
+          </div>
           <button onClick={save} className={btnPrimary}>{editingId ? <Edit2 className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />} {editingId ? 'Guardar' : 'Agregar'}</button>
           {editingId && <button onClick={resetForm} className={btnGhost}><X className="w-3.5 h-3.5" /> Cancelar</button>}
         </div>
@@ -423,7 +436,8 @@ function PayablesTab({ userId, formatCop }: { userId: string; formatCop: (n: num
                 <td className="text-slate-500">{p.vencimiento || '—'}</td>
                 <td className="text-slate-500">{p.estado}</td>
                 <td className="text-right space-x-2">
-                  <button onClick={() => { setEditingId(p.id); setForm({ proveedor: p.proveedor, factura: p.factura || '', concepto: p.concepto || '', valor: p.valor, moneda: p.moneda, vencimiento: p.vencimiento || '', estado: p.estado }); }} className="text-blue-600 text-xs font-semibold">Editar</button>
+                  {p.documento_url && <a href={p.documento_url} target="_blank" rel="noreferrer" className="text-emerald-600" title={p.documento_nombre || 'Ver factura en Drive'}><ExternalLink className="w-4 h-4 inline" /></a>}
+                  <button onClick={() => { setEditingId(p.id); setForm({ proveedor: p.proveedor, factura: p.factura || '', concepto: p.concepto || '', valor: p.valor, moneda: p.moneda, vencimiento: p.vencimiento || '', estado: p.estado, documento_url: p.documento_url || '', documento_nombre: p.documento_nombre || '' }); }} className="text-blue-600 text-xs font-semibold">Editar</button>
                   <button onClick={async () => {
                     const monto = Number(prompt('Monto pagado:', String(p.valor)) || '0');
                     if (monto > 0) { await updatePayable(p.id, { monto_pagado: monto, fecha_pago_real: new Date().toISOString().slice(0, 10), estado: 'pagada' }); reload(); }

@@ -10,7 +10,7 @@ export default function NotFound() {
         </div>
         <h1 className="font-display text-2xl font-semibold text-slate-900 mb-2">404</h1>
         <p className="text-sm text-slate-600 mb-6">
-          Esta ruta no existe en Ferova OS. Puede que hayas seguido un link viejo o mal escrito.
+          Esta ruta no existe en Ferova One. Puede que hayas seguido un enlace viejo o mal escrito.
         </p>
         <Link
           to="/"

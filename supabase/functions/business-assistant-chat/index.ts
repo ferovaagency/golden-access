@@ -1,6 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
-import { convertToModelMessages, streamText, type UIMessage } from "npm:ai";
+import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, streamText, type UIMessage } from "npm:ai";
 import { createLovableAiGatewayProvider, getLovableAiGatewayRunId, getLovableAiGatewayResponseHeaders, withLovableAiGatewayRunIdHeader } from "../_shared/ai-gateway.ts";
 
 function textFromParts(message: UIMessage): string {
@@ -24,6 +24,48 @@ const assistantCorsHeaders = {
 
 const MAX_MODEL_MESSAGES = 24;
 const MAX_STORED_MESSAGES = 80;
+
+function money(value: unknown) {
+  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(Number(value || 0));
+}
+
+function deterministicReply(input: {
+  question: string;
+  overview: any;
+  services: any[];
+  opportunities: any[];
+  tasks: any[];
+  integrations: any;
+}) {
+  const question = input.question.toLowerCase();
+  const overview = input.overview || {};
+  const openTasks = input.tasks.filter((task) => task.status !== 'done');
+  const urgentTasks = openTasks.filter((task) => task.priority === 'urgent' || task.priority === 'high');
+  const negativeServices = input.services.filter((service) => Number(service.margen_bruto || 0) < 0);
+  const openOpportunities = input.opportunities.filter((opportunity) => !['ganado', 'perdido'].includes(opportunity.estado));
+  const missingFollowUp = openOpportunities.filter((opportunity) => !opportunity.siguiente_accion);
+  const actions: string[] = [];
+  const facts: string[] = [];
+
+  if (/ingreso|margen|caja|finan|gasto|pago/.test(question)) {
+    facts.push(`Ventas registradas: ${money(overview.ventas_totales)}; egresos pagados: ${money(overview.egresos_pagados)}.`);
+    actions.push(negativeServices.length ? `Revisa ${negativeServices.length} servicio(s) con margen negativo en Finanzas → Por servicio.` : 'Compara ventas, gastos y cartera del mes en Finanzas operativas antes de comprometer nuevos pagos.');
+  } else if (/venta|crm|prospect|cliente|oportunidad|pipeline/.test(question)) {
+    facts.push(`Pipeline estimado: ${money(overview.pipeline_estimado)} en ${openOpportunities.length} oportunidades abiertas.`);
+    actions.push(missingFollowUp.length ? `Define la siguiente acción de ${missingFollowUp.length} oportunidad(es) que no tienen seguimiento.` : 'Prioriza hoy las oportunidades de mayor valor y agenda su próximo contacto.');
+  } else if (/tarea|planner|agenda|prioridad|hoy|semana/.test(question)) {
+    facts.push(`Tienes ${openTasks.length} tareas abiertas; ${urgentTasks.length} están en prioridad alta o urgente.`);
+    actions.push(urgentTasks.length ? `Abre Planner y bloquea tiempo para “${urgentTasks[0].title}”.` : 'Abre Planner y selecciona una tarea de impacto para tu primer bloque de foco.');
+  } else {
+    facts.push(`Ventas: ${money(overview.ventas_totales)}; pipeline: ${money(overview.pipeline_estimado)}; tareas abiertas: ${openTasks.length}.`);
+    if (missingFollowUp.length) actions.push(`Completa el seguimiento de ${missingFollowUp.length} oportunidad(es) sin siguiente acción.`);
+    if (urgentTasks.length) actions.push(`Protege un bloque para “${urgentTasks[0].title}”.`);
+    if (!actions.length) actions.push('Revisa Blind Spots y elige una sola acción prioritaria para hoy.');
+  }
+
+  if (!input.integrations?.connected) actions.push('Conecta Google Workspace en Configuración para sincronizar Calendar y Sheets.');
+  return `${facts.join(' ')}\n\nAcción recomendada:\n${actions.slice(0, 3).map((action, index) => `${index + 1}. ${action}`).join('\n')}`;
+}
 
 async function trimStoredHistory(admin: ReturnType<typeof createClient>, userId: string) {
   const { data, error } = await admin
@@ -57,7 +99,7 @@ Deno.serve(async (req) => {
     const userId = userData.user.id;
     const userEmail = userData.user.email || "";
     const currentArea = (req.headers.get("X-Ferova-Context-Area") || "").slice(0, 80);
-    const [{ data: isTeam }, { data: businessProfile }, { data: overview }, { data: services }, { data: growth }, { data: reviews }, { data: opportunities }, { data: clients }, { data: hours }] = await Promise.all([
+    const [{ data: isTeam }, { data: businessProfile }, { data: overview }, { data: services }, { data: growth }, { data: reviews }, { data: opportunities }, { data: clients }, { data: hours }, { data: tasks }, { data: integrations }] = await Promise.all([
       admin.from("crm_team_members").select("email").eq("email", userEmail).maybeSingle(),
       admin.from("business_profile").select("nombre_negocio, industria, tipo_negocio, tamano_equipo, ciudad").eq("user_id", userId).maybeSingle(),
       admin.from("business_overview").select("*").eq("user_id", userId).maybeSingle(),
@@ -67,6 +109,8 @@ Deno.serve(async (req) => {
       admin.from("crm_oportunidades").select("nombre_contacto, empresa, canal_origen, estado, valor_estimado, moneda, siguiente_accion, memoria_resumen, memoria_updated_at").order("updated_at", { ascending: false }).limit(15),
       admin.from("finance_clientes").select("nombre, tipo, activo, progreso, responsable, objetivos, kpis, entregables").eq("user_id", userId).order("nombre").limit(20),
       admin.from("finance_horas").select("fecha, cliente_id, servicio_id, horas, descripcion").eq("user_id", userId).order("fecha", { ascending: false }).limit(30),
+      admin.from("planner_tasks").select("title, priority, category, status, deadline, scheduled_for, client_ref, project_ref").eq("user_id", userId).in("status", ["backlog", "scheduled", "postponed"]).order("deadline", { ascending: true, nullsFirst: false }).limit(30),
+      admin.from("google_workspace_connections").select("connected, connected_email, scopes, expires_at, last_error").eq("user_id", userId).maybeSingle(),
     ]);
 
     const body = await req.json() as { messages?: UIMessage[] };
@@ -80,7 +124,22 @@ Deno.serve(async (req) => {
     }
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) return new Response(JSON.stringify({ ok: false, message: "La IA aún no está configurada en Supabase. Falta el secreto LOVABLE_API_KEY." }), { status: 503, headers: { ...assistantCorsHeaders, "Content-Type": "application/json" } });
+    if (!apiKey) {
+      const reply = deterministicReply({ question: last ? textFromParts(last) : '', overview, services: services || [], opportunities: opportunities || [], tasks: tasks || [], integrations });
+      const textId = crypto.randomUUID();
+      const stream = createUIMessageStream({
+        originalMessages: messages,
+        execute: ({ writer }) => {
+          writer.write({ type: 'text-start', id: textId });
+          writer.write({ type: 'text-delta', id: textId, delta: reply });
+          writer.write({ type: 'text-end', id: textId });
+        },
+      });
+      const { error } = await admin.from("business_assistant_messages").insert({ user_id: userId, role: "assistant", parts: [{ type: 'text', text: reply }], content: reply });
+      if (error) console.error("[business-assistant] deterministic persist error", error);
+      else await trimStoredHistory(admin, userId);
+      return createUIMessageStreamResponse({ stream, headers: assistantCorsHeaders });
+    }
 
     const context = JSON.stringify({
       user: { email: userEmail, team_member: !!isTeam },
@@ -93,6 +152,8 @@ Deno.serve(async (req) => {
       recent_opportunities: isTeam ? opportunities : [],
       clients: clients || [],
       recent_hours: hours || [],
+      planner_tasks: tasks || [],
+      integrations: integrations || null,
     }, null, 2);
 
     const initialRunId = getLovableAiGatewayRunId(req);

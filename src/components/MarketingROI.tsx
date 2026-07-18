@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { listCampaigns, listMetrics, createCampaign, deleteCampaign, upsertMetrics, type Campaign, type CampaignMetrics } from '../lib/marketingService';
 import { computeRoi, reverseRoi, type CampaignMetricsInput } from '../lib/roiCalc';
-import { Loader2, Plus, Trash2 } from 'lucide-react';
+import { CircleHelp, Loader2, Plus, Trash2 } from 'lucide-react';
 
 const cardClass = 'rounded-2xl border border-slate-200 bg-white p-4 shadow-sm';
 const inputClass = 'w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500';
@@ -34,7 +34,7 @@ export default function MarketingROI({ user, formatCop }: { user: User; formatCo
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Marketing ROI</h1>
-        <p className="text-sm text-slate-500">Registra tus campañas, embudos y descubrí el ROI real (utilidad neta / inversión).</p>
+        <p className="text-sm text-slate-500">Registra campañas, costos completos y resultados. El ROI real incluye pauta, entrega, comisiones y honorarios profesionales.</p>
       </div>
 
       <div className={cardClass}>
@@ -100,7 +100,7 @@ function MetricsEditor({ user, campaign, current, onSaved, formatCop }: { user: 
     periodo: current?.periodo || new Date().toISOString().slice(0, 7),
     inversion: current?.inversion || 0, impresiones: current?.impresiones || 0, clics: current?.clics || 0,
     leads: current?.leads || 0, leads_calificados: current?.leads_calificados || 0, citas: current?.citas || 0, citas_efectivas: current?.citas_efectivas || 0,
-    ventas: current?.ventas || 0, ticket_promedio: current?.ticket_promedio || 0, costo_entrega: current?.costo_entrega || 0, comision: current?.comision || 0, ltv: current?.ltv || 0,
+    ventas: current?.ventas || 0, ticket_promedio: current?.ticket_promedio || 0, costo_entrega: current?.costo_entrega || 0, comision: current?.comision || 0, costo_profesional: current?.costo_profesional || 0, ltv: current?.ltv || 0,
   };
   const [form, setForm] = useState(empty);
   useEffect(() => { setForm(empty); }, [current?.id]);
@@ -129,7 +129,8 @@ function MetricsEditor({ user, campaign, current, onSaved, formatCop }: { user: 
             <Field label="Ticket promedio" value={form.ticket_promedio} onChange={set('ticket_promedio')} />
             <Field label="Costo entrega" value={form.costo_entrega} onChange={set('costo_entrega')} />
             <Field label="Comisión" value={form.comision} onChange={set('comision')} />
-            <Field label="LTV" value={form.ltv} onChange={set('ltv')} />
+            <Field label="Honorarios profesionales" value={form.costo_profesional} onChange={set('costo_profesional')} help="Pago total del profesional o equipo que ejecutó la campaña durante este periodo." />
+            <Field label="LTV" value={form.ltv} onChange={set('ltv')} help="Valor total estimado que deja un cliente durante toda su relación con el negocio, no sólo en la primera compra." />
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <Kpi label="CPM" value={fmt(roi.cpm)} />
@@ -142,6 +143,7 @@ function MetricsEditor({ user, campaign, current, onSaved, formatCop }: { user: 
             <Kpi label="ROI real" value={pct(roi.roi)} highlight={roi.roi >= 0 ? 'good' : 'bad'} />
             <Kpi label="Ingresos" value={formatCop(roi.ingresos_brutos)} />
             <Kpi label="Utilidad neta" value={formatCop(roi.utilidad_neta)} highlight={roi.utilidad_neta >= 0 ? 'good' : 'bad'} />
+            <Kpi label="Costos totales" value={formatCop(roi.costos_totales)} />
             <Kpi label="Margen neto" value={pct(roi.margen_neto)} />
             <Kpi label="LTV total" value={formatCop(roi.ltv_total)} />
           </div>
@@ -155,10 +157,10 @@ function MetricsEditor({ user, campaign, current, onSaved, formatCop }: { user: 
   );
 }
 
-function Field({ label, value, onChange, type = 'number' }: { label: string; value: any; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; type?: string }) {
+function Field({ label, value, onChange, type = 'number', help }: { label: string; value: any; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; type?: string; help?: string }) {
   return (
     <label className="block">
-      <span className="text-[11px] font-semibold text-slate-500">{label}</span>
+      <span className="flex items-center gap-1 text-[11px] font-semibold text-slate-500">{label}{help && <span title={help}><CircleHelp className="h-3 w-3" aria-label={help} /></span>}</span>
       <input className={inputClass} type={type} value={value} onChange={onChange} />
     </label>
   );

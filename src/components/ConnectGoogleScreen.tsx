@@ -44,7 +44,7 @@ export default function ConnectGoogleScreen({ user }: Props) {
         </div>
 
         <p className="text-sm text-slate-600 leading-relaxed border-t border-b border-slate-100 py-4">
-          Ferova OS guarda la operación en la base de datos y usa Google para importar/respaldar Sheets,
+          Ferova One guarda la operación en la base de datos y usa Google para importar/respaldar Sheets,
           crear citas en Calendar y leer notificaciones de reseñas en Gmail.
         </p>
 

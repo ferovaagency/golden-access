@@ -133,7 +133,7 @@ export default function AISidebar({ user, collapsed, onToggle, width, onResize, 
 
   if (collapsed) {
     return (
-      <aside className="fixed right-0 top-1/2 z-40 flex w-12 -translate-y-1/2 flex-col items-center rounded-l-2xl border border-r-0 border-[var(--line)] bg-white py-4 shadow-lg xl:static xl:translate-y-0 xl:rounded-none xl:border-y-0 xl:border-r-0 xl:shadow-none">
+      <aside className="fixed right-0 top-1/2 z-40 flex w-12 -translate-y-1/2 flex-col items-center rounded-l-2xl border border-r-0 border-[var(--line)] bg-white py-4 shadow-lg xl:sticky xl:top-24 xl:h-fit xl:self-start xl:translate-y-0 xl:rounded-2xl xl:border xl:shadow-sm">
         <button onClick={onToggle} className="grid h-9 w-9 place-items-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900" title="Abrir asistente IA">
           <PanelRightOpen className="h-4 w-4" />
         </button>
@@ -145,10 +145,10 @@ export default function AISidebar({ user, collapsed, onToggle, width, onResize, 
   }
 
   return (
-    <aside className="fixed inset-y-2 right-2 z-40 flex w-[min(340px,calc(100vw-1rem))] flex-col rounded-2xl border border-[var(--line)] bg-white shadow-2xl xl:static xl:inset-auto xl:w-auto xl:shrink-0 xl:rounded-none xl:border-y-0 xl:border-r-0 xl:shadow-none" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1280 ? width : undefined }}>
+    <aside className="fixed inset-y-2 right-2 z-40 flex w-[min(340px,calc(100vw-1rem))] flex-col rounded-2xl border border-[var(--line)] bg-white shadow-2xl xl:sticky xl:top-24 xl:inset-auto xl:h-[calc(100vh-7rem)] xl:max-h-[820px] xl:w-auto xl:shrink-0 xl:self-start xl:rounded-2xl xl:shadow-sm" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1280 ? width : undefined }}>
       <div
         onMouseDown={onDragStart}
-        className="absolute left-0 top-0 h-full w-1 cursor-col-resize hover:bg-blue-200/60"
+        className="absolute left-0 top-0 hidden h-full w-1 cursor-col-resize hover:bg-blue-200/60 xl:block"
         title="Arrastra para redimensionar"
       />
       <header className="flex items-center justify-between border-b border-[var(--line)] px-4 py-3">

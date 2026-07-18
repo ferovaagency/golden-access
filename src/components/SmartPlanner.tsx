@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Sparkles, Wand2, Loader2, Check, Clock, Zap, Battery, BatteryLow, Trash2, ChevronRight, Sunrise, AlertTriangle, Lightbulb, TrendingUp, Info, Lock, Edit2, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Sparkles, Wand2, Loader2, Check, Clock, Zap, Battery, BatteryLow, Trash2, ChevronRight, Sunrise, AlertTriangle, Lightbulb, TrendingUp, Info, Lock, Edit2, X, CalendarDays, Columns3, List, SlidersHorizontal } from 'lucide-react';
 import { usePlanner } from '../hooks/usePlanner';
 import type { PlannerBlock, PlannerCategory, PlannerEnergy, PlannerTask } from '../lib/plannerService';
 import { AiDisclosure } from './AiDisclosure';
@@ -24,6 +24,8 @@ function fmtTime(iso: string) { return new Date(iso).toLocaleTimeString([], { ho
 
 export default function SmartPlanner() {
   const p = usePlanner();
+  const [plannerView, setPlannerView] = useState<'day' | 'week' | 'month'>(() => (localStorage.getItem('ferova.planner.view') as 'day' | 'week' | 'month') || 'day');
+  const [compactCalendar, setCompactCalendar] = useState(() => localStorage.getItem('ferova.planner.compact') === '1');
   const [dump, setDump] = useState('');
   const [showBlockForm, setShowBlockForm] = useState(false);
   const [blockTitle, setBlockTitle] = useState('');
@@ -44,6 +46,9 @@ export default function SmartPlanner() {
   const [taskRepeatUntil, setTaskRepeatUntil] = useState('');
   const [taskSyncGoogle, setTaskSyncGoogle] = useState(false);
   const [taskSaveNotice, setTaskSaveNotice] = useState<string | null>(null);
+
+  useEffect(() => { localStorage.setItem('ferova.planner.view', plannerView); }, [plannerView]);
+  useEffect(() => { localStorage.setItem('ferova.planner.compact', compactCalendar ? '1' : '0'); }, [compactCalendar]);
 
   const submitDump = async () => {
     const text = dump.trim();
@@ -114,7 +119,7 @@ export default function SmartPlanner() {
       <header className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs uppercase tracking-widest text-slate-500 font-semibold">Smart Planner</p>
-          <h1 className="font-display text-3xl font-semibold text-slate-900 tracking-tight mt-1">Tu día, diseñado por IA.</h1>
+          <h1 className="font-display text-3xl font-semibold text-slate-900 tracking-tight mt-1">Tu día, bajo control.</h1>
           <p className="text-sm text-slate-500 mt-1">Vacía tu mente. El sistema clasifica, prioriza y arma bloques por energía.</p>
         </div>
         <div className="flex items-center gap-2">
@@ -135,9 +140,22 @@ export default function SmartPlanner() {
         </div>
       </header>
 
+      <section className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-1 rounded-xl bg-slate-100 p-1" aria-label="Vista del planner">
+          {([
+            ['day', 'Día', List],
+            ['week', 'Semana', Columns3],
+            ['month', 'Calendario', CalendarDays],
+          ] as const).map(([value, label, Icon]) => <button key={value} type="button" onClick={() => setPlannerView(value)} className={`inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-xs font-semibold ${plannerView === value ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}><Icon className="h-4 w-4" />{label}</button>)}
+        </div>
+        <label className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 px-3 text-xs font-medium text-slate-600"><SlidersHorizontal className="h-4 w-4 text-slate-400" /><input type="checkbox" checked={compactCalendar} onChange={(event) => setCompactCalendar(event.target.checked)} /> Vista compacta</label>
+      </section>
+
       <AiDisclosure />
 
       {p.error && <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{p.error}</div>}
+
+      {plannerView !== 'day' && <PlannerCalendar view={plannerView} date={p.date} tasks={openTasks} clients={p.clients} compact={compactCalendar} onSelectDate={(date) => { p.setDate(date); setPlannerView('day'); }} onEdit={openTaskEditor} />}
 
       {p.planPreview && (
         <section className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
@@ -192,7 +210,7 @@ export default function SmartPlanner() {
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-blue-600" />
           <h2 className="text-sm font-semibold text-slate-900">Brain dump</h2>
-          <span className="text-xs text-slate-400">La IA detecta tipo, prioridad, energía, duración y deadline.</span>
+          <span className="text-xs text-slate-400">El sistema detecta tipo, prioridad, energía, duración y fecha límite.</span>
         </div>
         <textarea
           value={dump}
@@ -209,13 +227,13 @@ export default function SmartPlanner() {
             className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {p.busy === 'classify' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-            Clasificar con IA
+            Clasificar tareas
           </button>
         </div>
       </section>
 
       {/* Timeline of blocks */}
-      <section>
+      {plannerView === 'day' && <section>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500">Bloques del {new Date(p.date + 'T00:00').toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })}</h2>
           <div className="flex items-center gap-3">
@@ -240,14 +258,14 @@ export default function SmartPlanner() {
         )}
         {p.blocks.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-[var(--line)] bg-white p-6 text-center text-sm text-slate-500">
-            Sin bloques aún. Presioná <span className="font-semibold text-slate-700">Reorganizar mi día</span> para que la IA arme el horario.
+            Sin bloques aún. Presioná <span className="font-semibold text-slate-700">Reorganizar mi día</span> para que el planificador arme el horario.
           </div>
         ) : (
           <ul className="space-y-2">
             {p.blocks.map((b) => <BlockRow key={b.id} block={b} tasks={p.tasks} clients={p.clients} onComplete={p.completeTask} />)}
           </ul>
         )}
-      </section>
+      </section>}
 
       {/* Tasks queue */}
       <section>
@@ -295,6 +313,51 @@ export default function SmartPlanner() {
       )}
     </div>
   );
+}
+
+function toDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function addDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function PlannerCalendar({ view, date, tasks, clients, compact, onSelectDate, onEdit }: {
+  view: 'week' | 'month'; date: string; tasks: PlannerTask[]; clients: Array<{ id: string; nombre: string }>;
+  compact: boolean; onSelectDate: (date: string) => void; onEdit: (task: PlannerTask) => void;
+}) {
+  const selected = new Date(`${date}T00:00:00`);
+  const mondayOffset = (selected.getDay() + 6) % 7;
+  const weekStart = addDays(selected, -mondayOffset);
+  const monthStart = new Date(selected.getFullYear(), selected.getMonth(), 1);
+  const monthGridStart = addDays(monthStart, -((monthStart.getDay() + 6) % 7));
+  const days = view === 'week' ? Array.from({ length: 7 }, (_, index) => addDays(weekStart, index)) : Array.from({ length: 42 }, (_, index) => addDays(monthGridStart, index));
+  const tasksFor = (key: string) => tasks.filter((task) => (task.scheduled_for || task.deadline || '').slice(0, 10) === key);
+
+  return <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div className="border-b border-slate-100 px-4 py-3"><h2 className="text-sm font-semibold text-slate-900">{view === 'week' ? 'Vista semanal' : selected.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })}</h2><p className="text-[11px] text-slate-500">Selecciona un día para abrir su agenda. Los colores identifican clientes.</p></div>
+    <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50">{['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((label) => <div key={label} className="px-1 py-2 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</div>)}</div>
+    <div className="grid grid-cols-7">
+      {days.map((day) => {
+        const key = toDateKey(day);
+        const dayTasks = tasksFor(key);
+        const outsideMonth = view === 'month' && day.getMonth() !== selected.getMonth();
+        return <div key={key} className={`min-w-0 border-b border-r border-slate-100 p-1.5 ${compact ? 'min-h-24' : 'min-h-32'} ${outsideMonth ? 'bg-slate-50/70' : 'bg-white'}`}>
+          <button type="button" onClick={() => onSelectDate(key)} className={`mb-1 grid h-7 w-7 place-items-center rounded-full text-xs font-semibold ${key === date ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-blue-50 hover:text-blue-700'}`} aria-label={`Abrir agenda del ${key}`}>{day.getDate()}</button>
+          <div className="space-y-1">{dayTasks.slice(0, compact ? 2 : 4).map((task) => {
+            const client = clients.find((item) => item.id === task.client_ref);
+            return <button key={task.id} type="button" onClick={() => onEdit(task)} title={`${task.title}${client ? ` · ${client.nombre}` : ''}`} className={`block w-full truncate rounded-md border px-1.5 py-1 text-left text-[10px] font-medium ${client ? clientTone(task.client_ref) : categoryMeta[task.category].tone}`}>{task.title}</button>;
+          })}{dayTasks.length > (compact ? 2 : 4) && <p className="text-[9px] font-semibold text-slate-400">+{dayTasks.length - (compact ? 2 : 4)} más</p>}</div>
+        </div>;
+      })}
+    </div>
+  </section>;
 }
 
 function BlockRow({ block, tasks, clients, onComplete }: { block: PlannerBlock; tasks: PlannerTask[]; clients: Array<{ id: string; nombre: string }>; onComplete: (id: string) => void }) {
@@ -386,7 +449,7 @@ export function InsightsCard({ onNavigate }: { onNavigate?: (tab: string) => voi
       </div>
       {p.insights.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-[var(--line)] bg-white p-5 text-sm text-slate-500">
-          Sin insights aún. La IA los genera con tus datos de finanzas, CRM y planner.
+          Sin insights aún. El sistema los genera con tus datos de finanzas, CRM y Planner.
         </div>
       ) : (
         <ul className="space-y-2">

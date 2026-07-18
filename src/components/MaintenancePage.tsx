@@ -10,7 +10,7 @@ export default function MaintenancePage() {
           <Wrench className="h-6 w-6" />
         </div>
         <h1 className="font-display text-2xl font-semibold text-slate-900 mb-2">
-          Estamos mejorando Ferova OS
+          Estamos mejorando Ferova One
         </h1>
         <p className="text-sm text-slate-600">
           Volvemos en unos minutos. Tus datos están seguros y no se pierde nada.

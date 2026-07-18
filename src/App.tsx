@@ -1,18 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { initAuth, googleSignIn, linkGoogleIdentity, logout, getAccessToken, resolveAccess } from './lib/supabase';
-import { backupAppDataToSheets, importSheetByUrl } from './lib/sheetsService';
+import { backupAppDataToSheets, importSheetByUrl, syncExpenseDocumentsToSheets } from './lib/sheetsService';
 import * as financeService from './lib/financeService';
 import { isTeamMember } from './lib/crmService';
 import { getModules, type ModuleOverrides, PlanId } from './lib/planService';
 import { listMyOverrides } from './lib/moduleOverridesService';
 import { getBusinessProfile, BusinessProfile } from './lib/businessProfileService';
-import OnboardingChat from './components/OnboardingChat';
+import PlanOnboarding from './components/PlanOnboarding';
+import ProductTour from './components/ProductTour';
 import FeedbackWidget from './components/FeedbackWidget';
 import { Config, AppData, Cliente, Servicio, Herramienta, OtroGasto, Venta, Hora, PagoEgreso } from './types';
 import { calcularMétricasFinancieras } from './lib/calculations';
 import { useFiscalProfile } from './hooks/useFiscalProfile';
 import { isSupabaseConfigured, supabaseConfigurationError } from './integrations/supabase/client';
+import { trackUserEvent } from './lib/userEngagementService';
 
 // Unified Premium View Components
 import Home from './components/Home';
@@ -56,7 +58,7 @@ import {
   X,
 } from 'lucide-react';
 
-type NavigationItem = { id: string; label: string; hint: string };
+type NavigationItem = { id: string; label: string; hint: string; group?: 'Finanzas' | 'Planner' | 'Ventas' };
 type NavigationSection = { id: string; label: string; icon: React.ComponentType<{ className?: string }>; items: NavigationItem[] };
 
 export default function App() {
@@ -66,7 +68,7 @@ export default function App() {
         <section className="w-full max-w-xl rounded-3xl border border-amber-200 bg-white p-8 shadow-xl shadow-slate-200/50">
           <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700"><AlertCircle className="h-6 w-6" aria-hidden="true" /></div>
           <h1 className="text-xl font-bold">Configuración pendiente del despliegue</h1>
-          <p className="mt-3 text-sm leading-6 text-slate-600">{supabaseConfigurationError} Esta publicación de Lovable Cloud no recibió la configuración de su proyecto de datos, por lo que Ferova OS no puede conectarse todavía.</p>
+          <p className="mt-3 text-sm leading-6 text-slate-600">{supabaseConfigurationError} Esta publicación no recibió la configuración de su proyecto de datos, por lo que Ferova One no puede conectarse todavía.</p>
           <p className="mt-4 rounded-xl bg-slate-50 p-4 font-mono text-xs leading-5 text-slate-700">VITE_SUPABASE_URL<br />VITE_SUPABASE_PUBLISHABLE_KEY</p>
           <p className="mt-4 text-xs leading-5 text-slate-500">La integración de Lovable Cloud debe inyectar estos valores al publicar. Nunca uses una clave secret o service_role en el navegador.</p>
         </section>
@@ -103,7 +105,9 @@ export default function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [aiCollapsed, setAiCollapsed] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
-    return localStorage.getItem('ferova.ai.collapsed') === '1';
+    const stored = localStorage.getItem('ferova.ai.collapsed');
+    if (stored !== null) return stored === '1';
+    return window.innerWidth < 1280;
   });
   const [aiWidth, setAiWidth] = useState<number>(() => {
     if (typeof window === 'undefined') return 340;
@@ -112,6 +116,12 @@ export default function App() {
   });
   useEffect(() => { localStorage.setItem('ferova.ai.collapsed', aiCollapsed ? '1' : '0'); }, [aiCollapsed]);
   useEffect(() => { localStorage.setItem('ferova.ai.width', String(aiWidth)); }, [aiWidth]);
+  useEffect(() => {
+    if (window.innerWidth < 1280) setAiCollapsed(true);
+  }, []);
+  useEffect(() => {
+    if (user && hasPaid) void trackUserEvent(user.id, activeTab);
+  }, [activeTab, hasPaid, user]);
 
   // Header TRM Quick Edit
   const [headerTrm, setHeaderTrm] = useState<string>('');
@@ -346,6 +356,8 @@ export default function App() {
     setSheetsLoading(true);
     try {
       await financeService.saveOtrosGastos(user.id, updatedGastos);
+      const googleToken = getAccessToken();
+      if (googleToken) await syncExpenseDocumentsToSheets(googleToken, updatedGastos, appData.pagosEgresos || []);
       setAppData({ ...appData, otrosGastos: updatedGastos });
     } catch (err: any) {
       alert(`Error guardando gastos: ${err.message || err}`);
@@ -359,6 +371,8 @@ export default function App() {
     setSheetsLoading(true);
     try {
       await financeService.savePagosEgresos(user.id, updatedPagos);
+      const googleToken = getAccessToken();
+      if (googleToken) await syncExpenseDocumentsToSheets(googleToken, appData.otrosGastos || [], updatedPagos);
       setAppData({ ...appData, pagosEgresos: updatedPagos });
     } catch (err: any) {
       alert(`Error guardando pagos/egresos: ${err.message || err}`);
@@ -462,7 +476,7 @@ export default function App() {
   // Los miembros del equipo de Ferova (isTeam) no son clientes reales, no pasan por esto.
   const isReady = appData !== null;
   if (isReady && !isTeam && !businessProfile?.onboarding_completado) {
-    return <OnboardingChat user={user} onDone={(profile) => setBusinessProfile(profile)} />;
+    return <PlanOnboarding user={user} plan={plan} modules={modules} profile={businessProfile} onDone={(profile) => setBusinessProfile(profile)} />;
   }
 
   // Estado 3: Pagado => Dashboard (los datos viven en Supabase, Google es solo respaldo opcional)
@@ -517,21 +531,21 @@ export default function App() {
     ] : [] },
     { id: 'projects', label: 'Projects', icon: FolderKanban, items: modules.core_projects ? [{ id: 'proyectos', label: 'Proyectos', hint: 'KPIs y ejecución' }] : [] },
     { id: 'modules', label: 'Modules', icon: Grid2X2, items: [
-      ...(modules.planner ? [{ id: 'planner', label: 'Planner', hint: 'Prioridades y bloques protegidos' }] : []),
-      ...(modules.advanced_analytics ? [{ id: 'reports', label: 'Reportes CEO', hint: 'Seguimiento ejecutivo' }] : []),
-      ...(modules.crm_ventas ? [{ id: 'ventas-crm', label: 'CRM y Ventas', hint: 'Tu pipeline propio' }] : []),
+      ...(modules.advanced_analytics ? [{ id: 'reports', label: 'Reportes CEO', hint: 'Seguimiento ejecutivo', group: 'Finanzas' as const }] : []),
       ...(modules.financiero ? [
-      { id: 'finops', label: 'Finanzas operativas', hint: 'Cuentas, deudas, flujo' },
-      ...(modules.marketing_roi ? [{ id: 'marketingRoi', label: 'Marketing ROI', hint: 'Campañas y calculadora' }] : []),
-      { id: 'ventas', label: 'Ingresos', hint: 'Ventas y abonos' },
-      { id: 'pagosEgresos', label: 'Pagos', hint: 'Egresos registrados' },
-      { id: 'gastos', label: 'Costos', hint: 'Herramientas y gastos' },
-      { id: 'equilibrioGlobal', label: 'Equilibrio', hint: 'Punto global' },
-      { id: 'equilibrioServicio', label: 'Por servicio', hint: 'Margen unitario' },
-      { id: 'iva', label: 'IVA', hint: 'Control tributario' },
-      { id: 'alertas', label: 'Alertas', hint: 'Riesgos y topes' },
+      { id: 'finops', label: 'Finanzas operativas', hint: 'Cuentas, deudas, flujo', group: 'Finanzas' as const },
+      { id: 'ventas', label: 'Ingresos', hint: 'Ventas y abonos', group: 'Finanzas' as const },
+      { id: 'pagosEgresos', label: 'Pagos', hint: 'Egresos registrados', group: 'Finanzas' as const },
+      { id: 'gastos', label: 'Costos', hint: 'Herramientas y gastos', group: 'Finanzas' as const },
+      { id: 'equilibrioGlobal', label: 'Equilibrio', hint: 'Punto global', group: 'Finanzas' as const },
+      { id: 'equilibrioServicio', label: 'Por servicio', hint: 'Margen unitario', group: 'Finanzas' as const },
+      { id: 'iva', label: 'IVA', hint: 'Control tributario', group: 'Finanzas' as const },
+      { id: 'alertas', label: 'Alertas', hint: 'Riesgos y topes', group: 'Finanzas' as const },
       ] : []),
-      ...CRM_GROWTH_TABS,
+      ...(modules.planner ? [{ id: 'planner', label: 'Planner', hint: 'Prioridades y bloques protegidos', group: 'Planner' as const }] : []),
+      ...(modules.crm_ventas ? [{ id: 'ventas-crm', label: 'CRM y Ventas', hint: 'Tu pipeline propio', group: 'Ventas' as const }] : []),
+      ...(modules.marketing_roi ? [{ id: 'marketingRoi', label: 'Marketing ROI', hint: 'Campañas y calculadora', group: 'Ventas' as const }] : []),
+      ...CRM_GROWTH_TABS.map((item) => ({ ...item, group: 'Ventas' as const })),
     ] },
     { id: 'settings', label: 'Settings', icon: Settings, items: [
       ...(modules.financiero ? [{ id: 'ajustes', label: 'Configuración', hint: 'Datos y Google Sheets' }] : []),
@@ -554,19 +568,19 @@ export default function App() {
       <header className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-[#dbe4ee] relative z-20">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-sm font-bold">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-sm font-bold uppercase">
               F
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className="text-base font-bold font-display tracking-tight text-slate-900">{businessProfile?.nombre_negocio || 'Ferova OS'}</h1>
-                <span className="text-[10px] bg-blue-50 border border-blue-100 font-medium text-blue-700 px-2 py-0.5 rounded-full">
+                <h1 className="max-w-36 truncate text-base font-bold font-display tracking-tight text-slate-900 sm:max-w-64">Ferova One</h1>
+                <span className="hidden text-[10px] bg-blue-50 border border-blue-100 font-medium text-blue-700 px-2 py-0.5 rounded-full sm:inline">
                   Finanzas + Growth
                 </span>
               </div>
-              <span className="text-xs text-slate-500 block mt-0.5">
-                Navegación clara por módulos de negocio
+              <span className="hidden text-xs text-slate-500 mt-0.5 sm:block">
+                Tu sistema operativo de negocio
               </span>
             </div>
           </div>
@@ -661,7 +675,7 @@ export default function App() {
               <button onClick={() => setAiCollapsed((value) => !value)} className="hidden md:flex items-center gap-2 rounded-2xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700">
                 {aiCollapsed ? 'Abrir asistente' : 'Colapsar asistente'}
               </button>
-              {!isTeam && <FeedbackWidget user={user} />}
+              <FeedbackWidget user={user} />
 
               <div className="flex items-center gap-2.5 bg-white p-1.5 pr-3.5 rounded-2xl border border-slate-200 shadow-sm">
               <div className="w-7 h-7 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-center">
@@ -693,6 +707,42 @@ export default function App() {
 
         </div>
       </header>
+
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/35 backdrop-blur-sm lg:hidden" onClick={() => setIsMobileMenuOpen(false)}>
+          <aside className="h-full w-[min(88vw,360px)] overflow-y-auto bg-white p-4 shadow-2xl" onClick={(event) => event.stopPropagation()} aria-label="Navegación móvil">
+            <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Ferova One</p>
+                <p className="max-w-48 truncate text-xs text-slate-500">{businessProfile?.nombre_negocio || 'Tu negocio'} · Menú</p>
+              </div>
+              <button onClick={() => setIsMobileMenuOpen(false)} className="grid h-10 w-10 place-items-center rounded-xl bg-slate-100 text-slate-600" aria-label="Cerrar menú"><X className="h-5 w-5" /></button>
+            </div>
+            <nav className="space-y-3">
+              {visibleNavigationSections.map((section) => {
+                const Icon = section.icon;
+                const isActive = section.id === activeSectionId;
+                return (
+                  <section key={section.id} className="rounded-2xl border border-slate-100 p-2">
+                    <button onClick={() => navigateTo(section.items[0].id)} className={`flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-semibold ${isActive ? 'bg-slate-950 text-white' : 'text-slate-700 hover:bg-slate-50'}`}>
+                      <Icon className="h-4 w-4" /> {section.label}
+                    </button>
+                    {isActive && <div className="space-y-1 pt-2">{section.items.map((item, index) => (
+                      <React.Fragment key={item.id}>
+                        {item.group && section.items.findIndex((candidate) => candidate.group === item.group) === index && <p className="px-3 pb-1 pt-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 first:pt-1">{item.group}</p>}
+                        <button onClick={() => navigateTo(item.id)} className={`min-h-11 w-full rounded-xl px-3 py-2 text-left ${activeTab === item.id ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
+                          <span className="block text-xs font-semibold">{item.label}</span>
+                          <span className="block text-[11px] opacity-70">{item.hint}</span>
+                        </button>
+                      </React.Fragment>
+                    ))}</div>}
+                  </section>
+                );
+              })}
+            </nav>
+          </aside>
+        </div>
+      )}
 
       {/* Sync Banner */}
       {sheetsLoading && (
@@ -727,7 +777,7 @@ export default function App() {
 
             {/* Quick calculations layout bar */}
             {metrics && (
-              <div className="flex items-center gap-4 text-[10px] font-mono tracking-wider text-slate-500">
+              <div className="hidden items-center gap-4 text-[10px] font-mono tracking-wider text-slate-500 lg:flex">
                 <div>
                   <span>FACTURACIÓN:</span> <strong className="text-slate-900">{formatCop(metrics.totalVentas)}</strong>
                 </div>
@@ -766,11 +816,14 @@ export default function App() {
                   </button>
                   {isActive && (
                     <div className="space-y-1 px-2 pb-2 pt-2">
-                      {section.items.map((item) => (
-                        <button key={item.id} onClick={() => navigateTo(item.id)} className={`w-full rounded-lg px-3 py-2 text-left transition ${activeTab === item.id ? 'bg-blue-50 text-blue-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}>
-                          <span className="block text-xs font-semibold">{item.label}</span>
-                          <span className="block pt-0.5 text-[11px] font-normal opacity-70">{item.hint}</span>
-                        </button>
+                      {section.items.map((item, index) => (
+                        <React.Fragment key={item.id}>
+                          {item.group && section.items.findIndex((candidate) => candidate.group === item.group) === index && <p className="px-3 pb-1 pt-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 first:pt-1">{item.group}</p>}
+                          <button onClick={() => navigateTo(item.id)} className={`w-full rounded-lg px-3 py-2 text-left transition ${activeTab === item.id ? 'bg-blue-50 text-blue-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}>
+                            <span className="block text-xs font-semibold">{item.label}</span>
+                            <span className="block pt-0.5 text-[11px] font-normal opacity-70">{item.hint}</span>
+                          </button>
+                        </React.Fragment>
                       ))}
                     </div>
                   )}
@@ -789,7 +842,7 @@ export default function App() {
           </div>
         )}
 
-        <div className="max-w-6xl mx-auto px-6 lg:px-10 py-8">
+        <div className="max-w-6xl mx-auto px-0 sm:px-4 lg:px-10 py-4 sm:py-8">
           {errorMsg && (
             <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 flex gap-3 text-sm text-red-900">
               <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
@@ -854,7 +907,7 @@ export default function App() {
                 <ServiciosAdmin servicios={appData.servicios} ventas={appData.ventas} horas={appData.horas} config={appData.config} onSaveServicios={handleSaveServicios} formatCop={formatCop} />
               )}
               {activeTab === 'ajustes' && (
-                <ConfigAdmin config={appData.config} ventas={appData.ventas} clientes={appData.clientes} horas={appData.horas} hasGoogleToken={!!getAccessToken()} lastSheetBackupLink={lastSheetBackupLink} isBackingUpToSheets={isBackingUpToSheets} onSaveConfig={handleSaveConfig} onBackupToSheets={handleBackupToSheets} onImportFromSheets={handleImportFromSheets} onImportFromSheetsUrl={handleImportFromSheetsUrl} formatCop={formatCop} />
+                <ConfigAdmin userId={user.id} businessProfile={businessProfile} onBusinessProfileUpdated={setBusinessProfile} config={appData.config} ventas={appData.ventas} clientes={appData.clientes} horas={appData.horas} hasGoogleToken={!!getAccessToken()} lastSheetBackupLink={lastSheetBackupLink} isBackingUpToSheets={isBackingUpToSheets} onSaveConfig={handleSaveConfig} onBackupToSheets={handleBackupToSheets} onImportFromSheets={handleImportFromSheets} onImportFromSheetsUrl={handleImportFromSheetsUrl} formatCop={formatCop} />
               )}
               {activeTab === 'ventas-crm' && modules.crm_ventas && <CustomerCRM user={user} />}
               {isTeam && activeTab.startsWith('crm-') && (
@@ -871,7 +924,7 @@ export default function App() {
 
       {/* 4. Footer */}
       <footer className="bg-white border-t border-slate-200 py-6 text-center text-[10px] font-mono text-slate-400 shrink-0 uppercase tracking-widest mt-12">
-        Ferova OS © 2026 • Finanzas, Growth CRM y asistente IA con datos reales • <a href="/privacidad" className="underline hover:text-slate-700">Privacidad</a> • <a href="/terminos" className="underline hover:text-slate-700">Términos</a>
+        Ferova One © 2026 • Finanzas, Growth CRM y asistente con datos reales • <a href="/privacidad" className="underline hover:text-slate-700">Privacidad</a> • <a href="/terminos" className="underline hover:text-slate-700">Términos</a>
       </footer>
 
       <CommandPalette
@@ -883,6 +936,7 @@ export default function App() {
         onOpenAI={() => setAiCollapsed(false)}
         onOpenNotifications={() => handleNavigate('home')}
       />
+      <ProductTour userId={user.id} modules={modules} onNavigate={handleNavigate} />
     </div>
   );
 }

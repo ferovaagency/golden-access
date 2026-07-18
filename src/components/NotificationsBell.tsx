@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Bell, AlertTriangle, TrendingDown, Zap, CheckCircle2, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { listMyNotifications, markNotificationRead } from '../lib/userEngagementService';
 
 type Notif = {
   id: string;
@@ -10,6 +11,8 @@ type Notif = {
   category?: string;
   advice?: string;
   createdAt: string;
+  actionTab?: string | null;
+  personal?: boolean;
 };
 
 type Props = { userId: string; onNavigate?: (tab: string) => void };
@@ -32,15 +35,15 @@ export default function NotificationsBell({ userId, onNavigate }: Props) {
     if (!userId) return;
     let cancelled = false;
     (async () => {
-      const { data } = await (supabase as any)
+      const [{ data }, personal] = await Promise.all([(supabase as any)
         .from('business_blindspots')
         .select('id, title, detail, urgency, category, advice, created_at, resolved')
         .eq('user_id', userId)
         .eq('resolved', false)
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(20), listMyNotifications(userId).catch(() => [])]);
       if (cancelled) return;
-      setItems(((data as any[]) || []).map(r => ({
+      const blindspots = ((data as any[]) || []).map(r => ({
         id: r.id,
         title: r.title,
         detail: r.detail,
@@ -48,7 +51,11 @@ export default function NotificationsBell({ userId, onNavigate }: Props) {
         category: r.category,
         advice: r.advice,
         createdAt: r.created_at,
-      })));
+      }));
+      const direct = personal.map((notification) => ({ id: notification.id, title: notification.title, detail: notification.message, urgency: 'low' as const, category: `De ${notification.sender_name}`, createdAt: notification.created_at, actionTab: notification.action_tab, personal: true }));
+      setItems([...direct, ...blindspots].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      const alreadyRead = new Set(personal.filter((notification) => notification.read_at).map((notification) => notification.id));
+      if (alreadyRead.size) setReadSet((current) => new Set([...current, ...alreadyRead]));
     })();
     return () => { cancelled = true; };
   }, [userId, open]);
@@ -63,7 +70,7 @@ export default function NotificationsBell({ userId, onNavigate }: Props) {
   };
 
   const markAllRead = () => persistRead(new Set(items.map(i => i.id)));
-  const markOne = (id: string) => { const s = new Set(readSet); s.add(id); persistRead(s); };
+  const markOne = (item: Notif) => { const s = new Set(readSet); s.add(item.id); persistRead(s); if (item.personal) void markNotificationRead(item.id); };
 
   return (
     <div className="relative">
@@ -87,7 +94,7 @@ export default function NotificationsBell({ userId, onNavigate }: Props) {
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
               <div>
                 <p className="text-sm font-semibold text-slate-900">Notificaciones inteligentes</p>
-                <p className="text-[11px] text-slate-400">Detectadas por Ferova OS</p>
+                <p className="text-[11px] text-slate-400">Alertas de Ferova One y mensajes de María Fernanda</p>
               </div>
               <div className="flex items-center gap-1.5">
                 {unread > 0 && (
@@ -112,7 +119,7 @@ export default function NotificationsBell({ userId, onNavigate }: Props) {
                   <div
                     key={n.id}
                     className={`px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition ${isRead ? 'opacity-60' : ''}`}
-                    onClick={() => { markOne(n.id); onNavigate?.('home'); setOpen(false); }}
+                    onClick={() => { markOne(n); onNavigate?.(n.actionTab || 'home'); setOpen(false); }}
                   >
                     <div className="flex items-start gap-2.5">
                       <div className={`rounded-lg border p-1.5 ${st.bg}`}>
@@ -124,6 +131,7 @@ export default function NotificationsBell({ userId, onNavigate }: Props) {
                           {!isRead && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />}
                         </div>
                         {n.detail && <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">{n.detail}</p>}
+                        {n.category && <p className="mt-1 text-[10px] font-semibold text-emerald-700">{n.category}</p>}
                         {n.advice && <p className="text-[11px] text-blue-700 mt-1 line-clamp-2">→ {n.advice}</p>}
                       </div>
                     </div>

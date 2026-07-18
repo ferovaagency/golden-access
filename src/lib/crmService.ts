@@ -17,7 +17,7 @@ async function functionErrorMessage(error: any, fallback: string): Promise<Error
  * crm_team_members vía RLS -- ver migración create_crm_growth_ops_schema.
  */
 
-export type CanalOrigen = 'linkedin' | 'whatsapp' | 'email' | 'reddit' | 'web' | 'googlemaps' | 'referido' | 'otro';
+export type CanalOrigen = string;
 export type EstadoOportunidad = 'nuevo' | 'contactado' | 'calificando' | 'propuesta_enviada' | 'negociacion' | 'ganado' | 'perdido';
 
 export interface Oportunidad {
@@ -39,6 +39,9 @@ export interface Oportunidad {
   created_at: string;
   updated_at: string;
   closed_at: string | null;
+  vendedor?: string | null;
+  comision_porcentaje?: number | null;
+  comision_valor?: number | null;
   apollo_data?: any | null;
   apollo_enriched_at?: string | null;
   playbook_email?: string | null;
@@ -253,6 +256,32 @@ export interface RedditPost {
   url: string;
   link_flair_text: string | null;
   is_self: boolean;
+  locked: boolean;
+  archived: boolean;
+  can_comment: boolean;
+  comment_status: string;
+}
+
+export interface AcquisitionChannel { id: string; slug: string; label: string; color: string; active: boolean; }
+
+export async function listAcquisitionChannels(): Promise<AcquisitionChannel[]> {
+  const { data, error } = await (supabase as any).from('crm_acquisition_channels').select('*').order('label');
+  if (error) throw new Error(`[crmService] listAcquisitionChannels: ${error.message}`);
+  return (data || []) as AcquisitionChannel[];
+}
+
+export async function createAcquisitionChannel(label: string): Promise<AcquisitionChannel> {
+  const slug = label.trim().toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  if (!slug) throw new Error('Escribe un nombre válido para el canal.');
+  const { data, error } = await (supabase as any).from('crm_acquisition_channels').insert({ slug, label: label.trim() }).select('*').single();
+  if (error) throw new Error(`[crmService] createAcquisitionChannel: ${error.message}`);
+  return data as AcquisitionChannel;
+}
+
+export async function updateAcquisitionChannel(id: string, patch: Partial<Pick<AcquisitionChannel, 'label' | 'color' | 'active'>>): Promise<AcquisitionChannel> {
+  const { data, error } = await (supabase as any).from('crm_acquisition_channels').update(patch).eq('id', id).select('*').single();
+  if (error) throw new Error(`[crmService] updateAcquisitionChannel: ${error.message}`);
+  return data as AcquisitionChannel;
 }
 
 export interface LinkedInSearchResult {

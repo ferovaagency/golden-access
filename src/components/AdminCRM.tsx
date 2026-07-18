@@ -52,6 +52,10 @@ import {
   WhatsappInstance,
   getMyNotificationPhone,
   setMyNotificationPhone,
+  listAcquisitionChannels,
+  createAcquisitionChannel,
+  updateAcquisitionChannel,
+  AcquisitionChannel,
 } from '../lib/crmService';
 import {
   AdminCustomer,
@@ -106,6 +110,10 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const [nuevaValorEstimado, setNuevaValorEstimado] = useState<string>('');
   const [nuevaMoneda, setNuevaMoneda] = useState<'COP' | 'USD'>('COP');
   const [servicios, setServicios] = useState<ServicioCatalogo[]>([]);
+  const [channels, setChannels] = useState<AcquisitionChannel[]>([]);
+  const [newChannel, setNewChannel] = useState('');
+  const [newVendedor, setNewVendedor] = useState('');
+  const [newCommissionPercent, setNewCommissionPercent] = useState('');
 
   const [promptDraft, setPromptDraft] = useState('');
   const [savingPrompt, setSavingPrompt] = useState(false);
@@ -276,7 +284,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const refreshAll = async () => {
     setLoading(true);
     try {
-      const [o, c, k, bc, kn, srv, r, rs, wi, notifyPhone] = await Promise.all([
+      const [o, c, k, bc, kn, srv, r, rs, wi, notifyPhone, acquisitionChannels] = await Promise.all([
         listOportunidades(),
         listCitas(),
         listContenidoPotencial(),
@@ -287,6 +295,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
         listReviewSources().catch(() => [] as ReviewSource[]),
         getWhatsappInstance().catch(() => null),
         getMyNotificationPhone(user.email || '').catch(() => null),
+        listAcquisitionChannels().catch(() => [] as AcquisitionChannel[]),
       ]);
       setOportunidades(o);
       setCitas(c);
@@ -300,6 +309,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setWhatsappInstance(wi);
       setNotifyPhoneSaved(notifyPhone);
       setNotifyPhoneInput(notifyPhone || '');
+      setChannels(acquisitionChannels);
     } catch (err: any) {
       alert(`Error cargando el CRM: ${err.message || err}`);
     } finally {
@@ -731,6 +741,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
         servicio_id: nuevaServicioId || null,
         valor_estimado: valor,
         moneda: valor != null ? nuevaMoneda : null,
+        vendedor: newVendedor.trim() || null,
+        comision_porcentaje: newCommissionPercent ? Number(newCommissionPercent) : null,
+        comision_valor: valor != null && newCommissionPercent ? valor * Number(newCommissionPercent) / 100 : null,
       });
       setOportunidades([created, ...oportunidades]);
       setNombreContacto('');
@@ -739,6 +752,8 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setTelefono('');
       setNuevaServicioId('');
       setNuevaValorEstimado('');
+      setNewVendedor('');
+      setNewCommissionPercent('');
     } catch (err: any) {
       alert(`Error creando oportunidad: ${err.message || err}`);
     }
@@ -759,6 +774,29 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setOportunidades(oportunidades.map((x) => (x.id === o.id ? updated : x)));
     } catch (err: any) {
       alert(`Error actualizando canal: ${err.message || err}`);
+    }
+  };
+
+  const handleCommercialUpdate = async (o: Oportunidad, patch: Partial<Pick<Oportunidad, 'vendedor' | 'comision_porcentaje' | 'comision_valor'>>) => {
+    try {
+      const next = { ...patch };
+      if ('comision_porcentaje' in next && o.valor_estimado != null && next.comision_porcentaje != null) next.comision_valor = o.valor_estimado * next.comision_porcentaje / 100;
+      const updated = await upsertOportunidad({ id: o.id, ...next });
+      setOportunidades((current) => current.map((item) => item.id === o.id ? updated : item));
+    } catch (err: any) {
+      alert(`Error actualizando comisión: ${err.message || err}`);
+    }
+  };
+
+  const handleAddChannel = async () => {
+    if (!newChannel.trim()) return;
+    try {
+      const created = await createAcquisitionChannel(newChannel);
+      setChannels((current) => [...current, created].sort((a, b) => a.label.localeCompare(b.label)));
+      setNewChannel('');
+      setCanalOrigen(created.slug);
+    } catch (err: any) {
+      alert(`Error creando canal: ${err.message || err}`);
     }
   };
 
@@ -822,7 +860,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               <span className="text-[10px] font-mono text-[#8a8377] uppercase tracking-wider">CRM interno · no visible para clientes</span>
             </div>
             <div className="flex items-center gap-4">
-              <a href="/" className="text-[#8a8377] hover:text-blue-700 flex items-center gap-1 text-xs font-mono">← Volver a Ferova OS</a>
+              <a href="/" className="text-[#8a8377] hover:text-blue-700 flex items-center gap-1 text-xs font-mono">← Volver a Ferova One</a>
               <button onClick={() => logout()} className="text-[#8a8377] hover:text-red-600 flex items-center gap-1 text-xs font-mono">
                 <LogOut className="w-3.5 h-3.5" /> Cerrar sesión
               </button>
@@ -904,10 +942,15 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   onChange={(e) => setCanalOrigen(e.target.value)}
                   className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
                 >
-                  {['linkedin', 'whatsapp', 'email', 'reddit', 'web', 'googlemaps', 'referido', 'otro'].map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                  {(channels.length ? channels.filter((channel) => channel.active) : [{ slug: 'linkedin', label: 'LinkedIn' }, { slug: 'otro', label: 'Otro' }]).map((channel) => (
+                    <option key={channel.slug} value={channel.slug}>{channel.label}</option>
                   ))}
                 </select>
+                <div className="mt-2 flex gap-2">
+                  <input value={newChannel} onChange={(event) => setNewChannel(event.target.value)} placeholder="Agregar canal…" className="min-w-0 flex-1 rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] text-slate-900" />
+                  <button type="button" onClick={handleAddChannel} className="rounded border border-blue-200 px-2 py-1 text-[10px] font-semibold text-blue-700">Crear</button>
+                </div>
+                {channels.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{channels.map((channel) => <button type="button" key={channel.id} onClick={async () => { const updated = await updateAcquisitionChannel(channel.id, { active: !channel.active }); setChannels((current) => current.map((item) => item.id === updated.id ? updated : item)); }} className={`rounded-full border px-2 py-0.5 text-[9px] ${channel.active ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 text-slate-400 line-through'}`} title="Activar o desactivar canal">{channel.label}</button>)}</div>}
               </div>
               <div>
                 <label htmlFor="op-fuente" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Link de la publicación/perfil (opcional)</label>
@@ -967,6 +1010,11 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   </select>
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="block"><span className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Vendedor / comisionista</span><input value={newVendedor} onChange={(event) => setNewVendedor(event.target.value)} placeholder="Nombre" className="w-full rounded border border-slate-200 bg-slate-50/50 p-2 text-slate-900" /></label>
+                <label className="block"><span className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Comisión %</span><input type="number" min="0" max="100" step="0.1" value={newCommissionPercent} onChange={(event) => setNewCommissionPercent(event.target.value)} placeholder="0" className="w-full rounded border border-slate-200 bg-slate-50/50 p-2 text-slate-900" /></label>
+              </div>
+              {Number(nuevaValorEstimado) > 0 && Number(newCommissionPercent) > 0 && <p className="rounded-lg bg-blue-50 px-3 py-2 text-[10px] text-blue-700">Comisión estimada: {new Intl.NumberFormat('es-CO', { style: 'currency', currency: nuevaMoneda, maximumFractionDigits: 0 }).format(Number(nuevaValorEstimado) * Number(newCommissionPercent) / 100)}</p>}
               <button type="submit" className="w-full bg-[#c9a961] hover:bg-[#b09252] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5">
                 <Plus className="w-3.5 h-3.5" /> Crear
               </button>
@@ -1058,15 +1106,19 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                         aria-label={`Canal de ${o.nombre_contacto}`}
                         className="bg-slate-50/60 border border-slate-200 rounded px-2 py-1 text-slate-500 font-mono text-[10px]"
                       >
-                        {['linkedin', 'whatsapp', 'email', 'reddit', 'web', 'googlemaps', 'referido', 'otro'].map((channel) => (
-                          <option key={channel} value={channel}>{channel}</option>
+                        {(channels.length ? channels : [{ slug: o.canal_origen, label: o.canal_origen } as AcquisitionChannel]).map((channel) => (
+                          <option key={channel.slug} value={channel.slug}>{channel.label}</option>
                         ))}
                       </select>
                       <button onClick={() => handleDelete(o.id)} className="text-red-600 hover:text-[#e08970]">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
-
+                  <div className="grid grid-cols-1 gap-2 rounded-xl bg-slate-50 p-3 sm:grid-cols-3">
+                    <label className="text-[9px] font-mono uppercase text-slate-500">Vendedor<input defaultValue={o.vendedor || ''} onBlur={(event) => handleCommercialUpdate(o, { vendedor: event.target.value.trim() || null })} className="mt-1 w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-xs normal-case text-slate-900" /></label>
+                    <label className="text-[9px] font-mono uppercase text-slate-500">Comisión %<input type="number" min="0" max="100" step="0.1" defaultValue={o.comision_porcentaje ?? ''} onBlur={(event) => handleCommercialUpdate(o, { comision_porcentaje: event.target.value ? Number(event.target.value) : null })} className="mt-1 w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-900" /></label>
+                    <div className="text-[9px] font-mono uppercase text-slate-500">Comisión calculada<p className="mt-1 text-sm font-bold normal-case text-slate-900">{o.comision_valor != null ? fmt(Number(o.comision_valor), o.moneda || 'COP') : '—'}</p></div>
+                  </div>
 
                   {o.telefono && (
                     <div className="flex gap-2">
@@ -1090,7 +1142,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   <div className="pt-2 border-t border-slate-200 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-[9px] font-mono uppercase text-[#8a8377]">
-                        {o.apollo_enriched_at ? `Enriquecido con Apollo · ${new Date(o.apollo_enriched_at).toLocaleString('es-CO')}` : 'Enriquecer con Apollo + generar playbook IA'}
+                        {o.apollo_enriched_at ? `Enriquecido con Apollo · ${new Date(o.apollo_enriched_at).toLocaleString('es-CO')}` : 'Enriquecer con Apollo + generar playbook de contacto'}
                       </span>
                       {o.playbook_generated_at && (
                         <button
@@ -1306,7 +1358,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 {autoEnriching ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
-                    <span className="text-blue-700">Score alto detectado — enriqueciendo con Apollo y generando playbook automáticamente...</span>
+                    <span className="text-blue-700">Score alto detectado — enriqueciendo con Apollo y preparando el playbook de contacto...</span>
                   </>
                 ) : (
                   <span className="text-blue-700">{autoEnrichNotice}</span>
@@ -1361,7 +1413,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                         disabled={analyzingPostId === result.id}
                         className="w-full mt-1 px-2 py-1 bg-blue-50 border border-[#c9a961]/40 text-blue-600 rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
                       >
-                        <Sparkles className="w-2.5 h-2.5" /> {analyzingPostId === result.id ? 'Analizando...' : 'Analizar con IA'}
+                        <Sparkles className="w-2.5 h-2.5" /> {analyzingPostId === result.id ? 'Evaluando...' : 'Evaluar intención'}
                       </button>
                     </div>
                   ))}
@@ -1450,8 +1502,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                         disabled={analyzingPostId === p.id}
                         className="w-full mt-1 px-2 py-1 bg-blue-50 border border-[#c9a961]/40 text-blue-600 rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
                       >
-                        <Sparkles className="w-2.5 h-2.5" /> {analyzingPostId === p.id ? 'Analizando...' : 'Analizar con IA'}
+                        <Sparkles className="w-2.5 h-2.5" /> {analyzingPostId === p.id ? 'Evaluando...' : 'Evaluar intención'}
                       </button>
+                      <RedditCommentability post={p} />
                     </div>
                   ))}
                 </div>
@@ -1517,7 +1570,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 disabled={analyzing}
                 className="w-full bg-[#c9a961] hover:bg-[#b09252] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
               >
-                <Sparkles className="w-3.5 h-3.5" /> {analyzing ? 'Analizando con IA...' : 'Analizar y guardar'}
+                <Sparkles className="w-3.5 h-3.5" /> {analyzing ? 'Evaluando...' : 'Evaluar y guardar'}
               </button>
             </form>
 
@@ -1602,9 +1655,11 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                         disabled={analyzingPostId === p.id}
                         className="w-full mt-1 px-2 py-1 bg-blue-50 border border-[#c9a961]/40 text-blue-600 rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
                       >
-                        <Sparkles className="w-2.5 h-2.5" /> {analyzingPostId === p.id ? 'Analizando...' : 'Analizar con IA'}
+                        <Sparkles className="w-2.5 h-2.5" /> {analyzingPostId === p.id ? 'Evaluando...' : 'Evaluar intención'}
                       </button>
+                      <RedditCommentability post={p} />
                     </div>
+
                   ))}
                 </div>
               )}
@@ -2152,6 +2207,25 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
         )}
         {tab === 'feedback' && <AdminFeedbackPanel />}
       </main>
+    </div>
+  );
+}
+
+function RedditCommentability({ post }: { post: RedditPost }) {
+  return (
+    <div className="flex items-center justify-between gap-2 rounded border border-slate-200 bg-white px-2 py-1.5 text-[9px] font-mono">
+      <span className={post.can_comment ? 'text-emerald-700' : post.locked || post.archived ? 'text-red-600' : 'text-amber-700'}>
+        {post.comment_status || 'Estado de comentarios no verificado'}
+      </span>
+      <a
+        href={post.url}
+        target="_blank"
+        rel="noreferrer"
+        className="shrink-0 inline-flex items-center gap-1 text-blue-600 hover:underline"
+      >
+        <ExternalLink className="h-2.5 w-2.5" />
+        {post.can_comment ? 'Abrir para comentar' : 'Verificar en Reddit'}
+      </a>
     </div>
   );
 }

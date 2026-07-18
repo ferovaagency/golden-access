@@ -45,7 +45,7 @@ export default function AuthScreen() {
 
         <div className="space-y-2.5 text-center">
           <h1 className="text-2xl font-bold font-display tracking-tight text-slate-950">
-            Ferova OS Financiero
+            Ferova One
           </h1>
           <p className="text-sm text-slate-500">
             Finanzas, Growth CRM y asistente IA para operar con claridad
@@ -123,7 +123,7 @@ export default function AuthScreen() {
         </button>
 
         <p className="text-xs text-slate-400 text-center pt-2 leading-relaxed">
-          Al usar Ferova OS puedes consultar la <a href="/privacidad" target="_blank" rel="noreferrer" className="underline hover:text-blue-700">Política de Tratamiento de Datos</a> y los <a href="/terminos" target="_blank" rel="noreferrer" className="underline hover:text-blue-700">Términos y Condiciones</a>.<br />
+          Al usar Ferova One puedes consultar la <a href="/privacidad" target="_blank" rel="noreferrer" className="underline hover:text-blue-700">Política de Tratamiento de Datos</a> y los <a href="/terminos" target="_blank" rel="noreferrer" className="underline hover:text-blue-700">Términos y Condiciones</a>.<br />
           Mafe © 2026 · Bogotá D.C., Colombia
         </p>
       </div>

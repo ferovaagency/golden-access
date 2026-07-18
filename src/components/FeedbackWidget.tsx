@@ -37,9 +37,11 @@ export default function FeedbackWidget({ user }: Props) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="hidden md:flex items-center gap-2 rounded-2xl bg-white border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-50"
+        className="fixed bottom-4 left-4 z-40 grid h-12 w-12 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-lg hover:bg-slate-50 md:static md:flex md:h-auto md:w-auto md:items-center md:gap-2 md:px-3 md:py-2 md:text-xs md:font-semibold md:shadow-sm"
+        aria-label="Enviar feedback"
+        title="Reportar un problema o enviar una sugerencia"
       >
-        <MessageSquarePlus className="w-4 h-4" /> Reportar / Sugerir
+        <MessageSquarePlus className="w-4 h-4" /> <span className="hidden md:inline">Reportar / Sugerir</span>
       </button>
 
       {open && (

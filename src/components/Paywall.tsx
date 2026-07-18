@@ -48,7 +48,7 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
             <ShieldCheck className="w-6 h-6 text-[#c9a961]" />
           </div>
           <h1 className="text-2xl font-bold font-display tracking-tight text-[#c9a961]">Activa tu Licencia</h1>
-          <p className="text-xs text-[#a39d8e] font-mono uppercase tracking-wider">Acceso a Ferova OS</p>
+          <p className="text-xs text-[#a39d8e] font-mono uppercase tracking-wider">Acceso a Ferova One</p>
         </div>
 
         <div className="border-t border-b border-[#2a2620] py-5 space-y-3">
@@ -71,7 +71,7 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
             {paddleStatus === 'ready' ? 'Continuar con Paddle' : 'Paddle pendiente de configuración'}
           </button>
           <p className="text-[10px] text-[#8a8377] font-mono text-center leading-relaxed">
-            Paddle procesa la suscripción, factura y calcula los impuestos aplicables. Ferova OS no recibe ni almacena datos de pago. Al continuar aceptas los <a href="/terminos" className="underline hover:text-white">Términos</a> y la <a href="/privacidad" className="underline hover:text-white">Política de Privacidad</a>.
+            Paddle procesa la suscripción, factura y calcula los impuestos aplicables. Ferova One no recibe ni almacena datos de pago. Al continuar aceptas los <a href="/terminos" className="underline hover:text-white">Términos</a> y la <a href="/privacidad" className="underline hover:text-white">Política de Privacidad</a>.
           </p>
           <button
             onClick={handleCheckPayment}

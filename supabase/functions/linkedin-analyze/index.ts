@@ -22,6 +22,27 @@ const BodySchema = z.object({
   texto: z.string().trim().min(30, 'texto debe tener al menos 30 caracteres').max(20000),
 });
 
+function deterministicAnalysis(text: string) {
+  const normalized = text.toLowerCase();
+  const explicit = ['busco', 'necesito', 'contratar', 'cotización', 'cotizacion', 'recomienden', 'proveedor', 'agencia', 'freelancer'];
+  const pains = ['no aparezco', 'no vende', 'pocas ventas', 'tráfico', 'trafico', 'seo', 'google', 'tienda', 'ecommerce', 'shopify', 'wordpress', 'automatizar', 'manual', 'pierdo horas', 'mensajes', 'clientes', 'inteligencia artificial', 'ia'];
+  const urgency = ['urgente', 'esta semana', 'este mes', 'cuanto antes', 'presupuesto', 'pagar'];
+  const explicitHits = explicit.filter((term) => normalized.includes(term));
+  const painHits = pains.filter((term) => normalized.includes(term));
+  const urgencyHits = urgency.filter((term) => normalized.includes(term));
+  const score = Math.min(92, 18 + explicitHits.length * 18 + painHits.length * 7 + urgencyHits.length * 10);
+  const detected = [...explicitHits, ...painHits].slice(0, 4).join(', ');
+  return {
+    score_potencial: score,
+    resumen: text.replace(/\s+/g, ' ').slice(0, 220),
+    razon: detected ? `Se detectaron señales de necesidad o compra relacionadas con: ${detected}.` : 'La publicación tiene contexto comercial limitado y requiere revisión humana.',
+    comentario_sugerido: painHits.length
+      ? 'Una forma práctica de abordar esto es medir primero dónde se pierde la oportunidad y priorizar el cambio con mayor impacto. Si compartes un poco más de contexto, puedo sugerirte un primer diagnóstico.'
+      : '¿Qué resultado concreto esperas conseguir y en qué plazo? Con esos dos datos es más fácil recomendar un siguiente paso útil sin sobredimensionar la solución.',
+    analysis_mode: 'deterministic',
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -61,11 +82,6 @@ Deno.serve(async (req) => {
     const plataforma = body.plataforma || (body.url_publicacion.includes('reddit.com') ? 'reddit' : 'linkedin');
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ ok: false, message: 'LOVABLE_API_KEY no configurado' }), {
-        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
 
     // Aprendizaje por resultados: no requiere ninguna tabla/columna nueva, se calcula
     // en caliente sobre crm_oportunidades ya existente (estado ganado/perdido por canal).
@@ -115,45 +131,24 @@ Publicación:
 ${body.texto.slice(0, 6000)}
 """`;
 
-    const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Lovable-API-Key': LOVABLE_API_KEY,
-        'X-Lovable-AIG-SDK': 'manual-fetch',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        response_format: { type: 'json_object' },
-      }),
-    });
-
-    if (!aiRes.ok) {
-      const errText = await aiRes.text();
-      console.error(`[linkedin-analyze] AI gateway error [${aiRes.status}]: ${errText}`);
-      return new Response(
-        JSON.stringify({ ok: false, message: 'Error analizando con IA', status: aiRes.status, details: errText }),
-        { status: aiRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
-    }
-    const aiJson = await aiRes.json();
-    const content = aiJson?.choices?.[0]?.message?.content;
-    if (!content) {
-      return new Response(JSON.stringify({ ok: false, message: 'IA no devolvió contenido' }), {
-        status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    let parsed: any;
-    try {
-      parsed = JSON.parse(content);
-    } catch {
-      return new Response(JSON.stringify({ ok: false, message: 'IA devolvió JSON inválido', raw: content }), {
-        status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    let parsed: any = deterministicAnalysis(body.texto);
+    if (LOVABLE_API_KEY) {
+      try {
+        const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Lovable-API-Key': LOVABLE_API_KEY, 'X-Lovable-AIG-SDK': 'manual-fetch' },
+          body: JSON.stringify({ model: 'google/gemini-2.5-flash', messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], response_format: { type: 'json_object' } }),
+        });
+        if (aiRes.ok) {
+          const aiJson = await aiRes.json();
+          const content = aiJson?.choices?.[0]?.message?.content;
+          if (content) parsed = { ...JSON.parse(content), analysis_mode: 'ai' };
+        } else {
+          console.warn(`[linkedin-analyze] AI no disponible (${aiRes.status}); se usó análisis determinista.`);
+        }
+      } catch (error) {
+        console.warn('[linkedin-analyze] AI no disponible; se usó análisis determinista.', error);
+      }
     }
 
     const { data: inserted, error: insErr } = await supabase
@@ -191,7 +186,7 @@ ${body.texto.slice(0, 6000)}
       }
     }
 
-    return new Response(JSON.stringify({ ok: true, contenido: inserted }), {
+    return new Response(JSON.stringify({ ok: true, contenido: inserted, analysis_mode: parsed.analysis_mode || 'deterministic' }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {

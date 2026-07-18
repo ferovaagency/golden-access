@@ -13,6 +13,8 @@ export interface CampaignMetricsInput {
   ticket_promedio: number;
   costo_entrega: number;
   comision: number;
+  /** Honorarios totales del profesional/equipo durante el periodo. */
+  costo_profesional: number;
   ltv: number;
 }
 
@@ -35,6 +37,7 @@ export interface RoiResult {
   margen_neto: number;
   roi: number;
   ltv_total: number;
+  costos_totales: number;
 }
 
 const safeDiv = (a: number, b: number) => (b > 0 ? a / b : 0);
@@ -54,12 +57,12 @@ export function computeRoi(m: CampaignMetricsInput): RoiResult {
   const cpa = safeDiv(m.inversion, m.ventas);
   const ingresos_brutos = m.ventas * m.ticket_promedio;
   const roas = safeDiv(ingresos_brutos, m.inversion);
-  const costos_totales = m.inversion + m.costo_entrega * m.ventas + m.comision * m.ventas;
+  const costos_totales = m.inversion + m.costo_entrega * m.ventas + m.comision * m.ventas + m.costo_profesional;
   const utilidad_neta = ingresos_brutos - costos_totales;
   const margen_neto = safeDiv(utilidad_neta, ingresos_brutos);
   const roi = safeDiv(utilidad_neta, m.inversion);
   const ltv_total = m.ventas * m.ltv;
-  return { cpm, ctr, cpc, cpl, cpl_calificado, tasa_lead_a_calificado, tasa_calificado_a_cita, tasa_cita_a_efectiva, tasa_efectiva_a_venta, fuga_leads, fuga_citas, cpa, ingresos_brutos, roas, utilidad_neta, margen_neto, roi, ltv_total };
+  return { cpm, ctr, cpc, cpl, cpl_calificado, tasa_lead_a_calificado, tasa_calificado_a_cita, tasa_cita_a_efectiva, tasa_efectiva_a_venta, fuga_leads, fuga_citas, cpa, ingresos_brutos, roas, utilidad_neta, margen_neto, roi, ltv_total, costos_totales };
 }
 
 export interface ReverseRoiInput {

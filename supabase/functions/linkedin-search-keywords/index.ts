@@ -83,6 +83,27 @@ function extractBingResults(html: string, limit: number) {
   return results;
 }
 
+function extractBingRssResults(xml: string, limit: number) {
+  const $ = cheerio.load(xml, { xmlMode: true });
+  const results: any[] = [];
+  $('item').each((_, item) => {
+    if (results.length >= limit) return false;
+    const url = cleanText($(item).find('link').first().text());
+    const title = cleanText($(item).find('title').first().text());
+    const snippet = cleanText($(item).find('description').first().text());
+    if (!url.includes('linkedin.com/posts/') || !title) return;
+    results.push({
+      id: crypto.randomUUID(),
+      title,
+      snippet,
+      url,
+      author: title.split(' | ')[0]?.split(' - ')[0] || null,
+      source: 'linkedin_public_search_bing_rss',
+    });
+  });
+  return results;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -119,7 +140,8 @@ Deno.serve(async (req) => {
     }
 
     const { keywords, limit } = parsed.data;
-    const query = `site:linkedin.com/posts OR site:linkedin.com/feed/update ${keywords.join(' ')}`;
+    const serviceTerms = keywords.slice(0, 6).map((keyword) => keyword.split(/\s+/)[0]).filter(Boolean);
+    const query = `site:linkedin.com/posts ("busco agencia" OR "busco freelance" OR "necesito agencia" OR "recomienden") (${serviceTerms.join(' OR ')})`;
 
     // DuckDuckGo primero. Es un scraping de HTML de un buscador (no de LinkedIn en
     // sí), pero es frágil: el markup cambia y a veces bloquea peticiones automatizadas
@@ -164,6 +186,26 @@ Deno.serve(async (req) => {
           usedSource = 'bing';
         } else {
           lastError = lastError || `Bing ${bingRes.status}`;
+        }
+      } catch (err) {
+        lastError = lastError || (err instanceof Error ? err.message : String(err));
+      }
+    }
+
+    if (results.length === 0) {
+      try {
+        const rssUrl = new URL('https://www.bing.com/search');
+        rssUrl.searchParams.set('q', query);
+        rssUrl.searchParams.set('format', 'rss');
+        rssUrl.searchParams.set('count', String(Math.min(limit * 2, 30)));
+        const rssRes = await fetch(rssUrl.toString(), {
+          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FerovaOS/1.0; +https://ferova.agency)', 'Accept': 'application/rss+xml,text/xml,*/*' },
+        });
+        if (rssRes.ok) {
+          results = extractBingRssResults(await rssRes.text(), limit);
+          usedSource = 'bing_rss';
+        } else {
+          lastError = lastError || `Bing RSS ${rssRes.status}`;
         }
       } catch (err) {
         lastError = lastError || (err instanceof Error ? err.message : String(err));

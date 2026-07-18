@@ -6,6 +6,8 @@ export interface Receivable {
   id: string;
   cliente_id?: string | null;
   factura?: string | null;
+  documento_url?: string | null;
+  documento_nombre?: string | null;
   concepto: string;
   valor: number;
   moneda: string;

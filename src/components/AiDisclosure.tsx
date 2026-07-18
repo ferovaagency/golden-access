@@ -1,9 +1,9 @@
 type AiDisclosureVariant = 'inline' | 'banner' | 'report';
 
 const TEXTS: Record<AiDisclosureVariant, string> = {
-  inline: 'Respuesta generada con inteligencia artificial. Puede contener errores: verifica las cifras antes de decidir.',
-  banner: 'Estás usando un asistente de inteligencia artificial. Analiza los datos que registraste en Ferova OS para darte recomendaciones. Puede equivocarse: verifica siempre las cifras antes de tomar una decisión. No sustituye asesoría contable, tributaria ni legal.',
-  report: 'Documento generado automáticamente con inteligencia artificial a partir de los datos que registraste. Es una simulación, no una proyección certificada ni asesoría financiera. Las decisiones son tuyas.',
+  inline: 'Respuesta automatizada; puede usar inteligencia artificial cuando esté disponible. Verifica las cifras antes de decidir.',
+  banner: 'Estás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.',
+  report: 'Documento generado automáticamente a partir de los datos registrados; puede usar inteligencia artificial cuando esté disponible. Es una simulación, no una proyección certificada ni asesoría financiera.',
 };
 
 export function AiDisclosure({ variant = 'inline' }: { variant?: AiDisclosureVariant }) {

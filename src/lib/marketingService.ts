@@ -29,6 +29,7 @@ export interface CampaignMetrics {
   ticket_promedio: number;
   costo_entrega: number;
   comision: number;
+  costo_profesional: number;
   ltv: number;
   notas?: string | null;
 }
@@ -41,6 +42,7 @@ const toNum = (r: any): CampaignMetrics => ({
   ticket_promedio: Number(r.ticket_promedio),
   costo_entrega: Number(r.costo_entrega),
   comision: Number(r.comision),
+  costo_profesional: Number(r.costo_profesional || 0),
   ltv: Number(r.ltv),
 });
 

@@ -50,6 +50,10 @@ function parseAtomPosts(xml: string, fallbackSubreddit: string, limit: number) {
       url: href,
       link_flair_text: null,
       is_self: true,
+      locked: false,
+      archived: false,
+      can_comment: false,
+      comment_status: 'No fue posible verificar los comentarios en tiempo real',
     };
   });
 }
@@ -68,6 +72,14 @@ function mapPullPushPosts(data: any[], limit: number) {
     url: p.permalink ? `https://www.reddit.com${p.permalink}` : (p.full_link || p.url || 'https://www.reddit.com'),
     link_flair_text: p.link_flair_text || null,
     is_self: p.is_self ?? !!p.selftext,
+    locked: !!p.locked,
+    archived: !!p.archived,
+    can_comment: false,
+    comment_status: p.locked
+      ? 'Comentarios cerrados'
+      : p.archived
+        ? 'Publicación archivada'
+        : 'No fue posible verificar los comentarios en tiempo real',
   }));
 }
 
@@ -156,6 +168,16 @@ Deno.serve(async (req) => {
           url: `https://www.reddit.com${p.permalink}`,
           link_flair_text: p.link_flair_text || null,
           is_self: !!p.is_self,
+          locked: !!p.locked,
+          archived: !!p.archived,
+          can_comment: !p.locked && !p.archived && !p.removed_by_category && p.author !== '[deleted]',
+          comment_status: p.locked
+            ? 'Comentarios cerrados'
+            : p.archived
+              ? 'Publicación archivada'
+              : p.removed_by_category || p.author === '[deleted]'
+                ? 'Publicación eliminada'
+                : 'Comentarios habilitados (verificado)',
         };
       });
     }

@@ -6,6 +6,8 @@ export interface Payable {
   id: string;
   proveedor: string;
   factura?: string | null;
+  documento_url?: string | null;
+  documento_nombre?: string | null;
   concepto?: string | null;
   valor: number;
   moneda: string;

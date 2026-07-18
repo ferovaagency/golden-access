@@ -80,6 +80,39 @@ function domainFromEmailOrUrl(email?: string, url?: string) {
   return undefined;
 }
 
+function buildDeterministicPlaybook(input: {
+  nombre: string;
+  empresa?: string;
+  email?: string;
+  emailVerified: boolean;
+  telefono?: string;
+  linkedin?: string;
+  contexto?: string;
+}) {
+  const firstName = input.nombre.split(/\s+/)[0] || input.nombre;
+  const company = input.empresa || 'tu empresa';
+  const context = (input.contexto || '').replace(/\s+/g, ' ').trim();
+  const signal = context
+    ? `Vi que mencionaste: “${context.slice(0, 180)}${context.length > 180 ? '…' : ''}”`
+    : `Estuve revisando el trabajo de ${company} y veo una oportunidad concreta para fortalecer su crecimiento digital.`;
+  const verificationNote = input.email && !input.emailVerified
+    ? '\n\n(Nota interna: verifica el correo en Apollo antes de enviar.)'
+    : '';
+
+  return {
+    playbook_email: `Asunto: Una idea concreta para ${company}\n\nHola ${firstName},\n\n${signal}\n\nEn Ferova ayudamos a convertir este tipo de necesidad en un plan accionable de SEO, e-commerce o automatización, según el cuello de botella real. Si te sirve, puedo compartirte en una llamada de 20 minutos tres acciones priorizadas para ${company}, sin compromiso.\n\n¿Te funciona esta semana?${verificationNote}`,
+    playbook_linkedin_conectar: Boolean(input.linkedin),
+    playbook_linkedin_nota: input.linkedin
+      ? `Hola ${firstName}. Vi tu publicación y el reto que comentas. Me gustaría conectar para compartirte una idea puntual que podría servirle a ${company}.`
+      : '',
+    playbook_linkedin_mensaje: `Hola ${firstName}. ${signal} Tengo una idea práctica para abordar ese punto sin empezar por una propuesta grande. ¿Te la comparto en tres pasos por aquí o prefieres una llamada breve?`,
+    playbook_whatsapp_mensaje: input.telefono
+      ? `Hola ${firstName}, soy del equipo de Ferova. Llegué a tu contacto por la necesidad que compartiste sobre crecimiento digital. Preparé una recomendación breve para ${company}; ¿te la envío por aquí?`
+      : '',
+    siguiente_accion: `1. Verifica los datos de contacto${input.email && !input.emailVerified ? ' y el correo' : ''}. 2. Interactúa con la publicación antes de escribir. 3. Envía el mensaje corto y ofrece una recomendación concreta. 4. Si responde, agenda diagnóstico de 20 min. 5. Haz seguimiento en 2 y 5 días.`,
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -111,13 +144,8 @@ Deno.serve(async (req) => {
     const APOLLO_API_KEY = Deno.env.get('APOLLO_API_KEY');
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!APOLLO_API_KEY) {
-      return new Response(JSON.stringify({ ok: false, message: 'APOLLO_API_KEY no configurada' }), {
-        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ ok: false, message: 'LOVABLE_API_KEY no configurada' }), {
-        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      return new Response(JSON.stringify({ ok: false, message: 'Apollo todavía no está conectado. Configura APOLLO_API_KEY en los secretos de Supabase para habilitar el enriquecimiento.' }), {
+        status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
@@ -259,6 +287,18 @@ ${contexto ? contexto.slice(0, 3000) : '(sin contexto adicional; usa datos de Ap
 
 Servicios de Ferova a mencionar solo si son relevantes al dolor detectado: SEO, GEO/AIO (optimización para respuestas de IA), e-commerce (Shopify/Wordpress), automatización con IA (bots, agentes), asesoría estratégica de crecimiento.`;
 
+    let playbook: any = buildDeterministicPlaybook({
+      nombre: nombre_contacto,
+      empresa: foundCompany,
+      email: foundEmail,
+      emailVerified,
+      telefono: foundPhone,
+      linkedin: foundLinkedin,
+      contexto,
+    });
+    let playbookMode = 'deterministic';
+
+    if (LOVABLE_API_KEY) {
     const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Lovable-API-Key': LOVABLE_API_KEY, 'X-Lovable-AIG-SDK': 'manual-fetch' },
@@ -281,11 +321,13 @@ Servicios de Ferova a mencionar solo si son relevantes al dolor detectado: SEO, 
     }
     const aiJson = await aiRes.json();
     const content = aiJson?.choices?.[0]?.message?.content;
-    let playbook: any = {};
+    playbook = {};
     try { playbook = JSON.parse(content); } catch {
       return new Response(JSON.stringify({ ok: false, message: 'IA devolvió JSON inválido', raw: content }), {
         status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+    playbookMode = 'ai';
     }
 
     // Si Apollo no dio teléfono, forzar vacío el mensaje de WhatsApp
@@ -346,6 +388,7 @@ Servicios de Ferova a mencionar solo si son relevantes al dolor detectado: SEO, 
         org_from_cache: orgFromCache,
         email_status: emailStatus,
         email_verified: emailVerified,
+        playbook_mode: playbookMode,
       },
     }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
