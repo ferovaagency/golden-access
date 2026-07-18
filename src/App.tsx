@@ -782,6 +782,9 @@ export default function App() {
             <>
               {activeTab === 'planner' && <SmartPlanner />}
               {activeTab === 'reports' && user && <ReportsView user={user} />}
+              {activeTab === 'finops' && <FinanceOperativa user={user} appData={appData} formatCop={formatCop} />}
+              {activeTab === 'marketingRoi' && <MarketingROI user={user} formatCop={formatCop} />}
+              {activeTab === 'admin-cortesias' && isTeam && <AdminCourtesyPanel />}
               {activeTab === 'dashboard' && (
                 <Home
                   data={appData} 
