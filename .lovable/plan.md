@@ -1,108 +1,115 @@
-# Migración a Lovable Cloud (con Google login integrado)
 
-## Objetivo
+# Ferova OS — Redesign Plan
 
-Activar Lovable Cloud en este proyecto para tener el mismo Google login "un click" que Ferova AI Studio, **sin tocar tu Supabase actual** (donde viven datos de otros proyectos).
-
-## Cómo queda la arquitectura
-
-```text
-ANTES                          DESPUÉS
-─────                          ───────
-Tu Supabase externo            Tu Supabase externo (INTACTO)
-├── finance_*                  ├── (queda ahí sin cambios,
-├── crm_*                      │    otros proyectos siguen
-├── user_subscriptions         │    usándolo)
-└── auth.users                 └── auth.users
-       ↑
-       └── Ferova OS lee/escribe          Lovable Cloud (NUEVO)
-                                          ├── finance_* (copiados)
-                                          ├── crm_* (copiados)
-                                          ├── user_subscriptions
-                                          ├── auth.users (Google login OOB)
-                                          └── Edge functions
-                                                 ↑
-                                                 └── Ferova OS lee/escribe
-```
-
-**Tu Supabase actual no se toca**. Se crea un Supabase nuevo administrado por Lovable, se copian las 18 tablas que **solo** usa este proyecto, y Ferova OS pasa a apuntar al nuevo.
-
-## Tablas a migrar (solo las de este proyecto)
-
-Detectadas en el código:
-
-- **Finance (10)**: `finance_ventas`, `finance_clientes`, `finance_servicios`, `finance_horas`, `finance_abonos`, `finance_otros_gastos`, `finance_pagos_egresos`, `finance_herramientas`, `finance_herramienta_servicios`, `finance_config`
-- **CRM (7)**: `crm_oportunidades`, `crm_interacciones`, `crm_citas_diagnostico`, `crm_contenido_potencial`, `crm_team_members`, `crm_bot_config`, `crm_bot_knowledge`
-- **Suscripciones (1)**: `user_subscriptions`
-
-Confirmame que **ninguna de estas 18 tablas es leída/escrita por otro de tus proyectos**. Si alguna es compartida, la marcamos y decidimos qué hacer (dejarla en el Supabase externo con acceso cross-project, o duplicar datos).
-
-## Pasos
-
-### 1. Activar Lovable Cloud
-`supabase--enable` → crea el nuevo Supabase managed con auth + Google login ya configurados (así como AI Studio).
-
-### 2. Recrear el esquema en Lovable Cloud
-Genero migración con las 18 tablas exactas (columnas, tipos, FKs, índices, triggers, RLS policies, grants) leyendo primero el esquema real de tu Supabase actual vía las edge functions o pidiéndote un dump.
-
-**Necesito**: acceso SQL de solo lectura a tu Supabase actual para copiar el esquema fielmente. Dos opciones:
-- (a) Corrés `pg_dump --schema-only` de esas tablas y me pegás el SQL.
-- (b) Me das temporalmente la connection string y lo hago yo con `psql` desde el sandbox.
-
-### 3. Migrar los datos
-- Export `COPY (SELECT * FROM tabla) TO STDOUT WITH CSV` desde tu Supabase.
-- Import a Lovable Cloud vía tool `insert`.
-- **Los `user_id` de `auth.users` cambian** porque son cuentas nuevas. Estrategia: mapping table — para cada email en tu `auth.users` viejo, se crea el usuario equivalente en Lovable Cloud y se reescriben todos los `user_id` de las 18 tablas con el nuevo UUID antes de insertar.
-
-### 4. Reescribir `src/lib/supabase.ts`
-Reemplazo el cliente actual por el cliente auto-generado de Lovable Cloud (`src/integrations/lovable/client.ts`). El código de `financeService.ts`, `crmService.ts`, componentes: **sin cambios** (usan `supabase.from(...)`, misma API).
-
-### 5. Rehacer las 7 edge functions
-`paypal-ipn`, `paypal-capture-order`, `calendar-book`, `calendar-cancel`, `linkedin-analyze`, `whatsapp-send`, `whatsapp-webhook`, `bot-knowledge-upsert` se redeployan en Lovable Cloud. El código es idéntico salvo variables de entorno.
-
-### 6. Reconfigurar secretos
-- PayPal: `PAYPAL_CLIENT_ID`, `PAYPAL_SECRET`, `PAYPAL_WEBHOOK_ID`
-- WhatsApp/Meta: los que tengas hoy
-- Google Calendar: reconecto el connector
-- `LOVABLE_API_KEY` para AI Gateway (linkedin-analyze) — auto-provisionado
-
-### 7. Actualizar webhooks externos
-- **PayPal Dashboard**: cambiar URL del IPN al nuevo endpoint de Lovable Cloud.
-- **WhatsApp/Meta**: cambiar callback URL del webhook.
-
-### 8. Verificación
-- Login con Google desde el preview.
-- Cargar Dashboard, VentasAdmin, CRM y confirmar que los datos se ven.
-- Test de un pago PayPal en sandbox.
-- Cuando confirmes que todo funciona → apagamos las escrituras al Supabase viejo desde este proyecto (queda como archivo de referencia).
-
-## Riesgos y advertencias
-
-- **Ventana de escritura dual**: entre la exportación y el switch, cualquier venta/gasto que cargues en el Supabase viejo se pierde. Recomiendo hacer la migración en horario bajo y con la app en "modo mantenimiento" (te muestro un banner) por ~30 min.
-- **PayPal en producción**: si tenés suscripciones activas cobrando ahora, la URL del IPN cambia. Los pagos que ocurran mientras cambiás la config podrían no registrarse. Sugiero pausar el plan en PayPal durante la ventana.
-- **Google Sheets**: seguirá funcionando igual (el `provider_token` se obtiene del OAuth de Google en Lovable Cloud, mismos scopes).
-- **`sb_publishable_b5j2ar7b9fz2XNr95JwYCQ_Eyasabcn`** (tu clave actual) queda obsoleta para este proyecto pero **sigue viva** para los otros proyectos que usan ese Supabase.
-
-## Detalles técnicos
-
-- **Cliente Supabase**: Lovable Cloud usa `@supabase/supabase-js` estándar; la API `from().select()` es idéntica → los servicios no cambian.
-- **Auth mapping**: crear tabla temporal `auth_id_map(old_id uuid, new_id uuid, email text)` en el nuevo Supabase, poblarla con INSERT USER via admin API por email, y usar UPDATE con JOIN para reescribir FKs.
-- **RLS**: se replican las policies existentes; como los `user_id` cambian pero mantenemos la asociación email→user, las policies `auth.uid() = user_id` siguen siendo correctas post-mapping.
-- **Storage**: no detecté uso de storage buckets en el código; si tenés archivos en el Supabase viejo, decime y los agrego a la migración.
-
-## Estimación
-
-- Setup + esquema: ~30 min
-- Datos + auth mapping: ~1 h (depende del volumen)
-- Edge functions + secretos: ~45 min
-- Webhooks externos + smoke test: ~30 min
-
-**Total: ~3 h de trabajo, con la app operativa al final.**
+Goal: transform Ferova from a modular CRM/Finance tool into a clean, Apple/Linear-style operating system for entrepreneurs. **No business logic, no Supabase schema, no auth flow changes.** Only shell, navigation, Home, Planner, AI placement, and onboarding.
 
 ---
 
-## Antes de arrancar necesito confirmación de 3 cosas
+## 1. Remove AI Studio residue
 
-1. ¿Las 18 tablas listadas son **exclusivas** de este proyecto? ¿O alguna es compartida?
-2. ¿Preferís opción (a) pg_dump manual o (b) me pasás connection string temporal?
-3. ¿Hay suscripciones PayPal activas cobrando ahora (impacta la ventana de mantenimiento)?
+- Rewrite `README.md` as a Lovable project readme.
+- Rewrite `metadata.json` (drop `MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API`, AI Studio link).
+- Remove `.env.example` `GEMINI_API_KEY` / `APP_URL` block, replace with Lovable Cloud note.
+- Update `index.html` title/description to "Ferova OS".
+- Grep for "AI Studio", "ai.studio", "GEMINI_API_KEY" references and clean.
+
+## 2. New app shell (`src/App.tsx` refactor, no logic changes)
+
+Replace current tab-bar layout with a 3-column shell:
+
+```text
+┌──────────┬──────────────────────────────┬───────────────┐
+│ Sidebar  │  Main content (route view)   │  AI Sidebar   │
+│ (nav)    │                              │  (collapsible)│
+└──────────┴──────────────────────────────┴───────────────┘
+```
+
+New primary nav (left rail, icon+label, collapsible):
+- Home
+- Workspace (existing Dashboard + quick capture)
+- Projects (existing `ProyectosAdmin`)
+- Modules ▾
+  - Finance (Ventas, Gastos, Horas, Servicios, Equilibrio, Impuestos — grouped, unchanged internals)
+  - CRM (existing `AdminCRM` / `CustomerCRM`)
+  - Smart Planner (new — see §4)
+  - WhatsApp (existing panel inside CRM, surfaced as module)
+  - LinkedIn (existing)
+  - Reddit (existing)
+- Settings ▾
+  - Company, Users, Integrations, Appearance, AI, Permissions, Billing
+  - Maps to existing `ConfigAdmin`, `ClientesAdmin`, Google connect, Paywall — grouped, not rebuilt.
+
+All existing components are re-mounted inside the new shell. Their internals stay intact.
+
+## 3. Home — Executive Dashboard (new `src/components/Home.tsx`)
+
+Reads from existing services (`financeService`, `crmService`, `planService`) — no new queries beyond aggregation. Sections:
+
+1. **Today's priorities** (max 5) — pulls open oportunidades w/ `siguiente_accion`, overdue abonos, low-cash alerts, tasks from planner.
+2. **Business health** — 5 KPI cards using existing finance calcs: cash, AR, monthly revenue, today's hours, profitability.
+3. **Blind Spots** — calls existing `business-assistant-chat` edge function with a short "insights" prompt (reuses infra, no new function). Renders 3–5 bullet insights.
+4. **Quick access** — 5 large tiles: Planner, Projects, Finance, CRM, AI.
+
+No charts. Whitespace-heavy layout.
+
+## 4. Smart Planner (new module, self-contained)
+
+New files:
+- `src/components/SmartPlanner.tsx` — UI (brain dump input, today/week views, time blocks).
+- `src/lib/plannerService.ts` — Supabase CRUD.
+- Minimal new tables via `supabase--migration` (only unavoidable schema change):
+  - `planner_tasks` (title, notes, energy, priority, due_at, block_start, block_end, status, project_id nullable, user_id)
+  - `planner_habits` (title, cadence, streak, user_id)
+  - With GRANTs + RLS scoped to `auth.uid()`.
+- Auto-scheduling is client-side heuristic v1 (energy + priority + free blocks). No ML.
+
+This is the one place new tables are needed; everything else reuses existing schema.
+
+## 5. Permanent AI sidebar
+
+- Extract current `BusinessAssistant` into a right-side dockable panel (`src/components/AISidebar.tsx`) mounted in the shell, not floating.
+- Collapsible (icon rail) + resizable (drag handle, width persisted to localStorage).
+- Reuses existing `business-assistant-chat` edge function verbatim.
+- System prompt tightened: max 6 lines, always end with "Suggested actions:" list. Prompt edit only, no function signature change.
+
+## 6. Onboarding (redesign `OnboardingChat.tsx` presentation only)
+
+Convert to one-question-per-screen wizard using existing state fields (`business_profile`). Steps: name → solo/team → currency → timezone → business type → working hours → integrations (Google/WhatsApp/Notion optional) → theme. Same save payload as today.
+
+## 7. Design system
+
+Update `src/index.css`:
+- Introduce semantic tokens: `--bg`, `--surface`, `--surface-2`, `--border`, `--text`, `--muted`, `--accent`.
+- Light theme default, dark theme via `[data-theme="dark"]`.
+- Radius scale (`--r-sm/md/lg`), soft shadow tokens, 8pt spacing.
+- Typography: keep Outfit/Figtree, tighten scale.
+- Remove `.ferova-light-theme` overrides (legacy dark→light patches) once shell is on tokens.
+
+Density / large-text / dark-mode toggles live in Settings → Appearance, stored in localStorage.
+
+## 8. What stays untouched
+
+- All `supabase/functions/*` (except Home insights prompt reuse).
+- `financeService`, `crmService`, `businessProfileService`, `sheetsService`, `planService`, auth, PayPal, Google OAuth, WhatsApp/Evolution wiring.
+- Existing admin components — re-mounted, not rewritten.
+
+## 9. Delivery order (single implementation pass)
+
+1. Cleanup AI Studio references + `index.html` metadata.
+2. Design tokens in `index.css`.
+3. New shell in `App.tsx` + `AppSidebar.tsx` + `AISidebar.tsx`.
+4. `Home.tsx` executive dashboard.
+5. Planner migration + `SmartPlanner.tsx` + service.
+6. Onboarding wizard refactor.
+7. Settings grouping page.
+8. Typecheck, visual check via Playwright screenshot.
+
+## 10. Risks
+
+- Planner tables are the only schema change — small, additive, RLS-scoped, safe.
+- Re-mounting existing components inside a new shell may surface stale `.ferova-light-theme` selectors; will migrate incrementally, leaving overrides in place until each screen is verified.
+- AI sidebar always-on will increase Lovable AI usage only when user chats — no background polling.
+
+---
+
+Confirm and I'll implement in the order above.
