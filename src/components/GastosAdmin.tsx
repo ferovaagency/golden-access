@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Herramienta, OtroGasto, Servicio, Cliente, Config } from '../types';
-import { convertToCop, calcularPrestaciones, calcularCostosHerramientas } from '../lib/calculations';
-import { Trash2, ShieldAlert, Plus, HelpCircle, PenTool, LayoutGrid, Edit2, X, Check, Paperclip } from 'lucide-react';
+import { convertToCop, calcularPrestaciones, calcularCostosHerramientas, isColombiaFiscal, type FiscalContext } from '../lib/calculations';
+import { Trash2, ShieldAlert, Plus, HelpCircle, PenTool, LayoutGrid, Edit2, X, Check, Paperclip, Info } from 'lucide-react';
 import ComprobanteUpload from './ComprobanteUpload';
 
 interface GastosAdminProps {
@@ -10,6 +10,7 @@ interface GastosAdminProps {
   servicios: Servicio[];
   clientes: Cliente[];
   config: Config;
+  fiscalProfile?: FiscalContext;
   onSaveHerramientas: (updated: Herramienta[]) => Promise<void>;
   onSaveOtrosGastos: (updated: OtroGasto[]) => Promise<void>;
   onSaveConfig: (updated: Partial<Config>) => Promise<void>;
@@ -23,6 +24,7 @@ export default function GastosAdmin({
   servicios,
   clientes,
   config,
+  fiscalProfile,
   onSaveHerramientas,
   onSaveOtrosGastos,
   onSaveConfig,
@@ -55,8 +57,10 @@ export default function GastosAdmin({
   // --- CALCULATIONS ---
   const clientesActivosCount = clientes.filter(c => c.activo).length;
 
-  // Prestaciones
-  const prestaciones = calcularPrestaciones(config.salario_propuesto, config.smmlv);
+  // Prestaciones: sólo aplican en CO. Para otros países la función devuelve
+  // ceros con applies=false y renderizamos un aviso de configuración pendiente.
+  const prestaciones = calcularPrestaciones(config.salario_propuesto, config.smmlv, fiscalProfile);
+  const fiscalCO = isColombiaFiscal(fiscalProfile);
 
   // Herramientas costs
   const toolsComputed = calcularCostosHerramientas(herramientas, clientesActivosCount, config.trm);
