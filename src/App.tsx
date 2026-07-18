@@ -12,6 +12,7 @@ import FeedbackWidget from './components/FeedbackWidget';
 import { Config, AppData, Cliente, Servicio, Herramienta, OtroGasto, Venta, Hora, PagoEgreso } from './types';
 import { calcularMétricasFinancieras } from './lib/calculations';
 import { useFiscalProfile } from './hooks/useFiscalProfile';
+import { isSupabaseConfigured, supabaseConfigurationError } from './integrations/supabase/client';
 
 // Unified Premium View Components
 import Home from './components/Home';
@@ -59,6 +60,20 @@ type NavigationItem = { id: string; label: string; hint: string };
 type NavigationSection = { id: string; label: string; icon: React.ComponentType<{ className?: string }>; items: NavigationItem[] };
 
 export default function App() {
+  if (!isSupabaseConfigured) {
+    return (
+      <main className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-slate-900">
+        <section className="w-full max-w-xl rounded-3xl border border-amber-200 bg-white p-8 shadow-xl shadow-slate-200/50">
+          <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700"><AlertCircle className="h-6 w-6" aria-hidden="true" /></div>
+          <h1 className="text-xl font-bold">Configuración pendiente del despliegue</h1>
+          <p className="mt-3 text-sm leading-6 text-slate-600">{supabaseConfigurationError} Esta publicación de Lovable Cloud no recibió la configuración de su proyecto de datos, por lo que Ferova OS no puede conectarse todavía.</p>
+          <p className="mt-4 rounded-xl bg-slate-50 p-4 font-mono text-xs leading-5 text-slate-700">VITE_SUPABASE_URL<br />VITE_SUPABASE_PUBLISHABLE_KEY</p>
+          <p className="mt-4 text-xs leading-5 text-slate-500">La integración de Lovable Cloud debe inyectar estos valores al publicar. Nunca uses una clave secret o service_role en el navegador.</p>
+        </section>
+      </main>
+    );
+  }
+
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [hasPaid, setHasPaid] = useState(false);

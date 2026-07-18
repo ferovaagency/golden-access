@@ -4,6 +4,7 @@ import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, type UIMessage } from 'ai';
 import { Sparkles, PanelRightClose, PanelRightOpen, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { getSupabaseFunctionUrl } from '../integrations/supabase/client';
 import { Conversation, ConversationContent } from './ai-elements/conversation';
 import { Message, MessageContent, MessageResponse } from './ai-elements/message';
 import { PromptInput, PromptInputFooter, PromptInputSubmit, PromptInputTextarea } from './ai-elements/prompt-input';
@@ -52,7 +53,7 @@ export default function AISidebar({ user, collapsed, onToggle, width, onResize, 
   }, [user.id]);
 
   const transport = useMemo(() => new DefaultChatTransport({
-    api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/business-assistant-chat`,
+    api: getSupabaseFunctionUrl('business-assistant-chat'),
     fetch: async (input, init) => {
       const { data } = await supabase.auth.getSession();
       const headers = new Headers(init?.headers);

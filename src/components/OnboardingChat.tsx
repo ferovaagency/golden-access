@@ -4,6 +4,7 @@ import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, type UIMessage } from 'ai';
 import { Sparkles, CheckCircle2, Circle, PenLine } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { getSupabaseFunctionUrl } from '../integrations/supabase/client';
 import { BusinessProfile, getBusinessProfile, upsertBusinessProfile, skipOnboarding } from '../lib/businessProfileService';
 import { Conversation, ConversationContent } from './ai-elements/conversation';
 import { Message, MessageContent, MessageResponse } from './ai-elements/message';
@@ -74,7 +75,7 @@ export default function OnboardingChat({ user, onDone }: Props) {
   }, [user.id]);
 
   const transport = useMemo(() => new DefaultChatTransport({
-    api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/onboarding-chat`,
+    api: getSupabaseFunctionUrl('onboarding-chat'),
     fetch: async (input, init) => {
       const { data } = await supabase.auth.getSession();
       const headers = new Headers(init?.headers);

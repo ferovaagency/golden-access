@@ -6,7 +6,7 @@
 // Server-side (edge functions) has its own gateway helper in
 // supabase/functions/_shared/ai-gateway.ts. Keep them aligned.
 
-import { supabase } from '../../integrations/supabase/client';
+import { getSupabaseFunctionUrl, supabase } from '../../integrations/supabase/client';
 import { logger } from '../logger';
 
 const log = logger.child('ai');
@@ -31,7 +31,7 @@ export async function invokeAi<T = unknown>(opts: AiInvokeOptions): Promise<AiIn
   try {
     log.debug('invoke', functionName);
     const { data: session } = await supabase.auth.getSession();
-    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${functionName}`;
+    const url = getSupabaseFunctionUrl(functionName);
     const res = await fetch(url, {
       method: 'POST',
       signal,
