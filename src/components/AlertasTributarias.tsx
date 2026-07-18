@@ -64,8 +64,25 @@ export default function AlertasTributarias({ metrics, config, ventas, formatCop 
   const alertIva = resolveAlertLevel(pctIvaVentas);
   const alertPagoRenta = resolveAlertLevel(pctPagaRenta);
 
+  if (metrics.fiscalApplies === false) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div className="border-b border-slate-200 pb-5">
+          <h2 className="text-xl font-display font-medium text-slate-900">Semáforo Ampliado de Alertas Tributarias</h2>
+          <p className="text-xs text-slate-500 font-mono mt-1">Reglas tributarias locales aún no configuradas</p>
+        </div>
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 text-sm text-amber-800">
+          <p className="font-semibold mb-1">Configuración fiscal pendiente</p>
+          <p>{metrics.fiscalNotice || `Las alertas DIAN sólo aplican en Colombia (CO). Tu país actual: ${metrics.fiscalCountry}.`}</p>
+          <p className="mt-2 text-xs">Ajusta tu país en <b>Configuración → Perfil fiscal</b> para volver a activar los topes UVT.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-fade-in text-[#e8e3d8]">
+
 
       {/* Header */}
       <div className="border-b border-[#2a2620] pb-5">
