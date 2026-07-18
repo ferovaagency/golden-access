@@ -36,23 +36,7 @@ import CommandPalette from './components/CommandPalette';
 import TopBar from './components/TopBar';
 
 import {
-  Home as HomeIcon,
-  LayoutGrid,
   FolderKanban,
-  Settings as SettingsIcon,
-  CalendarCheck,
-  FileText,
-  TrendingUp,
-  Wallet,
-  Users as UsersIcon,
-  Briefcase,
-  Clock as ClockIcon,
-  Sparkles as SparklesIcon,
-  MessageCircle,
-  Linkedin,
-  MessagesSquare,
-  Star as StarIcon,
-  Target as TargetIcon,
   User as UserIcon,
   LogOut,
   Loader2,
@@ -65,11 +49,7 @@ import {
   Calendar,
   Database,
   X,
-  ChevronDown,
-  ChevronRight
 } from 'lucide-react';
-
-const CRM_TAB_IDS: CRMTab[] = ['pipeline', 'citas', 'contenido', 'bot', 'resenas'];
 
 type NavigationItem = { id: string; label: string; hint: string };
 type NavigationSection = { id: string; label: string; icon: React.ComponentType<{ className?: string }>; items: NavigationItem[] };
@@ -100,7 +80,6 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [openGroup, setOpenGroup] = useState<string | null>('modules');
   const [aiCollapsed, setAiCollapsed] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('ferova.ai.collapsed') === '1';
@@ -485,72 +464,33 @@ export default function App() {
   ] : [];
 
   // Módulo "CRM y Ventas" propio del cliente -- distinto del CRM interno de Ferova (abajo).
-  const VENTAS_TABS = modules.crm_ventas ? [
-    { id: 'ventas-crm', label: 'CRM y Ventas', hint: 'Tu pipeline propio' },
-  ] : [];
-
   const CRM_GROWTH_TABS = isTeam ? [
     { id: 'crm-pipeline', label: 'Pipeline', hint: 'Prospectos y playbooks' },
     { id: 'crm-citas', label: 'Citas', hint: 'Diagnósticos y Calendar' },
     { id: 'crm-contenido', label: 'LinkedIn + Reddit', hint: 'Señales automáticas' },
     { id: 'crm-bot', label: 'Bot WhatsApp', hint: 'Conocimiento y estado' },
     { id: 'crm-resenas', label: 'Reseñas', hint: 'Gmail y fuentes' },
+    { id: 'crm-clientes', label: 'Administración', hint: 'Usuarios, planes y feedback' },
   ] : [];
-
-  // Build the sidebar sections dynamically per role/plan.
-  type NavItem = { id: string; label: string; icon: any };
-  type NavGroup = { id: string; label: string; icon: any; items: NavItem[]; single?: boolean };
-
-  const modulesGroup: NavItem[] = [];
-  modulesGroup.push({ id: 'planner', label: 'Planificador', icon: CalendarCheck });
-  modulesGroup.push({ id: 'reports', label: 'Reportes CEO', icon: FileText });
-  modulesGroup.push({ id: 'proyectos', label: 'Proyectos', icon: FolderKanban });
-  if (modules.financiero) {
-    modulesGroup.push({ id: 'dashboard', label: 'Finanzas', icon: TrendingUp });
-    modulesGroup.push({ id: 'ventas', label: 'Ingresos', icon: Wallet });
-    modulesGroup.push({ id: 'pagosEgresos', label: 'Pagos', icon: Wallet });
-    modulesGroup.push({ id: 'gastos', label: 'Costos', icon: Wallet });
-    modulesGroup.push({ id: 'horas', label: 'Horas', icon: ClockIcon });
-    modulesGroup.push({ id: 'clientes', label: 'Clientes', icon: UsersIcon });
-    modulesGroup.push({ id: 'servicios', label: 'Servicios', icon: Briefcase });
-    modulesGroup.push({ id: 'equilibrioGlobal', label: 'Equilibrio', icon: TargetIcon });
-    modulesGroup.push({ id: 'equilibrioServicio', label: 'Equilibrio por servicio', icon: TargetIcon });
-    modulesGroup.push({ id: 'iva', label: 'IVA', icon: Wallet });
-    modulesGroup.push({ id: 'alertas', label: 'Alertas', icon: AlertCircle });
-  }
-  if (modules.crm_ventas) {
-    modulesGroup.push({ id: 'ventas-crm', label: 'CRM y Ventas', icon: TargetIcon });
-  }
-  if (isTeam) {
-    modulesGroup.push({ id: 'crm-pipeline', label: 'Pipeline (Growth)', icon: TargetIcon });
-    modulesGroup.push({ id: 'crm-citas', label: 'Citas', icon: CalendarCheck });
-    modulesGroup.push({ id: 'crm-contenido', label: 'LinkedIn + Reddit', icon: Linkedin });
-    modulesGroup.push({ id: 'crm-bot', label: 'Bot WhatsApp', icon: MessageCircle });
-    modulesGroup.push({ id: 'crm-resenas', label: 'Reseñas', icon: StarIcon });
-  }
-
-  const navGroups: NavGroup[] = [
-    { id: 'home', label: 'Home', icon: HomeIcon, items: [], single: true },
-    { id: 'modules', label: 'Módulos', icon: LayoutGrid, items: modulesGroup },
-    { id: 'settings', label: 'Ajustes', icon: SettingsIcon, items: modules.financiero ? [{ id: 'ajustes', label: 'Configuración', icon: SettingsIcon }] : [] },
-  ];
 
   const handleNavigate = (tab: string) => {
     if (tab === '__ai') { setAiCollapsed(false); return; }
     setActiveTab(tab);
   };
 
-  const userName = (user.user_metadata as any)?.full_name || (user.user_metadata as any)?.name || (user.email || '').split('@')[0];
-
   const NAVIGATION_SECTIONS: NavigationSection[] = [
     { id: 'home', label: 'Home', icon: LayoutDashboard, items: [{ id: 'dashboard', label: 'Executive Control Center', hint: 'Vista ejecutiva y prioridades' }] },
-    { id: 'workspace', label: 'Workspace', icon: Boxes, items: [
+    { id: 'workspace', label: 'Workspace', icon: Boxes, items: modules.financiero ? [
       { id: 'clientes', label: 'Clientes', hint: 'Cuentas activas' },
       { id: 'servicios', label: 'Servicios', hint: 'Catálogo y costos' },
       { id: 'horas', label: 'Horas', hint: 'Capacidad y rentabilidad' },
-    ] },
+    ] : [] },
     { id: 'projects', label: 'Projects', icon: FolderKanban, items: [{ id: 'proyectos', label: 'Proyectos', hint: 'KPIs y ejecución' }] },
     { id: 'modules', label: 'Modules', icon: Grid2X2, items: [
+      { id: 'planner', label: 'Planner', hint: 'Prioridades y bloques protegidos' },
+      { id: 'reports', label: 'Reportes CEO', hint: 'Seguimiento ejecutivo' },
+      ...(modules.crm_ventas ? [{ id: 'ventas-crm', label: 'CRM y Ventas', hint: 'Tu pipeline propio' }] : []),
+      ...(modules.financiero ? [
       { id: 'ventas', label: 'Ingresos', hint: 'Ventas y abonos' },
       { id: 'pagosEgresos', label: 'Pagos', hint: 'Egresos registrados' },
       { id: 'gastos', label: 'Costos', hint: 'Herramientas y gastos' },
@@ -558,12 +498,14 @@ export default function App() {
       { id: 'equilibrioServicio', label: 'Por servicio', hint: 'Margen unitario' },
       { id: 'iva', label: 'IVA', hint: 'Control tributario' },
       { id: 'alertas', label: 'Alertas', hint: 'Riesgos y topes' },
+      ] : []),
       ...CRM_GROWTH_TABS,
     ] },
-    { id: 'settings', label: 'Settings', icon: Settings, items: [{ id: 'ajustes', label: 'Configuración', hint: 'Datos y Google Sheets' }] },
+    { id: 'settings', label: 'Settings', icon: Settings, items: modules.financiero ? [{ id: 'ajustes', label: 'Configuración', hint: 'Datos y Google Sheets' }] : [] },
   ];
 
   const activeSectionId = NAVIGATION_SECTIONS.find((section) => section.items.some((item) => item.id === activeTab))?.id ?? 'home';
+  const visibleNavigationSections = NAVIGATION_SECTIONS.filter((section) => section.items.length > 0);
   const navigateTo = (tab: string) => {
     setActiveTab(tab);
     setIsMobileMenuOpen(false);
@@ -582,7 +524,7 @@ export default function App() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base font-bold font-display tracking-tight text-slate-900">Ferova OS</h1>
+                <h1 className="text-base font-bold font-display tracking-tight text-slate-900">{businessProfile?.nombre_negocio || 'Ferova OS'}</h1>
                 <span className="text-[10px] bg-blue-50 border border-blue-100 font-medium text-blue-700 px-2 py-0.5 rounded-full">
                   Finanzas + Growth
                 </span>
@@ -683,6 +625,7 @@ export default function App() {
               <button onClick={() => setAiCollapsed((value) => !value)} className="hidden md:flex items-center gap-2 rounded-2xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700">
                 {aiCollapsed ? 'Abrir asistente' : 'Colapsar asistente'}
               </button>
+              {!isTeam && <FeedbackWidget user={user} />}
 
               <div className="flex items-center gap-2.5 bg-white p-1.5 pr-3.5 rounded-2xl border border-slate-200 shadow-sm">
               <div className="w-7 h-7 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-center">
@@ -776,7 +719,7 @@ export default function App() {
         {/* Top-level navigation: every existing page lives inside one of five sections. */}
         <aside className="hidden shrink-0 lg:block lg:w-72">
           <nav className="space-y-2 rounded-3xl border border-slate-200 bg-white p-3 shadow-sm shadow-slate-200/30">
-            {NAVIGATION_SECTIONS.map((section) => {
+            {visibleNavigationSections.map((section) => {
               const Icon = section.icon;
               const isActive = section.id === activeSectionId;
               return (
@@ -800,81 +743,6 @@ export default function App() {
             })}
           </nav>
         </aside>
-
-        {/* Legacy navigation retained temporarily for tab compatibility; not rendered. */}
-        <aside className="hidden">
-          
-          <div>
-            <p className="text-sm font-semibold text-slate-900 font-display leading-tight">Ferova OS</p>
-            <p className="text-[10px] uppercase tracking-widest text-slate-400">Tu negocio</p>
-          </div>
-
-          <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-          {navGroups.map((g) => {
-            const GIcon = g.icon;
-            if (g.single) {
-              const active = activeTab === g.id;
-              return (
-                <button
-                  key={g.id}
-                  onClick={() => handleNavigate(g.id)}
-                  className={`w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition ${active ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'}`}
-                >
-                  <GIcon className="h-4 w-4" /> {g.label}
-                </button>
-              );
-            }
-            if (g.items.length === 0) return null;
-            const isOpen = openGroup === g.id;
-            const anyActive = g.items.some((i) => i.id === activeTab || (i.id.startsWith('crm-') && activeTab === i.id));
-            return (
-              <div key={g.id}>
-                <button
-                  onClick={() => setOpenGroup(isOpen ? null : g.id)}
-                  className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-sm font-medium transition ${anyActive ? 'text-slate-900' : 'text-slate-600 hover:bg-slate-50'}`}
-                >
-                  <span className="flex items-center gap-2.5"><GIcon className="h-4 w-4" /> {g.label}</span>
-                  {isOpen ? <ChevronDown className="h-3.5 w-3.5 text-slate-400" /> : <ChevronRight className="h-3.5 w-3.5 text-slate-400" />}
-                </button>
-                {isOpen && (
-                  <div className="mt-1 ml-2 pl-3 border-l border-[var(--line)] space-y-0.5">
-                    {g.items.map((item) => {
-                      const IIcon = item.icon;
-                      const active = activeTab === item.id;
-                      return (
-
-                        <button
-                          key={item.id}
-                          onClick={() => handleNavigate(item.id)}
-                          className={`w-full flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] transition ${active ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}
-                        >
-                          <IIcon className="h-3.5 w-3.5" /> <span className="truncate">{item.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-          </nav>
-
-          <div className="border-t border-[var(--line)] p-3">
-          <div className="flex items-center gap-2 rounded-xl bg-slate-50 p-2">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-white border border-[var(--line)] text-slate-600">
-              <UserIcon className="h-3.5 w-3.5" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-slate-900 truncate">{userName}</p>
-              <p className="text-[10px] text-slate-400 truncate">{user.email}</p>
-            </div>
-            <button onClick={handleSignOut} className="text-slate-400 hover:text-red-600 p-1" title="Cerrar sesión">
-              <LogOut className="h-3.5 w-3.5" />
-            </button>
-          </div>
-          {!isTeam && <div className="mt-2"><FeedbackWidget user={user} /></div>}
-          </div>
-      </aside>
 
       {/* MAIN CONTENT */}
       <main className="flex-1 min-w-0 overflow-y-auto">

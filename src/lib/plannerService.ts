@@ -88,6 +88,15 @@ export interface PlannerPlanResult {
   blocks: PlannerBlock[];
 }
 
+export interface CreatePlannerBlockInput {
+  title: string;
+  starts_at: string;
+  ends_at: string;
+  category?: PlannerCategory;
+  is_locked?: boolean;
+  notes?: string | null;
+}
+
 const anyDb = () => supabase as any;
 
 export const plannerService = {
@@ -107,6 +116,23 @@ export const plannerService = {
     const { data, error } = await anyDb().from('planner_blocks').select('*').gte('starts_at', start).lte('starts_at', end).order('starts_at');
     if (error) { log.error(error); return []; }
     return data || [];
+  },
+  async createBlock(input: CreatePlannerBlockInput): Promise<void> {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError) throw authError;
+    if (!user) throw new Error('Debes iniciar sesión para crear un bloque.');
+
+    const { error } = await anyDb().from('planner_blocks').insert({
+      user_id: user.id,
+      title: input.title.trim(),
+      starts_at: input.starts_at,
+      ends_at: input.ends_at,
+      category: input.category ?? 'meetings',
+      is_locked: input.is_locked ?? true,
+      notes: input.notes?.trim() || null,
+      source: 'manual',
+    });
+    if (error) throw error;
   },
   async listInsights(): Promise<PlannerInsight[]> {
     const { data, error } = await anyDb().from('planner_insights').select('*').eq('dismissed', false).order('created_at', { ascending: false });

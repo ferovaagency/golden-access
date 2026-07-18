@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Wand2, Loader2, Check, Clock, Zap, Battery, BatteryLow, Trash2, ChevronRight, Sunrise, AlertTriangle, Lightbulb, TrendingUp, Info } from 'lucide-react';
+import { Sparkles, Wand2, Loader2, Check, Clock, Zap, Battery, BatteryLow, Trash2, ChevronRight, Sunrise, AlertTriangle, Lightbulb, TrendingUp, Info, Lock } from 'lucide-react';
 import { usePlanner } from '../hooks/usePlanner';
 import type { PlannerBlock, PlannerCategory, PlannerEnergy, PlannerTask } from '../lib/plannerService';
 
@@ -22,12 +22,30 @@ function fmtTime(iso: string) { return new Date(iso).toLocaleTimeString([], { ho
 export default function SmartPlanner() {
   const p = usePlanner();
   const [dump, setDump] = useState('');
+  const [showBlockForm, setShowBlockForm] = useState(false);
+  const [blockTitle, setBlockTitle] = useState('');
+  const [blockStart, setBlockStart] = useState('09:00');
+  const [blockEnd, setBlockEnd] = useState('10:00');
 
   const submitDump = async () => {
     const text = dump.trim();
     if (!text) return;
     setDump('');
     await p.classify(text);
+  };
+
+  const createProtectedBlock = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!blockTitle.trim() || blockEnd <= blockStart) return;
+    await p.createBlock({
+      title: blockTitle,
+      starts_at: `${p.date}T${blockStart}:00`,
+      ends_at: `${p.date}T${blockEnd}:00`,
+      category: 'meetings',
+      is_locked: true,
+    });
+    setBlockTitle('');
+    setShowBlockForm(false);
   };
 
   const openTasks = p.tasks.filter((t) => t.status !== 'done' && t.status !== 'cancelled');
@@ -140,8 +158,26 @@ export default function SmartPlanner() {
       <section>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500">Bloques del {new Date(p.date + 'T00:00').toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })}</h2>
-          <span className="text-[11px] text-slate-400">{p.blocks.length} bloques</span>
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] text-slate-400">{p.blocks.length} bloques</span>
+            <button onClick={() => setShowBlockForm((value) => !value)} className="text-xs font-semibold text-blue-700 hover:text-blue-900">{showBlockForm ? 'Cancelar' : '+ Bloque protegido'}</button>
+          </div>
         </div>
+        {showBlockForm && (
+          <form onSubmit={createProtectedBlock} className="mb-3 grid gap-2 rounded-2xl border border-blue-200 bg-blue-50 p-3 sm:grid-cols-[1fr_auto_auto_auto] sm:items-end">
+            <label className="text-xs text-slate-600">Evento o compromiso
+              <input value={blockTitle} onChange={(event) => setBlockTitle(event.target.value)} required placeholder="Ej. reunión con cliente" className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" />
+            </label>
+            <label className="text-xs text-slate-600">Inicio
+              <input type="time" value={blockStart} onChange={(event) => setBlockStart(event.target.value)} required className="mt-1 block rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" />
+            </label>
+            <label className="text-xs text-slate-600">Fin
+              <input type="time" value={blockEnd} onChange={(event) => setBlockEnd(event.target.value)} required className="mt-1 block rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" />
+            </label>
+            <button type="submit" disabled={p.busy === 'block' || blockEnd <= blockStart} className="rounded-lg bg-blue-700 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-50">{p.busy === 'block' ? 'Guardando…' : 'Proteger'}</button>
+            <p className="sm:col-span-4 text-[11px] text-blue-800">Este bloque queda protegido: el planificador no lo moverá al reorganizar tu día.</p>
+          </form>
+        )}
         {p.blocks.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-[var(--line)] bg-white p-6 text-center text-sm text-slate-500">
             Sin bloques aún. Presioná <span className="font-semibold text-slate-700">Reorganizar mi día</span> para que la IA arme el horario.
@@ -196,6 +232,11 @@ function BlockRow({ block, tasks, onComplete }: { block: PlannerBlock; tasks: Pl
             <div className="flex items-center gap-2 flex-wrap">
               <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${meta.tone}`}>{meta.label}</span>
               <p className="text-sm font-semibold text-slate-900">{block.title}</p>
+              {block.is_locked && (
+                <span title="Bloque protegido: el planificador no lo moverá." className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] text-slate-600">
+                  <Lock className="h-3 w-3" /> Protegido
+                </span>
+              )}
             </div>
             {block.notes && <p className="text-xs text-slate-500 mt-1 italic">{block.notes}</p>}
             {linked.length > 0 && (

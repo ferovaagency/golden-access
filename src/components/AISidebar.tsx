@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, type UIMessage } from 'ai';
-import { Sparkles, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { Sparkles, PanelRightClose, PanelRightOpen, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Conversation, ConversationContent } from './ai-elements/conversation';
 import { Message, MessageContent, MessageResponse } from './ai-elements/message';
@@ -36,9 +36,10 @@ export default function AISidebar({ user, collapsed, onToggle, width, onResize, 
         .from('business_assistant_messages')
         .select('id, role, parts, content, created_at')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: false })
+        .limit(80);
       if (cancelled) return;
-      const mapped = (data || []).map((m: any) => ({
+      const mapped = (data || []).reverse().map((m: any) => ({
         id: m.id,
         role: m.role,
         parts: Array.isArray(m.parts) && m.parts.length ? m.parts : [{ type: 'text', text: m.content || '' }],
@@ -75,6 +76,16 @@ export default function AISidebar({ user, collapsed, onToggle, width, onResize, 
     setInput('');
     await sendMessage({ text });
     textareaRef.current?.focus();
+  };
+
+  const clearHistory = async () => {
+    const { error: deleteError } = await (supabase as any)
+      .from('business_assistant_messages')
+      .delete()
+      .eq('user_id', user.id);
+    if (deleteError) return;
+    setMessages([]);
+    setInitialMessages([]);
   };
 
   const onDragStart = (e: React.MouseEvent) => {
@@ -123,9 +134,14 @@ export default function AISidebar({ user, collapsed, onToggle, width, onResize, 
             <p className="text-[11px] text-slate-500">{currentArea ? `Contexto: ${currentArea}` : 'Contexto de tu negocio'}</p>
           </div>
         </div>
-        <button onClick={onToggle} className="grid h-8 w-8 place-items-center rounded-xl text-slate-500 hover:bg-slate-100" title="Colapsar">
-          <PanelRightClose className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button onClick={clearHistory} className="grid h-8 w-8 place-items-center rounded-xl text-slate-500 hover:bg-slate-100" title="Borrar conversación" aria-label="Borrar conversación">
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+          <button onClick={onToggle} className="grid h-8 w-8 place-items-center rounded-xl text-slate-500 hover:bg-slate-100" title="Colapsar" aria-label="Colapsar asistente">
+            <PanelRightClose className="h-4 w-4" />
+          </button>
+        </div>
       </header>
 
       <div className="flex-1 min-h-0 flex flex-col px-3">
