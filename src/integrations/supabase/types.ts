@@ -1679,6 +1679,27 @@ export type Database = {
           },
         ]
       }
+      paddle_webhook_events: {
+        Row: {
+          event_id: string
+          event_type: string
+          payload: Json
+          processed_at: string
+        }
+        Insert: {
+          event_id: string
+          event_type: string
+          payload: Json
+          processed_at?: string
+        }
+        Update: {
+          event_id?: string
+          event_type?: string
+          payload?: Json
+          processed_at?: string
+        }
+        Relationships: []
+      }
       planner_behavior: {
         Row: {
           id: string
