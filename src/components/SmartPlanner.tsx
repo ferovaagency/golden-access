@@ -43,6 +43,7 @@ export default function SmartPlanner() {
       ends_at: `${p.date}T${blockEnd}:00`,
       category: 'meetings',
       is_locked: true,
+      protected: true,
     });
     setBlockTitle('');
     setShowBlockForm(false);
@@ -232,9 +233,9 @@ function BlockRow({ block, tasks, onComplete }: { block: PlannerBlock; tasks: Pl
             <div className="flex items-center gap-2 flex-wrap">
               <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${meta.tone}`}>{meta.label}</span>
               <p className="text-sm font-semibold text-slate-900">{block.title}</p>
-              {block.is_locked && (
-                <span title="Bloque protegido: el planificador no lo moverá." className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] text-slate-600">
-                  <Lock className="h-3 w-3" /> Protegido
+              {(block.protected || block.is_locked) && (
+                <span title={block.protected ? 'Bloque protegido: no se moverá al reorganizar el día.' : 'Bloque fijado.'} className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] ${block.protected ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
+                  <Lock className="h-3 w-3" /> {block.protected ? 'Protegido' : 'Fijado'}
                 </span>
               )}
             </div>

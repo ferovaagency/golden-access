@@ -90,9 +90,9 @@ Deno.serve(async (req) => {
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const [{ data: tasks }, { data: existingBlocks }] = await Promise.all([
       admin.from("planner_tasks").select("id,title,category,priority,energy_required,estimated_minutes,deadline,postponed_count").eq("user_id", userData.user.id).in("status", ["backlog", "scheduled", "postponed"]).limit(40),
-      admin.from("planner_blocks").select("starts_at,ends_at,is_locked,source").eq("user_id", userData.user.id).gte("starts_at", dayStart).lte("starts_at", dayEnd),
+      admin.from("planner_blocks").select("starts_at,ends_at,is_locked,protected,source").eq("user_id", userData.user.id).gte("starts_at", dayStart).lte("starts_at", dayEnd),
     ]);
-    const locked = (existingBlocks || []).filter((block: any) => block.is_locked || block.source === "google" || block.source === "external");
+    const locked = (existingBlocks || []).filter((block: any) => block.protected || block.is_locked || block.source === "google" || block.source === "external");
     const blocks = buildPlan(date, (tasks || []) as Task[], locked);
     const summary = blocks.length
       ? `${blocks.length} bloques propuestos; los eventos protegidos se conservaran.`

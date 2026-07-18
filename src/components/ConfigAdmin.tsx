@@ -4,6 +4,7 @@ import { convertToCop } from '../lib/calculations';
 import { fetchOfficialTrm } from '../lib/financeService';
 import { Settings, Save, RefreshCw, FolderSync, Clipboard, Landmark } from 'lucide-react';
 import { copyText } from '../lib/clipboard';
+import FiscalProfileSection from './FiscalProfileSection';
 
 interface ConfigAdminProps {
   config: Config;
@@ -176,6 +177,9 @@ export default function ConfigAdmin({
         <h2 className="text-xl font-display font-medium text-[#c9a961]">Configuración del Sistema</h2>
         <p className="text-xs text-slate-500 font-mono mt-1">Límites DIAN, constantes 2026, respaldos y copias contables para fijos de operación</p>
       </div>
+
+      <FiscalProfileSection />
+
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         

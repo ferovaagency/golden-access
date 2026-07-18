@@ -58,6 +58,7 @@ export interface PlannerBlock {
   ends_at: string;
   task_ids: string[];
   is_locked: boolean;
+  protected: boolean;
   source: string;
   notes: string | null;
 }
@@ -94,6 +95,7 @@ export interface CreatePlannerBlockInput {
   ends_at: string;
   category?: PlannerCategory;
   is_locked?: boolean;
+  protected?: boolean;
   notes?: string | null;
 }
 
@@ -129,6 +131,7 @@ export const plannerService = {
       ends_at: input.ends_at,
       category: input.category ?? 'meetings',
       is_locked: input.is_locked ?? true,
+      protected: input.protected ?? false,
       notes: input.notes?.trim() || null,
       source: 'manual',
     });
