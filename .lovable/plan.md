@@ -1,115 +1,94 @@
+# Ferova OS → AI-First Business Operating System
 
-# Ferova OS — Redesign Plan
-
-Goal: transform Ferova from a modular CRM/Finance tool into a clean, Apple/Linear-style operating system for entrepreneurs. **No business logic, no Supabase schema, no auth flow changes.** Only shell, navigation, Home, Planner, AI placement, and onboarding.
-
----
-
-## 1. Remove AI Studio residue
-
-- Rewrite `README.md` as a Lovable project readme.
-- Rewrite `metadata.json` (drop `MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API`, AI Studio link).
-- Remove `.env.example` `GEMINI_API_KEY` / `APP_URL` block, replace with Lovable Cloud note.
-- Update `index.html` title/description to "Ferova OS".
-- Grep for "AI Studio", "ai.studio", "GEMINI_API_KEY" references and clean.
-
-## 2. New app shell (`src/App.tsx` refactor, no logic changes)
-
-Replace current tab-bar layout with a 3-column shell:
-
-```text
-┌──────────┬──────────────────────────────┬───────────────┐
-│ Sidebar  │  Main content (route view)   │  AI Sidebar   │
-│ (nav)    │                              │  (collapsible)│
-└──────────┴──────────────────────────────┴───────────────┘
-```
-
-New primary nav (left rail, icon+label, collapsible):
-- Home
-- Workspace (existing Dashboard + quick capture)
-- Projects (existing `ProyectosAdmin`)
-- Modules ▾
-  - Finance (Ventas, Gastos, Horas, Servicios, Equilibrio, Impuestos — grouped, unchanged internals)
-  - CRM (existing `AdminCRM` / `CustomerCRM`)
-  - Smart Planner (new — see §4)
-  - WhatsApp (existing panel inside CRM, surfaced as module)
-  - LinkedIn (existing)
-  - Reddit (existing)
-- Settings ▾
-  - Company, Users, Integrations, Appearance, AI, Permissions, Billing
-  - Maps to existing `ConfigAdmin`, `ClientesAdmin`, Google connect, Paywall — grouped, not rebuilt.
-
-All existing components are re-mounted inside the new shell. Their internals stay intact.
-
-## 3. Home — Executive Dashboard (new `src/components/Home.tsx`)
-
-Reads from existing services (`financeService`, `crmService`, `planService`) — no new queries beyond aggregation. Sections:
-
-1. **Today's priorities** (max 5) — pulls open oportunidades w/ `siguiente_accion`, overdue abonos, low-cash alerts, tasks from planner.
-2. **Business health** — 5 KPI cards using existing finance calcs: cash, AR, monthly revenue, today's hours, profitability.
-3. **Blind Spots** — calls existing `business-assistant-chat` edge function with a short "insights" prompt (reuses infra, no new function). Renders 3–5 bullet insights.
-4. **Quick access** — 5 large tiles: Planner, Projects, Finance, CRM, AI.
-
-No charts. Whitespace-heavy layout.
-
-## 4. Smart Planner (new module, self-contained)
-
-New files:
-- `src/components/SmartPlanner.tsx` — UI (brain dump input, today/week views, time blocks).
-- `src/lib/plannerService.ts` — Supabase CRUD.
-- Minimal new tables via `supabase--migration` (only unavoidable schema change):
-  - `planner_tasks` (title, notes, energy, priority, due_at, block_start, block_end, status, project_id nullable, user_id)
-  - `planner_habits` (title, cadence, streak, user_id)
-  - With GRANTs + RLS scoped to `auth.uid()`.
-- Auto-scheduling is client-side heuristic v1 (energy + priority + free blocks). No ML.
-
-This is the one place new tables are needed; everything else reuses existing schema.
-
-## 5. Permanent AI sidebar
-
-- Extract current `BusinessAssistant` into a right-side dockable panel (`src/components/AISidebar.tsx`) mounted in the shell, not floating.
-- Collapsible (icon rail) + resizable (drag handle, width persisted to localStorage).
-- Reuses existing `business-assistant-chat` edge function verbatim.
-- System prompt tightened: max 6 lines, always end with "Suggested actions:" list. Prompt edit only, no function signature change.
-
-## 6. Onboarding (redesign `OnboardingChat.tsx` presentation only)
-
-Convert to one-question-per-screen wizard using existing state fields (`business_profile`). Steps: name → solo/team → currency → timezone → business type → working hours → integrations (Google/WhatsApp/Notion optional) → theme. Same save payload as today.
-
-## 7. Design system
-
-Update `src/index.css`:
-- Introduce semantic tokens: `--bg`, `--surface`, `--surface-2`, `--border`, `--text`, `--muted`, `--accent`.
-- Light theme default, dark theme via `[data-theme="dark"]`.
-- Radius scale (`--r-sm/md/lg`), soft shadow tokens, 8pt spacing.
-- Typography: keep Outfit/Figtree, tighten scale.
-- Remove `.ferova-light-theme` overrides (legacy dark→light patches) once shell is on tokens.
-
-Density / large-text / dark-mode toggles live in Settings → Appearance, stored in localStorage.
-
-## 8. What stays untouched
-
-- All `supabase/functions/*` (except Home insights prompt reuse).
-- `financeService`, `crmService`, `businessProfileService`, `sheetsService`, `planService`, auth, PayPal, Google OAuth, WhatsApp/Evolution wiring.
-- Existing admin components — re-mounted, not rewritten.
-
-## 9. Delivery order (single implementation pass)
-
-1. Cleanup AI Studio references + `index.html` metadata.
-2. Design tokens in `index.css`.
-3. New shell in `App.tsx` + `AppSidebar.tsx` + `AISidebar.tsx`.
-4. `Home.tsx` executive dashboard.
-5. Planner migration + `SmartPlanner.tsx` + service.
-6. Onboarding wizard refactor.
-7. Settings grouping page.
-8. Typecheck, visual check via Playwright screenshot.
-
-## 10. Risks
-
-- Planner tables are the only schema change — small, additive, RLS-scoped, safe.
-- Re-mounting existing components inside a new shell may surface stale `.ferova-light-theme` selectors; will migrate incrementally, leaving overrides in place until each screen is verified.
-- AI sidebar always-on will increase Lovable AI usage only when user chats — no background polling.
+El alcance es enorme (15+ módulos). Lo divido en 5 fases entregables. Cada fase queda funcional en producción antes de pasar a la siguiente. Sin placeholders, sin TODOs, todo conectado a datos reales.
 
 ---
 
-Confirm and I'll implement in the order above.
+## Fase 1 — Business Intelligence Engine + Health Score
+
+**Backend**
+- Migración: tabla `business_health_snapshots` (score 0-100, sub-scores, deltas, explicación IA, generada diariamente).
+- Vista materializada `business_intel_context` que agrega finance + CRM + planner + horas + proyectos en un único payload optimizado.
+- Edge function `bi-compute-health`: calcula 10 sub-scores (cash flow, profitability, revenue growth, retention, project performance, invoices, time mgmt, task completion, pipeline, workload) con fórmulas deterministas + resumen IA de por qué cambió.
+- Edge function `bi-detect-blindspots`: reemplaza `planner-insights` con detector estructurado (14 categorías: clients-at-risk, revenue-concentration, cash-risk, late-invoices, project-hours-overrun, low-margin-projects, employee-overload, unused-capacity, no-followup, postponed-tasks, marketing-inactive, low-sales-activity, bottlenecks, opportunities). Cada insight: `why`, `impact`, `action`, `urgency`.
+- Cron pg_cron: recalcular health + blindspots diariamente 6am hora local del usuario.
+
+**Frontend**
+- `src/components/BusinessHealthCard.tsx`: gauge visual del score en Home con delta vs. ayer y top 3 razones.
+- `src/components/BlindSpotsPanel.tsx`: reemplaza `InsightsCard`, agrupado por urgencia, cada tarjeta con acción CTA que navega al módulo relevante.
+- Nueva sección "Salud del negocio" arriba del Home.
+
+## Fase 2 — CEO Reports (Daily / Weekly / Monthly) + Decision Support
+
+**Backend**
+- Tabla `ceo_reports` (type: daily|weekly|monthly, payload JSON, generated_at).
+- Edge function `ceo-report-generate` con 3 modos: daily (priorities/cash/meetings/risks/wins), weekly (ingresos/gastos/profit/pipeline/día más productivo), monthly (executive summary en lenguaje simple).
+- Programación diaria/semanal/mensual con pg_cron.
+- Ampliar `business-assistant-chat` con tools que responden preguntas de Decision Support consultando datos reales (`why_profits_lower`, `most_profitable_client`, `losing_project`, `service_to_stop`, `overloaded_employee`, `today_priority`, `waste_time`, `waste_money`).
+
+**Frontend**
+- Nueva ruta `/reports` con timeline de reportes generados, expandibles, exportables a PDF.
+- Notificación en Home cuando hay reporte nuevo sin leer.
+- Chat sidebar: chips con preguntas frecuentes de Decision Support.
+
+## Fase 3 — Automations + Smart Notifications + Command Palette
+
+**Backend**
+- Tabla `automations` (trigger, condition, action, natural_language, enabled).
+- Tabla `automation_runs` (log).
+- Tabla `notifications` (type, severity, entity_ref, read_at) — solo lo importante.
+- Edge function `automation-parse`: convierte texto natural ("cuando una venta se gane, crear proyecto") en trigger+action estructurado.
+- Edge function `automation-execute`: dispatcher que corre en pg_cron cada 5 min + triggers DB (`AFTER INSERT` en ventas/proyectos/pagos → NOTIFY → edge function).
+- Detector de patrones repetitivos → sugiere automatizaciones en Home.
+
+**Frontend**
+- Nueva ruta `/automations`: lista + creación con lenguaje natural.
+- `src/components/CommandPalette.tsx` (⌘K / Ctrl+K): fuse.js sobre clientes/proyectos/tareas/facturas + acciones (crear cliente, ir a finanzas, preguntar a IA, generar reporte).
+- Notification bell en topbar con solo alertas críticas.
+
+## Fase 4 — Global Search + Activity Timeline + File Management + Sheets Backup
+
+**Backend**
+- Migración: extensión `pg_trgm` + índices GIN sobre nombre/notas de todas las entidades.
+- Vista `global_search_index` unificada.
+- Tabla `activity_events` (source, entity_type, entity_id, actor, verb, payload). Triggers DB en inserts/updates clave.
+- Tabla `attachments` (entity_type, entity_id, file_url, uploaded_by). Bucket storage `attachments` (privado, RLS por dueño).
+- Tabla `backup_logs` + edge function `backup-to-sheets` (usa Google Sheets connector del usuario: crea un spreadsheet con pestaña por tabla, timestamps, log).
+- Programación manual/daily/weekly/monthly con pg_cron.
+
+**Frontend**
+- Command palette de Fase 3 se conecta al índice global.
+- `src/components/ActivityTimeline.tsx` en Home + filtros.
+- Componente `AttachmentsPanel` reutilizable, embebido en Clientes/Proyectos/Facturas/Tareas.
+- UI de backup en Settings con schedule + historial.
+
+## Fase 5 — Settings redesign + Offline scaffolding + Audit final
+
+**Frontend**
+- Rediseño de Settings en 9 tabs (Company, Appearance, Integrations, Notifications, AI, Security, Billing, Backup, Accessibility).
+- Offline: manifest.webmanifest + service worker con `vite-plugin-pwa` (network-first HTML, cache-first assets, IndexedDB para lectura offline de finance/CRM/planner via `react-query` persistence).
+
+**Auditoría de calidad**
+- `bunx tsgo` — cero errores.
+- `bunx eslint .` — cero warnings.
+- Barrido: eliminar `console.log`, código duplicado, imports rotos, componentes muertos.
+- Verificar bundle: lazy loading en todas las rutas pesadas (Admin, Reports, Automations, Planner).
+- Reporte final: arquitectura, archivos modificados, mejoras de performance, deuda técnica restante, próximos pasos.
+
+---
+
+## Estimación
+
+Cada fase = 1 turno grande (edge functions + migraciones + UI). Total: **5 turnos**.
+
+## Decisiones técnicas
+
+- **No reinventar**: todo pasa por `aiClient`, `invokeAi`, `logger`, `useAsync`, tokens de diseño existentes (`--line`, blue/slate/Outfit/Figtree).
+- **AI**: Gemini 3 Flash Preview para insights masivos (barato/rápido), GPT-5.4 solo para reportes ejecutivos mensuales.
+- **RLS**: cada tabla nueva con policy `user_id = auth.uid()` + GRANTS obligatorios (`authenticated` + `service_role`).
+- **Datos reales únicamente**: si falta información, la UI dice explícitamente qué cargar y dónde. Sin datos ficticios.
+- **Producción**: cada fase queda deployable y sin regresiones antes de pasar a la siguiente.
+
+## Confirmación
+
+¿Arranco directo con Fase 1 (Business Intelligence Engine + Health Score + Blind Spots estructurados)? Si querés cambiar el orden, priorizar algo específico, o dividir aún más las fases, decime antes de arrancar.
