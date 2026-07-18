@@ -4,6 +4,7 @@ import { convertToCop } from '../lib/calculations';
 import { fetchOfficialTrm } from '../lib/financeService';
 import { Settings, Save, RefreshCw, FolderSync, Clipboard, Landmark } from 'lucide-react';
 import { copyText } from '../lib/clipboard';
+import FiscalProfileSection from './FiscalProfileSection';
 
 interface ConfigAdminProps {
   config: Config;
