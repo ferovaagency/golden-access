@@ -57,7 +57,7 @@ export interface PlannerBlock {
   starts_at: string;
   ends_at: string;
   task_ids: string[];
-  is_locked: boolean;
+  /** Único flag de protección. Cuando es true, el planificador IA no lo mueve. */
   protected: boolean;
   source: string;
   notes: string | null;
