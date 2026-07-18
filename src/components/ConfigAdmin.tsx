@@ -178,6 +178,9 @@ export default function ConfigAdmin({
         <p className="text-xs text-slate-500 font-mono mt-1">Límites DIAN, constantes 2026, respaldos y copias contables para fijos de operación</p>
       </div>
 
+      <FiscalProfileSection />
+
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* Main Parameters Panel */}
