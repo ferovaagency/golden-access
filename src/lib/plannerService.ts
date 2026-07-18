@@ -94,7 +94,6 @@ export interface CreatePlannerBlockInput {
   starts_at: string;
   ends_at: string;
   category?: PlannerCategory;
-  is_locked?: boolean;
   protected?: boolean;
   notes?: string | null;
 }
