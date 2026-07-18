@@ -41,6 +41,168 @@ export type Database = {
         }
         Relationships: []
       }
+      business_blindspots: {
+        Row: {
+          action: string
+          action_route: string | null
+          category: Database["public"]["Enums"]["blindspot_category"]
+          created_at: string
+          detected_at: string
+          dismissed_at: string | null
+          entity_id: string | null
+          entity_type: string | null
+          fingerprint: string
+          id: string
+          impact: string
+          metric_label: string | null
+          metric_value: number | null
+          resolved_at: string | null
+          title: string
+          updated_at: string
+          urgency: Database["public"]["Enums"]["blindspot_urgency"]
+          user_id: string
+          why: string
+        }
+        Insert: {
+          action: string
+          action_route?: string | null
+          category: Database["public"]["Enums"]["blindspot_category"]
+          created_at?: string
+          detected_at?: string
+          dismissed_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          fingerprint: string
+          id?: string
+          impact: string
+          metric_label?: string | null
+          metric_value?: number | null
+          resolved_at?: string | null
+          title: string
+          updated_at?: string
+          urgency?: Database["public"]["Enums"]["blindspot_urgency"]
+          user_id: string
+          why: string
+        }
+        Update: {
+          action?: string
+          action_route?: string | null
+          category?: Database["public"]["Enums"]["blindspot_category"]
+          created_at?: string
+          detected_at?: string
+          dismissed_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          fingerprint?: string
+          id?: string
+          impact?: string
+          metric_label?: string | null
+          metric_value?: number | null
+          resolved_at?: string | null
+          title?: string
+          updated_at?: string
+          urgency?: Database["public"]["Enums"]["blindspot_urgency"]
+          user_id?: string
+          why?: string
+        }
+        Relationships: []
+      }
+      business_health_snapshots: {
+        Row: {
+          computed_at: string
+          created_at: string
+          delta: number
+          id: string
+          narrative: string | null
+          previous_score: number | null
+          score: number
+          snapshot_date: string
+          sub_scores: Json
+          top_reasons: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          computed_at?: string
+          created_at?: string
+          delta?: number
+          id?: string
+          narrative?: string | null
+          previous_score?: number | null
+          score: number
+          snapshot_date?: string
+          sub_scores?: Json
+          top_reasons?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          computed_at?: string
+          created_at?: string
+          delta?: number
+          id?: string
+          narrative?: string | null
+          previous_score?: number | null
+          score?: number
+          snapshot_date?: string
+          sub_scores?: Json
+          top_reasons?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ceo_reports: {
+        Row: {
+          created_at: string
+          headline: string | null
+          health_score: number | null
+          id: string
+          metrics: Json
+          period: Database["public"]["Enums"]["ceo_report_period"]
+          period_end: string
+          period_start: string
+          priorities: Json
+          risks: Json
+          summary_md: string | null
+          updated_at: string
+          user_id: string
+          wins: Json
+        }
+        Insert: {
+          created_at?: string
+          headline?: string | null
+          health_score?: number | null
+          id?: string
+          metrics?: Json
+          period: Database["public"]["Enums"]["ceo_report_period"]
+          period_end: string
+          period_start: string
+          priorities?: Json
+          risks?: Json
+          summary_md?: string | null
+          updated_at?: string
+          user_id: string
+          wins?: Json
+        }
+        Update: {
+          created_at?: string
+          headline?: string | null
+          health_score?: number | null
+          id?: string
+          metrics?: Json
+          period?: Database["public"]["Enums"]["ceo_report_period"]
+          period_end?: string
+          period_start?: string
+          priorities?: Json
+          risks?: Json
+          summary_md?: string | null
+          updated_at?: string
+          user_id?: string
+          wins?: Json
+        }
+        Relationships: []
+      }
       crm_bot_config: {
         Row: {
           bot_enabled: boolean
@@ -477,6 +639,39 @@ export type Database = {
         }
         Relationships: []
       }
+      decision_simulations: {
+        Row: {
+          created_at: string
+          id: string
+          inputs: Json
+          question: string
+          recommendation: string | null
+          result: Json
+          scenario_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inputs?: Json
+          question: string
+          recommendation?: string | null
+          result?: Json
+          scenario_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inputs?: Json
+          question?: string
+          recommendation?: string | null
+          result?: Json
+          scenario_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       finance_abonos: {
         Row: {
           fecha: string
@@ -870,6 +1065,413 @@ export type Database = {
         }
         Relationships: []
       }
+      planner_behavior: {
+        Row: {
+          id: string
+          metric_key: string
+          metric_value: Json
+          sample_count: number
+          updated_at: string
+          user_id: string
+          window_days: number
+        }
+        Insert: {
+          id?: string
+          metric_key: string
+          metric_value: Json
+          sample_count?: number
+          updated_at?: string
+          user_id: string
+          window_days?: number
+        }
+        Update: {
+          id?: string
+          metric_key?: string
+          metric_value?: Json
+          sample_count?: number
+          updated_at?: string
+          user_id?: string
+          window_days?: number
+        }
+        Relationships: []
+      }
+      planner_blocks: {
+        Row: {
+          category: Database["public"]["Enums"]["planner_category"]
+          created_at: string
+          ends_at: string
+          external_id: string | null
+          id: string
+          is_locked: boolean
+          notes: string | null
+          source: string
+          starts_at: string
+          task_ids: string[]
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["planner_category"]
+          created_at?: string
+          ends_at: string
+          external_id?: string | null
+          id?: string
+          is_locked?: boolean
+          notes?: string | null
+          source?: string
+          starts_at: string
+          task_ids?: string[]
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["planner_category"]
+          created_at?: string
+          ends_at?: string
+          external_id?: string | null
+          id?: string
+          is_locked?: boolean
+          notes?: string | null
+          source?: string
+          starts_at?: string
+          task_ids?: string[]
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      planner_briefings: {
+        Row: {
+          briefing_date: string
+          created_at: string
+          id: string
+          kind: string
+          payload: Json
+          user_id: string
+        }
+        Insert: {
+          briefing_date: string
+          created_at?: string
+          id?: string
+          kind: string
+          payload: Json
+          user_id: string
+        }
+        Update: {
+          briefing_date?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          payload?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      planner_goals: {
+        Row: {
+          created_at: string
+          deadline: string | null
+          horizon: Database["public"]["Enums"]["planner_goal_horizon"]
+          id: string
+          metric: string | null
+          parent_goal_id: string | null
+          progress: number
+          status: string
+          target: number | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deadline?: string | null
+          horizon: Database["public"]["Enums"]["planner_goal_horizon"]
+          id?: string
+          metric?: string | null
+          parent_goal_id?: string | null
+          progress?: number
+          status?: string
+          target?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          deadline?: string | null
+          horizon?: Database["public"]["Enums"]["planner_goal_horizon"]
+          id?: string
+          metric?: string | null
+          parent_goal_id?: string | null
+          progress?: number
+          status?: string
+          target?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planner_goals_parent_goal_id_fkey"
+            columns: ["parent_goal_id"]
+            isOneToOne: false
+            referencedRelation: "planner_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      planner_inbox: {
+        Row: {
+          ai_confidence: number | null
+          ai_reasoning: string | null
+          created_at: string
+          detected_category:
+            | Database["public"]["Enums"]["planner_category"]
+            | null
+          detected_client: string | null
+          detected_deadline: string | null
+          detected_duration_min: number | null
+          detected_energy: Database["public"]["Enums"]["planner_energy"] | null
+          detected_priority:
+            | Database["public"]["Enums"]["planner_priority"]
+            | null
+          detected_project: string | null
+          detected_type: Database["public"]["Enums"]["planner_item_type"] | null
+          id: string
+          processed: boolean
+          raw_text: string
+          task_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_confidence?: number | null
+          ai_reasoning?: string | null
+          created_at?: string
+          detected_category?:
+            | Database["public"]["Enums"]["planner_category"]
+            | null
+          detected_client?: string | null
+          detected_deadline?: string | null
+          detected_duration_min?: number | null
+          detected_energy?: Database["public"]["Enums"]["planner_energy"] | null
+          detected_priority?:
+            | Database["public"]["Enums"]["planner_priority"]
+            | null
+          detected_project?: string | null
+          detected_type?:
+            | Database["public"]["Enums"]["planner_item_type"]
+            | null
+          id?: string
+          processed?: boolean
+          raw_text: string
+          task_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_confidence?: number | null
+          ai_reasoning?: string | null
+          created_at?: string
+          detected_category?:
+            | Database["public"]["Enums"]["planner_category"]
+            | null
+          detected_client?: string | null
+          detected_deadline?: string | null
+          detected_duration_min?: number | null
+          detected_energy?: Database["public"]["Enums"]["planner_energy"] | null
+          detected_priority?:
+            | Database["public"]["Enums"]["planner_priority"]
+            | null
+          detected_project?: string | null
+          detected_type?:
+            | Database["public"]["Enums"]["planner_item_type"]
+            | null
+          id?: string
+          processed?: boolean
+          raw_text?: string
+          task_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      planner_insights: {
+        Row: {
+          action_hint: string | null
+          action_route: string | null
+          body: string
+          created_at: string
+          data: Json | null
+          dismissed: boolean
+          id: string
+          kind: string
+          severity: Database["public"]["Enums"]["planner_insight_severity"]
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_hint?: string | null
+          action_route?: string | null
+          body: string
+          created_at?: string
+          data?: Json | null
+          dismissed?: boolean
+          id?: string
+          kind: string
+          severity?: Database["public"]["Enums"]["planner_insight_severity"]
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_hint?: string | null
+          action_route?: string | null
+          body?: string
+          created_at?: string
+          data?: Json | null
+          dismissed?: boolean
+          id?: string
+          kind?: string
+          severity?: Database["public"]["Enums"]["planner_insight_severity"]
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      planner_routines: {
+        Row: {
+          active: boolean
+          cadence: string
+          category: Database["public"]["Enums"]["planner_category"]
+          created_at: string
+          duration_min: number
+          energy_required: Database["public"]["Enums"]["planner_energy"]
+          hour: number | null
+          id: string
+          last_run_at: string | null
+          name: string
+          updated_at: string
+          user_id: string
+          weekday: number | null
+        }
+        Insert: {
+          active?: boolean
+          cadence?: string
+          category?: Database["public"]["Enums"]["planner_category"]
+          created_at?: string
+          duration_min?: number
+          energy_required?: Database["public"]["Enums"]["planner_energy"]
+          hour?: number | null
+          id?: string
+          last_run_at?: string | null
+          name: string
+          updated_at?: string
+          user_id: string
+          weekday?: number | null
+        }
+        Update: {
+          active?: boolean
+          cadence?: string
+          category?: Database["public"]["Enums"]["planner_category"]
+          created_at?: string
+          duration_min?: number
+          energy_required?: Database["public"]["Enums"]["planner_energy"]
+          hour?: number | null
+          id?: string
+          last_run_at?: string | null
+          name?: string
+          updated_at?: string
+          user_id?: string
+          weekday?: number | null
+        }
+        Relationships: []
+      }
+      planner_tasks: {
+        Row: {
+          actual_minutes: number | null
+          ai_notes: string | null
+          category: Database["public"]["Enums"]["planner_category"]
+          client_ref: string | null
+          completed_at: string | null
+          created_at: string
+          deadline: string | null
+          description: string | null
+          energy_required: Database["public"]["Enums"]["planner_energy"]
+          estimated_minutes: number
+          goal_id: string | null
+          id: string
+          postponed_count: number
+          priority: Database["public"]["Enums"]["planner_priority"]
+          project_ref: string | null
+          scheduled_for: string | null
+          source_inbox_id: string | null
+          status: Database["public"]["Enums"]["planner_task_status"]
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_minutes?: number | null
+          ai_notes?: string | null
+          category?: Database["public"]["Enums"]["planner_category"]
+          client_ref?: string | null
+          completed_at?: string | null
+          created_at?: string
+          deadline?: string | null
+          description?: string | null
+          energy_required?: Database["public"]["Enums"]["planner_energy"]
+          estimated_minutes?: number
+          goal_id?: string | null
+          id?: string
+          postponed_count?: number
+          priority?: Database["public"]["Enums"]["planner_priority"]
+          project_ref?: string | null
+          scheduled_for?: string | null
+          source_inbox_id?: string | null
+          status?: Database["public"]["Enums"]["planner_task_status"]
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actual_minutes?: number | null
+          ai_notes?: string | null
+          category?: Database["public"]["Enums"]["planner_category"]
+          client_ref?: string | null
+          completed_at?: string | null
+          created_at?: string
+          deadline?: string | null
+          description?: string | null
+          energy_required?: Database["public"]["Enums"]["planner_energy"]
+          estimated_minutes?: number
+          goal_id?: string | null
+          id?: string
+          postponed_count?: number
+          priority?: Database["public"]["Enums"]["planner_priority"]
+          project_ref?: string | null
+          scheduled_for?: string | null
+          source_inbox_id?: string | null
+          status?: Database["public"]["Enums"]["planner_task_status"]
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planner_tasks_source_inbox_id_fkey"
+            columns: ["source_inbox_id"]
+            isOneToOne: false
+            referencedRelation: "planner_inbox"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_subscriptions: {
         Row: {
           amount_usd: number | null
@@ -977,7 +1579,59 @@ export type Database = {
       is_team_member: { Args: never; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      blindspot_category:
+        | "client_at_risk"
+        | "revenue_concentration"
+        | "cash_risk"
+        | "late_invoice"
+        | "project_hours_overrun"
+        | "low_margin_project"
+        | "employee_overload"
+        | "unused_capacity"
+        | "no_followup"
+        | "postponed_task"
+        | "marketing_inactive"
+        | "low_sales_activity"
+        | "bottleneck"
+        | "opportunity"
+      blindspot_urgency: "critical" | "high" | "medium" | "low"
+      ceo_report_period: "daily" | "weekly" | "monthly"
+      planner_category:
+        | "deep_work"
+        | "meetings"
+        | "admin"
+        | "creative"
+        | "calls"
+        | "learning"
+        | "personal"
+        | "breaks"
+      planner_energy: "low" | "medium" | "high"
+      planner_goal_horizon:
+        | "annual"
+        | "quarterly"
+        | "monthly"
+        | "weekly"
+        | "daily"
+      planner_insight_severity: "info" | "warn" | "risk" | "opportunity"
+      planner_item_type:
+        | "task"
+        | "reminder"
+        | "project"
+        | "idea"
+        | "note"
+        | "purchase"
+        | "event"
+        | "client"
+        | "finance"
+        | "unknown"
+      planner_priority: "low" | "medium" | "high" | "urgent"
+      planner_task_status:
+        | "backlog"
+        | "scheduled"
+        | "in_progress"
+        | "done"
+        | "postponed"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1104,6 +1758,65 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      blindspot_category: [
+        "client_at_risk",
+        "revenue_concentration",
+        "cash_risk",
+        "late_invoice",
+        "project_hours_overrun",
+        "low_margin_project",
+        "employee_overload",
+        "unused_capacity",
+        "no_followup",
+        "postponed_task",
+        "marketing_inactive",
+        "low_sales_activity",
+        "bottleneck",
+        "opportunity",
+      ],
+      blindspot_urgency: ["critical", "high", "medium", "low"],
+      ceo_report_period: ["daily", "weekly", "monthly"],
+      planner_category: [
+        "deep_work",
+        "meetings",
+        "admin",
+        "creative",
+        "calls",
+        "learning",
+        "personal",
+        "breaks",
+      ],
+      planner_energy: ["low", "medium", "high"],
+      planner_goal_horizon: [
+        "annual",
+        "quarterly",
+        "monthly",
+        "weekly",
+        "daily",
+      ],
+      planner_insight_severity: ["info", "warn", "risk", "opportunity"],
+      planner_item_type: [
+        "task",
+        "reminder",
+        "project",
+        "idea",
+        "note",
+        "purchase",
+        "event",
+        "client",
+        "finance",
+        "unknown",
+      ],
+      planner_priority: ["low", "medium", "high", "urgent"],
+      planner_task_status: [
+        "backlog",
+        "scheduled",
+        "in_progress",
+        "done",
+        "postponed",
+        "cancelled",
+      ],
+    },
   },
 } as const

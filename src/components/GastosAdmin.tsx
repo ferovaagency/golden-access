@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Herramienta, OtroGasto, Servicio, Cliente, Config } from '../types';
 import { convertToCop, calcularPrestaciones, calcularCostosHerramientas } from '../lib/calculations';
-import { Trash2, ShieldAlert, Plus, HelpCircle, PenTool, LayoutGrid, Edit2, X, Check } from 'lucide-react';
+import { Trash2, ShieldAlert, Plus, HelpCircle, PenTool, LayoutGrid, Edit2, X, Check, Paperclip } from 'lucide-react';
+import ComprobanteUpload from './ComprobanteUpload';
 
 interface GastosAdminProps {
   herramientas: Herramienta[];
@@ -46,6 +47,8 @@ export default function GastosAdmin({
   const [otroMonto, setOtroMonto] = useState(0);
   const [otroMoneda, setOtroMoneda] = useState<'COP' | 'USD'>('COP');
   const [otroCategoria, setOtroCategoria] = useState<'Operativo' | 'Administrativo' | 'Otros'>('Operativo');
+  const [otroComprobanteUrl, setOtroComprobanteUrl] = useState<string | undefined>(undefined);
+  const [otroComprobanteNombre, setOtroComprobanteNombre] = useState<string | undefined>(undefined);
   const [editingOtroId, setEditingOtroId] = useState<string | null>(null);
   const [confirmDeleteOtroId, setConfirmDeleteOtroId] = useState<string | null>(null);
 
@@ -161,7 +164,9 @@ export default function GastosAdmin({
             nombre: otroNombre.trim(),
             monto: Number(otroMonto),
             moneda: otroMoneda,
-            categoria: otroCategoria
+            categoria: otroCategoria,
+            comprobante_url: otroComprobanteUrl,
+            comprobante_nombre: otroComprobanteNombre,
           };
         }
         return g;
@@ -174,7 +179,9 @@ export default function GastosAdmin({
         nombre: otroNombre.trim(),
         monto: Number(otroMonto),
         moneda: otroMoneda,
-        categoria: otroCategoria
+        categoria: otroCategoria,
+        comprobante_url: otroComprobanteUrl,
+        comprobante_nombre: otroComprobanteNombre,
       };
 
       const updated = [...otrosGastos, newGasto];
@@ -183,6 +190,8 @@ export default function GastosAdmin({
       // Reset Form
       setOtroNombre('');
       setOtroMonto(0);
+      setOtroComprobanteUrl(undefined);
+      setOtroComprobanteNombre(undefined);
     }
   };
 
@@ -192,6 +201,8 @@ export default function GastosAdmin({
     setOtroMonto(g.monto);
     setOtroMoneda(g.moneda);
     setOtroCategoria(g.categoria);
+    setOtroComprobanteUrl(g.comprobante_url);
+    setOtroComprobanteNombre(g.comprobante_nombre);
   };
 
   const handleCancelEditOtro = () => {
@@ -200,6 +211,8 @@ export default function GastosAdmin({
     setOtroMonto(0);
     setOtroMoneda('COP');
     setOtroCategoria('Operativo');
+    setOtroComprobanteUrl(undefined);
+    setOtroComprobanteNombre(undefined);
   };
 
   const handleDeleteOtro = async (id: string) => {
@@ -613,8 +626,18 @@ export default function GastosAdmin({
               </div>
             </div>
 
+            <div>
+              <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Factura pagada (opcional)</label>
+              <ComprobanteUpload
+                currentUrl={otroComprobanteUrl}
+                currentNombre={otroComprobanteNombre}
+                onUploaded={(url, nombre) => { setOtroComprobanteUrl(url); setOtroComprobanteNombre(nombre); }}
+                label="Adjuntar factura"
+              />
+            </div>
+
             <div className="space-y-2">
-              <button 
+              <button
                 type="submit"
                 className="w-full bg-blue-600 hover:bg-[#b09252] text-black font-semibold font-display py-2.5 rounded transition cursor-pointer"
               >
@@ -654,7 +677,16 @@ export default function GastosAdmin({
                     const isOtroEditing = editingOtroId === g.id;
                     return (
                       <tr key={g.id} className={`hover:bg-white/[0.01] ${isOtroEditing ? 'bg-blue-600/5 border-l-2 border-[#c9a961]' : ''}`}>
-                        <td className="px-4 py-3 font-medium text-slate-900">{g.nombre}</td>
+                        <td className="px-4 py-3 font-medium text-slate-900">
+                          <span className="inline-flex items-center gap-1.5">
+                            {g.nombre}
+                            {g.comprobante_url && (
+                              <a href={g.comprobante_url} target="_blank" rel="noreferrer" aria-label={`Ver comprobante de ${g.nombre}`} title={g.comprobante_nombre || 'Ver comprobante'} className="text-blue-500 hover:text-blue-700">
+                                <Paperclip className="w-3 h-3" />
+                              </a>
+                            )}
+                          </span>
+                        </td>
                         <td className="px-4 py-3 font-mono text-slate-500">{g.categoria}</td>
                         <td className="px-4 py-3 font-mono">
                           {g.moneda === 'USD' ? formatUsd(g.monto) : formatCop(g.monto)}

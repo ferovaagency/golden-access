@@ -12,28 +12,39 @@
 //   email?: string,
 //   canal_origen?: 'linkedin'|'reddit'|'otro'|... (default 'otro'),
 //   fuente_url?: string,
-//   contexto_publicacion?: string      // texto original del post/comentario que originó el lead
+//   contexto_publicacion?: string,     // texto original del post/comentario que originó el lead
+//   score_potencial?: number           // score 0-100 del análisis de contenido que originó el lead (se guarda en probabilidad si aún no tiene)
 // }
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { z } from 'npm:zod';
+import { fetchWithRetry } from '../_shared/fetch-retry.ts';
 
-interface Body {
-  oportunidad_id?: string;
-  nombre_contacto?: string;
-  empresa?: string;
-  dominio?: string;
-  linkedin_url?: string;
-  email?: string;
-  canal_origen?: string;
-  fuente_url?: string;
-  contexto_publicacion?: string;
-}
+// Nota: linkedin_url/fuente_url/email se dejan como string libre (no .url()/.email()
+// estrictos) a propósito -- el formulario manual de "Enrich" en el pipeline permite
+// pegar valores sin protocolo (ej. "linkedin.com/in/juan" sin "https://"), y forzar
+// el formato estricto aquí rechazaría entradas válidas que el resto del código ya
+// tolera. zod sigue protegiendo tipos y tamaños, que es lo que importa a este nivel.
+const BodySchema = z.object({
+  oportunidad_id: z.string().uuid().optional(),
+  nombre_contacto: z.string().trim().min(1).max(200).optional(),
+  empresa: z.string().trim().max(200).optional(),
+  dominio: z.string().trim().max(255).optional(),
+  linkedin_url: z.string().trim().max(500).optional(),
+  email: z.string().trim().max(255).optional(),
+  canal_origen: z.string().trim().max(40).optional(),
+  fuente_url: z.string().trim().max(500).optional(),
+  contexto_publicacion: z.string().trim().max(6000).optional(),
+  score_potencial: z.number().min(0).max(100).optional(),
+});
 
 async function apolloPeopleMatch(apiKey: string, params: {
   first_name?: string; last_name?: string; name?: string;
   email?: string; linkedin_url?: string; organization_name?: string; domain?: string;
 }) {
-  const res = await fetch('https://api.apollo.io/api/v1/people/match?reveal_personal_emails=true&reveal_phone_number=false', {
+  // Reintenta hasta 2 veces (con backoff) si Apollo responde 429/5xx o hay un fallo
+  // de red transitorio -- antes un solo hiccup tumbaba todo el enriquecimiento.
+  const res = await fetchWithRetry('https://api.apollo.io/api/v1/people/match?reveal_personal_emails=true&reveal_phone_number=false', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache', 'x-api-key': apiKey },
     body: JSON.stringify(params),
@@ -49,7 +60,7 @@ async function apolloPeopleMatch(apiKey: string, params: {
 async function apolloOrgEnrich(apiKey: string, domain: string) {
   const url = new URL('https://api.apollo.io/api/v1/organizations/enrich');
   url.searchParams.set('domain', domain);
-  const res = await fetch(url.toString(), {
+  const res = await fetchWithRetry(url.toString(), {
     method: 'GET',
     headers: { 'Cache-Control': 'no-cache', 'x-api-key': apiKey },
   });
@@ -110,7 +121,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    const body = (await req.json()) as Body;
+    const parsedBody = BodySchema.safeParse(await req.json());
+    if (!parsedBody.success) {
+      return new Response(JSON.stringify({ ok: false, message: 'Parámetros inválidos', errors: parsedBody.error.flatten().fieldErrors }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const body = parsedBody.data;
 
     // Cargar oportunidad si viene el id
     let oportunidad: any = null;
@@ -150,6 +167,7 @@ Deno.serve(async (req) => {
 
     const person = await apolloPeopleMatch(APOLLO_API_KEY, peopleParams);
     let org: any = null;
+    let orgFromCache = false;
     const orgDomain = person.ok
       ? (person.data?.person?.organization?.primary_domain || person.data?.person?.organization?.website_url || dominio)
       : dominio;
@@ -158,7 +176,32 @@ Deno.serve(async (req) => {
       try { orgDomainClean = orgDomain.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]; } catch { /**/ }
     }
     if (orgDomainClean) {
-      org = await apolloOrgEnrich(APOLLO_API_KEY, orgDomainClean);
+      // Cache por dominio: si ya enriquecimos esta empresa en los últimos 30 días (para
+      // otra oportunidad), reutilizamos ese resultado en vez de gastar un crédito nuevo
+      // de Apollo -- las organizaciones no cambian de un día para otro.
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      try {
+        const { data: cached } = await supabase
+          .from('crm_oportunidades')
+          .select('apollo_data, apollo_enriched_at')
+          .gte('apollo_enriched_at', thirtyDaysAgo)
+          .not('apollo_data', 'is', null)
+          .order('apollo_enriched_at', { ascending: false })
+          .limit(50);
+        const hit = (cached || []).find((row: any) => {
+          const rowDomain = row.apollo_data?.organization?.primary_domain || row.apollo_data?.inputs?.dominio;
+          return rowDomain && rowDomain.toLowerCase() === orgDomainClean!.toLowerCase();
+        });
+        if (hit?.apollo_data?.organization && !hit.apollo_data.organization.error) {
+          org = { ok: true, data: { organization: hit.apollo_data.organization } };
+          orgFromCache = true;
+        }
+      } catch (err) {
+        console.warn('[apollo-enrich-playbook] no se pudo revisar cache de dominio:', err);
+      }
+      if (!org) {
+        org = await apolloOrgEnrich(APOLLO_API_KEY, orgDomainClean);
+      }
     }
 
     const apollo_data = {
@@ -166,12 +209,19 @@ Deno.serve(async (req) => {
       inputs: { nombre_contacto, empresa, dominio, linkedin_url, email: emailIn },
       person: person.ok ? person.data?.person || person.data : { error: person.error, status: (person as any).status },
       organization: org?.ok ? org.data?.organization || org.data : (org ? { error: org.error, status: (org as any).status } : null),
+      organization_from_cache: orgFromCache,
     };
 
     // Extraer datos útiles
     const p = person.ok ? (person.data?.person || {}) : {};
     const o = org?.ok ? (org.data?.organization || {}) : {};
     const foundEmail: string | undefined = p.email || (p.contact_emails?.[0]?.email) || emailIn;
+    // Apollo marca cada email como 'verified' (confirmado real), 'guessed' (adivinado por
+    // patrón, ej. nombre.apellido@dominio) o 'unavailable'. Priorizamos avisar a la IA/al
+    // equipo cuando el email es solo una suposición, para no dañar la reputación del
+    // dominio de correo propio enviando a direcciones que probablemente reboten.
+    const emailStatus: string = p.email_status || (foundEmail === emailIn ? 'aportado_manualmente' : 'desconocido');
+    const emailVerified = emailStatus === 'verified';
     const foundPhone: string | undefined = p.phone_numbers?.[0]?.sanitized_number || p.mobile_phone || p.organization?.phone;
     const foundLinkedin: string | undefined = p.linkedin_url || linkedin_url;
     const foundTitle: string | undefined = p.title;
@@ -196,7 +246,7 @@ Cargo: ${foundTitle || 'desconocido'}
 Empresa: ${foundCompany || 'desconocida'}
 Industria: ${foundIndustry || 'desconocida'}
 Tamaño empresa: ${foundSize || 'desconocido'}
-Email: ${foundEmail || 'no disponible'}
+Email: ${foundEmail || 'no disponible'} (estado Apollo: ${emailStatus}${emailVerified ? ', confirmado real' : ', NO confirmado -- si lo usas en el correo, adviértelo brevemente al final como nota interna entre paréntesis para que el equipo verifique antes de enviar'})
 Teléfono: ${foundPhone || 'no disponible'}
 LinkedIn: ${foundLinkedin || 'no disponible'}
 Canal de origen del lead: ${canal_origen}
@@ -259,6 +309,11 @@ Servicios de Ferova a mencionar solo si son relevantes al dolor detectado: SEO, 
     if (foundEmail && (!oportunidad || !oportunidad.email)) patch.email = foundEmail;
     if (foundPhone && (!oportunidad || !oportunidad.telefono)) patch.telefono = foundPhone;
     if (foundCompany && (!oportunidad || !oportunidad.empresa)) patch.empresa = foundCompany;
+    // Score del contenido que originó el lead, para la clasificación Hot/Warm/Cold del
+    // pipeline (no lo sobreescribimos si el equipo ya puso su propia probabilidad manual).
+    if (typeof body.score_potencial === 'number' && (!oportunidad || oportunidad.probabilidad == null)) {
+      patch.probabilidad = Math.max(0, Math.min(100, Math.round(body.score_potencial)));
+    }
 
     let saved: any;
     if (oportunidad?.id) {
@@ -282,7 +337,17 @@ Servicios de Ferova a mencionar solo si son relevantes al dolor detectado: SEO, 
       saved = data;
     }
 
-    return new Response(JSON.stringify({ ok: true, oportunidad: saved, apollo: { person_found: !!p?.id, org_found: !!o?.id } }), {
+    return new Response(JSON.stringify({
+      ok: true,
+      oportunidad: saved,
+      apollo: {
+        person_found: !!p?.id,
+        org_found: !!o?.id,
+        org_from_cache: orgFromCache,
+        email_status: emailStatus,
+        email_verified: emailVerified,
+      },
+    }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {

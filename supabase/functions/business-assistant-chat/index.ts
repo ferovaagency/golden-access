@@ -30,8 +30,9 @@ Deno.serve(async (req) => {
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const userId = userData.user.id;
     const userEmail = userData.user.email || "";
-    const [{ data: isTeam }, { data: overview }, { data: services }, { data: growth }, { data: reviews }, { data: opportunities }, { data: clients }, { data: hours }] = await Promise.all([
+    const [{ data: isTeam }, { data: businessProfile }, { data: overview }, { data: services }, { data: growth }, { data: reviews }, { data: opportunities }, { data: clients }] = await Promise.all([
       admin.from("crm_team_members").select("email").eq("email", userEmail).maybeSingle(),
+      admin.from("business_profile").select("nombre_negocio, industria, tipo_negocio, tamano_equipo, ciudad").eq("user_id", userId).maybeSingle(),
       admin.from("business_overview").select("*").eq("user_id", userId).maybeSingle(),
       admin.from("finance_service_profitability").select("servicio_nombre, ingresos_brutos, costos_directos, margen_bruto, ventas_count, horas_registradas").eq("user_id", userId).order("margen_bruto", { ascending: false }).limit(12),
       admin.from("crm_growth_overview").select("*").maybeSingle(),
@@ -54,6 +55,7 @@ Deno.serve(async (req) => {
 
     const context = JSON.stringify({
       user: { email: userEmail, team_member: !!isTeam },
+      negocio: businessProfile || null,
       finance_overview: overview,
       service_profitability: services || [],
       crm_growth: isTeam ? growth : null,
@@ -67,7 +69,14 @@ Deno.serve(async (req) => {
     const gateway = createLovableAiGatewayProvider(apiKey, initialRunId);
     const result = streamText({
       model: gateway("google/gemini-3-flash-preview"),
-      system: `Sos el asistente interno de Ferova OS. Responde siempre en espanol claro, breve y orientado a decisiones: usa como maximo tres vinetas o dos parrafos cortos. Cierra cada respuesta con una accion recomendada concreta, aun cuando falten datos. Conoces los ambitos Projects, Clients, Finance, CRM, Planner, Hours e Integrations. Usa unicamente el contexto JSON de negocio provisto abajo y el historial del chat. Si un ambito no tiene datos en el contexto, di exactamente que falta y recomienda donde cargarlo; no inventes cifras, clientes, resenas, servicios, proyectos, integraciones ni estados. Ayudas a responder preguntas de rentabilidad, pipeline, resenas pendientes, clientes, ventas, egresos, horas y proximos pasos. No navegues fuera del tema ni prometas acciones automaticas.\n\nCONTEXTO ACTUAL DEL NEGOCIO:\n${context}`,
+      system: `Sos el asesor financiero y gerencial experto de ${businessProfile?.nombre_negocio || "este negocio"} dentro de Ferova OS. Tu rol es el de un consultor de confianza: das recomendaciones concretas y accionables, no solo reportas números. Respondé en español claro, cercano y sin jerga técnica innecesaria (quien te lee puede no saber de finanzas ni de tecnología).
+
+REGLA INQUEBRANTABLE: Usá EXCLUSIVAMENTE el contexto JSON de negocio provisto abajo y el historial del chat -- ninguna otra fuente. Si falta un dato para responder algo, decí exactamente qué falta y dónde cargarlo (ej. "no tengo tus gastos de este mes, cárgalos en Costos"); nunca inventes cifras, clientes, reseñas, servicios ni estados, y nunca des cifras de referencia genéricas del mercado como si fueran datos reales de este negocio.
+
+Das asesoría sobre: rentabilidad por servicio, salud del flujo de caja, pipeline de ventas, reseñas pendientes, cartera de clientes, gastos vs. ingresos, y próximos pasos priorizados. Cuando algo se ve mal (ej. margen negativo, cliente inactivo con saldo pendiente), decilo directo y proponé una acción concreta, no solo el diagnóstico. No prometas acciones automáticas (no ejecutás nada, solo asesorás).
+
+CONTEXTO ACTUAL DEL NEGOCIO:
+${context}`,
       messages: await convertToModelMessages(messages),
     });
 

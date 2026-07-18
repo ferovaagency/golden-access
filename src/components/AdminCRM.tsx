@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles, Download, MessageSquare, Zap, Search, Star, RefreshCw, CheckCircle2, Link2 } from 'lucide-react';
+import QRCode from 'qrcode';
+import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles, Download, MessageSquare, Zap, Copy, Search, Star, RefreshCw, CheckCircle2, Link2, Bell } from 'lucide-react';
 import { getAccessToken, googleSignIn, logout } from '../lib/supabase';
 import { copyText } from '../lib/clipboard';
 import { PIPELINE_STAGES } from './crm/constants';
@@ -47,9 +48,24 @@ import {
   getWhatsappInstance,
   connectWhatsappInstance,
   WhatsappInstance,
+  getMyNotificationPhone,
+  setMyNotificationPhone,
 } from '../lib/crmService';
+import {
+  AdminCustomer,
+  FeedbackItem,
+  getMyTeamRole,
+  listCustomers,
+  setCustomerPlan,
+  grantCourtesyAccess,
+  listFeedback,
+  updateFeedbackStatus,
+} from '../lib/adminService';
+import type { PlanId } from '../lib/planService';
 
-export type CRMTab = 'pipeline' | 'citas' | 'contenido' | 'bot' | 'resenas';
+const ESTADOS: EstadoOportunidad[] = ['nuevo', 'contactado', 'calificando', 'propuesta_enviada', 'negociacion', 'ganado', 'perdido'];
+
+export type CRMTab = 'pipeline' | 'citas' | 'contenido' | 'bot' | 'resenas' | 'clientes';
 
 interface Props {
   user: User;
@@ -98,7 +114,25 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const [whatsappDrafts, setWhatsappDrafts] = useState<Record<string, string>>({});
   const [sendingWhatsapp, setSendingWhatsapp] = useState<string | null>(null);
   const [whatsappInstance, setWhatsappInstance] = useState<WhatsappInstance | null>(null);
+  const [whatsappQrSrc, setWhatsappQrSrc] = useState<string | null>(null);
+  const [whatsappQrError, setWhatsappQrError] = useState<string | null>(null);
   const [connectingWhatsapp, setConnectingWhatsapp] = useState(false);
+  const [notifyPhoneInput, setNotifyPhoneInput] = useState('');
+  const [notifyPhoneSaved, setNotifyPhoneSaved] = useState<string | null>(null);
+  const [savingNotifyPhone, setSavingNotifyPhone] = useState(false);
+
+  // Portal de administración: clientes (planes/suscripción), cortesía, feedback
+  const [teamRole, setTeamRole] = useState<string | null>(null);
+  const [customers, setCustomers] = useState<AdminCustomer[]>([]);
+  const [loadingCustomers, setLoadingCustomers] = useState(false);
+  const [savingPlanFor, setSavingPlanFor] = useState<string | null>(null);
+  const [courtesyEmail, setCourtesyEmail] = useState('');
+  const [courtesyPlan, setCourtesyPlan] = useState<PlanId>('completo');
+  const [courtesyNotas, setCourtesyNotas] = useState('');
+  const [grantingCourtesy, setGrantingCourtesy] = useState(false);
+  const [feedbackList, setFeedbackList] = useState<FeedbackItem[]>([]);
+  const [feedbackFilter, setFeedbackFilter] = useState<'todos' | FeedbackItem['estado']>('nuevo');
+  const [clientesLoaded, setClientesLoaded] = useState(false);
 
   // Booking form
   const [bookNombre, setBookNombre] = useState('');
@@ -144,6 +178,8 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const [liLimit, setLiLimit] = useState(12);
   const [liResults, setLiResults] = useState<LinkedInSearchResult[]>([]);
   const [searchingLi, setSearchingLi] = useState(false);
+  const [liWarning, setLiWarning] = useState<string | null>(null);
+  const [kwWarning, setKwWarning] = useState<string | null>(null);
 
   // Apollo + playbook por oportunidad
   const [enrichingId, setEnrichingId] = useState<string | null>(null);
@@ -153,18 +189,92 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const setEnrichInput = (id: string, patch: Partial<{ linkedin_url: string; dominio: string; contexto: string }>) =>
     setEnrichInputs({ ...enrichInputs, [id]: { ...getEnrichInput(id), ...patch } });
 
+  // Auto-enriquecimiento con Apollo tras analizar contenido calificado
+  const APOLLO_AUTO_THRESHOLD = 60;
+  const [autoEnriching, setAutoEnriching] = useState(false);
+  const [autoEnrichNotice, setAutoEnrichNotice] = useState<string | null>(null);
+
+  const looksLikeRealName = (autor: string | null | undefined): boolean => {
+    if (!autor) return false;
+    const a = autor.trim();
+    if (!a) return false;
+    // Descarta handles tipo "u/usuario · r/subreddit" — no son nombres reales, Apollo no los puede enriquecer.
+    if (/^u\//i.test(a)) return false;
+    return true;
+  };
+
+  // Si el análisis detectó una oportunidad calificada (score alto) y tenemos un
+  // nombre de autor usable, dispara automáticamente el enriquecimiento con Apollo
+  // + generación de playbook, en vez de dejarlo como un paso manual separado.
+  const maybeAutoEnrichApollo = async (opts: {
+    plataforma: 'linkedin' | 'reddit';
+    url: string;
+    autor: string | null | undefined;
+    texto: string;
+    score: number | null;
+  }) => {
+    if (opts.score === null || opts.score < APOLLO_AUTO_THRESHOLD) return;
+    if (!looksLikeRealName(opts.autor)) {
+      setAutoEnrichNotice('Score alto, pero no hay un nombre de contacto identificable para enriquecer con Apollo automáticamente. Créalo manualmente en el Pipeline si tienes más datos.');
+      return;
+    }
+    setAutoEnriching(true);
+    setAutoEnrichNotice(null);
+    try {
+      const updated = await enrichOportunidadApollo({
+        nombre_contacto: opts.autor!.trim(),
+        linkedin_url: opts.plataforma === 'linkedin' ? opts.url : undefined,
+        fuente_url: opts.url,
+        canal_origen: opts.plataforma,
+        contexto_publicacion: opts.texto,
+        score_potencial: opts.score ?? undefined,
+      });
+      setOportunidades((prev) => [updated, ...prev.filter((x) => x.id !== updated.id)]);
+      setExpandedPlaybookId(updated.id);
+      setAutoEnrichNotice(`✓ "${updated.nombre_contacto}" enriquecido con Apollo y playbook generado — revísalo en la pestaña Pipeline.`);
+    } catch (err: any) {
+      setAutoEnrichNotice(`No se pudo enriquecer automáticamente con Apollo: ${err.message || err}`);
+    } finally {
+      setAutoEnriching(false);
+    }
+  };
+
   useEffect(() => {
     (async () => {
       const ok = await isTeamMember(user.email || '');
       setAuthorized(ok);
-      if (ok) await refreshAll();
+      if (ok) {
+        await refreshAll();
+        setTeamRole(await getMyTeamRole(user.email || ''));
+      }
     })();
   }, [user.email]);
+
+  const refreshClientesTab = async () => {
+    setLoadingCustomers(true);
+    try {
+      const [c, f] = await Promise.all([listCustomers(), listFeedback()]);
+      setCustomers(c);
+      setFeedbackList(f);
+    } catch (err: any) {
+      alert(`Error cargando el portal de clientes: ${err.message || err}`);
+    } finally {
+      setLoadingCustomers(false);
+    }
+  };
+
+  useEffect(() => {
+    if (tab === 'clientes' && authorized && !clientesLoaded) {
+      setClientesLoaded(true);
+      refreshClientesTab();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, authorized]);
 
   const refreshAll = async () => {
     setLoading(true);
     try {
-      const [o, c, k, bc, kn, srv, r, rs, wi] = await Promise.all([
+      const [o, c, k, bc, kn, srv, r, rs, wi, notifyPhone] = await Promise.all([
         listOportunidades(),
         listCitas(),
         listContenidoPotencial(),
@@ -174,6 +284,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
         listResenas().catch(() => [] as Resena[]),
         listReviewSources().catch(() => [] as ReviewSource[]),
         getWhatsappInstance().catch(() => null),
+        getMyNotificationPhone(user.email || '').catch(() => null),
       ]);
       setOportunidades(o);
       setCitas(c);
@@ -185,6 +296,8 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setResenas(r);
       setReviewSources(rs);
       setWhatsappInstance(wi);
+      setNotifyPhoneSaved(notifyPhone);
+      setNotifyPhoneInput(notifyPhone || '');
     } catch (err: any) {
       alert(`Error cargando el CRM: ${err.message || err}`);
     } finally {
@@ -307,6 +420,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
   const handleConnectWhatsapp = async () => {
     setConnectingWhatsapp(true);
+    setWhatsappQrError(null);
     try {
       const instance = await connectWhatsappInstance();
       setWhatsappInstance(instance);
@@ -314,6 +428,93 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       alert(`Error generando QR: ${err.message || err}`);
     } finally {
       setConnectingWhatsapp(false);
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    const value = whatsappInstance?.qr_code?.trim();
+    setWhatsappQrError(null);
+
+    if (!value) {
+      setWhatsappQrSrc(null);
+      return;
+    }
+
+    if (value.startsWith('data:image/')) {
+      setWhatsappQrSrc(value);
+      return;
+    }
+
+    const compact = value.replace(/\s/g, '');
+    const looksLikeImageBase64 = /^(iVBORw0KGgo|\/9j\/|R0lGODlh|R0lGODdh|PHN2Zy)/.test(compact);
+    if (looksLikeImageBase64) {
+      setWhatsappQrSrc(`data:image/png;base64,${compact}`);
+      return;
+    }
+
+    QRCode.toDataURL(value, { width: 240, margin: 1, errorCorrectionLevel: 'M' })
+      .then((src) => {
+        if (!cancelled) setWhatsappQrSrc(src);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setWhatsappQrSrc(null);
+          setWhatsappQrError('El servidor devolvió el código de conexión, pero no pude convertirlo en QR visible. Pulsa “Actualizar QR”.');
+        }
+      });
+
+    return () => { cancelled = true; };
+  }, [whatsappInstance?.qr_code]);
+
+  const handleSaveNotifyPhone = async () => {
+    setSavingNotifyPhone(true);
+    try {
+      const saved = await setMyNotificationPhone(notifyPhoneInput.trim());
+      setNotifyPhoneSaved(saved);
+      setNotifyPhoneInput(saved || '');
+    } catch (err: any) {
+      alert(`Error guardando el teléfono de notificaciones: ${err.message || err}`);
+    } finally {
+      setSavingNotifyPhone(false);
+    }
+  };
+
+  const handleSetPlan = async (customer: AdminCustomer, newPlan: PlanId) => {
+    setSavingPlanFor(customer.user_id);
+    try {
+      await setCustomerPlan(customer.user_id, newPlan);
+      setCustomers((prev) => prev.map((c) => (c.user_id === customer.user_id ? { ...c, plan: newPlan } : c)));
+    } catch (err: any) {
+      alert(`Error cambiando el plan: ${err.message || err}`);
+    } finally {
+      setSavingPlanFor(null);
+    }
+  };
+
+  const handleGrantCourtesy = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!courtesyEmail.trim()) return;
+    setGrantingCourtesy(true);
+    try {
+      await grantCourtesyAccess(courtesyEmail.trim().toLowerCase(), courtesyPlan, courtesyNotas.trim() || undefined);
+      setCourtesyEmail('');
+      setCourtesyNotas('');
+      await refreshClientesTab();
+      alert('✓ Acceso de cortesía otorgado.');
+    } catch (err: any) {
+      alert(`Error dando acceso de cortesía: ${err.message || err}`);
+    } finally {
+      setGrantingCourtesy(false);
+    }
+  };
+
+  const handleUpdateFeedbackStatus = async (item: FeedbackItem, estado: FeedbackItem['estado']) => {
+    try {
+      await updateFeedbackStatus(item.id, estado);
+      setFeedbackList((prev) => prev.map((f) => (f.id === item.id ? { ...f, estado } : f)));
+    } catch (err: any) {
+      alert(`Error actualizando el feedback: ${err.message || err}`);
     }
   };
 
@@ -332,7 +533,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
         texto: anaTexto.trim(),
       });
       setContenido([created, ...contenido]);
+      const { url: capturedUrl, autor: capturedAutor, texto: capturedTexto } = { url: anaUrl.trim(), autor: anaAutor.trim() || null, texto: anaTexto.trim() };
       setAnaUrl(''); setAnaAutor(''); setAnaTexto('');
+      await maybeAutoEnrichApollo({ plataforma: anaPlataforma, url: capturedUrl, autor: capturedAutor, texto: capturedTexto, score: created.score_potencial });
     } catch (err: any) {
       alert(`Error analizando: ${err.message || err}`);
     } finally {
@@ -366,6 +569,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
         texto,
       });
       setContenido([created, ...contenido]);
+      // Los handles de Reddit (u/usuario) no son nombres reales: maybeAutoEnrichApollo
+      // los descarta automáticamente y solo avisa si el score era alto.
+      await maybeAutoEnrichApollo({ plataforma: 'reddit', url: post.url, autor: `u/${post.author}`, texto, score: created.score_potencial });
     } catch (err: any) {
       alert(`Error analizando: ${err.message || err}`);
     } finally {
@@ -378,9 +584,11 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     if (keywords.length === 0) { alert('Escribe al menos una palabra clave.'); return; }
     const subreddits = kwSubs.split(',').map((s) => s.trim().replace(/^r\//i, '')).filter(Boolean);
     setSearchingKw(true);
+    setKwWarning(null);
     try {
-      const posts = await searchRedditByKeywords({ keywords, subreddits, sort: kwSort, timeframe: kwTimeframe, limit: kwLimit });
+      const { posts, warning } = await searchRedditByKeywords({ keywords, subreddits, sort: kwSort, timeframe: kwTimeframe, limit: kwLimit });
       setKwPosts(posts);
+      setKwWarning(warning);
     } catch (err: any) {
       alert(`Error buscando: ${err.message || err}`);
     } finally {
@@ -392,9 +600,11 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     const keywords = liInput.split(',').map((s) => s.trim()).filter(Boolean);
     if (keywords.length === 0) { alert('Escribe al menos una palabra clave.'); return; }
     setSearchingLi(true);
+    setLiWarning(null);
     try {
-      const results = await searchLinkedInByKeywords({ keywords, limit: liLimit });
+      const { results, warning } = await searchLinkedInByKeywords({ keywords, limit: liLimit });
       setLiResults(results);
+      setLiWarning(warning);
     } catch (err: any) {
       alert(`Error buscando en LinkedIn: ${err.message || err}`);
     } finally {
@@ -414,6 +624,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
         texto,
       });
       setContenido([created, ...contenido]);
+      await maybeAutoEnrichApollo({ plataforma: 'linkedin', url: result.url, autor: result.author, texto, score: created.score_potencial });
     } catch (err: any) {
       alert(`Error analizando: ${err.message || err}`);
     } finally {
@@ -583,9 +794,6 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
   const bodyClass = embedded ? '' : 'p-6 max-w-6xl mx-auto';
   const outerClass = embedded ? '' : 'ferova-light-theme min-h-screen bg-[#f7f8fb] text-slate-900 font-sans';
-  const qrSrc = whatsappInstance?.qr_code
-    ? (whatsappInstance.qr_code.startsWith('data:') ? whatsappInstance.qr_code : `data:image/png;base64,${whatsappInstance.qr_code}`)
-    : null;
   const kpis = [
     { label: 'Pipeline', value: oportunidades.length, accent: '#c9a961' },
     { label: 'Citas activas', value: citas.filter((c) => c.estado !== 'cancelada').length, accent: '#7ab5c9' },
@@ -608,7 +816,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
           </header>
 
           <nav className="flex gap-2 px-6 py-3 border-b border-slate-200 text-xs font-mono">
-            {(['pipeline', 'citas', 'contenido', 'bot', 'resenas'] as const).map((t) => (
+            {(['pipeline', 'citas', 'contenido', 'bot', 'resenas', 'clientes'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -616,7 +824,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   tab === t ? 'bg-blue-50 text-blue-600 border border-[#c9a961]/40' : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
-                {t === 'pipeline' ? 'Pipeline' : t === 'citas' ? 'Citas de diagnóstico' : t === 'contenido' ? 'Contenido con potencial' : t === 'bot' ? 'Bot de WhatsApp' : 'Reseñas'}
+                {t === 'pipeline' ? 'Pipeline' : t === 'citas' ? 'Citas de diagnóstico' : t === 'contenido' ? 'Contenido con potencial' : t === 'bot' ? 'Bot de WhatsApp' : t === 'resenas' ? 'Reseñas' : 'Clientes'}
               </button>
             ))}
           </nav>
@@ -653,67 +861,97 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <form onSubmit={handleCreateOportunidad} className="lg:col-span-4 bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs h-fit">
               <h3 className="text-blue-600 font-mono uppercase text-[10px] tracking-wider font-bold">Nueva oportunidad</h3>
-              <input
-                value={nombreContacto}
-                onChange={(e) => setNombreContacto(e.target.value)}
-                placeholder="Nombre de contacto"
-                required
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
-              />
-              <input
-                value={empresa}
-                onChange={(e) => setEmpresa(e.target.value)}
-                placeholder="Empresa (opcional)"
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
-              />
-              <select
-                value={canalOrigen}
-                onChange={(e) => setCanalOrigen(e.target.value)}
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
-              >
-                {['linkedin', 'whatsapp', 'email', 'reddit', 'web', 'googlemaps', 'referido', 'otro'].map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-              <input
-                value={fuenteUrl}
-                onChange={(e) => setFuenteUrl(e.target.value)}
-                placeholder="Link de la publicación/perfil (opcional)"
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
-              />
-              <input
-                value={telefono}
-                onChange={(e) => setTelefono(e.target.value)}
-                placeholder="WhatsApp (ej. 573001234567, opcional)"
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
-              />
-              <select
-                value={nuevaServicioId}
-                onChange={(e) => setNuevaServicioId(e.target.value)}
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
-              >
-                <option value="">Servicio del catálogo (opcional)</option>
-                {servicios.map((s) => (
-                  <option key={s.id} value={s.id}>{s.nombre}</option>
-                ))}
-              </select>
-              <div className="flex gap-2">
+              <div>
+                <label htmlFor="op-nombre" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Nombre de contacto</label>
                 <input
-                  type="number"
-                  min={0}
-                  value={nuevaValorEstimado}
-                  onChange={(e) => setNuevaValorEstimado(e.target.value)}
-                  placeholder="Valor estimado (opcional)"
-                  className="flex-1 bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
+                  id="op-nombre"
+                  value={nombreContacto}
+                  onChange={(e) => setNombreContacto(e.target.value)}
+                  placeholder="Nombre de contacto"
+                  required
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
                 />
+              </div>
+              <div>
+                <label htmlFor="op-empresa" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Empresa (opcional)</label>
+                <input
+                  id="op-empresa"
+                  value={empresa}
+                  onChange={(e) => setEmpresa(e.target.value)}
+                  placeholder="Empresa"
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
+                />
+              </div>
+              <div>
+                <label htmlFor="op-canal" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Canal de origen</label>
                 <select
-                  value={nuevaMoneda}
-                  onChange={(e) => setNuevaMoneda(e.target.value as 'COP' | 'USD')}
-                  className="bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
+                  id="op-canal"
+                  value={canalOrigen}
+                  onChange={(e) => setCanalOrigen(e.target.value)}
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
                 >
-                  <option value="COP">COP</option>
-                  <option value="USD">USD</option>
+                  {['linkedin', 'whatsapp', 'email', 'reddit', 'web', 'googlemaps', 'referido', 'otro'].map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
                 </select>
+              </div>
+              <div>
+                <label htmlFor="op-fuente" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Link de la publicación/perfil (opcional)</label>
+                <input
+                  id="op-fuente"
+                  value={fuenteUrl}
+                  onChange={(e) => setFuenteUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
+                />
+              </div>
+              <div>
+                <label htmlFor="op-telefono" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">WhatsApp (opcional)</label>
+                <input
+                  id="op-telefono"
+                  value={telefono}
+                  onChange={(e) => setTelefono(e.target.value)}
+                  placeholder="573001234567"
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
+                />
+              </div>
+              <div>
+                <label htmlFor="op-servicio" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Servicio del catálogo (opcional)</label>
+                <select
+                  id="op-servicio"
+                  value={nuevaServicioId}
+                  onChange={(e) => setNuevaServicioId(e.target.value)}
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
+                >
+                  <option value="">Sin servicio asociado</option>
+                  {servicios.map((s) => (
+                    <option key={s.id} value={s.id}>{s.nombre}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="op-valor" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Valor estimado (opcional)</label>
+                <div className="flex gap-2">
+                  <input
+                    id="op-valor"
+                    type="number"
+                    min={0}
+                    value={nuevaValorEstimado}
+                    onChange={(e) => setNuevaValorEstimado(e.target.value)}
+                    placeholder="0"
+                    aria-label="Valor estimado"
+                    className="flex-1 bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
+                  />
+                  <select
+                    value={nuevaMoneda}
+                    onChange={(e) => setNuevaMoneda(e.target.value as 'COP' | 'USD')}
+                    aria-label="Moneda"
+                    className="bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
+                  >
+                    <option value="COP">COP</option>
+                    <option value="USD">USD</option>
+                  </select>
+                </div>
               </div>
               <button type="submit" className="w-full bg-[#c9a961] hover:bg-[#b09252] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5">
                 <Plus className="w-3.5 h-3.5" /> Crear
@@ -738,11 +976,33 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   m === 'USD'
                     ? `US$ ${n.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
                     : `$ ${n.toLocaleString('es-CO', { maximumFractionDigits: 0 })}`;
+                // Clasificación Hot/Warm/Cold (marco del skill de prospecting): Hot >=70,
+                // Warm 40-69, Cold <40. Usa `probabilidad`, que se llena sola con el
+                // score_potencial del análisis de contenido que originó el lead (si vino
+                // de ahí) o manualmente por el equipo.
+                const tier = o.probabilidad == null
+                  ? null
+                  : o.probabilidad >= 70
+                    ? { label: 'Hot', color: '#c97a61' }
+                    : o.probabilidad >= 40
+                      ? { label: 'Warm', color: '#c9a961' }
+                      : { label: 'Cold', color: '#8a8377' };
                 return (
                   <div key={o.id} className="bg-white border border-slate-200 rounded-lg p-4 space-y-3 text-xs">
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="flex-1 min-w-[160px]">
-                        <div className="font-semibold text-slate-900">{o.nombre_contacto}</div>
+                        <div className="font-semibold text-slate-900 flex items-center gap-1.5">
+                          {o.nombre_contacto}
+                          {tier && (
+                            <span
+                              className="text-[8px] font-mono font-bold uppercase px-1.5 py-0.5 rounded border"
+                              style={{ color: tier.color, borderColor: `${tier.color}66` }}
+                              title={`Score/probabilidad: ${o.probabilidad}`}
+                            >
+                              {tier.label}
+                            </span>
+                          )}
+                        </div>
                         <div className="text-[#8a8377] font-mono text-[10px]">
                           {o.empresa || 'Sin empresa'} · {o.canal_origen}{o.telefono ? ` · ${o.telefono}` : ''}
                         </div>
@@ -1017,6 +1277,18 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
         {tab === 'contenido' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {(autoEnriching || autoEnrichNotice) && (
+              <div className="lg:col-span-12 bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs flex items-center gap-2">
+                {autoEnriching ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
+                    <span className="text-blue-700">Score alto detectado — enriqueciendo con Apollo y generando playbook automáticamente...</span>
+                  </>
+                ) : (
+                  <span className="text-blue-700">{autoEnrichNotice}</span>
+                )}
+              </div>
+            )}
             <div className="lg:col-span-12 bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs">
               <h3 className="text-blue-600 font-mono uppercase text-[10px] tracking-wider font-bold flex items-center gap-1.5">
                 <Search className="w-3.5 h-3.5" /> Buscar publicaciones públicas de LinkedIn
@@ -1047,6 +1319,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   <Search className={`w-3.5 h-3.5 ${searchingLi ? 'animate-pulse' : ''}`} /> {searchingLi ? 'Buscando...' : 'Buscar LinkedIn'}
                 </button>
               </div>
+              {liWarning && (
+                <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 leading-relaxed">{liWarning}</p>
+              )}
               {liResults.length > 0 && (
                 <div className="pt-2 border-t border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[420px] overflow-y-auto">
                   <p className="md:col-span-2 text-[9px] font-mono uppercase text-[#8a8377]">{liResults.length} resultados públicos</p>
@@ -1128,6 +1403,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   <Search className={`w-3.5 h-3.5 ${searchingKw ? 'animate-pulse' : ''}`} /> {searchingKw ? 'Buscando...' : 'Buscar'}
                 </button>
               </div>
+              {kwWarning && (
+                <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 leading-relaxed">{kwWarning}</p>
+              )}
               {kwPosts.length > 0 && (
                 <div className="pt-2 border-t border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[520px] overflow-y-auto">
                   <p className="md:col-span-2 text-[9px] font-mono uppercase text-[#8a8377]">{kwPosts.length} resultados</p>
@@ -1164,36 +1442,52 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 Pegá el link y el texto de una publicación de LinkedIn o Reddit. La IA la puntúa (0-100), explica por qué y redacta un comentario sugerido para que lo publiques manualmente.
               </p>
               <div className="flex gap-2">
-                <select
-                  value={anaPlataforma}
-                  onChange={(e) => setAnaPlataforma(e.target.value as 'linkedin' | 'reddit')}
-                  className="bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
-                >
-                  <option value="linkedin">LinkedIn</option>
-                  <option value="reddit">Reddit</option>
-                </select>
+                <div>
+                  <label htmlFor="ana-plataforma" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Plataforma</label>
+                  <select
+                    id="ana-plataforma"
+                    value={anaPlataforma}
+                    onChange={(e) => setAnaPlataforma(e.target.value as 'linkedin' | 'reddit')}
+                    className="bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
+                  >
+                    <option value="linkedin">LinkedIn</option>
+                    <option value="reddit">Reddit</option>
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label htmlFor="ana-autor" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Autor (opcional)</label>
+                  <input
+                    id="ana-autor"
+                    value={anaAutor}
+                    onChange={(e) => setAnaAutor(e.target.value)}
+                    placeholder="Nombre del autor"
+                    className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="ana-url" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">URL de la publicación</label>
                 <input
-                  value={anaAutor}
-                  onChange={(e) => setAnaAutor(e.target.value)}
-                  placeholder="Autor (opcional)"
-                  className="flex-1 bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
+                  id="ana-url"
+                  value={anaUrl}
+                  onChange={(e) => setAnaUrl(e.target.value)}
+                  placeholder="https://..."
+                  required
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
                 />
               </div>
-              <input
-                value={anaUrl}
-                onChange={(e) => setAnaUrl(e.target.value)}
-                placeholder="URL de la publicación"
-                required
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
-              />
-              <textarea
-                value={anaTexto}
-                onChange={(e) => setAnaTexto(e.target.value)}
-                rows={8}
-                placeholder="Pegá acá el texto completo de la publicación..."
-                required
-                className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900 font-mono text-[11px] leading-relaxed"
-              />
+              <div>
+                <label htmlFor="ana-texto" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Texto de la publicación</label>
+                <textarea
+                  id="ana-texto"
+                  value={anaTexto}
+                  onChange={(e) => setAnaTexto(e.target.value)}
+                  rows={8}
+                  placeholder="Pegá acá el texto completo de la publicación..."
+                  required
+                  className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900 font-mono text-[11px] leading-relaxed"
+                />
+              </div>
               <button
                 type="submit"
                 disabled={analyzing}
@@ -1392,13 +1686,18 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   className="w-full rounded-xl bg-blue-600 px-4 py-2.5 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${connectingWhatsapp ? 'animate-spin' : ''}`} />
-                  {connectingWhatsapp ? 'Generando QR...' : qrSrc ? 'Actualizar QR' : 'Generar QR de conexión'}
+                  {connectingWhatsapp ? 'Generando QR...' : whatsappQrSrc ? 'Actualizar QR' : 'Generar QR de conexión'}
                 </button>
-                {qrSrc && (
+                {whatsappQrSrc && (
                   <div className="rounded-2xl bg-white border border-blue-100 p-4 text-center space-y-2">
-                    <img src={qrSrc} alt="QR para conectar WhatsApp" className="mx-auto h-48 w-48 rounded-xl border border-slate-200 object-contain" />
+                    <img src={whatsappQrSrc} alt="QR para conectar WhatsApp" className="mx-auto h-48 w-48 rounded-xl border border-slate-200 object-contain" />
                     <p className="text-[10px] font-mono text-slate-500">Abre WhatsApp → Dispositivos vinculados → Vincular dispositivo.</p>
                   </div>
+                )}
+                {whatsappQrError && (
+                  <p className="rounded-xl border border-red-100 bg-red-50 p-3 text-[10px] font-mono text-red-600">
+                    {whatsappQrError}
+                  </p>
                 )}
                 {whatsappInstance && (
                   <div className="rounded-xl bg-white/70 border border-blue-100 p-3 text-[10px] font-mono text-slate-600 space-y-1">
@@ -1406,6 +1705,35 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                     <p>Estado: <span className="text-blue-700">{whatsappInstance.status}</span></p>
                     {whatsappInstance.last_error && <p className="text-red-600 break-words">{whatsappInstance.last_error}</p>}
                   </div>
+                )}
+              </div>
+
+              <div className="bg-amber-50 border border-amber-100 rounded-lg p-5 space-y-2 text-xs text-slate-700">
+                <h3 className="text-amber-700 font-semibold flex items-center gap-1.5">
+                  <Bell className="w-3.5 h-3.5" /> Alerta de leads Hot por WhatsApp
+                </h3>
+                <p className="text-slate-600 leading-relaxed">
+                  Si pones tu número aquí, te llega un WhatsApp automático cada vez que el análisis de contenido detecta un lead con score ≥ 70 (Hot) — no tienes que estar revisando el Pipeline.
+                </p>
+                <label htmlFor="notify-phone" className="block text-[10px] font-mono uppercase tracking-wider text-slate-500">Tu número (solo dígitos, con indicativo)</label>
+                <div className="flex gap-2">
+                  <input
+                    id="notify-phone"
+                    value={notifyPhoneInput}
+                    onChange={(e) => setNotifyPhoneInput(e.target.value.replace(/[^\d]/g, ''))}
+                    placeholder="573001234567"
+                    className="flex-1 bg-white border border-amber-200 p-2 rounded text-slate-900"
+                  />
+                  <button
+                    onClick={handleSaveNotifyPhone}
+                    disabled={savingNotifyPhone}
+                    className="rounded-lg bg-amber-600 hover:bg-amber-700 px-4 text-white font-semibold disabled:opacity-50"
+                  >
+                    {savingNotifyPhone ? 'Guardando...' : 'Guardar'}
+                  </button>
+                </div>
+                {notifyPhoneSaved && (
+                  <p className="text-[10px] font-mono text-amber-700">✓ Alertas activas a {notifyPhoneSaved}</p>
                 )}
               </div>
 
@@ -1610,6 +1938,185 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {tab === 'clientes' && (
+          <div className="space-y-6">
+            {loadingCustomers && (
+              <div className="flex items-center gap-2 text-blue-600 text-xs font-mono">
+                <Loader2 className="w-4 h-4 animate-spin" /> Cargando clientes...
+              </div>
+            )}
+
+            <div className="bg-white border border-slate-200 rounded-lg p-5 space-y-3">
+              <h3 className="text-blue-600 font-mono uppercase text-[10px] tracking-wider font-bold">
+                Clientes registrados ({customers.length})
+              </h3>
+              {!loadingCustomers && customers.length === 0 && (
+                <p className="text-xs text-[#8a8377]">Todavía no hay clientes registrados.</p>
+              )}
+              {customers.length > 0 && (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="text-left text-[#8a8377] font-mono uppercase text-[9px] tracking-wider border-b border-slate-200">
+                        <th className="py-2 pr-3">Negocio / Email</th>
+                        <th className="py-2 pr-3">Estado</th>
+                        <th className="py-2 pr-3">Plan</th>
+                        <th className="py-2 pr-3">Onboarding</th>
+                        <th className="py-2 pr-3">Registrado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {customers.map((c) => (
+                        <tr key={c.user_id} className="border-b border-slate-100">
+                          <td className="py-2 pr-3">
+                            <div className="text-slate-900 font-semibold">{c.nombre_negocio || '(sin nombre aún)'}</div>
+                            <div className="text-[#8a8377] font-mono text-[10px]">{c.email}</div>
+                          </td>
+                          <td className="py-2 pr-3">
+                            <span className={`px-2 py-0.5 rounded font-mono text-[9px] uppercase border ${
+                              c.estado_suscripcion === 'activo' ? 'bg-[#a8c98a]/15 text-emerald-600 border-[#a8c98a]/40'
+                                : c.estado_suscripcion === 'cortesia' ? 'bg-blue-50 text-blue-600 border-blue-200'
+                                : 'bg-[#c97a61]/15 text-red-600 border-[#c97a61]/40'
+                            }`}>
+                              {c.estado_suscripcion === 'activo' ? 'Activo' : c.estado_suscripcion === 'cortesia' ? 'Cortesía' : 'Sin pago'}
+                            </span>
+                          </td>
+                          <td className="py-2 pr-3">
+                            <select
+                              value={c.plan}
+                              disabled={savingPlanFor === c.user_id || c.estado_suscripcion === 'sin_pago'}
+                              onChange={(e) => handleSetPlan(c, e.target.value as PlanId)}
+                              className="bg-slate-50/50 border border-slate-200 p-1.5 rounded text-slate-900 text-[10px]"
+                            >
+                              <option value="financiero">Financiero + Proyectos</option>
+                              <option value="crm_ventas">CRM y Ventas</option>
+                              <option value="completo">Completo</option>
+                            </select>
+                          </td>
+                          <td className="py-2 pr-3">
+                            {c.onboarding_completado
+                              ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                              : <span className="text-[#8a8377] text-[10px]">Pendiente</span>}
+                          </td>
+                          <td className="py-2 pr-3 text-[#8a8377] font-mono text-[10px]">
+                            {new Date(c.created_at).toLocaleDateString('es-CO')}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {teamRole === 'owner' && (
+              <form onSubmit={handleGrantCourtesy} className="bg-amber-50 border border-amber-100 rounded-lg p-5 space-y-3 text-xs">
+                <h3 className="text-amber-700 font-mono uppercase text-[10px] tracking-wider font-bold">Dar acceso de cortesía</h3>
+                <p className="text-slate-600 leading-relaxed">
+                  Le da acceso sin pago a un email (aunque todavía no se haya registrado). Solo visible para el owner del equipo.
+                </p>
+                <div className="grid sm:grid-cols-3 gap-2">
+                  <div className="sm:col-span-1">
+                    <label htmlFor="courtesy-email" className="block text-[10px] font-mono uppercase text-slate-500 mb-1">Email</label>
+                    <input
+                      id="courtesy-email"
+                      type="email"
+                      value={courtesyEmail}
+                      onChange={(e) => setCourtesyEmail(e.target.value)}
+                      required
+                      placeholder="cliente@empresa.com"
+                      className="w-full bg-white border border-amber-200 p-2 rounded text-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="courtesy-plan" className="block text-[10px] font-mono uppercase text-slate-500 mb-1">Plan</label>
+                    <select
+                      id="courtesy-plan"
+                      value={courtesyPlan}
+                      onChange={(e) => setCourtesyPlan(e.target.value as PlanId)}
+                      className="w-full bg-white border border-amber-200 p-2 rounded text-slate-900"
+                    >
+                      <option value="financiero">Financiero + Proyectos</option>
+                      <option value="crm_ventas">CRM y Ventas</option>
+                      <option value="completo">Completo</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="courtesy-notas" className="block text-[10px] font-mono uppercase text-slate-500 mb-1">Nota (opcional)</label>
+                    <input
+                      id="courtesy-notas"
+                      value={courtesyNotas}
+                      onChange={(e) => setCourtesyNotas(e.target.value)}
+                      placeholder="Ej. Cliente de prueba, referido..."
+                      className="w-full bg-white border border-amber-200 p-2 rounded text-slate-900"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  disabled={grantingCourtesy}
+                  className="rounded-lg bg-amber-600 hover:bg-amber-700 px-4 py-2 text-white font-semibold disabled:opacity-50"
+                >
+                  {grantingCourtesy ? 'Guardando...' : 'Dar acceso de cortesía'}
+                </button>
+              </form>
+            )}
+
+            <div className="bg-white border border-slate-200 rounded-lg p-5 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-blue-600 font-mono uppercase text-[10px] tracking-wider font-bold">
+                  Feedback de clientes ({feedbackList.filter((f) => feedbackFilter === 'todos' || f.estado === feedbackFilter).length})
+                </h3>
+                <select
+                  value={feedbackFilter}
+                  onChange={(e) => setFeedbackFilter(e.target.value as any)}
+                  className="bg-slate-50/50 border border-slate-200 p-1.5 rounded text-slate-900 text-[10px]"
+                >
+                  <option value="todos">Todos</option>
+                  <option value="nuevo">Nuevo</option>
+                  <option value="revisado">Revisado</option>
+                  <option value="resuelto">Resuelto</option>
+                </select>
+              </div>
+              {!loadingCustomers && feedbackList.length === 0 && (
+                <p className="text-xs text-[#8a8377]">Todavía no hay feedback de clientes.</p>
+              )}
+              <div className="space-y-2">
+                {feedbackList
+                  .filter((f) => feedbackFilter === 'todos' || f.estado === feedbackFilter)
+                  .map((f) => (
+                    <div key={f.id} className="border border-slate-100 rounded-lg p-3 text-xs space-y-1.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`px-2 py-0.5 rounded font-mono text-[9px] uppercase border ${
+                          f.tipo === 'bug' ? 'bg-[#c97a61]/15 text-red-600 border-[#c97a61]/40' : 'bg-blue-50 text-blue-600 border-blue-200'
+                        }`}>
+                          {f.tipo}
+                        </span>
+                        <span className="text-[#8a8377] font-mono text-[10px]">{f.email || 'sin email'}</span>
+                        <span className="text-[#8a8377] font-mono text-[10px] ml-auto">{new Date(f.created_at).toLocaleString('es-CO')}</span>
+                      </div>
+                      <p className="text-slate-900 leading-relaxed whitespace-pre-wrap">{f.mensaje}</p>
+                      <div className="flex items-center gap-1.5 pt-1">
+                        {(['nuevo', 'revisado', 'resuelto'] as const).map((estado) => (
+                          <button
+                            key={estado}
+                            onClick={() => handleUpdateFeedbackStatus(f, estado)}
+                            disabled={f.estado === estado}
+                            className={`text-[9px] font-mono uppercase px-2 py-1 rounded border ${
+                              f.estado === estado ? 'bg-slate-100 text-slate-400 border-slate-200' : 'text-blue-600 border-blue-200 hover:bg-blue-50'
+                            }`}
+                          >
+                            {estado}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+              </div>
             </div>
           </div>
         )}

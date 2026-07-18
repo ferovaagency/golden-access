@@ -56,6 +56,8 @@ export interface OtroGasto {
   monto: number;
   moneda: 'COP' | 'USD';
   categoria: 'Operativo' | 'Administrativo' | 'Otros';
+  comprobante_url?: string;
+  comprobante_nombre?: string;
 }
 
 export interface PagoEgreso {
@@ -67,6 +69,8 @@ export interface PagoEgreso {
   moneda: 'COP' | 'USD';
   metodo_pago: string; // e.g. "Bancolombia", "Tarjeta de Crédito", "Efectivo"
   notas?: string;
+  comprobante_url?: string;
+  comprobante_nombre?: string;
 }
 
 export interface AbonoLog {

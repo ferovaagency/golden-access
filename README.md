@@ -1,20 +1,18 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Ferova OS
 
-# Run and deploy your AI Studio app
+Sistema operativo para emprendedores: finanzas, CRM, planificación y asistente IA — construido en Lovable con Lovable Cloud.
 
-This contains everything you need to run your app locally.
+## Stack
 
-View your app in AI Studio: https://ai.studio/apps/c547ebe4-51d3-407c-b2d3-6206f1c7b51c
+- React + Vite + TypeScript + Tailwind
+- Lovable Cloud (Supabase) para auth, base de datos y edge functions
+- Lovable AI Gateway para el asistente y automatizaciones
 
-## Run Locally
+## Desarrollo local
 
-**Prerequisites:**  Node.js
+```bash
+npm install
+npm run dev
+```
 
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Las claves y secretos se gestionan desde Lovable — no se requiere `.env` local para el flujo básico.

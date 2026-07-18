@@ -120,3 +120,6 @@ export default function Home({ data, metrics, selectedMonth, formatCop, onNaviga
     </div>
   );
 }
+    </div>
+  );
+}

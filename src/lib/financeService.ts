@@ -141,6 +141,8 @@ export async function loadFinanceData(userId: string): Promise<AppData> {
     monto: Number(g.monto),
     moneda: g.moneda,
     categoria: g.categoria,
+    comprobante_url: g.comprobante_url ?? undefined,
+    comprobante_nombre: g.comprobante_nombre ?? undefined,
   }));
 
   const pagosEgresos: PagoEgreso[] = pagosEgresosRaw.map((p) => ({
@@ -152,6 +154,8 @@ export async function loadFinanceData(userId: string): Promise<AppData> {
     moneda: p.moneda,
     metodo_pago: p.metodo_pago ?? '',
     notas: p.notas ?? undefined,
+    comprobante_url: p.comprobante_url ?? undefined,
+    comprobante_nombre: p.comprobante_nombre ?? undefined,
   }));
 
   const ventas: Venta[] = ventasRaw.map((v) => ({
@@ -276,6 +280,8 @@ export async function saveOtrosGastos(userId: string, list: OtroGasto[]) {
     monto: g.monto,
     moneda: g.moneda,
     categoria: g.categoria,
+    comprobante_url: g.comprobante_url || null,
+    comprobante_nombre: g.comprobante_nombre || null,
   })));
 }
 
@@ -289,6 +295,8 @@ export async function savePagosEgresos(userId: string, list: PagoEgreso[]) {
     moneda: p.moneda,
     metodo_pago: p.metodo_pago || null,
     notas: p.notas || null,
+    comprobante_url: p.comprobante_url || null,
+    comprobante_nombre: p.comprobante_nombre || null,
   })));
 }
 
@@ -334,4 +342,20 @@ export async function saveHoras(userId: string, list: Hora[]) {
 export async function saveConfig(userId: string, config: Config) {
   const res = await supabase.from('finance_config').upsert({ user_id: userId, ...config, updated_at: new Date().toISOString() });
   if (res.error) throw new Error(`[financeService] saveConfig: ${res.error.message}`);
+}
+
+export interface OfficialTrm {
+  trm: number;
+  source: string;
+  vigente_desde: string | null;
+}
+
+// Trae la TRM oficial (datos.gov.co, con fallback a currency-api) para precargar el
+// campo del formulario -- el usuario sigue confirmando manualmente con "Actualizar
+// Parámetros", nunca se sobreescribe solo.
+export async function fetchOfficialTrm(): Promise<OfficialTrm> {
+  const { data, error } = await supabase.functions.invoke('trm-fetch', { body: {} });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo obtener la TRM oficial.');
+  return { trm: data.trm, source: data.source, vigente_desde: data.vigente_desde ?? null };
 }

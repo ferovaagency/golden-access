@@ -1,21 +1,23 @@
 import React, { useState } from 'react';
 import { PagoEgreso, Config } from '../types';
-import { 
-  Coins, 
-  Plus, 
-  Trash2, 
-  Search, 
-  Filter, 
-  Calendar, 
-  FileText, 
-  DollarSign, 
-  Wallet, 
-  Save, 
-  Check, 
+import {
+  Coins,
+  Plus,
+  Trash2,
+  Search,
+  Filter,
+  Calendar,
+  FileText,
+  DollarSign,
+  Wallet,
+  Save,
+  Check,
   Layers,
   ArrowDownCircle,
-  TrendingDown
+  TrendingDown,
+  Paperclip,
 } from 'lucide-react';
+import ComprobanteUpload from './ComprobanteUpload';
 
 interface PagosEgresosAdminProps {
   pagosEgresos: PagoEgreso[];
@@ -35,6 +37,8 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
   const [moneda, setMoneda] = useState<'COP' | 'USD'>('COP');
   const [metodoPago, setMetodoPago] = useState('Bancolombia');
   const [notas, setNotas] = useState('');
+  const [comprobanteUrl, setComprobanteUrl] = useState<string | undefined>(undefined);
+  const [comprobanteNombre, setComprobanteNombre] = useState<string | undefined>(undefined);
 
   // Filters state
   const [searchTerm, setSearchTerm] = useState('');
@@ -78,7 +82,9 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
       monto: Number(monto),
       moneda,
       metodo_pago: metodoPago,
-      notas: notas.trim() || undefined
+      notas: notas.trim() || undefined,
+      comprobante_url: comprobanteUrl,
+      comprobante_nombre: comprobanteNombre,
     };
 
     const updated = [newPago, ...pagosEgresos];
@@ -86,11 +92,13 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
     try {
       await onSavePagosEgresos(updated);
       setSuccessMsg('¡Pago registrado con éxito y sincronizado con Sheets!');
-      
+
       // Reset form fields
       setConcepto('');
       setMonto('');
       setNotas('');
+      setComprobanteUrl(undefined);
+      setComprobanteNombre(undefined);
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err: any) {
       alert(`Error al registrar pago: ${err.message || err}`);
@@ -321,7 +329,18 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
               />
             </div>
 
-            <button 
+            {/* Comprobante del pago recibido, subido al Drive del propio usuario */}
+            <div>
+              <label className="block text-[#a39d8e] font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Comprobante de pago (Opcional)</label>
+              <ComprobanteUpload
+                currentUrl={comprobanteUrl}
+                currentNombre={comprobanteNombre}
+                onUploaded={(url, nombre) => { setComprobanteUrl(url); setComprobanteNombre(nombre); }}
+                label="Adjuntar comprobante"
+              />
+            </div>
+
+            <button
               type="submit"
               disabled={saving}
               className="w-full bg-[#c9a961] hover:bg-[#b09252] disabled:bg-[#2a2620] text-black font-semibold font-mono tracking-wide py-2.5 rounded transition font-bold cursor-pointer"
@@ -420,7 +439,14 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
                             {p.fecha}
                           </td>
                           <td className="p-3 max-w-[200px]">
-                            <span className="font-semibold text-[#e8e3d8] block leading-snug">{p.concepto}</span>
+                            <span className="font-semibold text-[#e8e3d8] leading-snug inline-flex items-center gap-1.5">
+                              {p.concepto}
+                              {p.comprobante_url && (
+                                <a href={p.comprobante_url} target="_blank" rel="noreferrer" aria-label={`Ver comprobante de ${p.concepto}`} title={p.comprobante_nombre || 'Ver comprobante'} className="text-blue-400 hover:text-blue-300">
+                                  <Paperclip className="w-3 h-3" />
+                                </a>
+                              )}
+                            </span>
                             {p.notas && (
                               <span className="block text-[10px] text-[#8a8377] leading-tight pt-0.5">{p.notas}</span>
                             )}

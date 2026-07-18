@@ -113,6 +113,23 @@ export async function isTeamMember(email: string): Promise<boolean> {
   return !!data;
 }
 
+export async function getMyNotificationPhone(email: string): Promise<string | null> {
+  const { data, error } = await (supabase as any)
+    .from('crm_team_members')
+    .select('telefono_notificaciones')
+    .eq('email', email)
+    .maybeSingle();
+  if (error) throw new Error(`[crmService] getMyNotificationPhone: ${error.message}`);
+  return data?.telefono_notificaciones || null;
+}
+
+export async function setMyNotificationPhone(telefono: string): Promise<string | null> {
+  const { data, error } = await supabase.functions.invoke('crm-set-notification-phone', { body: { telefono } });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo guardar el teléfono de notificaciones.');
+  return data.team_member?.telefono_notificaciones || null;
+}
+
 export async function listOportunidades(): Promise<Oportunidad[]> {
   const { data, error } = await supabase
     .from('crm_oportunidades')
@@ -250,21 +267,21 @@ export async function searchRedditByKeywords(payload: {
   sort?: 'relevance' | 'new' | 'hot' | 'top' | 'comments';
   timeframe?: 'hour' | 'day' | 'week' | 'month' | 'year' | 'all';
   limit?: number;
-}): Promise<RedditPost[]> {
+}): Promise<{ posts: RedditPost[]; warning: string | null }> {
   const { data, error } = await supabase.functions.invoke('reddit-search-keywords', { body: payload });
   if (error) throw error;
   if (!data?.ok) throw new Error(data?.message || 'No se pudo buscar en Reddit.');
-  return data.posts as RedditPost[];
+  return { posts: data.posts as RedditPost[], warning: data.warning || null };
 }
 
 export async function searchLinkedInByKeywords(payload: {
   keywords: string[];
   limit?: number;
-}): Promise<LinkedInSearchResult[]> {
+}): Promise<{ results: LinkedInSearchResult[]; warning: string | null }> {
   const { data, error } = await supabase.functions.invoke('linkedin-search-keywords', { body: payload });
   if (error) throw error;
   if (!data?.ok) throw new Error(data?.message || 'No se pudo buscar en LinkedIn.');
-  return data.results as LinkedInSearchResult[];
+  return { results: data.results as LinkedInSearchResult[], warning: data.warning || null };
 }
 
 export async function enrichOportunidadApollo(payload: {
@@ -277,6 +294,7 @@ export async function enrichOportunidadApollo(payload: {
   canal_origen?: string;
   fuente_url?: string;
   contexto_publicacion?: string;
+  score_potencial?: number;
 }): Promise<Oportunidad> {
   const { data, error } = await supabase.functions.invoke('apollo-enrich-playbook', { body: payload });
   if (error) throw error;

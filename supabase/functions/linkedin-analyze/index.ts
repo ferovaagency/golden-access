@@ -4,13 +4,23 @@
 // - Guarda el resultado en crm_contenido_potencial.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { z } from 'npm:zod';
+import { notifyHotLeadWhatsapp } from '../_shared/notify-team.ts';
 
-interface Body {
-  plataforma?: 'linkedin' | 'reddit';
-  url_publicacion: string;
-  autor?: string | null;
-  texto: string;
-}
+// Umbral "Hot" del mismo marco Hot/Warm/Cold que ya usa el badge del Pipeline
+// (AdminCRM.tsx) -- se repite aca como constante en vez de importarla porque
+// una Edge Function no puede importar codigo del bundle de React.
+const HOT_SCORE_THRESHOLD = 70;
+
+// url_publicacion se deja como string libre (no .url() estricto): es un campo
+// pegado a mano y no vale la pena rechazar un link sin "https://" cuando el resto
+// del flujo lo tolera igual.
+const BodySchema = z.object({
+  plataforma: z.enum(['linkedin', 'reddit']).optional(),
+  url_publicacion: z.string().trim().min(3).max(500),
+  autor: z.string().trim().max(200).nullable().optional(),
+  texto: z.string().trim().min(30, 'texto debe tener al menos 30 caracteres').max(20000),
+});
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -41,12 +51,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    const body = (await req.json()) as Body;
-    if (!body?.url_publicacion || !body?.texto || body.texto.length < 30) {
-      return new Response(JSON.stringify({ ok: false, message: 'url_publicacion y texto (≥30 chars) son requeridos' }), {
+    const parsedBody = BodySchema.safeParse(await req.json());
+    if (!parsedBody.success) {
+      return new Response(JSON.stringify({ ok: false, message: 'Parámetros inválidos', errors: parsedBody.error.flatten().fieldErrors }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    const body = parsedBody.data;
     const plataforma = body.plataforma || (body.url_publicacion.includes('reddit.com') ? 'reddit' : 'linkedin');
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -56,12 +67,43 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Aprendizaje por resultados: no requiere ninguna tabla/columna nueva, se calcula
+    // en caliente sobre crm_oportunidades ya existente (estado ganado/perdido por canal).
+    // Se usa como contexto para que el score se ajuste con la experiencia real del negocio,
+    // no solo con el criterio genérico de la IA.
+    let winRateContext = 'Sin historial de oportunidades cerradas todavía (usa solo tu criterio).';
+    try {
+      const { data: closedRows } = await supabase
+        .from('crm_oportunidades')
+        .select('canal_origen, estado')
+        .in('estado', ['ganado', 'perdido']);
+      const statsByCanal: Record<string, { won: number; lost: number }> = {};
+      for (const row of closedRows || []) {
+        const c = (row as any).canal_origen || 'otro';
+        if (!statsByCanal[c]) statsByCanal[c] = { won: 0, lost: 0 };
+        if ((row as any).estado === 'ganado') statsByCanal[c].won++; else statsByCanal[c].lost++;
+      }
+      const lines = Object.entries(statsByCanal).map(([canal, s]) => {
+        const total = s.won + s.lost;
+        const pct = total > 0 ? Math.round((s.won / total) * 100) : null;
+        return `- ${canal}: ${pct !== null ? `${pct}% de conversión histórica` : 'sin datos suficientes'} (${s.won} ganados / ${s.lost} perdidos, de un total de ${total} oportunidades cerradas)`;
+      });
+      if (lines.length) winRateContext = lines.join('\n');
+    } catch (err) {
+      console.warn('[linkedin-analyze] no se pudo calcular win-rate histórico:', err);
+    }
+
     const systemPrompt = `Eres un analista de prospección B2B para Ferova Agency (agencia de marketing digital, SEO/GEO, desarrollo web y automatización con IA en Colombia). Analiza publicaciones de ${plataforma} para detectar oportunidades comerciales.
 
+IMPORTANTE: no busques solo publicaciones que pidan explícitamente un servicio ("busco quien me haga..."). También detecta cuando alguien describe un PROBLEMA o dolor que los servicios de Ferova resuelven, aunque no lo pida directamente (ej. "pierdo horas metiendo pedidos a mano", "mi tienda nunca aparece en Google", "no doy abasto respondiendo mensajes de clientes", "mi web se ve anticuada"). Ese tipo de publicación suele ser una oportunidad tan buena o mejor que una solicitud explícita, porque hay menos competencia respondiéndola.
+
+CONTEXTO DE CONVERSIÓN HISTÓRICA POR CANAL (ajusta el score con esto, no lo ignores):
+${winRateContext}
+
 Devuelves EXCLUSIVAMENTE un JSON con estas claves:
-- "score_potencial": entero 0-100 (qué tan buena oportunidad comercial es para Ferova).
+- "score_potencial": entero 0-100 (qué tan buena oportunidad comercial es para Ferova, ya ajustado por la conversión histórica del canal si hay datos suficientes).
 - "resumen": 1-2 frases explicando de qué habla la publicación.
-- "razon": 1 frase justificando el score (dolor detectado, señal de compra, autoridad del autor).
+- "razon": 1 frase justificando el score (dolor detectado -explícito o implícito-, señal de compra, autoridad del autor, y si el ajuste histórico del canal subió o bajó el score).
 - "comentario_sugerido": comentario breve (máx 400 caracteres), en español neutro, útil, sin ser vendedor. Aporta valor primero, menciona a Ferova solo si es natural. Nada de emojis excesivos. Nada de "excelente publicación".`;
 
     const userPrompt = `URL: ${body.url_publicacion}
@@ -134,6 +176,19 @@ ${body.texto.slice(0, 6000)}
       return new Response(JSON.stringify({ ok: false, message: insErr.message }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // Alerta proactiva por WhatsApp si el score es "Hot" -- no bloquea ni rompe
+    // la respuesta si el envio falla (best-effort, ver notify-team.ts).
+    if (typeof inserted.score_potencial === 'number' && inserted.score_potencial >= HOT_SCORE_THRESHOLD) {
+      try {
+        await notifyHotLeadWhatsapp(
+          supabase,
+          `🔥 Lead Hot detectado (score ${inserted.score_potencial}/100) en ${plataforma}.\n${inserted.resumen || ''}\n${body.url_publicacion}`,
+        );
+      } catch (err) {
+        console.warn('[linkedin-analyze] no se pudo enviar alerta de WhatsApp:', err);
+      }
     }
 
     return new Response(JSON.stringify({ ok: true, contenido: inserted }), {
