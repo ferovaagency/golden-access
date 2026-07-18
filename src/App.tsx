@@ -481,631 +481,206 @@ export default function App() {
     { id: 'crm-resenas', label: 'Reseñas', hint: 'Gmail y fuentes' },
   ] : [];
 
-  const TAB_SET = [...GESTION_OPERATIVA_TABS, ...GESTION_FINANCIERA_TABS, ...VENTAS_TABS, ...CRM_GROWTH_TABS];
+  // Build the sidebar sections dynamically per role/plan.
+  type NavItem = { id: string; label: string; icon: any };
+  type NavGroup = { id: string; label: string; icon: any; items: NavItem[]; single?: boolean };
+
+  const modulesGroup: NavItem[] = [];
+  modulesGroup.push({ id: 'planner', label: 'Planificador', icon: CalendarCheck });
+  modulesGroup.push({ id: 'proyectos', label: 'Proyectos', icon: FolderKanban });
+  if (modules.financiero) {
+    modulesGroup.push({ id: 'dashboard', label: 'Finanzas', icon: TrendingUp });
+    modulesGroup.push({ id: 'ventas', label: 'Ingresos', icon: Wallet });
+    modulesGroup.push({ id: 'pagosEgresos', label: 'Pagos', icon: Wallet });
+    modulesGroup.push({ id: 'gastos', label: 'Costos', icon: Wallet });
+    modulesGroup.push({ id: 'horas', label: 'Horas', icon: ClockIcon });
+    modulesGroup.push({ id: 'clientes', label: 'Clientes', icon: UsersIcon });
+    modulesGroup.push({ id: 'servicios', label: 'Servicios', icon: Briefcase });
+    modulesGroup.push({ id: 'equilibrioGlobal', label: 'Equilibrio', icon: TargetIcon });
+    modulesGroup.push({ id: 'equilibrioServicio', label: 'Equilibrio por servicio', icon: TargetIcon });
+    modulesGroup.push({ id: 'iva', label: 'IVA', icon: Wallet });
+    modulesGroup.push({ id: 'alertas', label: 'Alertas', icon: AlertCircle });
+  }
+  if (modules.crm_ventas) {
+    modulesGroup.push({ id: 'ventas-crm', label: 'CRM y Ventas', icon: TargetIcon });
+  }
+  if (isTeam) {
+    modulesGroup.push({ id: 'crm-pipeline', label: 'Pipeline (Growth)', icon: TargetIcon });
+    modulesGroup.push({ id: 'crm-citas', label: 'Citas', icon: CalendarCheck });
+    modulesGroup.push({ id: 'crm-contenido', label: 'LinkedIn + Reddit', icon: Linkedin });
+    modulesGroup.push({ id: 'crm-bot', label: 'Bot WhatsApp', icon: MessageCircle });
+    modulesGroup.push({ id: 'crm-resenas', label: 'Reseñas', icon: StarIcon });
+  }
+
+  const navGroups: NavGroup[] = [
+    { id: 'home', label: 'Home', icon: HomeIcon, items: [], single: true },
+    { id: 'modules', label: 'Módulos', icon: LayoutGrid, items: modulesGroup },
+    { id: 'settings', label: 'Ajustes', icon: SettingsIcon, items: modules.financiero ? [{ id: 'ajustes', label: 'Configuración', icon: SettingsIcon }] : [] },
+  ];
+
+  const handleNavigate = (tab: string) => {
+    if (tab === '__ai') { setAiCollapsed(false); return; }
+    setActiveTab(tab);
+  };
+
+  const userName = (user.user_metadata as any)?.full_name || (user.user_metadata as any)?.name || (user.email || '').split('@')[0];
 
   return (
-    <div className="ferova-light-theme min-h-screen bg-[#f7f8fb] flex flex-col text-[#1f2937] font-sans">
-      
-      {/* 1. Header component */}
-      <header className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-[#dbe4ee] relative z-20">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-sm font-bold">
-              F
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-base font-bold font-display tracking-tight text-slate-900">Ferova OS</h1>
-                <span className="text-[10px] bg-blue-50 border border-blue-100 font-medium text-blue-700 px-2 py-0.5 rounded-full">
-                  Finanzas + Growth
-                </span>
-              </div>
-              <span className="text-xs text-slate-500 block mt-0.5">
-                Navegación clara por módulos de negocio
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            
-            {/* 1.1 TRM Editable Quick Panel */}
-            {isReady && appData && (
-              <div className="hidden md:flex items-center gap-2 bg-white px-3 py-2 rounded-2xl border border-slate-200 text-xs shadow-sm">
-                <span className="text-slate-500 text-xs">TRM</span>
-                {isEditingTrm ? (
-                  <form 
-                    onSubmit={async (e) => {
-                      e.preventDefault();
-                      const val = Number(headerTrm);
-                      if (val > 0) {
-                        try {
-                          await handleSaveConfig({ trm: val });
-                          setIsEditingTrm(false);
-                        } catch (err: any) {
-                          alert(`Error de guardado TRM: ${err.message || err}`);
-                        }
-                      }
-                    }}
-                    className="flex items-center gap-1.5"
-                  >
-                    <input 
-                      type="number"
-                      value={headerTrm}
-                      onChange={(e) => setHeaderTrm(e.target.value)}
-                      className="w-16 bg-slate-50 text-slate-900 border border-slate-200 p-0.5 px-1 rounded text-xs font-mono focus:outline-none focus:border-[#c9a961]"
-                      autoFocus
-                    />
-                    <button 
-                      type="submit" 
-                      className="text-emerald-600 hover:text-emerald-700 font-bold px-1 cursor-pointer"
-                      title="Guardar TRM"
-                    >
-                      ✓
-                    </button>
-                    <button 
-                      type="button" 
-                      onClick={() => {
-                        setHeaderTrm(String(appData.config.trm));
-                        setIsEditingTrm(false);
-                      }} 
-                      className="text-[#c97a61] hover:text-[#c97a61]/80 font-bold px-1 cursor-pointer"
-                      title="Cancelar"
-                    >
-                      ✕
-                    </button>
-                  </form>
-                ) : (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-blue-600 font-bold">{formatCop(appData.config.trm)}</span>
-                    <button 
-                      onClick={() => setIsEditingTrm(true)}
-                      className="text-slate-400 hover:text-slate-900 text-[9px] hover:underline cursor-pointer"
-                    >
-                      [✏️]
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* 1.2 Display de Clientes Activos */}
-            {isReady && appData && (
-                <div className="hidden sm:flex items-center gap-2 bg-white px-3 py-2 rounded-2xl border border-slate-200 text-xs text-slate-600 shadow-sm">
-                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span>
-                  CLIENTES: <strong className="text-slate-900">{appData.clientes.filter(c => c.activo).length}</strong>
-                </span>
-              </div>
-            )}
-            
-            {/* Google Sheets backup link, if one exists */}
-            {lastSheetBackupLink && (
-              <a
-                href={lastSheetBackupLink}
-                target="_blank"
-                rel="noreferrer"
-                className="bg-slate-100 hover:bg-[#23201c] transition px-3 py-1.5 rounded border border-slate-200 text-xs font-mono text-slate-500 flex items-center gap-2"
-              >
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <Database className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="hidden sm:inline">Respaldo en Sheets</span>
-              </a>
-            )}
-
-            {/* Feedback del cliente (no para el equipo interno de Ferova) */}
-            {!isTeam && <FeedbackWidget user={user} />}
-
-            {/* Profile component user info */}
-              <button onClick={() => setAssistantOpen(true)} className="hidden md:flex items-center gap-2 rounded-2xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700">
-                Asistente IA
-              </button>
-
-              <div className="flex items-center gap-2.5 bg-white p-1.5 pr-3.5 rounded-2xl border border-slate-200 shadow-sm">
-              <div className="w-7 h-7 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-center">
-                <UserIcon className="w-3.5 h-3.5 text-blue-600" />
-              </div>
-              <div className="hidden md:block text-left text-[10px] leading-tight">
-                <span className="font-semibold text-slate-900 block">{(user.user_metadata as any)?.full_name || (user.user_metadata as any)?.name || 'Mafe'}</span>
-                <span className="text-slate-400 block font-mono text-[9px] max-w-40 truncate">{user.email}</span>
-              </div>
-              
-              <button 
-                onClick={handleSignOut}
-                className="bg-slate-50/60 p-1.5 rounded border border-slate-200 text-slate-400 hover:text-[#c97a61] cursor-pointer transition ml-1"
-                title="Cerrar sesion Workspace"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* Mobile menu trigger */}
-            <button 
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden bg-white border border-slate-200 p-2 rounded text-slate-500"
-            >
-              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-
-          </div>
-
-        </div>
-      </header>
-
-      {/* Sync Banner */}
-      {sheetsLoading && (
-        <div className="bg-blue-50 border-b border-blue-100 text-blue-700 py-2 text-center text-xs font-semibold flex items-center justify-center gap-2">
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          <span>Guardando cambios en la base de datos...</span>
-        </div>
-      )}
-
-      {/* 2. Global Period Selection Rail */}
-      {isReady && appData && (
-        <div className="bg-white/90 border-b border-slate-200 py-3 text-xs">
-          <div className="max-w-[1440px] mx-auto px-4 sm:px-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-blue-600" />
-              <span className="font-mono text-slate-500 text-[10px] uppercase font-bold tracking-wider">Ventana Periodo DIAN:</span>
-              <select 
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="bg-slate-50 text-slate-900 border border-slate-200 text-xs p-1 rounded font-mono focus:outline-none focus:border-[#c9a961]"
-              >
-                <option value="Todos">Histórico Completo (COP)</option>
-                {Array.from({ length: 12 }).map((_, i) => {
-                  const mStr = `2026-${String(i + 1).padStart(2, '0')}`;
-                  return (
-                    <option key={mStr} value={mStr}>{mStr}</option>
-                  );
-                })}
-              </select>
-            </div>
-
-            {/* Quick calculations layout bar */}
-            {metrics && (
-              <div className="flex items-center gap-4 text-[10px] font-mono tracking-wider text-slate-500">
-                <div>
-                  <span>FACTURACIÓN:</span> <strong className="text-slate-900">{formatCop(metrics.totalVentas)}</strong>
-                </div>
-                <div className="w-px h-3 bg-[#2a2620]" />
-                <div>
-                  <span>NÓMINA RETIROS:</span> <strong className="text-slate-900">{formatCop(metrics.salarioPropuesto)}</strong>
-                </div>
-                <div className="w-px h-3 bg-[#2a2620]" />
-                <div>
-                  <span>NETO DISPONIBLE:</span>{' '}
-                  <strong style={{ color: metrics.utilidadNeta >= 0 ? '#a8c98a' : '#c97a61' }}>
-                    {formatCop(metrics.utilidadNeta)}
-                  </strong>
-                </div>
-              </div>
-            )}
-
-          </div>
-        </div>
-      )}
-
-      {/* 3. Main layout tabs container */}
-       <div className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-6 flex flex-col lg:flex-row gap-6">
-        
-        {/* Navigation Sidebar menu (lg+) */}
-        <aside className="lg:w-72 shrink-0 space-y-5 hidden lg:block select-none">
-
-          {modules.financiero && (
+    <div className="ferova-light-theme min-h-screen bg-[var(--bg)] flex text-[var(--text)] font-sans">
+      {/* LEFT NAV RAIL */}
+      <aside className="hidden md:flex w-60 shrink-0 flex-col border-r border-[var(--line)] bg-white">
+        <div className="flex items-center gap-2.5 px-4 py-4 border-b border-[var(--line)]">
+          <div className="grid h-9 w-9 place-items-center rounded-xl bg-blue-600 text-white font-bold shadow-sm">F</div>
           <div>
-            <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-blue-600 block px-3 mb-2 font-black border-l-2 border-l-[#c9a961] pl-2">
-              Gestión Operativa
-            </span>
-            <nav className="space-y-1 text-sm font-semibold">
-              {GESTION_OPERATIVA_TABS.map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`w-full text-left px-4 py-3 rounded-2xl transition border ${
-                    activeTab === tab.id
-                      ? 'bg-blue-50 text-blue-700 border-blue-100 shadow-sm'
-                      : 'text-slate-600 border-transparent hover:text-slate-900 hover:bg-white hover:border-slate-200'
-                  }`}
-                >
-                  <span className="block">{tab.label}</span>
-                  <span className="block text-xs font-normal opacity-70">{tab.hint}</span>
-                </button>
-              ))}
-            </nav>
+            <p className="text-sm font-semibold text-slate-900 font-display leading-tight">Ferova OS</p>
+            <p className="text-[10px] uppercase tracking-widest text-slate-400">Tu negocio</p>
           </div>
-          )}
+        </div>
 
-          {modules.financiero && (
-          <div className="pt-2 border-t border-slate-200/45">
-            <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-slate-500 block px-3 mb-2 font-black border-l-2 border-l-[#a39d8e] pl-2">
-              Control Financiero
-            </span>
-            <nav className="space-y-1 text-sm font-semibold">
-              {GESTION_FINANCIERA_TABS.map(tab => (
+        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+          {navGroups.map((g) => {
+            const GIcon = g.icon;
+            if (g.single) {
+              const active = activeTab === g.id;
+              return (
                 <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`w-full text-left px-4 py-3 rounded-2xl transition border ${
-                    activeTab === tab.id
-                      ? 'bg-blue-50 text-blue-700 border-blue-100 shadow-sm'
-                      : 'text-slate-600 border-transparent hover:text-slate-900 hover:bg-white hover:border-slate-200'
-                  }`}
+                  key={g.id}
+                  onClick={() => handleNavigate(g.id)}
+                  className={`w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition ${active ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'}`}
                 >
-                  <span className="block">{tab.label}</span>
-                  <span className="block text-xs font-normal opacity-70">{tab.hint}</span>
+                  <GIcon className="h-4 w-4" /> {g.label}
                 </button>
-              ))}
-            </nav>
-          </div>
-          )}
-
-          {modules.crm_ventas && VENTAS_TABS.length > 0 && (
-            <div className="pt-2 border-t border-slate-200/45">
-              <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-violet-600 block px-3 mb-2 font-black border-l-2 border-l-violet-400 pl-2">
-                Ventas
-              </span>
-              <nav className="space-y-1 text-sm font-semibold">
-                {VENTAS_TABS.map(tab => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`w-full text-left px-4 py-3 rounded-2xl transition border ${
-                      activeTab === tab.id
-                        ? 'bg-violet-50 text-violet-700 border-violet-100 shadow-sm'
-                        : 'text-slate-600 border-transparent hover:text-slate-900 hover:bg-white hover:border-slate-200'
-                    }`}
-                  >
-                    <span className="block">{tab.label}</span>
-                    <span className="block text-xs font-normal opacity-70">{tab.hint}</span>
-                  </button>
-                ))}
-              </nav>
-            </div>
-          )}
-
-          {isTeam && CRM_GROWTH_TABS.length > 0 && (
-            <div className="pt-2 border-t border-slate-200/45">
-              <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-emerald-600 block px-3 mb-2 font-black border-l-2 border-l-[#a8c98a] pl-2">
-                Growth · CRM Interno
-              </span>
-              <nav className="space-y-1 text-sm font-semibold">
-                {CRM_GROWTH_TABS.map(tab => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`w-full text-left px-4 py-3 rounded-2xl transition border ${
-                      activeTab === tab.id
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-100 shadow-sm'
-                        : 'text-slate-600 border-transparent hover:text-slate-900 hover:bg-white hover:border-slate-200'
-                    }`}
-                  >
-                    <span className="block">{tab.label}</span>
-                    <span className="block text-xs font-normal opacity-70">{tab.hint}</span>
-                  </button>
-                ))}
-              </nav>
-            </div>
-          )}
-
-        </aside>
-
-        {/* Responsive Mobile Drawer menu (controlled by trigger button) */}
-        {isMobileMenuOpen && (
-          <div className="lg:hidden fixed inset-0 z-35 bg-slate-900/20 flex justify-end" onClick={() => setIsMobileMenuOpen(false)}>
-            <div className="w-64 bg-white border-l border-slate-200 h-full p-5 space-y-4 text-xs font-mono overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-2">
-                <span className="font-semibold text-blue-600">Menú Corporativo</span>
-                <button onClick={() => setIsMobileMenuOpen(false)} className="text-slate-400">Cerrar</button>
-              </div>
-              
-              <div className="space-y-4 text-left">
-                {modules.financiero && (
-                <div>
-                  <span className="text-[9px] uppercase tracking-wider text-blue-600/70 block font-bold mb-1.5 font-mono">1. GESTIÓN OPERATIVA</span>
-                  <nav className="space-y-1">
-                    {GESTION_OPERATIVA_TABS.map(tab => (
-                      <button
-                        key={tab.id}
-                        onClick={() => {
-                          setActiveTab(tab.id);
-                          setIsMobileMenuOpen(false);
-                        }}
-                        className={`w-full text-left px-3 py-1.5 rounded transition ${
-                          activeTab === tab.id
-                            ? 'bg-blue-50 text-blue-600 font-semibold'
-                            : 'text-slate-500 hover:text-slate-900'
-                        }`}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </nav>
-                </div>
-                )}
-
-                {modules.financiero && (
-                <div className="pt-2 border-t border-slate-200/45">
-                  <span className="text-[9px] uppercase tracking-wider text-slate-500/70 block font-bold mb-1.5 font-mono">2. CONTROL FINANCIERO</span>
-                  <nav className="space-y-1">
-                    {GESTION_FINANCIERA_TABS.map(tab => (
-                      <button
-                        key={tab.id}
-                        onClick={() => {
-                          setActiveTab(tab.id);
-                          setIsMobileMenuOpen(false);
-                        }}
-                        className={`w-full text-left px-3 py-1.5 rounded transition ${
-                          activeTab === tab.id
-                            ? 'bg-blue-50 text-blue-600 font-semibold'
-                            : 'text-slate-500 hover:text-slate-900'
-                        }`}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </nav>
-                </div>
-                )}
-
-                {modules.crm_ventas && VENTAS_TABS.length > 0 && (
-                  <div className="pt-2 border-t border-slate-200/45">
-                    <span className="text-[9px] uppercase tracking-wider text-violet-600/80 block font-bold mb-1.5 font-mono">VENTAS</span>
-                    <nav className="space-y-1">
-                      {VENTAS_TABS.map(tab => (
+              );
+            }
+            if (g.items.length === 0) return null;
+            const isOpen = openGroup === g.id;
+            const anyActive = g.items.some((i) => i.id === activeTab || (i.id.startsWith('crm-') && activeTab === i.id));
+            return (
+              <div key={g.id}>
+                <button
+                  onClick={() => setOpenGroup(isOpen ? null : g.id)}
+                  className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-sm font-medium transition ${anyActive ? 'text-slate-900' : 'text-slate-600 hover:bg-slate-50'}`}
+                >
+                  <span className="flex items-center gap-2.5"><GIcon className="h-4 w-4" /> {g.label}</span>
+                  {isOpen ? <ChevronDown className="h-3.5 w-3.5 text-slate-400" /> : <ChevronRight className="h-3.5 w-3.5 text-slate-400" />}
+                </button>
+                {isOpen && (
+                  <div className="mt-1 ml-2 pl-3 border-l border-[var(--line)] space-y-0.5">
+                    {g.items.map((item) => {
+                      const IIcon = item.icon;
+                      const active = activeTab === item.id;
+                      return (
                         <button
-                          key={tab.id}
-                          onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false); }}
-                          className={`w-full text-left px-3 py-1.5 rounded transition ${
-                            activeTab === tab.id ? 'bg-violet-50 text-violet-600 font-semibold' : 'text-slate-500 hover:text-slate-900'
-                          }`}
+                          key={item.id}
+                          onClick={() => handleNavigate(item.id)}
+                          className={`w-full flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] transition ${active ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}
                         >
-                          {tab.label}
+                          <IIcon className="h-3.5 w-3.5" /> <span className="truncate">{item.label}</span>
                         </button>
-                      ))}
-                    </nav>
-                  </div>
-                )}
-
-                {isTeam && CRM_GROWTH_TABS.length > 0 && (
-                  <div className="pt-2 border-t border-slate-200/45">
-                    <span className="text-[9px] uppercase tracking-wider text-emerald-600/80 block font-bold mb-1.5 font-mono">3. GROWTH · CRM INTERNO</span>
-                    <nav className="space-y-1">
-                      {CRM_GROWTH_TABS.map(tab => (
-                        <button
-                          key={tab.id}
-                          onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false); }}
-                          className={`w-full text-left px-3 py-1.5 rounded transition ${
-                            activeTab === tab.id ? 'bg-emerald-50 text-emerald-600 font-semibold' : 'text-slate-500 hover:text-slate-900'
-                          }`}
-                        >
-                          {tab.label}
-                        </button>
-                      ))}
-                    </nav>
+                      );
+                    })}
                   </div>
                 )}
               </div>
+            );
+          })}
+        </nav>
 
+        <div className="border-t border-[var(--line)] p-3">
+          <div className="flex items-center gap-2 rounded-xl bg-slate-50 p-2">
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-white border border-[var(--line)] text-slate-600">
+              <UserIcon className="h-3.5 w-3.5" />
             </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-slate-900 truncate">{userName}</p>
+              <p className="text-[10px] text-slate-400 truncate">{user.email}</p>
+            </div>
+            <button onClick={handleSignOut} className="text-slate-400 hover:text-red-600 p-1" title="Cerrar sesión">
+              <LogOut className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          {!isTeam && <div className="mt-2"><FeedbackWidget user={user} /></div>}
+        </div>
+      </aside>
+
+      {/* MAIN CONTENT */}
+      <main className="flex-1 min-w-0 overflow-y-auto">
+        {sheetsLoading && (
+          <div className="bg-blue-50 border-b border-blue-100 text-blue-700 py-2 text-center text-xs font-semibold flex items-center justify-center gap-2">
+            <Loader2 className="w-3.5 h-3.5 animate-spin" /> Guardando cambios…
           </div>
         )}
 
-        {/* Content body layout container */}
-        <div className="flex-1 min-w-0">
-          
-          {/* Error alerts */}
+        <div className="max-w-6xl mx-auto px-6 lg:px-10 py-8">
           {errorMsg && (
-            <div className="bg-[#c97a61]/10 border border-[#c97a61]/25 rounded p-4 flex gap-3 text-xs text-slate-900 mb-6">
-              <AlertCircle className="w-5 h-5 text-[#c97a61] shrink-0 mt-0.5" />
+            <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 flex gap-3 text-sm text-red-900">
+              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
               <div className="space-y-1.5 w-full">
-                <span className="font-semibold font-display text-[#c97a61] block">Inconveniente de Sincronización</span>
-                <p className="text-slate-500 leading-relaxed">{errorMsg}</p>
-                <div className="flex flex-wrap gap-x-4 gap-y-2 pt-2 border-t border-[#c97a61]/15 mt-2 items-center">
-                  <button
-                    onClick={() => user && bootstrapFinanceData(user.id)}
-                    className="underline text-slate-900 font-mono font-bold hover:text-blue-600 cursor-pointer"
-                  >
-                    Intentar reconexión manual
-                  </button>
-                  <button
-                    onClick={handleSignOut}
-                    className="underline text-slate-500 font-mono hover:text-slate-900 cursor-pointer"
-                  >
-                    Cerrar sesión
-                  </button>
-                </div>
+                <p className="font-semibold">Inconveniente de sincronización</p>
+                <p className="text-red-700 leading-relaxed">{errorMsg}</p>
+                <button onClick={() => user && bootstrapFinanceData(user.id)} className="underline text-red-900 font-semibold text-xs">Reintentar</button>
               </div>
             </div>
           )}
 
-          {/* Load databases spinner */}
           {!isReady && !errorMsg && (
-            <div className="bg-white border border-slate-200 rounded-lg p-16 text-center text-xs space-y-4">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto" />
-              <p className="font-mono text-slate-500 font-semibold tracking-wider">CARGANDO TU CONTABILIDAD...</p>
-              <p className="text-slate-400 max-w-sm mx-auto leading-relaxed">
-                Sincronizando clientes, ventas y parámetros DIAN 2026 desde tu cuenta.
-              </p>
+            <div className="rounded-2xl border border-[var(--line)] bg-white p-16 text-center space-y-3">
+              <Loader2 className="w-6 h-6 animate-spin text-blue-600 mx-auto" />
+              <p className="text-sm text-slate-500">Cargando tu negocio…</p>
             </div>
           )}
 
-          {/* ACTIVE SCREEN ROUTER FRAMEWORK */}
           {isReady && metrics && appData && (
-            <div className="min-h-[500px]">
-              
+            <>
+              {activeTab === 'home' && (
+                <Home appData={appData} formatCop={formatCop} onNavigate={handleNavigate} userName={userName} />
+              )}
+              {activeTab === 'planner' && <SmartPlanner />}
               {activeTab === 'dashboard' && (
-                <Dashboard 
-                  data={appData} 
-                  metrics={metrics} 
-                  selectedMonth={selectedMonth} 
-                  formatCop={formatCop} 
-                  formatUsd={formatUsd} 
-                />
+                <Dashboard data={appData} metrics={metrics} selectedMonth={selectedMonth} formatCop={formatCop} formatUsd={formatUsd} />
               )}
-
               {activeTab === 'ventas' && (
-                <VentasAdmin 
-                  ventas={appData.ventas} 
-                  clientes={appData.clientes} 
-                  servicios={appData.servicios} 
-                  config={appData.config} 
-                  onSaveVentas={handleSaveVentas} 
-                  formatCop={formatCop} 
-                  formatUsd={formatUsd} 
-                />
+                <VentasAdmin ventas={appData.ventas} clientes={appData.clientes} servicios={appData.servicios} config={appData.config} onSaveVentas={handleSaveVentas} formatCop={formatCop} formatUsd={formatUsd} />
               )}
-
               {activeTab === 'horas' && (
-                <HorasAdmin 
-                  horas={appData.horas} 
-                  clientes={appData.clientes} 
-                  servicios={appData.servicios} 
-                  ventas={appData.ventas}
-                  config={appData.config}
-                  metrics={metrics}
-                  selectedMonth={selectedMonth}
-                  onSaveHoras={handleSaveHoras} 
-                  onSaveConfig={handleSaveConfig}
-                  formatCop={formatCop}
-                />
+                <HorasAdmin horas={appData.horas} clientes={appData.clientes} servicios={appData.servicios} ventas={appData.ventas} config={appData.config} metrics={metrics} selectedMonth={selectedMonth} onSaveHoras={handleSaveHoras} onSaveConfig={handleSaveConfig} formatCop={formatCop} />
               )}
-
               {activeTab === 'clientes' && (
-                <ClientesAdmin 
-                  clientes={appData.clientes} 
-                  ventas={appData.ventas} 
-                  horas={appData.horas} 
-                  config={appData.config} 
-                  onSaveClientes={handleSaveClientes} 
-                  formatCop={formatCop} 
-                  formatUsd={formatUsd} 
-                />
+                <ClientesAdmin clientes={appData.clientes} ventas={appData.ventas} horas={appData.horas} config={appData.config} onSaveClientes={handleSaveClientes} formatCop={formatCop} formatUsd={formatUsd} />
               )}
-
               {activeTab === 'proyectos' && (
-                <ProyectosAdmin 
-                  clientes={appData.clientes}
-                  config={appData.config}
-                  onSaveClientes={handleSaveClientes}
-                />
+                <ProyectosAdmin clientes={appData.clientes} config={appData.config} onSaveClientes={handleSaveClientes} />
               )}
-
               {activeTab === 'pagosEgresos' && (
-                <PagosEgresosAdmin 
-                  pagosEgresos={appData.pagosEgresos || []}
-                  config={appData.config}
-                  onSavePagosEgresos={handleSavePagosEgresos}
-                />
+                <PagosEgresosAdmin pagosEgresos={appData.pagosEgresos || []} config={appData.config} onSavePagosEgresos={handleSavePagosEgresos} />
               )}
-
               {activeTab === 'gastos' && (
-                <GastosAdmin 
-                  herramientas={appData.herramientas} 
-                  otrosGastos={appData.otrosGastos} 
-                  servicios={appData.servicios} 
-                  clientes={appData.clientes} 
-                  config={appData.config} 
-                  onSaveHerramientas={handleSaveHerramientas} 
-                  onSaveOtrosGastos={handleSaveOtrosGastos} 
-                  onSaveConfig={handleSaveConfig} 
-                  formatCop={formatCop} 
-                  formatUsd={formatUsd} 
-                />
+                <GastosAdmin herramientas={appData.herramientas} otrosGastos={appData.otrosGastos} servicios={appData.servicios} clientes={appData.clientes} config={appData.config} onSaveHerramientas={handleSaveHerramientas} onSaveOtrosGastos={handleSaveOtrosGastos} onSaveConfig={handleSaveConfig} formatCop={formatCop} formatUsd={formatUsd} />
               )}
-
-              {activeTab === 'equilibrioGlobal' && (
-                <EquilibrioGlobal 
-                  metrics={metrics} 
-                  formatCop={formatCop} 
-                />
-              )}
-
+              {activeTab === 'equilibrioGlobal' && <EquilibrioGlobal metrics={metrics} formatCop={formatCop} />}
               {activeTab === 'equilibrioServicio' && (
-                <EquilibrioServicio 
-                  servicios={appData.servicios} 
-                  herramientas={appData.herramientas} 
-                  clientes={appData.clientes} 
-                  ventas={appData.ventas} 
-                  config={appData.config} 
-                  selectedMonth={selectedMonth} 
-                  formatCop={formatCop} 
-                />
+                <EquilibrioServicio servicios={appData.servicios} herramientas={appData.herramientas} clientes={appData.clientes} ventas={appData.ventas} config={appData.config} selectedMonth={selectedMonth} formatCop={formatCop} />
               )}
-
-              {activeTab === 'iva' && (
-                <ImpuestosIva 
-                  data={appData} 
-                  metrics={metrics} 
-                  formatCop={formatCop} 
-                />
-              )}
-
-              {activeTab === 'alertas' && (
-                <AlertasTributarias 
-                  metrics={metrics} 
-                  config={appData.config} 
-                  ventas={appData.ventas} 
-                  formatCop={formatCop} 
-                />
-              )}
-
+              {activeTab === 'iva' && <ImpuestosIva data={appData} metrics={metrics} formatCop={formatCop} />}
+              {activeTab === 'alertas' && <AlertasTributarias metrics={metrics} config={appData.config} ventas={appData.ventas} formatCop={formatCop} />}
               {activeTab === 'servicios' && (
-                <ServiciosAdmin 
-                  servicios={appData.servicios} 
-                  ventas={appData.ventas} 
-                  horas={appData.horas} 
-                  config={appData.config} 
-                  onSaveServicios={handleSaveServicios} 
-                  formatCop={formatCop} 
-                />
+                <ServiciosAdmin servicios={appData.servicios} ventas={appData.ventas} horas={appData.horas} config={appData.config} onSaveServicios={handleSaveServicios} formatCop={formatCop} />
               )}
-
               {activeTab === 'ajustes' && (
-                <ConfigAdmin
-                  config={appData.config}
-                  ventas={appData.ventas}
-                  clientes={appData.clientes}
-                  horas={appData.horas}
-                  hasGoogleToken={!!getAccessToken()}
-                  lastSheetBackupLink={lastSheetBackupLink}
-                  isBackingUpToSheets={isBackingUpToSheets}
-                  onSaveConfig={handleSaveConfig}
-                  onBackupToSheets={handleBackupToSheets}
-                  onImportFromSheets={handleImportFromSheets}
-                  onImportFromSheetsUrl={handleImportFromSheetsUrl}
-                  formatCop={formatCop}
-                />
+                <ConfigAdmin config={appData.config} ventas={appData.ventas} clientes={appData.clientes} horas={appData.horas} hasGoogleToken={!!getAccessToken()} lastSheetBackupLink={lastSheetBackupLink} isBackingUpToSheets={isBackingUpToSheets} onSaveConfig={handleSaveConfig} onBackupToSheets={handleBackupToSheets} onImportFromSheets={handleImportFromSheets} onImportFromSheetsUrl={handleImportFromSheetsUrl} formatCop={formatCop} />
               )}
-
-              {activeTab === 'ventas-crm' && modules.crm_ventas && (
-                <CustomerCRM user={user} />
-              )}
-
+              {activeTab === 'ventas-crm' && modules.crm_ventas && <CustomerCRM user={user} />}
               {isTeam && activeTab.startsWith('crm-') && (
-                <AdminCRM
-                  user={user}
-                  embedded
-                  tab={activeTab.replace('crm-', '') as CRMTab}
-                  onTabChange={(t) => setActiveTab(`crm-${t}`)}
-                />
+                <AdminCRM user={user} embedded tab={activeTab.replace('crm-', '') as CRMTab} onTabChange={(t) => setActiveTab(`crm-${t}`)} />
               )}
-
-            </div>
+            </>
           )}
-
         </div>
+      </main>
 
-      </div>
-
-      {/* 4. Footer */}
-      <footer className="bg-white border-t border-slate-200 py-6 text-center text-[10px] font-mono text-slate-400 shrink-0 uppercase tracking-widest mt-12">
-        Ferova OS © 2026 • Finanzas, Growth CRM y asistente IA con datos reales
-      </footer>
-
-      {user && <BusinessAssistant user={user} open={assistantOpen} onToggle={() => setAssistantOpen((v) => !v)} />}
-
+      {/* RIGHT AI SIDEBAR */}
+      <AISidebar user={user} collapsed={aiCollapsed} onToggle={() => setAiCollapsed((v) => !v)} width={aiWidth} onResize={setAiWidth} />
     </div>
   );
 }
+
