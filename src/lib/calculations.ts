@@ -138,14 +138,23 @@ export interface FinancialMetrics {
     Administrativo: number;
     Otros: number;
   };
+
+  /** true cuando las reglas tributarias colombianas se aplicaron. false para otros países. */
+  fiscalApplies: boolean;
+  fiscalCountry: string;
+  /** Mensaje humano cuando fiscalApplies=false, para renderizar "configuración pendiente". */
+  fiscalNotice: string | null;
 }
 
 export function calcularMétricasFinancieras(
   data: AppData,
-  selectedMonth: string // YYYY-MM or "Todos"
+  selectedMonth: string, // YYYY-MM or "Todos"
+  fiscal?: FiscalContext,
 ): FinancialMetrics {
   const { config, clientes, herramientas, otrosGastos, ventas, pagosEgresos = [] } = data;
   const { trm, smmlv, salario_propuesto } = config;
+  const isCO = isColombiaFiscal(fiscal);
+  const fiscalCountry = (fiscal?.country || 'CO').toUpperCase();
 
   // Filter sales and hours by selected period
   const isAll = selectedMonth === 'Todos';
