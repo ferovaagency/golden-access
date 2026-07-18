@@ -15,13 +15,14 @@ interface Props {
   onToggle: () => void;
   width: number;
   onResize: (w: number) => void;
+  currentArea?: string;
 }
 
 function getText(message: UIMessage): string {
   return (message.parts || []).map((p: any) => p.type === 'text' ? p.text : '').join('');
 }
 
-export default function AISidebar({ user, collapsed, onToggle, width, onResize }: Props) {
+export default function AISidebar({ user, collapsed, onToggle, width, onResize, currentArea }: Props) {
   const [initialMessages, setInitialMessages] = useState<UIMessage[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [input, setInput] = useState('');
@@ -54,9 +55,10 @@ export default function AISidebar({ user, collapsed, onToggle, width, onResize }
       const { data } = await supabase.auth.getSession();
       const headers = new Headers(init?.headers);
       if (data.session?.access_token) headers.set('Authorization', `Bearer ${data.session.access_token}`);
+      if (currentArea) headers.set('X-Ferova-Context-Area', currentArea);
       return fetch(input, { ...init, headers });
     },
-  }), []);
+  }), [currentArea]);
 
   const { messages, setMessages, sendMessage, status, stop, error } = useChat({
     id: `business-assistant-${user.id}`,
@@ -93,7 +95,7 @@ export default function AISidebar({ user, collapsed, onToggle, width, onResize }
 
   if (collapsed) {
     return (
-      <aside className="hidden lg:flex w-12 shrink-0 border-l border-[var(--line)] bg-white flex-col items-center py-4">
+      <aside className="fixed right-0 top-1/2 z-40 flex w-12 -translate-y-1/2 flex-col items-center rounded-l-2xl border border-r-0 border-[var(--line)] bg-white py-4 shadow-lg lg:static lg:translate-y-0 lg:rounded-none lg:border-y-0 lg:border-r-0 lg:shadow-none">
         <button onClick={onToggle} className="grid h-9 w-9 place-items-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900" title="Abrir asistente IA">
           <PanelRightOpen className="h-4 w-4" />
         </button>
@@ -105,7 +107,7 @@ export default function AISidebar({ user, collapsed, onToggle, width, onResize }
   }
 
   return (
-    <aside className="hidden lg:flex shrink-0 border-l border-[var(--line)] bg-white flex-col relative" style={{ width }}>
+    <aside className="fixed inset-y-2 right-2 z-40 flex w-[min(380px,calc(100vw-1rem))] flex-col rounded-2xl border border-[var(--line)] bg-white shadow-2xl lg:static lg:inset-auto lg:w-auto lg:rounded-none lg:border-y-0 lg:border-r-0 lg:shadow-none" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1024 ? width : undefined }}>
       <div
         onMouseDown={onDragStart}
         className="absolute left-0 top-0 h-full w-1 cursor-col-resize hover:bg-blue-200/60"
@@ -118,7 +120,7 @@ export default function AISidebar({ user, collapsed, onToggle, width, onResize }
           </div>
           <div>
             <h2 className="text-sm font-semibold text-slate-900 font-display">Asistente Ferova</h2>
-            <p className="text-[11px] text-slate-500">Contexto de tu negocio en vivo</p>
+            <p className="text-[11px] text-slate-500">{currentArea ? `Contexto: ${currentArea}` : 'Contexto de tu negocio'}</p>
           </div>
         </div>
         <button onClick={onToggle} className="grid h-8 w-8 place-items-center rounded-xl text-slate-500 hover:bg-slate-100" title="Colapsar">

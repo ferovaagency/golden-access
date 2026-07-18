@@ -181,7 +181,7 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
     }));
   };
 
-  const selectedClient = clientes.find(c => c.id === selectedClientId);
+  const selectedClient = activeClientes.find((client) => client.id === selectedClientId);
 
   return (
     <div className="space-y-8 animate-fade-in text-[#e8e3d8]">

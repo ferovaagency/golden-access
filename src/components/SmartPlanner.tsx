@@ -61,6 +61,21 @@ export default function SmartPlanner() {
 
       {p.error && <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{p.error}</div>}
 
+      {p.planPreview && (
+        <section className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-blue-950">Vista previa de la agenda</p>
+              <p className="mt-1 text-xs text-blue-800">{p.planPreview.summary} Revisa los bloques antes de aplicarlos.</p>
+            </div>
+            <button onClick={p.applyPlan} disabled={p.busy === 'plan'} className="rounded-xl bg-blue-700 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-50">Aplicar plan</button>
+          </div>
+          <ul className="mt-3 space-y-1 text-xs text-blue-900">
+            {p.planPreview.blocks.map((block) => <li key={`${block.starts_at}-${block.title}`}>{fmtTime(block.starts_at)} - {fmtTime(block.ends_at)}: {block.title}</li>)}
+          </ul>
+        </section>
+      )}
+
       {/* Briefing */}
       <section className="rounded-2xl border border-[var(--line)] bg-gradient-to-br from-blue-50/60 to-white p-5">
         <div className="flex items-start justify-between gap-4">

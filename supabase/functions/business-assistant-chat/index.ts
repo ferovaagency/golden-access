@@ -30,7 +30,8 @@ Deno.serve(async (req) => {
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const userId = userData.user.id;
     const userEmail = userData.user.email || "";
-    const [{ data: isTeam }, { data: businessProfile }, { data: overview }, { data: services }, { data: growth }, { data: reviews }, { data: opportunities }, { data: clients }] = await Promise.all([
+    const currentArea = (req.headers.get("X-Ferova-Context-Area") || "").slice(0, 80);
+    const [{ data: isTeam }, { data: businessProfile }, { data: overview }, { data: services }, { data: growth }, { data: reviews }, { data: opportunities }, { data: clients }, { data: hours }] = await Promise.all([
       admin.from("crm_team_members").select("email").eq("email", userEmail).maybeSingle(),
       admin.from("business_profile").select("nombre_negocio, industria, tipo_negocio, tamano_equipo, ciudad").eq("user_id", userId).maybeSingle(),
       admin.from("business_overview").select("*").eq("user_id", userId).maybeSingle(),
@@ -55,6 +56,7 @@ Deno.serve(async (req) => {
 
     const context = JSON.stringify({
       user: { email: userEmail, team_member: !!isTeam },
+      screen_context: currentArea || null,
       negocio: businessProfile || null,
       finance_overview: overview,
       service_profitability: services || [],

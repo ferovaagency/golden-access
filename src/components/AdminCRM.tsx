@@ -30,6 +30,7 @@ import {
   searchLinkedInByKeywords,
   enrichOportunidadApollo,
   ServicioCatalogo,
+  EstadoOportunidad,
   Oportunidad,
   CitaDiagnostico,
   ContenidoPotencial,

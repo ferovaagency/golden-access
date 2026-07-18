@@ -81,6 +81,13 @@ export interface PlannerBriefing {
   estimated_workload_minutes: number;
 }
 
+export interface PlannerPlanResult {
+  ok: boolean;
+  preview: boolean;
+  summary?: string;
+  blocks: PlannerBlock[];
+}
+
 const anyDb = () => supabase as any;
 
 export const plannerService = {
@@ -127,8 +134,8 @@ export const plannerService = {
   async classify(text: string) {
     return invokeAi<{ ok: boolean; results: any[] }>({ functionName: 'planner-classify', body: { text } });
   },
-  async planDay(date?: string) {
-    return invokeAi<{ ok: boolean; summary?: string; blocks?: any[] }>({ functionName: 'planner-plan-day', body: { date } });
+  async planDay(date?: string, apply = false) {
+    return invokeAi<PlannerPlanResult>({ functionName: 'planner-plan-day', body: { date, apply } });
   },
   async regenerateInsights() {
     return invokeAi<{ ok: boolean; insights: any[] }>({ functionName: 'planner-insights', body: { kind: 'insights' } });

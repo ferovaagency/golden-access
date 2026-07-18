@@ -30,7 +30,6 @@ import Paywall from './components/Paywall';
 import AdminCRM, { CRMTab } from './components/AdminCRM';
 import AISidebar from './components/AISidebar';
 import CustomerCRM from './components/CustomerCRM';
-import Home from './components/Home';
 import SmartPlanner from './components/SmartPlanner';
 import ReportsView from './components/ReportsView';
 import CommandPalette from './components/CommandPalette';
@@ -59,11 +58,12 @@ import {
   Loader2,
   AlertCircle,
   Boxes,
-  FolderKanban,
   Grid2X2,
   LayoutDashboard,
   Menu,
   Settings,
+  Calendar,
+  Database,
   X,
   ChevronDown,
   ChevronRight
@@ -99,8 +99,6 @@ export default function App() {
   const [selectedMonth, setSelectedMonth] = useState<string>('Todos');
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [assistantCollapsed, setAssistantCollapsed] = useState(false);
-
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>('modules');
   const [aiCollapsed, setAiCollapsed] = useState<boolean>(() => {
@@ -572,7 +570,7 @@ export default function App() {
   };
 
   return (
-    <div className={`ferova-light-theme min-h-screen bg-[#f7f8fb] flex flex-col text-[#1f2937] font-sans transition-[padding] ${assistantCollapsed ? '' : 'xl:pr-[360px]'}`}>
+    <div className="ferova-light-theme min-h-screen bg-[#f7f8fb] flex flex-col text-[#1f2937] font-sans">
       
       {/* 1. Header component */}
       <header className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-[#dbe4ee] relative z-20">
@@ -682,8 +680,8 @@ export default function App() {
             )}
 
             {/* Profile component user info */}
-              <button onClick={() => setAssistantCollapsed((value) => !value)} className="hidden md:flex items-center gap-2 rounded-2xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700">
-                {assistantCollapsed ? 'Abrir asistente' : 'Colapsar asistente'}
+              <button onClick={() => setAiCollapsed((value) => !value)} className="hidden md:flex items-center gap-2 rounded-2xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700">
+                {aiCollapsed ? 'Abrir asistente' : 'Colapsar asistente'}
               </button>
 
               <div className="flex items-center gap-2.5 bg-white p-1.5 pr-3.5 rounded-2xl border border-slate-200 shadow-sm">
@@ -810,9 +808,8 @@ export default function App() {
             <p className="text-sm font-semibold text-slate-900 font-display leading-tight">Ferova OS</p>
             <p className="text-[10px] uppercase tracking-widest text-slate-400">Tu negocio</p>
           </div>
-        </div>
 
-        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+          <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {navGroups.map((g) => {
             const GIcon = g.icon;
             if (g.single) {
@@ -860,9 +857,9 @@ export default function App() {
               </div>
             );
           })}
-        </nav>
+          </nav>
 
-        <div className="border-t border-[var(--line)] p-3">
+          <div className="border-t border-[var(--line)] p-3">
           <div className="flex items-center gap-2 rounded-xl bg-slate-50 p-2">
             <div className="grid h-8 w-8 place-items-center rounded-lg bg-white border border-[var(--line)] text-slate-600">
               <UserIcon className="h-3.5 w-3.5" />
@@ -876,7 +873,7 @@ export default function App() {
             </button>
           </div>
           {!isTeam && <div className="mt-2"><FeedbackWidget user={user} /></div>}
-        </div>
+          </div>
       </aside>
 
       {/* MAIN CONTENT */}
@@ -909,9 +906,6 @@ export default function App() {
 
           {isReady && metrics && appData && (
             <>
-              {activeTab === 'home' && (
-                <Home appData={appData} formatCop={formatCop} onNavigate={handleNavigate} userName={userName} />
-              )}
               {activeTab === 'planner' && <SmartPlanner />}
               {activeTab === 'reports' && user && <ReportsView user={user} />}
               {activeTab === 'dashboard' && (
@@ -935,8 +929,6 @@ export default function App() {
               {activeTab === 'proyectos' && (
                 <ProyectosAdmin 
                   projectData={appData}
-                  clientes={appData.clientes}
-                  config={appData.config}
                   onSaveClientes={handleSaveClientes}
                 />
               )}
@@ -967,7 +959,7 @@ export default function App() {
         </div>
       </main>
 
-      <AISidebar user={user} collapsed={aiCollapsed} onToggle={() => setAiCollapsed((v) => !v)} width={aiWidth} onResize={setAiWidth} />
+        <AISidebar user={user} collapsed={aiCollapsed} onToggle={() => setAiCollapsed((v) => !v)} width={aiWidth} onResize={setAiWidth} currentArea={NAVIGATION_SECTIONS.find((section) => section.items.some((item) => item.id === activeTab))?.label} />
 
       </div>
 
@@ -975,8 +967,6 @@ export default function App() {
       <footer className="bg-white border-t border-slate-200 py-6 text-center text-[10px] font-mono text-slate-400 shrink-0 uppercase tracking-widest mt-12">
         Ferova OS © 2026 • Finanzas, Growth CRM y asistente IA con datos reales
       </footer>
-
-      {user && <BusinessAssistant user={user} collapsed={assistantCollapsed} onToggleCollapsed={() => setAssistantCollapsed((value) => !value)} />}
 
       <CommandPalette
         open={paletteOpen}

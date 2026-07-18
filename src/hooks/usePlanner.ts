@@ -2,7 +2,7 @@
 // and insights in one place, and exposes typed actions that map 1:1 to
 // plannerService. Components should not touch supabase for planner data.
 import { useCallback, useEffect, useState } from 'react';
-import { plannerService, type PlannerBlock, type PlannerBriefing, type PlannerInbox, type PlannerInsight, type PlannerTask } from '../lib/plannerService';
+import { plannerService, type PlannerBlock, type PlannerBriefing, type PlannerInbox, type PlannerInsight, type PlannerPlanResult, type PlannerTask } from '../lib/plannerService';
 
 function today() { return new Date().toISOString().slice(0, 10); }
 
@@ -12,6 +12,7 @@ export function usePlanner() {
   const [blocks, setBlocks] = useState<PlannerBlock[]>([]);
   const [insights, setInsights] = useState<PlannerInsight[]>([]);
   const [briefing, setBriefing] = useState<PlannerBriefing | null>(null);
+  const [planPreview, setPlanPreview] = useState<PlannerPlanResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -44,8 +45,17 @@ export function usePlanner() {
 
   const planDay = useCallback(async () => {
     setBusy('plan'); setError(null);
-    const { error: err } = await plannerService.planDay(date);
+    const { data, error: err } = await plannerService.planDay(date);
     if (err) setError(err.message);
+    if (data) setPlanPreview(data);
+    setBusy(null);
+  }, [date]);
+
+  const applyPlan = useCallback(async () => {
+    setBusy('plan'); setError(null);
+    const { error: err } = await plannerService.planDay(date, true);
+    if (err) setError(err.message);
+    else setPlanPreview(null);
     await refresh();
     setBusy(null);
   }, [date, refresh]);
@@ -72,9 +82,9 @@ export function usePlanner() {
   const dismissInsight = useCallback(async (id: string) => { await plannerService.dismissInsight(id); setInsights((prev) => prev.filter((i) => i.id !== id)); }, []);
 
   return {
-    inbox, tasks, blocks, insights, briefing,
+    inbox, tasks, blocks, insights, briefing, planPreview,
     loading, busy, error, date, setDate,
-    refresh, classify, planDay, regenerateInsights, regenerateBriefing,
+    refresh, classify, planDay, applyPlan, regenerateInsights, regenerateBriefing,
     completeTask, postponeTask, deleteTask, dismissInsight,
   };
 }

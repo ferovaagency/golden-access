@@ -56,18 +56,18 @@ export default function Home({ data, metrics, selectedMonth, formatCop, onNaviga
       ? { title: 'Margen bajo vigilancia', detail: `Margen operacional de ${margin.toFixed(0)}% en el período.`, tone: 'warning', action: { label: 'Revisar costos', tab: 'gastos' } }
       : { title: 'Negocio saludable', detail: `Margen operacional de ${margin.toFixed(0)}% en el período.`, tone: 'positive' };
 
-  const blindSpots: Signal[] = [
+  const blindSpots = ([
     !hasSales ? { title: 'Sin ventas registradas', detail: 'No hay ingresos en el período seleccionado.', tone: 'critical', action: { label: 'Registrar venta', tab: 'ventas' } } : null,
     totalHours === 0 ? { title: 'Capacidad sin medir', detail: 'No hay horas registradas en el período.', tone: 'warning', action: { label: 'Registrar horas', tab: 'horas' } } : null,
     activeClients.length === 0 ? { title: 'Sin clientes activos', detail: 'Activa o registra una cuenta para iniciar seguimiento.', tone: 'warning', action: { label: 'Gestionar clientes', tab: 'clientes' } } : null,
     metrics.totalVentas > 0 && metrics.totalVentas < metrics.puntoEquilibrioVentas ? { title: 'Meta de equilibrio pendiente', detail: `Faltan ${formatCop(Math.max(0, metrics.puntoEquilibrioVentas - metrics.totalVentas))} para el punto de equilibrio.`, tone: 'warning', action: { label: 'Ver equilibrio', tab: 'equilibrioGlobal' } } : null,
-  ].filter((signal): signal is Signal => signal !== null).slice(0, 3);
+  ] as Array<Signal | null>).filter((signal): signal is Signal => signal !== null).slice(0, 3);
 
-  const priorities: Signal[] = [
+  const priorities = ([
     !hasSales ? { title: 'Actualiza ingresos del período', detail: 'Registra ventas y abonos para que el control ejecutivo sea confiable.', tone: 'warning', action: { label: 'Abrir ventas', tab: 'ventas' } } : null,
     totalHours === 0 ? { title: 'Registra la capacidad entregada', detail: 'Las horas conectan la rentabilidad con la operación.', tone: 'neutral', action: { label: 'Abrir horas', tab: 'horas' } } : null,
     activeClients.length > 0 ? { title: 'Revisa el avance de proyectos activos', detail: `${activeClients.length} cliente${activeClients.length === 1 ? '' : 's'} activo${activeClients.length === 1 ? '' : 's'} requieren seguimiento de entrega.`, tone: 'neutral', action: { label: 'Abrir proyectos', tab: 'proyectos' } } : null,
-  ].filter((signal): signal is Signal => signal !== null).slice(0, 3);
+  ] as Array<Signal | null>).filter((signal): signal is Signal => signal !== null).slice(0, 3);
 
   const activity = [
     ...periodSales.map((sale) => ({ id: `sale-${sale.id}`, date: sale.fecha, title: `Venta · ${sale.cliente_nombre}`, detail: `${sale.servicio_nombre} · ${formatCop(sale.precio_venta_unitario * sale.cantidad)}`, icon: CircleDollarSign })),
@@ -117,9 +117,6 @@ export default function Home({ data, metrics, selectedMonth, formatCop, onNaviga
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/30 sm:p-6"><div className="flex items-center justify-between"><div><p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Últimos movimientos</p><h3 className="mt-1 text-lg font-semibold text-slate-950">Recent Activity</h3></div></div><div className="mt-4 divide-y divide-slate-100">{activity.length ? activity.map(({ id, date, title, detail, icon: Icon }) => <div key={id} className="flex items-center gap-3 py-3"><span className="grid h-8 w-8 place-items-center rounded-lg bg-slate-50 text-slate-500"><Icon className="h-4 w-4" /></span><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-slate-800">{title}</p><p className="truncate text-xs text-slate-500">{detail}</p></div><time className="text-[11px] font-medium text-slate-400">{date}</time></div>) : <p className="py-6 text-center text-sm text-slate-500">Aún no hay actividad registrada para este período.</p>}</div></section>
-    </div>
-  );
-}
     </div>
   );
 }
