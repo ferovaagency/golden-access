@@ -83,13 +83,19 @@ export default function App() {
 
   // Filter and view state
   const [selectedMonth, setSelectedMonth] = useState<string>('Todos');
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [assistantOpen, setAssistantOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('home');
+  const [openGroup, setOpenGroup] = useState<string | null>('modules');
+  const [aiCollapsed, setAiCollapsed] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('ferova.ai.collapsed') === '1';
+  });
+  const [aiWidth, setAiWidth] = useState<number>(() => {
+    if (typeof window === 'undefined') return 380;
+    const v = Number(localStorage.getItem('ferova.ai.width')); return v >= 320 && v <= 640 ? v : 380;
+  });
+  useEffect(() => { localStorage.setItem('ferova.ai.collapsed', aiCollapsed ? '1' : '0'); }, [aiCollapsed]);
+  useEffect(() => { localStorage.setItem('ferova.ai.width', String(aiWidth)); }, [aiWidth]);
 
-  // Header TRM Quick Edit
-  const [headerTrm, setHeaderTrm] = useState<string>('');
-  const [isEditingTrm, setIsEditingTrm] = useState(false);
 
   useEffect(() => {
     if (appData?.config?.trm) {
