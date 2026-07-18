@@ -255,6 +255,12 @@ export async function saveServicios(userId: string, list: Servicio[]) {
     nombre: s.nombre,
     costo_unitario: s.costo_unitario,
     descripcion: s.descripcion || null,
+    // Preservamos precios históricos y ofrecidos: solo se sobrescriben si el
+    // usuario los editó explícitamente en el formulario.
+    costo_entrega_estimado: s.costo_entrega_estimado ?? null,
+    margen_objetivo: s.margen_objetivo ?? null,
+    precio_habitual: s.precio_habitual ?? null,
+    precio_ofrecido: s.precio_ofrecido ?? null,
   })));
 }
 
