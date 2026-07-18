@@ -220,18 +220,19 @@ export function calcularMétricasFinancieras(
   const utilidadOperacional = utilidadBruta - gastosOperativos;
   const utilidadAntesImpuestos = utilidadOperacional - salarioPropuesto;
 
-  // Renta estimation
-  // If annualized (meaning: our rate * 12) exceeds DIAN limit of 1090 UVT Rentable Tax Limit ($57.087.660)
-  const monthlySalaryAndAdminUtility = utilidadAntesImpuestos / activeMonthsCountScale;
-  const utilidadAnualizada = monthlySalaryAndAdminUtility * 12;
-  const topeNoPagaRenta = config.tope_no_paga_renta_uvt * config.uvt;
-  
-  let impuestoRentaAnual = 0;
-  if (utilidadAnualizada > topeNoPagaRenta) {
-    impuestoRentaAnual = (utilidadAnualizada - topeNoPagaRenta) * 0.19;
+  // Renta estimation — SOLO en Colombia. En otros países no se estima impuesto
+  // hasta que el usuario configure su régimen local.
+  let impuestoRentaEstimado = 0;
+  if (isCO) {
+    const monthlySalaryAndAdminUtility = utilidadAntesImpuestos / activeMonthsCountScale;
+    const utilidadAnualizada = monthlySalaryAndAdminUtility * 12;
+    const topeNoPagaRenta = config.tope_no_paga_renta_uvt * config.uvt;
+    let impuestoRentaAnual = 0;
+    if (utilidadAnualizada > topeNoPagaRenta) {
+      impuestoRentaAnual = (utilidadAnualizada - topeNoPagaRenta) * 0.19;
+    }
+    impuestoRentaEstimado = (impuestoRentaAnual / 12) * activeMonthsCountScale;
   }
-  
-  const impuestoRentaEstimado = (impuestoRentaAnual / 12) * activeMonthsCountScale;
   const utilidadNeta = utilidadAntesImpuestos - impuestoRentaEstimado;
 
   // 4. Break even point
@@ -240,7 +241,11 @@ export function calcularMétricasFinancieras(
   const puntoEquilibrioVentas = margenContribucion > 0 ? (totalGastosFijos / margenContribucion) : 0;
 
   // Social security summary of proposed salary
-  const prestaciones = calcularPrestaciones(salario_propuesto, smmlv);
+  const prestaciones = calcularPrestaciones(salario_propuesto, smmlv, fiscal);
+
+  const fiscalNotice = isCO
+    ? null
+    : `Los cálculos tributarios de ${fiscalCountry} aún no están configurados. Impuestos, retenciones y prestaciones se muestran en cero hasta cargar reglas locales.`;
 
   return {
     totalVentas,
@@ -260,7 +265,10 @@ export function calcularMétricasFinancieras(
     activeMonthsCountScale,
     salariosRealesPagados,
     totalEgresosReales,
-    egresosRealesPorCategoria
+    egresosRealesPorCategoria,
+    fiscalApplies: isCO,
+    fiscalCountry,
+    fiscalNotice,
   };
 }
 
