@@ -101,6 +101,18 @@ export default function App() {
   useEffect(() => { localStorage.setItem('ferova.ai.collapsed', aiCollapsed ? '1' : '0'); }, [aiCollapsed]);
   useEffect(() => { localStorage.setItem('ferova.ai.width', String(aiWidth)); }, [aiWidth]);
 
+  // Global Cmd/Ctrl+K opens the command palette
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setPaletteOpen(o => !o);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
 
   // (TRM quick-edit was moved out of the shell; kept in Ajustes.)
 
