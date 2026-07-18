@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_courtesy_emails: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          notas: string | null
+          plan: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          notas?: string | null
+          plan?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          notas?: string | null
+          plan?: string
+        }
+        Relationships: []
+      }
+      admin_module_overrides: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          module: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          module: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          module?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       business_assistant_messages: {
         Row: {
           content: string | null
@@ -702,6 +753,93 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_accounts: {
+        Row: {
+          activo: boolean
+          corte_dia: number | null
+          created_at: string
+          cupo: number | null
+          id: string
+          moneda: string
+          nombre: string
+          notas: string | null
+          pago_dia: number | null
+          saldo_inicial: number
+          tipo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activo?: boolean
+          corte_dia?: number | null
+          created_at?: string
+          cupo?: number | null
+          id?: string
+          moneda?: string
+          nombre: string
+          notas?: string | null
+          pago_dia?: number | null
+          saldo_inicial?: number
+          tipo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activo?: boolean
+          corte_dia?: number | null
+          created_at?: string
+          cupo?: number | null
+          id?: string
+          moneda?: string
+          nombre?: string
+          notas?: string | null
+          pago_dia?: number | null
+          saldo_inicial?: number
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      finance_budget_monthly: {
+        Row: {
+          categoria: string
+          created_at: string
+          id: string
+          moneda: string
+          monto_presupuestado: number
+          notas: string | null
+          origen: string
+          periodo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          id?: string
+          moneda?: string
+          monto_presupuestado?: number
+          notas?: string | null
+          origen?: string
+          periodo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          id?: string
+          moneda?: string
+          monto_presupuestado?: number
+          notas?: string | null
+          origen?: string
+          periodo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       finance_clientes: {
         Row: {
           activo: boolean
@@ -815,6 +953,113 @@ export type Database = {
           uvt?: number
         }
         Relationships: []
+      }
+      finance_debt_payments: {
+        Row: {
+          created_at: string
+          debt_id: string
+          fecha: string
+          id: string
+          monto: number
+          notas: string | null
+          payment_method_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          debt_id: string
+          fecha: string
+          id?: string
+          monto: number
+          notas?: string | null
+          payment_method_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          debt_id?: string
+          fecha?: string
+          id?: string
+          monto?: number
+          notas?: string | null
+          payment_method_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_debt_payments_debt_id_fkey"
+            columns: ["debt_id"]
+            isOneToOne: false
+            referencedRelation: "finance_debts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_debt_payments_payment_method_id_fkey"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "finance_payment_methods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_debts: {
+        Row: {
+          account_id: string | null
+          created_at: string
+          cuotas: number | null
+          estado: string
+          fecha_corte: string | null
+          fecha_limite: string | null
+          id: string
+          moneda: string
+          nombre: string
+          notas: string | null
+          saldo_inicial: number
+          tasa: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          created_at?: string
+          cuotas?: number | null
+          estado?: string
+          fecha_corte?: string | null
+          fecha_limite?: string | null
+          id?: string
+          moneda?: string
+          nombre: string
+          notas?: string | null
+          saldo_inicial: number
+          tasa?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          created_at?: string
+          cuotas?: number | null
+          estado?: string
+          fecha_corte?: string | null
+          fecha_limite?: string | null
+          id?: string
+          moneda?: string
+          nombre?: string
+          notas?: string | null
+          saldo_inicial?: number
+          tasa?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_debts_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       finance_herramienta_servicios: {
         Row: {
@@ -957,26 +1202,255 @@ export type Database = {
         }
         Relationships: []
       }
-      finance_servicios: {
+      finance_payables: {
         Row: {
-          costo_unitario: number
-          descripcion: string | null
+          account_id: string | null
+          concepto: string | null
+          created_at: string
+          estado: string
+          factura: string | null
+          fecha_pago_real: string | null
+          id: string
+          moneda: string
+          monto_pagado: number | null
+          notas: string | null
+          payment_method_id: string | null
+          proveedor: string
+          updated_at: string
+          user_id: string
+          valor: number
+          vencimiento: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          concepto?: string | null
+          created_at?: string
+          estado?: string
+          factura?: string | null
+          fecha_pago_real?: string | null
+          id?: string
+          moneda?: string
+          monto_pagado?: number | null
+          notas?: string | null
+          payment_method_id?: string | null
+          proveedor: string
+          updated_at?: string
+          user_id: string
+          valor: number
+          vencimiento?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          concepto?: string | null
+          created_at?: string
+          estado?: string
+          factura?: string | null
+          fecha_pago_real?: string | null
+          id?: string
+          moneda?: string
+          monto_pagado?: number | null
+          notas?: string | null
+          payment_method_id?: string | null
+          proveedor?: string
+          updated_at?: string
+          user_id?: string
+          valor?: number
+          vencimiento?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_payables_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_payables_payment_method_id_fkey"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "finance_payment_methods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_payment_methods: {
+        Row: {
+          activo: boolean
+          created_at: string
           id: string
           nombre: string
+          notas: string | null
+          tipo: string
+          updated_at: string
           user_id: string
         }
         Insert: {
-          costo_unitario?: number
-          descripcion?: string | null
-          id: string
+          activo?: boolean
+          created_at?: string
+          id?: string
           nombre: string
+          notas?: string | null
+          tipo: string
+          updated_at?: string
           user_id: string
         }
         Update: {
+          activo?: boolean
+          created_at?: string
+          id?: string
+          nombre?: string
+          notas?: string | null
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      finance_receivable_payments: {
+        Row: {
+          account_id: string | null
+          created_at: string
+          fecha: string
+          id: string
+          monto: number
+          notas: string | null
+          payment_method_id: string | null
+          receivable_id: string
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          created_at?: string
+          fecha: string
+          id?: string
+          monto: number
+          notas?: string | null
+          payment_method_id?: string | null
+          receivable_id: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          created_at?: string
+          fecha?: string
+          id?: string
+          monto?: number
+          notas?: string | null
+          payment_method_id?: string | null
+          receivable_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_receivable_payments_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_receivable_payments_payment_method_id_fkey"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "finance_payment_methods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_receivable_payments_receivable_id_fkey"
+            columns: ["receivable_id"]
+            isOneToOne: false
+            referencedRelation: "finance_receivables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_receivables: {
+        Row: {
+          cliente_id: string | null
+          concepto: string
+          created_at: string
+          estado: string
+          factura: string | null
+          id: string
+          moneda: string
+          notas: string | null
+          updated_at: string
+          user_id: string
+          valor: number
+          vencimiento: string | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          concepto: string
+          created_at?: string
+          estado?: string
+          factura?: string | null
+          id?: string
+          moneda?: string
+          notas?: string | null
+          updated_at?: string
+          user_id: string
+          valor: number
+          vencimiento?: string | null
+        }
+        Update: {
+          cliente_id?: string | null
+          concepto?: string
+          created_at?: string
+          estado?: string
+          factura?: string | null
+          id?: string
+          moneda?: string
+          notas?: string | null
+          updated_at?: string
+          user_id?: string
+          valor?: number
+          vencimiento?: string | null
+        }
+        Relationships: []
+      }
+      finance_servicios: {
+        Row: {
+          costo_entrega_estimado: number | null
+          costo_unitario: number
+          descripcion: string | null
+          id: string
+          incluye: string | null
+          margen_objetivo: number | null
+          market_reference_notes: string | null
+          no_incluye: string | null
+          nombre: string
+          precio_habitual: number | null
+          precio_ofrecido: number | null
+          user_id: string
+        }
+        Insert: {
+          costo_entrega_estimado?: number | null
+          costo_unitario?: number
+          descripcion?: string | null
+          id: string
+          incluye?: string | null
+          margen_objetivo?: number | null
+          market_reference_notes?: string | null
+          no_incluye?: string | null
+          nombre: string
+          precio_habitual?: number | null
+          precio_ofrecido?: number | null
+          user_id: string
+        }
+        Update: {
+          costo_entrega_estimado?: number | null
           costo_unitario?: number
           descripcion?: string | null
           id?: string
+          incluye?: string | null
+          margen_objetivo?: number | null
+          market_reference_notes?: string | null
+          no_incluye?: string | null
           nombre?: string
+          precio_habitual?: number | null
+          precio_ofrecido?: number | null
           user_id?: string
         }
         Relationships: []
@@ -1065,6 +1539,146 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_campaign_metrics: {
+        Row: {
+          campaign_id: string
+          citas: number
+          citas_efectivas: number
+          clics: number
+          comision: number
+          costo_entrega: number
+          created_at: string
+          id: string
+          impresiones: number
+          inversion: number
+          leads: number
+          leads_calificados: number
+          ltv: number
+          notas: string | null
+          periodo: string
+          ticket_promedio: number
+          updated_at: string
+          user_id: string
+          ventas: number
+        }
+        Insert: {
+          campaign_id: string
+          citas?: number
+          citas_efectivas?: number
+          clics?: number
+          comision?: number
+          costo_entrega?: number
+          created_at?: string
+          id?: string
+          impresiones?: number
+          inversion?: number
+          leads?: number
+          leads_calificados?: number
+          ltv?: number
+          notas?: string | null
+          periodo: string
+          ticket_promedio?: number
+          updated_at?: string
+          user_id: string
+          ventas?: number
+        }
+        Update: {
+          campaign_id?: string
+          citas?: number
+          citas_efectivas?: number
+          clics?: number
+          comision?: number
+          costo_entrega?: number
+          created_at?: string
+          id?: string
+          impresiones?: number
+          inversion?: number
+          leads?: number
+          leads_calificados?: number
+          ltv?: number
+          notas?: string | null
+          periodo?: string
+          ticket_promedio?: number
+          updated_at?: string
+          user_id?: string
+          ventas?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_campaign_metrics_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_campaigns: {
+        Row: {
+          account_id: string | null
+          canal: string | null
+          cliente_id: string | null
+          created_at: string
+          estado: string
+          fecha_fin: string | null
+          fecha_inicio: string | null
+          id: string
+          moneda: string
+          nombre: string
+          notas: string | null
+          payment_method_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          canal?: string | null
+          cliente_id?: string | null
+          created_at?: string
+          estado?: string
+          fecha_fin?: string | null
+          fecha_inicio?: string | null
+          id?: string
+          moneda?: string
+          nombre: string
+          notas?: string | null
+          payment_method_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          canal?: string | null
+          cliente_id?: string | null
+          created_at?: string
+          estado?: string
+          fecha_fin?: string | null
+          fecha_inicio?: string | null
+          id?: string
+          moneda?: string
+          nombre?: string
+          notas?: string | null
+          payment_method_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_campaigns_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_campaigns_payment_method_id_fkey"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "finance_payment_methods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       planner_behavior: {
         Row: {
           id: string
@@ -1104,6 +1718,7 @@ export type Database = {
           id: string
           is_locked: boolean
           notes: string | null
+          protected: boolean
           source: string
           starts_at: string
           task_ids: string[]
@@ -1119,6 +1734,7 @@ export type Database = {
           id?: string
           is_locked?: boolean
           notes?: string | null
+          protected?: boolean
           source?: string
           starts_at: string
           task_ids?: string[]
@@ -1134,6 +1750,7 @@ export type Database = {
           id?: string
           is_locked?: boolean
           notes?: string | null
+          protected?: boolean
           source?: string
           starts_at?: string
           task_ids?: string[]
@@ -1471,6 +2088,105 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      saas_plans: {
+        Row: {
+          activo: boolean
+          created_at: string
+          descripcion: string | null
+          id: string
+          modulos: Json
+          nombre: string
+          orden: number
+          precio_usd: number
+          provisional: boolean
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          descripcion?: string | null
+          id: string
+          modulos?: Json
+          nombre: string
+          orden?: number
+          precio_usd?: number
+          provisional?: boolean
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          modulos?: Json
+          nombre?: string
+          orden?: number
+          precio_usd?: number
+          provisional?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      saas_user_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          module: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          module?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          module?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_fiscal_profile: {
+        Row: {
+          country: string
+          created_at: string
+          currency_base: string
+          id: string
+          person_type: string
+          regime: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          country?: string
+          created_at?: string
+          currency_base?: string
+          id?: string
+          person_type?: string
+          regime?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          currency_base?: string
+          id?: string
+          person_type?: string
+          regime?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_subscriptions: {
         Row: {
