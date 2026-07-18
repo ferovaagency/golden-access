@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import type { AppData } from '../types';
 import { calcularMétricasFinancieras } from '../lib/calculations';
 import { ArrowRight, TrendingUp, Wallet, Clock, Users, Sparkles, CalendarCheck, Target } from 'lucide-react';
+import { InsightsCard } from './SmartPlanner';
 
 interface Props {
   appData: AppData;
@@ -65,6 +66,9 @@ export default function Home({ appData, formatCop, onNavigate, userName }: Props
           ))}
         </ul>
       </section>
+
+      <InsightsCard onNavigate={onNavigate} />
+
 
       <section>
         <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-500">Salud del negocio</h2>
