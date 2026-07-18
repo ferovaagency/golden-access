@@ -32,6 +32,7 @@ import AISidebar from './components/AISidebar';
 import CustomerCRM from './components/CustomerCRM';
 import Home from './components/Home';
 import SmartPlanner from './components/SmartPlanner';
+import ReportsView from './components/ReportsView';
 
 import {
   Home as HomeIcon,
@@ -39,6 +40,7 @@ import {
   FolderKanban,
   Settings as SettingsIcon,
   CalendarCheck,
+  FileText,
   TrendingUp,
   Wallet,
   Users as UsersIcon,
@@ -471,6 +473,7 @@ export default function App() {
 
   const modulesGroup: NavItem[] = [];
   modulesGroup.push({ id: 'planner', label: 'Planificador', icon: CalendarCheck });
+  modulesGroup.push({ id: 'reports', label: 'Reportes CEO', icon: FileText });
   modulesGroup.push({ id: 'proyectos', label: 'Proyectos', icon: FolderKanban });
   if (modules.financiero) {
     modulesGroup.push({ id: 'dashboard', label: 'Finanzas', icon: TrendingUp });
@@ -620,6 +623,7 @@ export default function App() {
                 <Home appData={appData} formatCop={formatCop} onNavigate={handleNavigate} userName={userName} />
               )}
               {activeTab === 'planner' && <SmartPlanner />}
+              {activeTab === 'reports' && user && <ReportsView user={user} />}
               {activeTab === 'dashboard' && (
                 <Dashboard data={appData} metrics={metrics} selectedMonth={selectedMonth} formatCop={formatCop} formatUsd={formatUsd} />
               )}

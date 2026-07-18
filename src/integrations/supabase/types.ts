@@ -152,6 +152,57 @@ export type Database = {
         }
         Relationships: []
       }
+      ceo_reports: {
+        Row: {
+          created_at: string
+          headline: string | null
+          health_score: number | null
+          id: string
+          metrics: Json
+          period: Database["public"]["Enums"]["ceo_report_period"]
+          period_end: string
+          period_start: string
+          priorities: Json
+          risks: Json
+          summary_md: string | null
+          updated_at: string
+          user_id: string
+          wins: Json
+        }
+        Insert: {
+          created_at?: string
+          headline?: string | null
+          health_score?: number | null
+          id?: string
+          metrics?: Json
+          period: Database["public"]["Enums"]["ceo_report_period"]
+          period_end: string
+          period_start: string
+          priorities?: Json
+          risks?: Json
+          summary_md?: string | null
+          updated_at?: string
+          user_id: string
+          wins?: Json
+        }
+        Update: {
+          created_at?: string
+          headline?: string | null
+          health_score?: number | null
+          id?: string
+          metrics?: Json
+          period?: Database["public"]["Enums"]["ceo_report_period"]
+          period_end?: string
+          period_start?: string
+          priorities?: Json
+          risks?: Json
+          summary_md?: string | null
+          updated_at?: string
+          user_id?: string
+          wins?: Json
+        }
+        Relationships: []
+      }
       crm_bot_config: {
         Row: {
           bot_enabled: boolean
@@ -584,6 +635,39 @@ export type Database = {
           qr_code?: string | null
           status?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      decision_simulations: {
+        Row: {
+          created_at: string
+          id: string
+          inputs: Json
+          question: string
+          recommendation: string | null
+          result: Json
+          scenario_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inputs?: Json
+          question: string
+          recommendation?: string | null
+          result?: Json
+          scenario_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inputs?: Json
+          question?: string
+          recommendation?: string | null
+          result?: Json
+          scenario_type?: string
           user_id?: string
         }
         Relationships: []
@@ -1511,6 +1595,7 @@ export type Database = {
         | "bottleneck"
         | "opportunity"
       blindspot_urgency: "critical" | "high" | "medium" | "low"
+      ceo_report_period: "daily" | "weekly" | "monthly"
       planner_category:
         | "deep_work"
         | "meetings"
@@ -1691,6 +1776,7 @@ export const Constants = {
         "opportunity",
       ],
       blindspot_urgency: ["critical", "high", "medium", "low"],
+      ceo_report_period: ["daily", "weekly", "monthly"],
       planner_category: [
         "deep_work",
         "meetings",
