@@ -33,6 +33,7 @@ import {
   enrichOportunidadApollo,
   importApolloList,
   ApolloImportResult,
+  scanSortlistLeads,
   ServicioCatalogo,
   EstadoOportunidad,
   Oportunidad,
@@ -204,6 +205,8 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const [apolloMaxResults, setApolloMaxResults] = useState(25);
   const [importingApollo, setImportingApollo] = useState(false);
   const [apolloImportResult, setApolloImportResult] = useState<ApolloImportResult | null>(null);
+  const [scanningSortlistLeads, setScanningSortlistLeads] = useState(false);
+  const [sortlistLeadsResult, setSortlistLeadsResult] = useState<string | null>(null);
   const [enrichInputs, setEnrichInputs] = useState<Record<string, { linkedin_url: string; dominio: string; contexto: string }>>({});
   const getEnrichInput = (id: string) => enrichInputs[id] || { linkedin_url: '', dominio: '', contexto: '' };
   const setEnrichInput = (id: string, patch: Partial<{ linkedin_url: string; dominio: string; contexto: string }>) =>
@@ -701,6 +704,24 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     }
   };
 
+  const handleScanSortlistLeads = async () => {
+    setScanningSortlistLeads(true);
+    setSortlistLeadsResult(null);
+    try {
+      if (!getAccessToken()) {
+        await googleSignIn();
+        return;
+      }
+      const res = await scanSortlistLeads(30);
+      setSortlistLeadsResult(`Escaneados ${res.scanned} correos · ${res.inserted} lead(s) nuevo(s) importados · ${res.already_saved} ya procesados · ${res.skipped} sin lead.`);
+      if (res.oportunidades.length) setOportunidades([...res.oportunidades, ...oportunidades]);
+    } catch (err: any) {
+      alert(`Error escaneando leads de Sortlist: ${err.message || err}`);
+    } finally {
+      setScanningSortlistLeads(false);
+    }
+  };
+
   const copyToClipboard = async (text: string) => {
     await copyText(text);
   };
@@ -988,6 +1009,20 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               </div>
             )}
           </form>
+
+          <div className="bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs">
+            <div className="flex items-center gap-2 text-blue-600 font-mono uppercase text-[10px] tracking-wider font-bold">
+              <Bell className="w-3.5 h-3.5" /> Leads del Radar de Sortlist
+            </div>
+            <p className="text-[10px] text-slate-400">Sortlist no tiene API pública para leer el Radar directamente, así que esto escanea las notificaciones de leads nuevos que Sortlist envía por correo a tu Gmail conectado y las importa al pipeline. Requiere Google Workspace conectado con permiso Gmail.</p>
+            <button type="button" onClick={handleScanSortlistLeads} disabled={scanningSortlistLeads} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded disabled:opacity-50 flex items-center gap-2">
+              {scanningSortlistLeads ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bell className="w-3.5 h-3.5" />}
+              {scanningSortlistLeads ? 'Escaneando…' : 'Buscar leads nuevos en Gmail'}
+            </button>
+            {sortlistLeadsResult && (
+              <div className="rounded-lg bg-blue-50 border border-blue-100 px-3 py-2 text-[11px] text-blue-800">{sortlistLeadsResult}</div>
+            )}
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <form onSubmit={handleCreateOportunidad} className="lg:col-span-4 bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs h-fit">

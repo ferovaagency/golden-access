@@ -548,6 +548,15 @@ export async function scanResenas(days = 30): Promise<{ inserted: number; scanne
   return data;
 }
 
+export async function scanSortlistLeads(days = 30): Promise<{ inserted: number; scanned: number; already_saved: number; skipped: number; oportunidades: Oportunidad[] }> {
+  const accessToken = getAccessToken();
+  if (!accessToken) throw new Error('No hay token de Google. Reconecta Google Workspace (incluye permiso Gmail).');
+  const { data, error } = await supabase.functions.invoke('sortlist-leads-scan', { body: { access_token: accessToken, days } });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo escanear.');
+  return data;
+}
+
 export async function markResenaRespondida(id: string, respondida: boolean): Promise<void> {
   const { error } = await (supabase as any).from('crm_resenas').update({ respondida }).eq('id', id);
   if (error) throw new Error(`[crmService] markResenaRespondida: ${error.message}`);
