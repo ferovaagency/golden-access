@@ -4,7 +4,7 @@ import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, type UIMessage } from 'ai';
 import { Sparkles, PanelRightClose, PanelRightOpen, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { getSupabaseFunctionUrl } from '../integrations/supabase/client';
+import { getSupabaseFunctionUrl, SUPABASE_PUBLISHABLE_KEY } from '../integrations/supabase/client';
 import { Conversation, ConversationContent } from './ai-elements/conversation';
 import { Message, MessageContent, MessageResponse } from './ai-elements/message';
 import { PromptInput, PromptInputFooter, PromptInputSubmit, PromptInputTextarea } from './ai-elements/prompt-input';
@@ -57,6 +57,9 @@ export default function AISidebar({ user, collapsed, onToggle, width, onResize, 
     fetch: async (input, init) => {
       const { data } = await supabase.auth.getSession();
       const headers = new Headers(init?.headers);
+      // Direct streaming requests do not use the Supabase client's global fetch,
+      // so the publishable key must be attached explicitly for the Functions gateway.
+      headers.set('apikey', SUPABASE_PUBLISHABLE_KEY);
       if (data.session?.access_token) headers.set('Authorization', `Bearer ${data.session.access_token}`);
       if (currentArea) headers.set('X-Ferova-Context-Area', currentArea);
       return fetch(input, { ...init, headers });

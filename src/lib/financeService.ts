@@ -51,12 +51,16 @@ async function loadConfig(userId: string): Promise<Config> {
     const { user_id, updated_at, ...config } = res.data as any;
     return config as Config;
   }
+  // Multiple screens can load finance data at the same time after sign-in.
+  // Seed once and let the subsequent read return the canonical row instead
+  // of failing when another request won the race to insert it.
   const insertRes = await supabase
     .from('finance_config')
-    .insert({ user_id: userId, ...DEFAULT_CONFIG })
-    .select('*')
-    .single();
-  const created = throwIfError('loadConfig (seed)', insertRes as any);
+    .upsert({ user_id: userId, ...DEFAULT_CONFIG }, { onConflict: 'user_id', ignoreDuplicates: true });
+  throwIfError('loadConfig (seed)', insertRes as any);
+
+  const createdRes = await supabase.from('finance_config').select('*').eq('user_id', userId).single();
+  const created = throwIfError('loadConfig (seed read)', createdRes as any);
   const { user_id, updated_at, ...config } = created as any;
   return config as Config;
 }

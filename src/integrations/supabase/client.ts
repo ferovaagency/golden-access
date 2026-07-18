@@ -10,7 +10,7 @@ const DEFAULT_SUPABASE_URL = 'https://rrjyfyihdnbvbtdxygyp.supabase.co';
 const DEFAULT_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_b5j2ar7b9fz2XNr95JwYCQ_Eyasabcn';
 
 export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY =
+export const SUPABASE_PUBLISHABLE_KEY =
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() || DEFAULT_SUPABASE_PUBLISHABLE_KEY;
 
 const missingSupabaseVariables = [
