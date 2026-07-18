@@ -1,6 +1,6 @@
-// Webhook de Paddle Billing con verificación de firma (HMAC) e idempotencia.
-// Mientras `PADDLE_WEBHOOK_SECRET` esté vacío el endpoint devuelve 503
-// (`awaiting_configuration`) para no aceptar eventos sin firma válida.
+// Paddle Billing webhook: signature verification, idempotency, and entitlement
+// updates. This function deliberately has verify_jwt=false because Paddle does
+// not send Supabase JWTs; its HMAC signature is verified before any DB write.
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
@@ -8,99 +8,120 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const WEBHOOK_SECRET = Deno.env.get('PADDLE_WEBHOOK_SECRET') || '';
+const PADDLE_PRICE_MAP_JSON = Deno.env.get('PADDLE_PRICE_MAP_JSON') || '';
 
-async function verifyPaddleSignature(rawBody: string, sigHeader: string, secret: string): Promise<boolean> {
-  // Formato Paddle Billing: "ts=...;h1=<hex>"
+function response(body: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+function getPriceMap(): Record<string, string> | null {
   try {
-    const parts = Object.fromEntries(sigHeader.split(';').map((p) => p.split('=')));
-    const ts = parts['ts'];
-    const h1 = parts['h1'];
-    if (!ts || !h1) return false;
-    const payload = `${ts}:${rawBody}`;
-    const key = await crypto.subtle.importKey(
-      'raw', new TextEncoder().encode(secret),
-      { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
-    );
-    const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payload));
-    const hex = Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, '0')).join('');
-    // comparación en tiempo constante
-    if (hex.length !== h1.length) return false;
-    let diff = 0;
-    for (let i = 0; i < hex.length; i++) diff |= hex.charCodeAt(i) ^ h1.charCodeAt(i);
-    return diff === 0;
+    const value = JSON.parse(PADDLE_PRICE_MAP_JSON);
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    const entries = Object.entries(value).filter(([plan, price]) => typeof plan === 'string' && typeof price === 'string' && price.startsWith('pri_'));
+    return entries.length === Object.keys(value).length ? Object.fromEntries(entries) : null;
+  } catch { return null; }
+}
+
+async function verifyPaddleSignature(rawBody: string, signatureHeader: string, secret: string): Promise<boolean> {
+  try {
+    const pairs = signatureHeader.split(';').map((part) => part.split('='));
+    const parts = Object.fromEntries(pairs);
+    const timestamp = parts.ts;
+    const signature = parts.h1;
+    if (!timestamp || !signature) return false;
+    const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    const value = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${timestamp}:${rawBody}`));
+    const expected = Array.from(new Uint8Array(value)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
+    if (expected.length !== signature.length) return false;
+    let difference = 0;
+    for (let index = 0; index < expected.length; index += 1) difference |= expected.charCodeAt(index) ^ signature.charCodeAt(index);
+    return difference === 0;
   } catch { return false; }
+}
+
+function statusForEvent(eventType: string, paddleStatus?: unknown): 'active' | 'pending' | 'cancelled' | null {
+  if (eventType === 'transaction.completed' || ['subscription.activated', 'subscription.resumed', 'subscription.trialing'].includes(eventType)) return 'active';
+  if (eventType === 'subscription.canceled') return 'cancelled';
+  if (eventType === 'subscription.paused' || eventType === 'subscription.past_due') return 'pending';
+  if (eventType !== 'subscription.updated' || typeof paddleStatus !== 'string') return null;
+  if (['active', 'trialing'].includes(paddleStatus)) return 'active';
+  if (['paused', 'past_due'].includes(paddleStatus)) return 'pending';
+  if (['canceled', 'cancelled'].includes(paddleStatus)) return 'cancelled';
+  return null;
+}
+
+function priceIdFromEvent(data: Record<string, any>): string | null {
+  const items = Array.isArray(data.items) ? data.items : Array.isArray(data.details?.line_items) ? data.details.line_items : [];
+  const item = items[0];
+  const priceId = item?.price_id ?? item?.price?.id;
+  return typeof priceId === 'string' ? priceId : null;
 }
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-
-  if (!WEBHOOK_SECRET) {
-    return new Response(JSON.stringify({ ok: false, status: 'awaiting_configuration', message: 'PADDLE_WEBHOOK_SECRET no configurado.' }), {
-      status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
+  if (req.method !== 'POST') return response({ ok: false, message: 'Metodo no permitido.' }, 405);
+  if (!WEBHOOK_SECRET) return response({ ok: false, message: 'PADDLE_WEBHOOK_SECRET no configurado.' }, 503);
 
   const rawBody = await req.text();
-  const sig = req.headers.get('paddle-signature') || '';
-  const ok = await verifyPaddleSignature(rawBody, sig, WEBHOOK_SECRET);
-  if (!ok) {
-    return new Response(JSON.stringify({ ok: false, message: 'Firma inválida' }), {
-      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
+  const signed = await verifyPaddleSignature(rawBody, req.headers.get('paddle-signature') || '', WEBHOOK_SECRET);
+  if (!signed) return response({ ok: false, message: 'Firma invalida.' }, 401);
 
   let event: any;
-  try { event = JSON.parse(rawBody); }
-  catch {
-    return new Response(JSON.stringify({ ok: false, message: 'Body inválido' }), {
-      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-
-  const eventId: string | undefined = event?.event_id || event?.data?.id;
-  const eventType: string = event?.event_type || 'unknown';
-  if (!eventId) {
-    return new Response(JSON.stringify({ ok: false, message: 'event_id ausente' }), {
-      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
+  try { event = JSON.parse(rawBody); } catch { return response({ ok: false, message: 'Body invalido.' }, 400); }
+  const eventId = typeof event?.event_id === 'string' ? event.event_id : null;
+  const eventType = typeof event?.event_type === 'string' ? event.event_type : 'unknown';
+  if (!eventId) return response({ ok: false, message: 'event_id ausente.' }, 400);
 
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
-
-  // Idempotencia: si el event_id ya se procesó, devolvemos 200.
-  const { error: insertErr } = await admin.from('paddle_webhook_events').insert({
-    event_id: eventId, event_type: eventType, payload: event,
-  });
-  if (insertErr) {
-    if (insertErr.code === '23505') {
-      return new Response(JSON.stringify({ ok: true, duplicate: true }), {
-        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    console.error('[paddle-webhook] insert error', insertErr);
-    return new Response(JSON.stringify({ ok: false, message: insertErr.message }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+  const { error: eventError } = await admin.from('paddle_webhook_events').insert({ event_id: eventId, event_type: eventType, payload: event });
+  if (eventError) {
+    if (eventError.code === '23505') return response({ ok: true, duplicate: true });
+    console.error('[paddle-webhook] event insert failed', eventError);
+    return response({ ok: false, message: 'No fue posible registrar el evento.' }, 500);
   }
 
-  // Mapeo mínimo a `user_subscriptions`. La lógica detallada se completa
-  // cuando el proveedor esté productivo; aquí sólo garantizamos la escritura.
-  try {
-    const email: string | undefined = event?.data?.customer?.email || event?.data?.email;
-    if (email && ['subscription.created', 'subscription.activated', 'transaction.completed'].includes(eventType)) {
-      const { data: userRow } = await admin.rpc('get_user_id_by_email', { p_email: email }).maybeSingle?.() ?? { data: null };
-      const userId = (userRow as any)?.id;
-      if (userId) {
-        await admin.from('user_subscriptions').upsert({
-          user_id: userId, status: 'active', provider: 'paddle', amount_usd: 50,
-        }, { onConflict: 'user_id' });
-      }
-    }
-  } catch (err) {
-    console.warn('[paddle-webhook] no se pudo mapear entitlement:', (err as Error).message);
+  const data = event?.data && typeof event.data === 'object' ? event.data as Record<string, any> : {};
+  const mappedStatus = statusForEvent(eventType, data.status);
+  if (!mappedStatus) return response({ ok: true, ignored: true });
+
+  const userId = typeof data.custom_data?.ferova_user_id === 'string' ? data.custom_data.ferova_user_id : null;
+  const priceId = priceIdFromEvent(data);
+  const priceMap = getPriceMap();
+  const isRecognizedPrice = Boolean(priceId && priceMap && Object.values(priceMap).includes(priceId));
+  if (!userId || !isRecognizedPrice) {
+    // Remove the idempotency entry so Paddle can retry after configuration is fixed.
+    await admin.from('paddle_webhook_events').delete().eq('event_id', eventId);
+    console.error('[paddle-webhook] missing secure entitlement context', { eventId, eventType, userId, priceId });
+    return response({ ok: false, message: 'Evento sin contexto de acceso valido.' }, 503);
   }
 
-  return new Response(JSON.stringify({ ok: true }), {
-    status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  });
+  const providerOrderId = typeof data.id === 'string' ? data.id : eventId;
+  const { data: existingRows, error: lookupError } = await admin
+    .from('user_subscriptions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('provider', 'paddle')
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  let subscriptionError = lookupError;
+  if (!subscriptionError && existingRows?.[0]) {
+    const { error } = await admin.from('user_subscriptions').update({ status: mappedStatus, provider_order_id: providerOrderId }).eq('id', existingRows[0].id);
+    subscriptionError = error;
+  } else if (!subscriptionError && mappedStatus !== 'cancelled') {
+    const { error } = await admin.from('user_subscriptions').insert({ user_id: userId, status: mappedStatus, provider: 'paddle', provider_order_id: providerOrderId, amount_usd: null });
+    subscriptionError = error;
+  }
+
+  if (subscriptionError) {
+    await admin.from('paddle_webhook_events').delete().eq('event_id', eventId);
+    console.error('[paddle-webhook] subscription update failed', subscriptionError);
+    return response({ ok: false, message: 'No fue posible actualizar el acceso.' }, 500);
+  }
+
+  return response({ ok: true });
 });

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Loader2, ShieldCheck, LogOut } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { logout, checkSubscription } from '../lib/supabase';
-import { getPaddleStatus, openPaddleCheckout } from '../lib/paymentProvider';
+import { createPaddleCheckoutIntent, getPaddleStatus, openPaddleCheckout } from '../lib/paymentProvider';
 
 interface PaywallProps {
   user: User;
@@ -16,12 +16,12 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
 
   const handleCheckout = async () => {
     setError(null);
-    const priceId = import.meta.env.VITE_PADDLE_DEFAULT_PRICE_ID;
-    if (!priceId) {
-      setError('Los pagos con Paddle todavía no están configurados para este entorno.');
+    const intent = await createPaddleCheckoutIntent('completo');
+    if (intent.status !== 'ready' || !intent.transactionId) {
+      setError(intent.message || 'No fue posible iniciar el checkout.');
       return;
     }
-    const result = await openPaddleCheckout({ priceId, customerEmail: user.email });
+    const result = await openPaddleCheckout(intent.transactionId);
     if (result.status !== 'ready') setError(result.message || 'No fue posible abrir el checkout.');
   };
 
@@ -30,13 +30,10 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
     setError(null);
     try {
       const paid = await checkSubscription(user.id);
-      if (paid) {
-        onPaid();
-      } else {
-        setError('Todavía no vemos una suscripción confirmada. Cuando Paddle confirme el pago, tu acceso se activará automáticamente.');
-      }
-    } catch (e: any) {
-      setError(`Error verificando el pago: ${e.message || e}`);
+      if (paid) onPaid();
+      else setError('Todavía no vemos una suscripción confirmada. Cuando Paddle confirme el pago, tu acceso se activará automáticamente.');
+    } catch (caught: unknown) {
+      setError(`Error verificando el pago: ${caught instanceof Error ? caught.message : String(caught)}`);
     } finally {
       setChecking(false);
     }
@@ -46,17 +43,12 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
     <div className="min-h-screen bg-[#0f0e0c] flex flex-col justify-center items-center p-4 text-[#e8e3d8] font-sans">
       <div className="max-w-md w-full bg-[#161412] border border-[#2a2620] rounded-lg p-8 space-y-6 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 inset-x-0 h-[3px] bg-[#c9a961]" />
-
         <div className="space-y-2 text-center">
           <div className="w-12 h-12 rounded-full bg-[#c9a961]/10 border border-[#c9a961]/30 flex items-center justify-center mx-auto">
             <ShieldCheck className="w-6 h-6 text-[#c9a961]" />
           </div>
-          <h1 className="text-2xl font-bold font-display tracking-tight text-[#c9a961]">
-            Activa tu Licencia
-          </h1>
-          <p className="text-xs text-[#a39d8e] font-mono uppercase tracking-wider">
-            Acceso a Ferova OS
-          </p>
+          <h1 className="text-2xl font-bold font-display tracking-tight text-[#c9a961]">Activa tu Licencia</h1>
+          <p className="text-xs text-[#a39d8e] font-mono uppercase tracking-wider">Acceso a Ferova OS</p>
         </div>
 
         <div className="border-t border-b border-[#2a2620] py-5 space-y-3">
@@ -70,12 +62,7 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
         </div>
 
         <div className="space-y-3">
-          {error && (
-            <p className="text-xs text-red-400 bg-red-950/30 border border-red-900/50 rounded p-2">
-              {error}
-            </p>
-          )}
-
+          {error && <p className="text-xs text-red-400 bg-red-950/30 border border-red-900/50 rounded p-2">{error}</p>}
           <button
             onClick={handleCheckout}
             disabled={paddleStatus !== 'ready'}
@@ -83,11 +70,9 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
           >
             {paddleStatus === 'ready' ? 'Continuar con Paddle' : 'Paddle pendiente de configuración'}
           </button>
-
           <p className="text-[10px] text-[#8a8377] font-mono text-center leading-relaxed">
             Paddle procesa la suscripción, factura y calcula los impuestos aplicables. Ferova OS no recibe ni almacena datos de pago. Al continuar aceptas los <a href="/terminos" className="underline hover:text-white">Términos</a> y la <a href="/privacidad" className="underline hover:text-white">Política de Privacidad</a>.
           </p>
-
           <button
             onClick={handleCheckPayment}
             disabled={checking}
@@ -99,13 +84,8 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
         </div>
 
         <div className="flex items-center justify-between pt-2 border-t border-[#2a2620]">
-          <span className="text-[10px] text-[#8a8377] font-mono truncate max-w-[60%]">
-            {user.email}
-          </span>
-          <button
-            onClick={() => logout()}
-            className="text-[10px] text-[#8a8377] hover:text-[#c97a61] font-mono flex items-center gap-1"
-          >
+          <span className="text-[10px] text-[#8a8377] font-mono truncate max-w-[60%]">{user.email}</span>
+          <button onClick={() => logout()} className="text-[10px] text-[#8a8377] hover:text-[#c97a61] font-mono flex items-center gap-1">
             <LogOut className="w-3 h-3" /> Cerrar sesión
           </button>
         </div>
