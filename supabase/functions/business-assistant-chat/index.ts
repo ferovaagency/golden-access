@@ -14,6 +14,24 @@ function latestAssistant(messages: UIMessage[]): UIMessage | null {
   return null;
 }
 
+const MAX_MODEL_MESSAGES = 24;
+const MAX_STORED_MESSAGES = 80;
+
+async function trimStoredHistory(admin: ReturnType<typeof createClient>, userId: string) {
+  const { data, error } = await admin
+    .from('business_assistant_messages')
+    .select('id')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .range(MAX_STORED_MESSAGES, MAX_STORED_MESSAGES + 200);
+  if (error || !data?.length) return;
+  const { error: deleteError } = await admin
+    .from('business_assistant_messages')
+    .delete()
+    .in('id', data.map((message: { id: string }) => message.id));
+  if (deleteError) console.error('[business-assistant] history trim error', deleteError);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return new Response(JSON.stringify({ ok: false, message: "Method not allowed" }), { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -44,7 +62,9 @@ Deno.serve(async (req) => {
     ]);
 
     const body = await req.json() as { messages?: UIMessage[] };
-    const messages = body.messages || [];
+    // The client can display a short recent history, but the model receives a
+    // bounded window so long conversations do not grow cost or context forever.
+    const messages = (body.messages || []).slice(-MAX_MODEL_MESSAGES);
     const last = messages[messages.length - 1];
     if (last?.role === "user") {
       const { error } = await admin.from("business_assistant_messages").insert({ user_id: userId, role: "user", parts: last.parts || [], content: textFromParts(last) });
@@ -90,6 +110,7 @@ ${context}`,
         if (!responseMessage) return;
         const { error } = await admin.from("business_assistant_messages").insert({ user_id: userId, role: "assistant", parts: responseMessage.parts || [], content: textFromParts(responseMessage) });
         if (error) console.error("[business-assistant] assistant persist error", error);
+        else await trimStoredHistory(admin, userId);
       },
     });
 

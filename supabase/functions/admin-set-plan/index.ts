@@ -7,7 +7,7 @@ import { z } from 'npm:zod';
 
 const BodySchema = z.object({
   user_id: z.string().uuid(),
-  plan: z.enum(['financiero', 'crm_ventas', 'completo']),
+  plan: z.enum(['projects', 'finance', 'planner', 'crm', 'completo', 'custom', 'financiero', 'crm_ventas']),
 });
 
 Deno.serve(async (req) => {
@@ -33,8 +33,8 @@ Deno.serve(async (req) => {
     }
 
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    const { data: team } = await admin.from('crm_team_members').select('email').eq('email', user.email).maybeSingle();
-    if (!team) {
+    const { data: team } = await admin.from('crm_team_members').select('email, rol').eq('email', user.email).maybeSingle();
+    if (!team || team.rol !== 'owner') {
       return new Response(JSON.stringify({ ok: false, message: 'No autorizado' }), {
         status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

@@ -117,6 +117,16 @@ Deno.serve(async (req) => {
       else { values[SHEET_TABS[i]] = []; if (!firstError) firstError = (r.reason as Error)?.message || String(r.reason); }
     });
 
+    const unavailableTabs = results
+      .map((result, index) => result.status === 'rejected' ? SHEET_TABS[index] : null)
+      .filter((tab): tab is string => tab !== null);
+    if (unavailableTabs.length) {
+      return new Response(JSON.stringify({
+        ok: false,
+        message: `La hoja no tiene la estructura requerida. No pude leer: ${unavailableTabs.join(', ')}. Debe usar las pestañas exactas: ${SHEET_TABS.join(', ')}.`,
+      }), { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     if (successCount === 0) {
       return new Response(JSON.stringify({ ok: false, message: firstError || 'No se pudo leer ninguna pestaña. Verifica el link y los permisos.' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },

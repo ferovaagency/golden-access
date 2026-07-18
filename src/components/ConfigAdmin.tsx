@@ -443,7 +443,7 @@ export default function ConfigAdmin({
               <div className="border-t border-slate-200 pt-4 mt-2 space-y-2">
                 <p className="text-[10px] text-slate-400 uppercase tracking-widest font-mono">Importar pegando link</p>
                 <p className="text-[11px] text-slate-500 leading-relaxed">
-                  Pega la URL de tu Google Sheet (debe estar compartido con tu cuenta Google conectada) y lo importamos directo. Debe tener las pestañas: <span className="font-mono text-[#c9a961]">Config, Clientes, Servicios, Herramientas, OtrosGastos, Ventas, Horas, PagosEgresos</span>.
+                  Pega la URL de un Google Sheet con la misma estructura de la plantilla <span className="font-medium text-slate-700">Ferova_OS_Financiero</span>. Debe incluir estas pestañas, con estos nombres exactos: <span className="font-mono text-[#c9a961]">Config, Clientes, Servicios, Herramientas, OtrosGastos, Ventas, Horas, Respaldos y PagosEgresos</span>.
                 </p>
                 <input
                   type="url"

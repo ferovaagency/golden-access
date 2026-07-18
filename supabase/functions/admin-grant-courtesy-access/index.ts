@@ -9,7 +9,7 @@ import { z } from 'npm:zod';
 
 const BodySchema = z.object({
   email: z.string().trim().toLowerCase().email(),
-  plan: z.enum(['financiero', 'crm_ventas', 'completo']).default('completo'),
+  plan: z.enum(['projects', 'finance', 'planner', 'crm', 'completo', 'custom', 'financiero', 'crm_ventas']).default('completo'),
   notas: z.string().trim().max(500).optional(),
 });
 

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { initAuth, googleSignIn, linkGoogleIdentity, logout, getAccessToken, resolveAccess, hydrateGoogleWorkspaceConnection } from './lib/supabase';
+import { initAuth, googleSignIn, linkGoogleIdentity, logout, getAccessToken, resolveAccess } from './lib/supabase';
 import { backupAppDataToSheets, importSheetByUrl } from './lib/sheetsService';
 import * as financeService from './lib/financeService';
 import { isTeamMember } from './lib/crmService';
-import { getModules, PlanId } from './lib/planService';
+import { getModules, type ModuleOverrides, PlanId } from './lib/planService';
+import { listMyOverrides } from './lib/moduleOverridesService';
 import { getBusinessProfile, BusinessProfile } from './lib/businessProfileService';
 import OnboardingChat from './components/OnboardingChat';
 import FeedbackWidget from './components/FeedbackWidget';
@@ -37,7 +38,6 @@ import CommandPalette from './components/CommandPalette';
 import TopBar from './components/TopBar';
 import FinanceOperativa from './components/FinanceOperativa';
 import MarketingROI from './components/MarketingROI';
-import AdminCourtesyPanel from './components/AdminCourtesyPanel';
 
 import {
   FolderKanban,
@@ -65,7 +65,8 @@ export default function App() {
   const [isTeam, setIsTeam] = useState(false);
   const [plan, setPlan] = useState<PlanId>('financiero');
   const [checkingPayment, setCheckingPayment] = useState(false);
-  const modules = React.useMemo(() => getModules(plan, isTeam), [plan, isTeam]);
+  const [moduleOverrides, setModuleOverrides] = useState<ModuleOverrides>({});
+  const modules = React.useMemo(() => getModules(plan, isTeam, moduleOverrides), [plan, isTeam, moduleOverrides]);
 
 
   
@@ -127,9 +128,14 @@ export default function App() {
           resolveAccess(fUser.id, fUser.email || ''),
           isTeamMember(fUser.email || '').catch(() => false),
         ]);
+        const overrides = await listMyOverrides(fUser.id).catch((error) => {
+          console.error('[App] module overrides error:', error);
+          return [];
+        });
         setHasPaid(access.hasPaid || team);
         setPlan(access.plan);
         setIsTeam(team);
+        setModuleOverrides(Object.fromEntries(overrides.map((override) => [override.module, override.enabled])) as ModuleOverrides);
         setCheckingPayment(false);
         if (access.hasPaid || team) {
           bootstrapFinanceData(fUser.id);
@@ -140,6 +146,7 @@ export default function App() {
         setHasPaid(false);
         setIsTeam(false);
         setPlan('financiero');
+        setModuleOverrides({});
         setAuthLoading(false);
         setAppData(null);
       }
@@ -185,7 +192,6 @@ export default function App() {
     try {
       const [data] = await Promise.all([
         financeService.loadFinanceData(userId),
-        hydrateGoogleWorkspaceConnection(userId),
         getBusinessProfile(userId).then(setBusinessProfile).catch((err) => {
           console.error('[App] getBusinessProfile error:', err);
         }),
@@ -249,7 +255,7 @@ export default function App() {
       await persistImportedFinanceData(data);
       alert('✨ Importación completada.');
     } catch (err: any) {
-      alert(`Fallo al importar: ${err.message || err}\n\nAsegúrate de:\n1) Que la hoja esté compartida con la cuenta Google conectada o pública con link.\n2) Que tenga las pestañas: Config, Clientes, Servicios, Herramientas, OtrosGastos, Ventas, Horas, PagosEgresos.`);
+      alert(`Fallo al importar: ${err.message || err}\n\nAsegúrate de:\n1) Que la hoja esté compartida con la cuenta Google conectada o pública con link.\n2) Que use la estructura Ferova_OS_Financiero y tenga estas pestañas exactas: Config, Clientes, Servicios, Herramientas, OtrosGastos, Ventas, Horas, Respaldos y PagosEgresos.`);
     } finally {
       setSheetsLoading(false);
     }
@@ -449,7 +455,7 @@ export default function App() {
 
   // Visual Tab Categorization - Separates Operational Management from Financial Control
   // Ambos bloques solo se muestran si el plan del cliente incluye el módulo Financiero.
-  const GESTION_OPERATIVA_TABS = modules.financiero ? [
+  const GESTION_OPERATIVA_TABS = modules.core_projects ? [
     { id: 'proyectos', label: 'Proyectos', hint: 'KPIs y ejecución' },
     { id: 'horas', label: 'Horas', hint: 'Rentabilidad por tiempo' },
     { id: 'clientes', label: 'Clientes', hint: 'Cuentas activas' },
@@ -485,19 +491,19 @@ export default function App() {
 
   const NAVIGATION_SECTIONS: NavigationSection[] = [
     { id: 'home', label: 'Home', icon: LayoutDashboard, items: [{ id: 'dashboard', label: 'Executive Control Center', hint: 'Vista ejecutiva y prioridades' }] },
-    { id: 'workspace', label: 'Workspace', icon: Boxes, items: modules.financiero ? [
+    { id: 'workspace', label: 'Workspace', icon: Boxes, items: modules.core_projects ? [
       { id: 'clientes', label: 'Clientes', hint: 'Cuentas activas' },
       { id: 'servicios', label: 'Servicios', hint: 'Catálogo y costos' },
       { id: 'horas', label: 'Horas', hint: 'Capacidad y rentabilidad' },
     ] : [] },
-    { id: 'projects', label: 'Projects', icon: FolderKanban, items: [{ id: 'proyectos', label: 'Proyectos', hint: 'KPIs y ejecución' }] },
+    { id: 'projects', label: 'Projects', icon: FolderKanban, items: modules.core_projects ? [{ id: 'proyectos', label: 'Proyectos', hint: 'KPIs y ejecución' }] : [] },
     { id: 'modules', label: 'Modules', icon: Grid2X2, items: [
-      { id: 'planner', label: 'Planner', hint: 'Prioridades y bloques protegidos' },
-      { id: 'reports', label: 'Reportes CEO', hint: 'Seguimiento ejecutivo' },
+      ...(modules.planner ? [{ id: 'planner', label: 'Planner', hint: 'Prioridades y bloques protegidos' }] : []),
+      ...(modules.advanced_analytics ? [{ id: 'reports', label: 'Reportes CEO', hint: 'Seguimiento ejecutivo' }] : []),
       ...(modules.crm_ventas ? [{ id: 'ventas-crm', label: 'CRM y Ventas', hint: 'Tu pipeline propio' }] : []),
       ...(modules.financiero ? [
       { id: 'finops', label: 'Finanzas operativas', hint: 'Cuentas, deudas, flujo' },
-      { id: 'marketingRoi', label: 'Marketing ROI', hint: 'Campañas y calculadora' },
+      ...(modules.marketing_roi ? [{ id: 'marketingRoi', label: 'Marketing ROI', hint: 'Campañas y calculadora' }] : []),
       { id: 'ventas', label: 'Ingresos', hint: 'Ventas y abonos' },
       { id: 'pagosEgresos', label: 'Pagos', hint: 'Egresos registrados' },
       { id: 'gastos', label: 'Costos', hint: 'Herramientas y gastos' },
@@ -506,7 +512,6 @@ export default function App() {
       { id: 'iva', label: 'IVA', hint: 'Control tributario' },
       { id: 'alertas', label: 'Alertas', hint: 'Riesgos y topes' },
       ] : []),
-      ...(isTeam ? [{ id: 'admin-cortesias', label: 'Cortesías y planes', hint: 'Acceso gratis y precios' }] : []),
       ...CRM_GROWTH_TABS,
     ] },
     { id: 'settings', label: 'Settings', icon: Settings, items: modules.financiero ? [{ id: 'ajustes', label: 'Configuración', hint: 'Datos y Google Sheets' }] : [] },
@@ -786,7 +791,6 @@ export default function App() {
               {activeTab === 'reports' && user && <ReportsView user={user} />}
               {activeTab === 'finops' && <FinanceOperativa user={user} appData={appData} formatCop={formatCop} />}
               {activeTab === 'marketingRoi' && <MarketingROI user={user} formatCop={formatCop} />}
-              {activeTab === 'admin-cortesias' && isTeam && <AdminCourtesyPanel />}
               {activeTab === 'dashboard' && (
                 <Home
                   data={appData} 

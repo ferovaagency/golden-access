@@ -1994,9 +1994,12 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                               onChange={(e) => handleSetPlan(c, e.target.value as PlanId)}
                               className="bg-slate-50/50 border border-slate-200 p-1.5 rounded text-slate-900 text-[10px]"
                             >
-                              <option value="financiero">Financiero + Proyectos</option>
-                              <option value="crm_ventas">CRM y Ventas</option>
+                              <option value="projects">Proyectos</option>
+                              <option value="finance">Finanzas</option>
+                              <option value="planner">Planner</option>
+                              <option value="crm">Ventas / CRM</option>
                               <option value="completo">Completo</option>
+                              <option value="custom">Personalizado</option>
                             </select>
                           </td>
                           <td className="py-2 pr-3">
@@ -2042,9 +2045,12 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                       onChange={(e) => setCourtesyPlan(e.target.value as PlanId)}
                       className="w-full bg-white border border-amber-200 p-2 rounded text-slate-900"
                     >
-                      <option value="financiero">Financiero + Proyectos</option>
-                      <option value="crm_ventas">CRM y Ventas</option>
+                      <option value="projects">Proyectos</option>
+                      <option value="finance">Finanzas</option>
+                      <option value="planner">Planner</option>
+                      <option value="crm">Ventas / CRM</option>
                       <option value="completo">Completo</option>
+                      <option value="custom">Personalizado</option>
                     </select>
                   </div>
                   <div>
