@@ -28,20 +28,34 @@ import PagosEgresosAdmin from './components/PagosEgresosAdmin';
 import AuthScreen from './components/AuthScreen';
 import Paywall from './components/Paywall';
 import AdminCRM, { CRMTab } from './components/AdminCRM';
-import BusinessAssistant from './components/BusinessAssistant';
+import AISidebar from './components/AISidebar';
 import CustomerCRM from './components/CustomerCRM';
+import Home from './components/Home';
+import SmartPlanner from './components/SmartPlanner';
 
-
-import { 
-  Building2, 
-  User as UserIcon, 
-  LogOut, 
-  Database, 
-  Calendar, 
-  Loader2, 
+import {
+  Home as HomeIcon,
+  LayoutGrid,
+  FolderKanban,
+  Settings as SettingsIcon,
+  CalendarCheck,
+  TrendingUp,
+  Wallet,
+  Users as UsersIcon,
+  Briefcase,
+  Clock as ClockIcon,
+  Sparkles as SparklesIcon,
+  MessageCircle,
+  Linkedin,
+  MessagesSquare,
+  Star as StarIcon,
+  Target as TargetIcon,
+  User as UserIcon,
+  LogOut,
+  Loader2,
   AlertCircle,
-  Menu,
-  X
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 
 const CRM_TAB_IDS: CRMTab[] = ['pipeline', 'citas', 'contenido', 'bot', 'resenas'];
