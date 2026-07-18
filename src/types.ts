@@ -38,6 +38,14 @@ export interface Servicio {
   nombre: string;
   costo_unitario: number;
   descripcion?: string;
+  /** Costo total estimado para entregar una unidad del servicio (mano de obra + insumos). */
+  costo_entrega_estimado?: number | null;
+  /** Margen objetivo entre 0 y 1 (ej: 0.35 = 35%). */
+  margen_objetivo?: number | null;
+  /** Precio histórico que ya cobrás; solo lectura desde el motor de "precio ideal". */
+  precio_habitual?: number | null;
+  /** Precio publicado actual; solo lectura desde el motor de "precio ideal". */
+  precio_ofrecido?: number | null;
 }
 
 export interface Herramienta {
