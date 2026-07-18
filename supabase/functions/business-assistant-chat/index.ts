@@ -14,6 +14,14 @@ function latestAssistant(messages: UIMessage[]): UIMessage | null {
   return null;
 }
 
+// The AI SDK transport sends this streaming-protocol header. Supabase's
+// default CORS headers do not include it, so browsers stop after OPTIONS and
+// report the unhelpful "Failed to fetch" before the function receives POST.
+const assistantCorsHeaders = {
+  ...corsHeaders,
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-vercel-ai-ui-message-stream, x-lovable-aig-run-id, x-ferova-context-area",
+};
+
 const MAX_MODEL_MESSAGES = 24;
 const MAX_STORED_MESSAGES = 80;
 
@@ -33,17 +41,17 @@ async function trimStoredHistory(admin: ReturnType<typeof createClient>, userId:
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  if (req.method !== "POST") return new Response(JSON.stringify({ ok: false, message: "Method not allowed" }), { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: assistantCorsHeaders });
+  if (req.method !== "POST") return new Response(JSON.stringify({ ok: false, message: "Method not allowed" }), { status: 405, headers: { ...assistantCorsHeaders, "Content-Type": "application/json" } });
 
   try {
     const authHeader = req.headers.get("Authorization") || "";
     const token = authHeader.replace("Bearer ", "");
-    if (!token) return new Response(JSON.stringify({ ok: false, message: "No autenticado" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!token) return new Response(JSON.stringify({ ok: false, message: "No autenticado" }), { status: 401, headers: { ...assistantCorsHeaders, "Content-Type": "application/json" } });
 
     const userClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: authHeader } } });
     const { data: userData, error: userError } = await userClient.auth.getUser(token);
-    if (userError || !userData.user) return new Response(JSON.stringify({ ok: false, message: "Sesion invalida" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (userError || !userData.user) return new Response(JSON.stringify({ ok: false, message: "Sesion invalida" }), { status: 401, headers: { ...assistantCorsHeaders, "Content-Type": "application/json" } });
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const userId = userData.user.id;
@@ -72,7 +80,7 @@ Deno.serve(async (req) => {
     }
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) return new Response(JSON.stringify({ ok: false, message: "LOVABLE_API_KEY no configurada" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!apiKey) return new Response(JSON.stringify({ ok: false, message: "La IA aún no está configurada en Supabase. Falta el secreto LOVABLE_API_KEY." }), { status: 503, headers: { ...assistantCorsHeaders, "Content-Type": "application/json" } });
 
     const context = JSON.stringify({
       user: { email: userEmail, team_member: !!isTeam },
@@ -104,7 +112,7 @@ ${context}`,
 
     const response = result.toUIMessageStreamResponse({
       originalMessages: messages,
-      headers: getLovableAiGatewayResponseHeaders(undefined, { ...corsHeaders, ...(initialRunId ? { "X-Lovable-AIG-Run-ID": initialRunId } : {}) }),
+      headers: getLovableAiGatewayResponseHeaders(undefined, { ...assistantCorsHeaders, ...(initialRunId ? { "X-Lovable-AIG-Run-ID": initialRunId } : {}) }),
       onFinish: async ({ messages: finishedMessages }: any) => {
         const responseMessage = latestAssistant(finishedMessages || []);
         if (!responseMessage) return;
@@ -114,9 +122,9 @@ ${context}`,
       },
     });
 
-    return withLovableAiGatewayRunIdHeader(response, gateway, corsHeaders);
+    return withLovableAiGatewayRunIdHeader(response, gateway, assistantCorsHeaders);
   } catch (err) {
     console.error("[business-assistant] error", err);
-    return new Response(JSON.stringify({ ok: false, message: err instanceof Error ? err.message : String(err) }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ ok: false, message: err instanceof Error ? err.message : String(err) }), { status: 500, headers: { ...assistantCorsHeaders, "Content-Type": "application/json" } });
   }
 });

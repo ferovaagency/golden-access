@@ -753,6 +753,15 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     }
   };
 
+  const handleChangeCanal = async (o: Oportunidad, canal_origen: Oportunidad['canal_origen']) => {
+    try {
+      const updated = await upsertOportunidad({ id: o.id, canal_origen });
+      setOportunidades(oportunidades.map((x) => (x.id === o.id ? updated : x)));
+    } catch (err: any) {
+      alert(`Error actualizando canal: ${err.message || err}`);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!window.confirm('¿Eliminar esta oportunidad?')) return;
     try {
@@ -812,9 +821,12 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               <h1 className="text-lg font-display font-bold text-blue-600">Ferova Growth OS</h1>
               <span className="text-[10px] font-mono text-[#8a8377] uppercase tracking-wider">CRM interno · no visible para clientes</span>
             </div>
-            <button onClick={() => logout()} className="text-[#8a8377] hover:text-red-600 flex items-center gap-1 text-xs font-mono">
-              <LogOut className="w-3.5 h-3.5" /> Cerrar sesión
-            </button>
+            <div className="flex items-center gap-4">
+              <a href="/" className="text-[#8a8377] hover:text-blue-700 flex items-center gap-1 text-xs font-mono">← Volver a Ferova OS</a>
+              <button onClick={() => logout()} className="text-[#8a8377] hover:text-red-600 flex items-center gap-1 text-xs font-mono">
+                <LogOut className="w-3.5 h-3.5" /> Cerrar sesión
+              </button>
+            </div>
           </header>
 
           <nav className="flex gap-2 px-6 py-3 border-b border-slate-200 text-xs font-mono">
@@ -1038,6 +1050,16 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                       >
                         {PIPELINE_STAGES.map((s) => (
                           <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                      <select
+                        value={o.canal_origen}
+                        onChange={(e) => handleChangeCanal(o, e.target.value as Oportunidad['canal_origen'])}
+                        aria-label={`Canal de ${o.nombre_contacto}`}
+                        className="bg-slate-50/60 border border-slate-200 rounded px-2 py-1 text-slate-500 font-mono text-[10px]"
+                      >
+                        {['linkedin', 'whatsapp', 'email', 'reddit', 'web', 'googlemaps', 'referido', 'otro'].map((channel) => (
+                          <option key={channel} value={channel}>{channel}</option>
                         ))}
                       </select>
                       <button onClick={() => handleDelete(o.id)} className="text-red-600 hover:text-[#e08970]">

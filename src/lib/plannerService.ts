@@ -98,6 +98,15 @@ export interface CreatePlannerBlockInput {
   notes?: string | null;
 }
 
+export interface UpdatePlannerTaskInput {
+  title: string;
+  estimated_minutes: number;
+  actual_minutes: number | null;
+  scheduled_for: string | null;
+  schedule_time?: string | null;
+  protected?: boolean;
+}
+
 const anyDb = () => supabase as any;
 
 export const plannerService = {
@@ -150,6 +159,46 @@ export const plannerService = {
   },
   async completeTask(id: string, actualMinutes?: number) {
     await anyDb().from('planner_tasks').update({ status: 'done', completed_at: new Date().toISOString(), actual_minutes: actualMinutes ?? null }).eq('id', id);
+  },
+  async updateTask(id: string, input: UpdatePlannerTaskInput): Promise<void> {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError) throw authError;
+    if (!user) throw new Error('Debes iniciar sesión para editar una tarea.');
+
+    const { error: taskError } = await anyDb().from('planner_tasks').update({
+      title: input.title.trim(),
+      estimated_minutes: input.estimated_minutes,
+      actual_minutes: input.actual_minutes,
+      scheduled_for: input.scheduled_for,
+    }).eq('id', id);
+    if (taskError) throw taskError;
+
+    // A task becomes a protected calendar block only when it has an explicit
+    // time. This keeps unscheduled tasks flexible for the daily planner.
+    if (!input.scheduled_for || !input.schedule_time) return;
+    const [hours, minutes] = input.schedule_time.split(':').map(Number);
+    const startsAt = new Date(`${input.scheduled_for}T00:00:00`);
+    startsAt.setHours(hours, minutes, 0, 0);
+    const endsAt = new Date(startsAt.getTime() + input.estimated_minutes * 60_000);
+    const { data: existing, error: blockLookupError } = await anyDb()
+      .from('planner_blocks')
+      .select('id, task_ids')
+      .contains('task_ids', [id])
+      .maybeSingle();
+    if (blockLookupError) throw blockLookupError;
+    const block = {
+      title: input.title.trim(),
+      starts_at: startsAt.toISOString(),
+      ends_at: endsAt.toISOString(),
+      category: 'admin',
+      protected: input.protected ?? false,
+      source: 'manual',
+      task_ids: existing?.task_ids?.length ? existing.task_ids : [id],
+    };
+    const { error: blockError } = existing
+      ? await anyDb().from('planner_blocks').update(block).eq('id', existing.id)
+      : await anyDb().from('planner_blocks').insert({ user_id: user.id, ...block });
+    if (blockError) throw blockError;
   },
   async postponeTask(id: string) {
     const { data } = await anyDb().from('planner_tasks').select('postponed_count').eq('id', id).maybeSingle();

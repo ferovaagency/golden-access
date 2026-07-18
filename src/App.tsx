@@ -106,8 +106,9 @@ export default function App() {
     return localStorage.getItem('ferova.ai.collapsed') === '1';
   });
   const [aiWidth, setAiWidth] = useState<number>(() => {
-    if (typeof window === 'undefined') return 380;
-    const v = Number(localStorage.getItem('ferova.ai.width')); return v >= 320 && v <= 640 ? v : 380;
+    if (typeof window === 'undefined') return 340;
+    const v = Number(localStorage.getItem('ferova.ai.width'));
+    return v >= 300 && v <= 440 ? v : 340;
   });
   useEffect(() => { localStorage.setItem('ferova.ai.collapsed', aiCollapsed ? '1' : '0'); }, [aiCollapsed]);
   useEffect(() => { localStorage.setItem('ferova.ai.width', String(aiWidth)); }, [aiWidth]);

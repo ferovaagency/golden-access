@@ -2,7 +2,7 @@
 // and insights in one place, and exposes typed actions that map 1:1 to
 // plannerService. Components should not touch supabase for planner data.
 import { useCallback, useEffect, useState } from 'react';
-import { plannerService, type CreatePlannerBlockInput, type PlannerBlock, type PlannerBriefing, type PlannerInbox, type PlannerInsight, type PlannerPlanResult, type PlannerTask } from '../lib/plannerService';
+import { plannerService, type CreatePlannerBlockInput, type PlannerBlock, type PlannerBriefing, type PlannerInbox, type PlannerInsight, type PlannerPlanResult, type PlannerTask, type UpdatePlannerTaskInput } from '../lib/plannerService';
 
 function today() { return new Date().toISOString().slice(0, 10); }
 
@@ -77,6 +77,12 @@ export function usePlanner() {
   }, []);
 
   const completeTask = useCallback(async (id: string) => { await plannerService.completeTask(id); await refresh(); }, [refresh]);
+  const updateTask = useCallback(async (id: string, input: UpdatePlannerTaskInput) => {
+    setBusy('task'); setError(null);
+    try { await plannerService.updateTask(id, input); await refresh(); }
+    catch (err: any) { setError(err.message || 'No fue posible actualizar la tarea.'); throw err; }
+    finally { setBusy(null); }
+  }, [refresh]);
   const postponeTask = useCallback(async (id: string) => { await plannerService.postponeTask(id); await refresh(); }, [refresh]);
   const deleteTask = useCallback(async (id: string) => { await plannerService.deleteTask(id); await refresh(); }, [refresh]);
   const createBlock = useCallback(async (input: CreatePlannerBlockInput) => {
@@ -97,6 +103,6 @@ export function usePlanner() {
     inbox, tasks, blocks, insights, briefing, planPreview,
     loading, busy, error, date, setDate,
     refresh, classify, planDay, applyPlan, regenerateInsights, regenerateBriefing,
-    completeTask, postponeTask, deleteTask, createBlock, dismissInsight,
+    completeTask, updateTask, postponeTask, deleteTask, createBlock, dismissInsight,
   };
 }

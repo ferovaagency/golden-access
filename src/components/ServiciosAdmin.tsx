@@ -97,9 +97,9 @@ export default function ServiciosAdmin({
   };
 
   // Derive total physical sales and hours for each service
-  const getServiceStats = (id: string) => {
+  const getServiceStats = (service: Servicio) => {
     // Sales Revenue in COP
-    const srvSales = ventas.filter(v => v.servicio_id === id);
+    const srvSales = ventas.filter(v => v.servicio_id === service.id);
     const totalQty = srvSales.reduce((sum, v) => sum + v.cantidad, 0);
     const srvRevenueCop = srvSales.reduce((sum, v) => {
       return sum + convertToCop(v.precio_venta_unitario * v.cantidad, v.moneda, config.trm);
@@ -114,7 +114,7 @@ export default function ServiciosAdmin({
 
     // Total hours logged to this service
     const totalHrs = horas
-      .filter(h => h.servicio_id === id)
+      .filter(h => h.servicio_id === service.id)
       .reduce((sum, h) => sum + h.horas, 0);
 
     return {
@@ -123,7 +123,11 @@ export default function ServiciosAdmin({
       srvCogsCop,
       srvMarginCop,
       marginPct,
-      totalHrs
+      totalHrs,
+      // A sale stores the direct cost agreed at the moment it was recorded.
+      // Its weighted average is the actual unit cost and is never rewritten by
+      // later catalogue changes; before any sale, show the configured estimate.
+      unitDirectCost: totalQty > 0 ? srvCogsCop / totalQty : service.costo_unitario,
     };
   };
 
@@ -239,13 +243,16 @@ export default function ServiciosAdmin({
                   </tr>
                 ) : (
                   servicios.map(s => {
-                    const stats = getServiceStats(s.id);
+                    const stats = getServiceStats(s);
                     const isServiceEditing = editingServiceId === s.id;
                     return (
                       <tr key={s.id} className={`hover:bg-white/[0.01]/70 transition ${isServiceEditing ? 'bg-blue-600/5 border-l-2 border-[#c9a961]' : ''}`}>
                         <td className="px-5 py-4 font-mono text-slate-500">{s.id}</td>
                         <td className="px-5 py-4 font-semibold text-slate-900">{s.nombre}</td>
-                        <td className="px-5 py-4 text-right font-mono text-slate-900">{formatCop(s.costo_unitario)}</td>
+                        <td className="px-5 py-4 text-right font-mono text-slate-900">
+                          {formatCop(stats.unitDirectCost)}
+                          <span className="block text-[9px] text-slate-400">{stats.totalQty > 0 ? 'real según ventas' : 'estimado configurado'}</span>
+                        </td>
                         <td className="px-5 py-4 text-right font-mono font-bold text-blue-600">
                           {formatCop(stats.srvRevenueCop)}
                           <span className="text-[9px] text-slate-400 block font-mono">({stats.totalQty} uds vendidas)</span>
@@ -260,7 +267,8 @@ export default function ServiciosAdmin({
                           )}
                         </td>
                         <td className="px-5 py-4 text-right font-mono font-bold" style={{ color: stats.marginPct >= 50 ? '#a8c98a' : (stats.marginPct > 0 ? '#c9a961' : '#8a8377') }}>
-                          {stats.srvRevenueCop > 0 ? `${stats.marginPct.toFixed(0)}%` : 'No vendida'}
+                          {stats.srvRevenueCop > 0 ? `${stats.marginPct.toFixed(0)}%` : 'Sin ventas'}
+                          {stats.srvRevenueCop > 0 && <span className="block text-[9px] font-normal text-slate-400">{formatCop(stats.srvMarginCop)}</span>}
                         </td>
                         <td className="px-5 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">

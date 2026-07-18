@@ -1,5 +1,14 @@
 import { supabase, getAccessToken } from './supabase';
 
+async function functionErrorMessage(error: any, fallback: string): Promise<Error> {
+  const response = error?.context;
+  if (response && typeof response.clone === 'function') {
+    const payload = await response.clone().json().catch(() => null) as { message?: string; details?: string } | null;
+    if (payload?.message) return new Error(payload.details ? `${payload.message}: ${payload.details}` : payload.message);
+  }
+  return new Error(error?.message || fallback);
+}
+
 
 
 /**
@@ -141,7 +150,13 @@ export async function listOportunidades(): Promise<Oportunidad[]> {
 
 export async function upsertOportunidad(o: Partial<Oportunidad> & { id?: string }): Promise<Oportunidad> {
   const payload = { ...o, updated_at: new Date().toISOString() };
-  const { data, error } = await (supabase as any).from('crm_oportunidades').upsert(payload).select('*').single();
+  // State changes only send { id, estado }. An upsert treats that as a new
+  // row unless every required field is included, so use UPDATE for existing
+  // opportunities and reserve INSERT for newly created prospects.
+  const query = o.id
+    ? (supabase as any).from('crm_oportunidades').update(payload).eq('id', o.id)
+    : (supabase as any).from('crm_oportunidades').insert(payload);
+  const { data, error } = await query.select('*').single();
   if (error) throw new Error(`[crmService] upsertOportunidad: ${error.message}`);
   return data as Oportunidad;
 }
@@ -205,7 +220,7 @@ export async function cancelCita(cita_id: string): Promise<CitaDiagnostico> {
 
 export async function syncBookingLinkCitas(days = 30): Promise<{ scanned: number; inserted: number; skipped: number; citas: CitaDiagnostico[] }> {
   const { data, error } = await supabase.functions.invoke('calendar-sync-bookings', { body: { days } });
-  if (error) throw error;
+  if (error) throw await functionErrorMessage(error, 'No se pudieron sincronizar reservas.');
   if (!data?.ok) throw new Error(data?.message || 'No se pudieron sincronizar reservas.');
   return data;
 }
@@ -297,7 +312,7 @@ export async function enrichOportunidadApollo(payload: {
   score_potencial?: number;
 }): Promise<Oportunidad> {
   const { data, error } = await supabase.functions.invoke('apollo-enrich-playbook', { body: payload });
-  if (error) throw error;
+  if (error) throw await functionErrorMessage(error, 'No se pudo enriquecer con Apollo.');
   if (!data?.ok) throw new Error(data?.message || 'No se pudo enriquecer con Apollo.');
   return data.oportunidad as Oportunidad;
 }
@@ -394,7 +409,7 @@ export async function getWhatsappInstance(): Promise<WhatsappInstance | null> {
 
 export async function connectWhatsappInstance(): Promise<WhatsappInstance> {
   const { data, error } = await supabase.functions.invoke('whatsapp-connect', { body: {} });
-  if (error) throw error;
+  if (error) throw await functionErrorMessage(error, 'No se pudo generar el QR de WhatsApp.');
   if (!data?.ok) throw new Error(data?.message || 'No se pudo generar el QR de WhatsApp.');
   return data.instance as WhatsappInstance;
 }

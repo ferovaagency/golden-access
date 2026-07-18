@@ -95,7 +95,7 @@ export default function Home({ data, metrics, selectedMonth, formatCop, onNaviga
         </button>
       </section>
 
-      <section aria-label="Indicadores clave" className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <section aria-label="Indicadores clave" className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-5">
         <MetricCard label="Ingresos" value={formatCop(metrics.totalVentas)} detail="Ventas del período" icon={CircleDollarSign} />
         <MetricCard label="Utilidad operativa" value={formatCop(metrics.utilidadOperacional)} detail="Después de costos y gastos" icon={Wallet} />
         <MetricCard label="Utilidad neta" value={formatCop(metrics.utilidadNeta)} detail="Estimación después de impuestos" icon={ShieldCheck} />

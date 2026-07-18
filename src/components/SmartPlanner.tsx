@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Wand2, Loader2, Check, Clock, Zap, Battery, BatteryLow, Trash2, ChevronRight, Sunrise, AlertTriangle, Lightbulb, TrendingUp, Info, Lock } from 'lucide-react';
+import { Sparkles, Wand2, Loader2, Check, Clock, Zap, Battery, BatteryLow, Trash2, ChevronRight, Sunrise, AlertTriangle, Lightbulb, TrendingUp, Info, Lock, Edit2, X } from 'lucide-react';
 import { usePlanner } from '../hooks/usePlanner';
 import type { PlannerBlock, PlannerCategory, PlannerEnergy, PlannerTask } from '../lib/plannerService';
 import { AiDisclosure } from './AiDisclosure';
@@ -27,6 +27,13 @@ export default function SmartPlanner() {
   const [blockTitle, setBlockTitle] = useState('');
   const [blockStart, setBlockStart] = useState('09:00');
   const [blockEnd, setBlockEnd] = useState('10:00');
+  const [editingTask, setEditingTask] = useState<PlannerTask | null>(null);
+  const [taskTitle, setTaskTitle] = useState('');
+  const [taskDate, setTaskDate] = useState('');
+  const [taskTime, setTaskTime] = useState('');
+  const [taskEstimatedMinutes, setTaskEstimatedMinutes] = useState(30);
+  const [taskActualMinutes, setTaskActualMinutes] = useState<number | ''>('');
+  const [taskProtected, setTaskProtected] = useState(false);
 
   const submitDump = async () => {
     const text = dump.trim();
@@ -47,6 +54,31 @@ export default function SmartPlanner() {
     });
     setBlockTitle('');
     setShowBlockForm(false);
+  };
+
+  const openTaskEditor = (task: PlannerTask) => {
+    const linkedBlock = p.blocks.find((block) => block.task_ids?.includes(task.id));
+    setEditingTask(task);
+    setTaskTitle(task.title);
+    setTaskDate((linkedBlock?.starts_at || task.scheduled_for || p.date).slice(0, 10));
+    setTaskTime(linkedBlock ? new Date(linkedBlock.starts_at).toTimeString().slice(0, 5) : '');
+    setTaskEstimatedMinutes(task.estimated_minutes);
+    setTaskActualMinutes(task.actual_minutes ?? '');
+    setTaskProtected(linkedBlock?.protected ?? false);
+  };
+
+  const saveTaskEditor = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!editingTask || !taskTitle.trim() || taskEstimatedMinutes < 5) return;
+    await p.updateTask(editingTask.id, {
+      title: taskTitle,
+      estimated_minutes: taskEstimatedMinutes,
+      actual_minutes: taskActualMinutes === '' ? null : Number(taskActualMinutes),
+      scheduled_for: taskDate || null,
+      schedule_time: taskTime || null,
+      protected: taskProtected,
+    });
+    setEditingTask(null);
   };
 
   const openTasks = p.tasks.filter((t) => t.status !== 'done' && t.status !== 'cancelled');
@@ -194,12 +226,26 @@ export default function SmartPlanner() {
 
       {/* Tasks queue */}
       <section>
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-500">Bandeja de tareas · {openTasks.length}</h2>
+        <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500">Bandeja de tareas · {openTasks.length}</h2><span className="text-[11px] text-slate-400">Edita día, hora, duración y protección.</span></div>
+        {editingTask && (
+          <form onSubmit={saveTaskEditor} className="mb-3 rounded-2xl border border-blue-200 bg-blue-50 p-4">
+            <div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-sm font-semibold text-slate-900">Editar tarea</p><p className="text-[11px] text-slate-600">Una hora crea o actualiza su bloque de agenda.</p></div><button type="button" onClick={() => setEditingTask(null)} className="text-slate-500 hover:text-slate-900" aria-label="Cerrar edición"><X className="h-4 w-4" /></button></div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <label className="sm:col-span-2 text-xs text-slate-600">Tarea<input required value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" /></label>
+              <label className="text-xs text-slate-600">Día<input type="date" value={taskDate} onChange={(event) => setTaskDate(event.target.value)} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" /></label>
+              <label className="text-xs text-slate-600">Hora<input type="time" value={taskTime} onChange={(event) => setTaskTime(event.target.value)} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" /></label>
+              <label className="text-xs text-slate-600">Duración estimada (min)<input type="number" min="5" step="5" value={taskEstimatedMinutes} onChange={(event) => setTaskEstimatedMinutes(Number(event.target.value))} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" /></label>
+              <label className="text-xs text-slate-600">Tiempo dedicado (min)<input type="number" min="0" step="5" value={taskActualMinutes} onChange={(event) => setTaskActualMinutes(event.target.value === '' ? '' : Number(event.target.value))} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" /></label>
+              <label className="flex items-end gap-2 pb-2 text-xs text-slate-700"><input type="checkbox" checked={taskProtected} disabled={!taskTime} onChange={(event) => setTaskProtected(event.target.checked)} className="h-4 w-4 rounded border-blue-300 text-blue-600" /><span>Bloque protegido</span></label>
+              <div className="flex items-end gap-2"><button type="submit" disabled={p.busy === 'task'} className="rounded-lg bg-blue-700 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-50">{p.busy === 'task' ? 'Guardando…' : 'Guardar tarea'}</button><button type="button" onClick={() => setEditingTask(null)} className="rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Cancelar</button></div>
+            </div>
+          </form>
+        )}
         {openTasks.length === 0 ? (
           <p className="text-xs text-slate-400 italic">Bandeja vacía.</p>
         ) : (
           <ul className="space-y-1.5">
-            {openTasks.map((t) => <TaskRow key={t.id} task={t} onComplete={p.completeTask} onPostpone={p.postponeTask} onDelete={p.deleteTask} />)}
+            {openTasks.map((t) => <TaskRow key={t.id} task={t} isProtected={p.blocks.some((block) => block.task_ids?.includes(t.id) && block.protected)} onEdit={openTaskEditor} onComplete={p.completeTask} onPostpone={p.postponeTask} onDelete={p.deleteTask} />)}
           </ul>
         )}
       </section>
@@ -260,7 +306,7 @@ function BlockRow({ block, tasks, onComplete }: { block: PlannerBlock; tasks: Pl
   );
 }
 
-function TaskRow({ task, onComplete, onPostpone, onDelete }: { task: PlannerTask; onComplete: (id: string) => void; onPostpone: (id: string) => void; onDelete: (id: string) => void }) {
+function TaskRow({ task, isProtected, onEdit, onComplete, onPostpone, onDelete }: { task: PlannerTask; isProtected: boolean; onEdit: (task: PlannerTask) => void; onComplete: (id: string) => void; onPostpone: (id: string) => void; onDelete: (id: string) => void }) {
   const EIcon = energyIcon[task.energy_required];
   return (
     <li className="group flex items-center gap-2 rounded-xl border border-[var(--line)] bg-white px-3 py-2">
@@ -272,8 +318,10 @@ function TaskRow({ task, onComplete, onPostpone, onDelete }: { task: PlannerTask
       <span className="inline-flex items-center gap-1 text-[10px] text-slate-500"><EIcon className="h-3 w-3" /> {task.energy_required}</span>
       <span className="text-sm text-slate-800 flex-1 truncate">{task.title}</span>
       <span className="text-[10px] text-slate-400 inline-flex items-center gap-1"><Clock className="h-3 w-3" /> {task.estimated_minutes}m</span>
+      {isProtected && <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] text-amber-700"><Lock className="h-3 w-3" /> Protegido</span>}
       {task.deadline && <span className="text-[10px] text-amber-700 bg-amber-50 rounded-full px-2 py-0.5">⏰ {new Date(task.deadline).toLocaleDateString()}</span>}
       <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1">
+        <button onClick={() => onEdit(task)} title="Editar tarea" className="text-slate-400 hover:text-blue-700"><Edit2 className="h-3.5 w-3.5" /></button>
         <button onClick={() => onPostpone(task.id)} title="Postergar" className="text-[10px] text-slate-400 hover:text-slate-700 px-1.5 py-0.5 rounded"><ChevronRight className="h-3.5 w-3.5" /></button>
         <button onClick={() => onDelete(task.id)} title="Eliminar" className="text-slate-400 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
       </div>
