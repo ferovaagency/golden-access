@@ -33,6 +33,8 @@ import CustomerCRM from './components/CustomerCRM';
 import Home from './components/Home';
 import SmartPlanner from './components/SmartPlanner';
 import ReportsView from './components/ReportsView';
+import CommandPalette from './components/CommandPalette';
+import TopBar from './components/TopBar';
 
 import {
   Home as HomeIcon,
@@ -86,6 +88,7 @@ export default function App() {
   // Filter and view state
   const [selectedMonth, setSelectedMonth] = useState<string>('Todos');
   const [activeTab, setActiveTab] = useState<string>('home');
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>('modules');
   const [aiCollapsed, setAiCollapsed] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
