@@ -58,6 +58,7 @@ export interface PlannerBlock {
   ends_at: string;
   task_ids: string[];
   is_locked: boolean;
+  protected: boolean;
   source: string;
   notes: string | null;
 }
