@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import type { AppData } from '../types';
 import { calcularMétricasFinancieras } from '../lib/calculations';
 import { ArrowRight, TrendingUp, Wallet, Clock, Users, Sparkles, CalendarCheck, Target } from 'lucide-react';
+import { InsightsCard } from './SmartPlanner';
 
 interface Props {
   appData: AppData;
