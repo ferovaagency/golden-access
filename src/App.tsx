@@ -623,6 +623,7 @@ export default function App() {
                 <Home appData={appData} formatCop={formatCop} onNavigate={handleNavigate} userName={userName} />
               )}
               {activeTab === 'planner' && <SmartPlanner />}
+              {activeTab === 'reports' && user && <ReportsView user={user} />}
               {activeTab === 'dashboard' && (
                 <Dashboard data={appData} metrics={metrics} selectedMonth={selectedMonth} formatCop={formatCop} formatUsd={formatUsd} />
               )}
