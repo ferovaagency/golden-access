@@ -24,6 +24,7 @@ export default function ServiciosAdmin({
   const [srvNombre, setSrvNombre] = useState('');
   const [srvId, setSrvId] = useState('');
   const [srvCostoUnitario, setSrvCostoUnitario] = useState(0);
+  const [srvMargenPct, setSrvMargenPct] = useState(''); // vacío = sin margen propio, usa el 30% por defecto
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [confirmDeleteSrvId, setConfirmDeleteSrvId] = useState<string | null>(null);
 
@@ -32,6 +33,7 @@ export default function ServiciosAdmin({
     setSrvId(s.id);
     setSrvNombre(s.nombre);
     setSrvCostoUnitario(s.costo_unitario);
+    setSrvMargenPct(s.margen_objetivo != null ? String(Math.round(s.margen_objetivo * 100)) : '');
   };
 
   const handleCancelEdit = () => {
@@ -39,11 +41,14 @@ export default function ServiciosAdmin({
     setSrvId('');
     setSrvNombre('');
     setSrvCostoUnitario(0);
+    setSrvMargenPct('');
   };
 
   const handleCreateServicio = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!srvNombre.trim()) return;
+
+    const margenObjetivo = srvMargenPct.trim() === '' ? null : Number(srvMargenPct) / 100;
 
     if (editingServiceId) {
       // Mode Edit
@@ -53,6 +58,7 @@ export default function ServiciosAdmin({
             ...s,
             nombre: srvNombre.trim(),
             costo_unitario: Number(srvCostoUnitario),
+            margen_objetivo: margenObjetivo,
             descripcion: s.descripcion || `Línea de servicio general para ${srvNombre.trim()}`
           };
         }
@@ -74,6 +80,7 @@ export default function ServiciosAdmin({
         id: uniqueId,
         nombre: srvNombre.trim(),
         costo_unitario: Number(srvCostoUnitario),
+        margen_objetivo: margenObjetivo,
         descripcion: `Línea de servicio general para ${srvNombre.trim()}`
       };
 
@@ -84,6 +91,7 @@ export default function ServiciosAdmin({
       setSrvNombre('');
       setSrvId('');
       setSrvCostoUnitario(0);
+      setSrvMargenPct('');
     }
   };
 
@@ -194,7 +202,21 @@ export default function ServiciosAdmin({
               <p className="text-[10px] text-slate-400 mt-1">Costo de entrega de un desarrollador externo o aprovisionamiento técnico.</p>
             </div>
 
-            <button 
+            <div>
+              <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Margen objetivo (%) — opcional</label>
+              <input
+                type="number"
+                min="0"
+                max="99"
+                placeholder="Ej: 40"
+                value={srvMargenPct}
+                onChange={(e) => setSrvMargenPct(e.target.value)}
+                className="w-full bg-slate-50 text-slate-900 font-mono border border-slate-200 p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
+              />
+              <p className="text-[10px] text-slate-400 mt-1">Define el precio ideal sugerido en Equilibrio por Servicio. Cada servicio puede tener su propio %; si lo dejas vacío, se usa 30% por defecto.</p>
+            </div>
+
+            <button
               type="submit"
               className="w-full bg-blue-600 hover:bg-[#b09252] text-black font-semibold font-display py-3 rounded transition cursor-pointer"
             >
@@ -248,7 +270,12 @@ export default function ServiciosAdmin({
                     return (
                       <tr key={s.id} className={`hover:bg-white/[0.01]/70 transition ${isServiceEditing ? 'bg-blue-600/5 border-l-2 border-[#c9a961]' : ''}`}>
                         <td className="px-5 py-4 font-mono text-slate-500">{s.id}</td>
-                        <td className="px-5 py-4 font-semibold text-slate-900">{s.nombre}</td>
+                        <td className="px-5 py-4 font-semibold text-slate-900">
+                          {s.nombre}
+                          <span className="block text-[9px] font-normal text-slate-400">
+                            Margen objetivo: {s.margen_objetivo != null ? `${Math.round(s.margen_objetivo * 100)}%` : '30% (por defecto)'}
+                          </span>
+                        </td>
                         <td className="px-5 py-4 text-right font-mono text-slate-900">
                           {formatCop(stats.unitDirectCost)}
                           <span className="block text-[9px] text-slate-400">{stats.totalQty > 0 ? 'real según ventas' : 'estimado configurado'}</span>

@@ -356,7 +356,14 @@ export async function listContenidoPotencial(): Promise<ContenidoPotencial[]> {
 }
 
 export async function upsertContenidoPotencial(c: Partial<ContenidoPotencial> & { id?: string }): Promise<ContenidoPotencial> {
-  const { data, error } = await (supabase as any).from('crm_contenido_potencial').upsert(c).select('*').single();
+  // Un upsert con columnas parciales construye un INSERT antes de evaluar el
+  // ON CONFLICT, así que Postgres exige las columnas NOT NULL omitidas (como
+  // url_publicacion) aunque la fila ya exista y esto termine en un UPDATE. Con
+  // id ya sabemos que la fila existe, así que actualizamos directamente.
+  const query = c.id
+    ? (supabase as any).from('crm_contenido_potencial').update(c).eq('id', c.id)
+    : (supabase as any).from('crm_contenido_potencial').insert(c);
+  const { data, error } = await query.select('*').single();
   if (error) throw new Error(`[crmService] upsertContenidoPotencial: ${error.message}`);
   return data as ContenidoPotencial;
 }

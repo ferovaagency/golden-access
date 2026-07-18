@@ -47,24 +47,30 @@ function deterministicReply(input: {
   const actions: string[] = [];
   const facts: string[] = [];
 
+  let opener = '';
   if (/ingreso|margen|caja|finan|gasto|pago/.test(question)) {
-    facts.push(`Ventas registradas: ${money(overview.ventas_totales)}; egresos pagados: ${money(overview.egresos_pagados)}.`);
-    actions.push(negativeServices.length ? `Revisa ${negativeServices.length} servicio(s) con margen negativo en Finanzas → Por servicio.` : 'Compara ventas, gastos y cartera del mes en Finanzas operativas antes de comprometer nuevos pagos.');
+    opener = 'Vamos a lo financiero.';
+    facts.push(`Llevas ${money(overview.ventas_totales)} en ventas registradas y ${money(overview.egresos_pagados)} en egresos pagados.`);
+    actions.push(negativeServices.length ? `Le daría una mirada a ${negativeServices.length} servicio(s) que están con margen negativo — los encuentras en Finanzas → Por servicio.` : 'Antes de comprometer nuevos pagos, compara ventas, gastos y cartera del mes en Finanzas operativas.');
   } else if (/venta|crm|prospect|cliente|oportunidad|pipeline/.test(question)) {
-    facts.push(`Pipeline estimado: ${money(overview.pipeline_estimado)} en ${openOpportunities.length} oportunidades abiertas.`);
-    actions.push(missingFollowUp.length ? `Define la siguiente acción de ${missingFollowUp.length} oportunidad(es) que no tienen seguimiento.` : 'Prioriza hoy las oportunidades de mayor valor y agenda su próximo contacto.');
+    opener = 'Mirando tu pipeline:';
+    facts.push(`Tienes ${money(overview.pipeline_estimado)} en juego, repartidos en ${openOpportunities.length} oportunidades abiertas.`);
+    actions.push(missingFollowUp.length ? `${missingFollowUp.length} oportunidad(es) no tienen un siguiente paso definido — vale la pena cerrarles eso primero.` : 'Elige hoy las oportunidades de mayor valor y agenda su próximo contacto.');
   } else if (/tarea|planner|agenda|prioridad|hoy|semana/.test(question)) {
-    facts.push(`Tienes ${openTasks.length} tareas abiertas; ${urgentTasks.length} están en prioridad alta o urgente.`);
-    actions.push(urgentTasks.length ? `Abre Planner y bloquea tiempo para “${urgentTasks[0].title}”.` : 'Abre Planner y selecciona una tarea de impacto para tu primer bloque de foco.');
+    opener = 'Sobre tu día a día:';
+    facts.push(`Tienes ${openTasks.length} tarea(s) abiertas, y ${urgentTasks.length} de esas son de prioridad alta o urgente.`);
+    actions.push(urgentTasks.length ? `Yo empezaría bloqueando tiempo en el Planner para “${urgentTasks[0].title}”.` : 'Abre el Planner y elige una tarea de impacto real para tu primer bloque de foco.');
   } else {
-    facts.push(`Ventas: ${money(overview.ventas_totales)}; pipeline: ${money(overview.pipeline_estimado)}; tareas abiertas: ${openTasks.length}.`);
-    if (missingFollowUp.length) actions.push(`Completa el seguimiento de ${missingFollowUp.length} oportunidad(es) sin siguiente acción.`);
-    if (urgentTasks.length) actions.push(`Protege un bloque para “${urgentTasks[0].title}”.`);
-    if (!actions.length) actions.push('Revisa Blind Spots y elige una sola acción prioritaria para hoy.');
+    opener = 'Así te veo hoy:';
+    facts.push(`Ventas: ${money(overview.ventas_totales)}. Pipeline: ${money(overview.pipeline_estimado)}. Tareas abiertas: ${openTasks.length}.`);
+    if (missingFollowUp.length) actions.push(`Cierra el seguimiento de ${missingFollowUp.length} oportunidad(es) que se quedaron sin siguiente paso.`);
+    if (urgentTasks.length) actions.push(`Protege un bloque de tiempo para “${urgentTasks[0].title}”.`);
+    if (!actions.length) actions.push('Dale una pasada a Blind Spots y elige una sola cosa como prioridad de hoy.');
   }
 
-  if (!input.integrations?.connected) actions.push('Conecta Google Workspace en Configuración para sincronizar Calendar y Sheets.');
-  return `${facts.join(' ')}\n\nAcción recomendada:\n${actions.slice(0, 3).map((action, index) => `${index + 1}. ${action}`).join('\n')}`;
+  if (!input.integrations?.connected) actions.push('Cuando puedas, conecta Google Workspace en Configuración — así se sincronizan Calendar y Sheets automáticamente.');
+  const actionIntro = actions.length > 1 ? 'Yo por ahora me enfocaría en esto:' : 'Yo por ahora haría esto:';
+  return `${opener} ${facts.join(' ')}\n\n${actionIntro}\n${actions.slice(0, 3).map((action, index) => `${index + 1}. ${action}`).join('\n')}`;
 }
 
 async function trimStoredHistory(admin: ReturnType<typeof createClient>, userId: string) {

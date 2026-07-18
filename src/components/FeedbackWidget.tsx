@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { User } from '@supabase/supabase-js';
 import { MessageSquarePlus, X, CheckCircle2 } from 'lucide-react';
 import { submitFeedback, FeedbackTipo } from '../lib/feedbackService';
@@ -44,7 +45,7 @@ export default function FeedbackWidget({ user }: Props) {
         <MessageSquarePlus className="w-4 h-4" /> <span className="hidden md:inline">Reportar / Sugerir</span>
       </button>
 
-      {open && (
+      {open && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 p-4" onClick={close}>
           <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
@@ -97,7 +98,8 @@ export default function FeedbackWidget({ user }: Props) {
               </form>
             )}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );
