@@ -158,6 +158,41 @@ export default function EquilibrioServicio({
                       </div>
                     </div>
                   </div>
+
+                  {/* Precio ideal recomendado */}
+                  {(() => {
+                    const overheadUnit = totalQuantitySoldSrv > 0
+                      ? costoFijoAsignadoSrv / totalQuantitySoldSrv
+                      : costoFijoAsignadoSrv / Math.max(unidadesEquilibrioEstimadas, 1);
+                    const ideal = calcularPrecioIdeal(srv, overheadUnit);
+                    if (!ideal.precioIdeal) return null;
+                    const brechaHabitual = ideal.vsHabitual;
+                    return (
+                      <div className="border-t border-[#2a2620] pt-4 space-y-2">
+                        <h4 className="text-[10px] font-mono uppercase tracking-wider text-[#a39d8e] flex items-center gap-1.5">
+                          <Sparkles className="h-3 w-3 text-[#c9a961]" /> Precio Ideal Recomendado
+                        </h4>
+                        <div className="bg-[#c9a961]/5 border border-[#c9a961]/25 rounded p-3 space-y-1.5 font-mono text-[11px]">
+                          <div className="flex justify-between text-[#e8e3d8]">
+                            <span>Precio ideal (margen {(ideal.margenAplicado * 100).toFixed(0)}%):</span>
+                            <span className="font-display font-bold text-[#c9a961] text-base">{formatCop(ideal.precioIdeal)}</span>
+                          </div>
+                          <div className="text-[10px] text-[#8a8377]">{ideal.formulaHumana}</div>
+                          {srv.precio_habitual != null && brechaHabitual != null && (
+                            <div className="flex justify-between text-[#a39d8e] pt-1 border-t border-[#2a2620]/60">
+                              <span>vs precio habitual ({formatCop(srv.precio_habitual)}):</span>
+                              <span className={brechaHabitual > 0 ? 'text-[#c99a61]' : 'text-[#a8c98a]'}>
+                                {brechaHabitual > 0 ? '↑ subir ' : '↓ bajar '}{formatCop(Math.abs(brechaHabitual))}
+                              </span>
+                            </div>
+                          )}
+                          {ideal.notas.length > 0 && (
+                            <div className="text-[10px] text-[#c99a61] pt-1">{ideal.notas.join(' ')}</div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Footer note */}
