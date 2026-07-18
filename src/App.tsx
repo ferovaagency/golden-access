@@ -595,6 +595,7 @@ export default function App() {
 
       {/* MAIN CONTENT */}
       <main className="flex-1 min-w-0 overflow-y-auto">
+        <TopBar userId={user.id} onOpenPalette={() => setPaletteOpen(true)} onNavigate={handleNavigate} />
         {sheetsLoading && (
           <div className="bg-blue-50 border-b border-blue-100 text-blue-700 py-2 text-center text-xs font-semibold flex items-center justify-center gap-2">
             <Loader2 className="w-3.5 h-3.5 animate-spin" /> Guardando cambios…
