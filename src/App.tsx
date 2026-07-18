@@ -33,6 +33,8 @@ import CustomerCRM from './components/CustomerCRM';
 import Home from './components/Home';
 import SmartPlanner from './components/SmartPlanner';
 import ReportsView from './components/ReportsView';
+import CommandPalette from './components/CommandPalette';
+import TopBar from './components/TopBar';
 
 import {
   Home as HomeIcon,
@@ -86,6 +88,7 @@ export default function App() {
   // Filter and view state
   const [selectedMonth, setSelectedMonth] = useState<string>('Todos');
   const [activeTab, setActiveTab] = useState<string>('home');
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>('modules');
   const [aiCollapsed, setAiCollapsed] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -97,6 +100,18 @@ export default function App() {
   });
   useEffect(() => { localStorage.setItem('ferova.ai.collapsed', aiCollapsed ? '1' : '0'); }, [aiCollapsed]);
   useEffect(() => { localStorage.setItem('ferova.ai.width', String(aiWidth)); }, [aiWidth]);
+
+  // Global Cmd/Ctrl+K opens the command palette
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setPaletteOpen(o => !o);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
 
   // (TRM quick-edit was moved out of the shell; kept in Ajustes.)
@@ -592,6 +607,7 @@ export default function App() {
 
       {/* MAIN CONTENT */}
       <main className="flex-1 min-w-0 overflow-y-auto">
+        <TopBar userId={user.id} onOpenPalette={() => setPaletteOpen(true)} onNavigate={handleNavigate} />
         {sheetsLoading && (
           <div className="bg-blue-50 border-b border-blue-100 text-blue-700 py-2 text-center text-xs font-semibold flex items-center justify-center gap-2">
             <Loader2 className="w-3.5 h-3.5 animate-spin" /> Guardando cambios…
@@ -668,6 +684,16 @@ export default function App() {
 
       {/* RIGHT AI SIDEBAR */}
       <AISidebar user={user} collapsed={aiCollapsed} onToggle={() => setAiCollapsed((v) => !v)} width={aiWidth} onResize={setAiWidth} />
+
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        onNavigate={handleNavigate}
+        isTeam={isTeam}
+        hasFinance={!!modules.financiero}
+        onOpenAI={() => setAiCollapsed(false)}
+        onOpenNotifications={() => handleNavigate('home')}
+      />
     </div>
   );
 }
