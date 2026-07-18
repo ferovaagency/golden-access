@@ -1716,7 +1716,6 @@ export type Database = {
           ends_at: string
           external_id: string | null
           id: string
-          is_locked: boolean
           notes: string | null
           protected: boolean
           source: string
@@ -1732,7 +1731,6 @@ export type Database = {
           ends_at: string
           external_id?: string | null
           id?: string
-          is_locked?: boolean
           notes?: string | null
           protected?: boolean
           source?: string
@@ -1748,7 +1746,6 @@ export type Database = {
           ends_at?: string
           external_id?: string | null
           id?: string
-          is_locked?: boolean
           notes?: string | null
           protected?: boolean
           source?: string
@@ -2089,40 +2086,97 @@ export type Database = {
           },
         ]
       }
+      product_feedback: {
+        Row: {
+          admin_response: string | null
+          created_at: string
+          email: string | null
+          estado: string
+          id: string
+          mensaje: string
+          metadata: Json
+          resolved_at: string | null
+          resolved_by: string | null
+          tipo: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          admin_response?: string | null
+          created_at?: string
+          email?: string | null
+          estado?: string
+          id?: string
+          mensaje: string
+          metadata?: Json
+          resolved_at?: string | null
+          resolved_by?: string | null
+          tipo: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          admin_response?: string | null
+          created_at?: string
+          email?: string | null
+          estado?: string
+          id?: string
+          mensaje?: string
+          metadata?: Json
+          resolved_at?: string | null
+          resolved_by?: string | null
+          tipo?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       saas_plans: {
         Row: {
           activo: boolean
+          code: string | null
           created_at: string
+          currency: string
           descripcion: string | null
           id: string
           modulos: Json
           nombre: string
           orden: number
           precio_usd: number
+          price_cop_monthly: number | null
+          price_cop_yearly: number | null
           provisional: boolean
           updated_at: string
         }
         Insert: {
           activo?: boolean
+          code?: string | null
           created_at?: string
+          currency?: string
           descripcion?: string | null
           id: string
           modulos?: Json
           nombre: string
           orden?: number
           precio_usd?: number
+          price_cop_monthly?: number | null
+          price_cop_yearly?: number | null
           provisional?: boolean
           updated_at?: string
         }
         Update: {
           activo?: boolean
+          code?: string | null
           created_at?: string
+          currency?: string
           descripcion?: string | null
           id?: string
           modulos?: Json
           nombre?: string
           orden?: number
           precio_usd?: number
+          price_cop_monthly?: number | null
+          price_cop_yearly?: number | null
           provisional?: boolean
           updated_at?: string
         }

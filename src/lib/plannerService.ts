@@ -57,7 +57,7 @@ export interface PlannerBlock {
   starts_at: string;
   ends_at: string;
   task_ids: string[];
-  is_locked: boolean;
+  /** Único flag de protección. Cuando es true, el planificador IA no lo mueve. */
   protected: boolean;
   source: string;
   notes: string | null;
@@ -94,7 +94,6 @@ export interface CreatePlannerBlockInput {
   starts_at: string;
   ends_at: string;
   category?: PlannerCategory;
-  is_locked?: boolean;
   protected?: boolean;
   notes?: string | null;
 }
@@ -130,8 +129,7 @@ export const plannerService = {
       starts_at: input.starts_at,
       ends_at: input.ends_at,
       category: input.category ?? 'meetings',
-      is_locked: input.is_locked ?? true,
-      protected: input.protected ?? false,
+      protected: input.protected ?? true,
       notes: input.notes?.trim() || null,
       source: 'manual',
     });

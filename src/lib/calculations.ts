@@ -1,7 +1,21 @@
 import { Config, AppData, Cliente, Servicio, Herramienta, OtroGasto, Venta, Hora, Respaldo } from '../types';
+import type { FiscalProfile } from './fiscalProfileService';
 
 /**
- * Calculates Independent Contractor (Persona Natural) Social Security obligations
+ * FiscalContext identifica el país activo y decide si aplicar reglas tributarias
+ * colombianas (DIAN) o marcar los cálculos fiscales como "pendientes de
+ * configuración" para otros países. Nunca inventar impuestos fuera de CO.
+ */
+export type FiscalContext = Pick<FiscalProfile, 'country' | 'person_type' | 'regime'> | null | undefined;
+
+export function isColombiaFiscal(ctx: FiscalContext): boolean {
+  if (!ctx) return true; // default histórico: CO
+  return (ctx.country || 'CO').toUpperCase() === 'CO';
+}
+
+/**
+ * Calculates Independent Contractor (Persona Natural) Social Security obligations.
+ * Solo aplica en Colombia; para otros países devuelve ceros y `applies=false`.
  */
 export interface PrestacionesSociales {
   ibc: number;
@@ -9,16 +23,24 @@ export interface PrestacionesSociales {
   pension: number;
   totalPrestaciones: number;
   salarioNeto: number;
+  applies: boolean;
 }
 
-export function calcularPrestaciones(salarioPropuesto: number, smmlv: number): PrestacionesSociales {
+export function calcularPrestaciones(
+  salarioPropuesto: number,
+  smmlv: number,
+  ctx?: FiscalContext,
+): PrestacionesSociales {
+  if (!isColombiaFiscal(ctx)) {
+    return { ibc: 0, salud: 0, pension: 0, totalPrestaciones: 0, salarioNeto: salarioPropuesto, applies: false };
+  }
   const ibc = Math.max(salarioPropuesto * 0.40, smmlv);
   const salud = ibc * 0.125;
   const pension = ibc * 0.16;
   const totalPrestaciones = salud + pension;
   const salarioNeto = salarioPropuesto - totalPrestaciones;
 
-  return { ibc, salud, pension, totalPrestaciones, salarioNeto };
+  return { ibc, salud, pension, totalPrestaciones, salarioNeto, applies: true };
 }
 
 /**
@@ -116,14 +138,23 @@ export interface FinancialMetrics {
     Administrativo: number;
     Otros: number;
   };
+
+  /** true cuando las reglas tributarias colombianas se aplicaron. false para otros países. */
+  fiscalApplies: boolean;
+  fiscalCountry: string;
+  /** Mensaje humano cuando fiscalApplies=false, para renderizar "configuración pendiente". */
+  fiscalNotice: string | null;
 }
 
 export function calcularMétricasFinancieras(
   data: AppData,
-  selectedMonth: string // YYYY-MM or "Todos"
+  selectedMonth: string, // YYYY-MM or "Todos"
+  fiscal?: FiscalContext,
 ): FinancialMetrics {
   const { config, clientes, herramientas, otrosGastos, ventas, pagosEgresos = [] } = data;
   const { trm, smmlv, salario_propuesto } = config;
+  const isCO = isColombiaFiscal(fiscal);
+  const fiscalCountry = (fiscal?.country || 'CO').toUpperCase();
 
   // Filter sales and hours by selected period
   const isAll = selectedMonth === 'Todos';
@@ -189,18 +220,19 @@ export function calcularMétricasFinancieras(
   const utilidadOperacional = utilidadBruta - gastosOperativos;
   const utilidadAntesImpuestos = utilidadOperacional - salarioPropuesto;
 
-  // Renta estimation
-  // If annualized (meaning: our rate * 12) exceeds DIAN limit of 1090 UVT Rentable Tax Limit ($57.087.660)
-  const monthlySalaryAndAdminUtility = utilidadAntesImpuestos / activeMonthsCountScale;
-  const utilidadAnualizada = monthlySalaryAndAdminUtility * 12;
-  const topeNoPagaRenta = config.tope_no_paga_renta_uvt * config.uvt;
-  
-  let impuestoRentaAnual = 0;
-  if (utilidadAnualizada > topeNoPagaRenta) {
-    impuestoRentaAnual = (utilidadAnualizada - topeNoPagaRenta) * 0.19;
+  // Renta estimation — SOLO en Colombia. En otros países no se estima impuesto
+  // hasta que el usuario configure su régimen local.
+  let impuestoRentaEstimado = 0;
+  if (isCO) {
+    const monthlySalaryAndAdminUtility = utilidadAntesImpuestos / activeMonthsCountScale;
+    const utilidadAnualizada = monthlySalaryAndAdminUtility * 12;
+    const topeNoPagaRenta = config.tope_no_paga_renta_uvt * config.uvt;
+    let impuestoRentaAnual = 0;
+    if (utilidadAnualizada > topeNoPagaRenta) {
+      impuestoRentaAnual = (utilidadAnualizada - topeNoPagaRenta) * 0.19;
+    }
+    impuestoRentaEstimado = (impuestoRentaAnual / 12) * activeMonthsCountScale;
   }
-  
-  const impuestoRentaEstimado = (impuestoRentaAnual / 12) * activeMonthsCountScale;
   const utilidadNeta = utilidadAntesImpuestos - impuestoRentaEstimado;
 
   // 4. Break even point
@@ -209,7 +241,11 @@ export function calcularMétricasFinancieras(
   const puntoEquilibrioVentas = margenContribucion > 0 ? (totalGastosFijos / margenContribucion) : 0;
 
   // Social security summary of proposed salary
-  const prestaciones = calcularPrestaciones(salario_propuesto, smmlv);
+  const prestaciones = calcularPrestaciones(salario_propuesto, smmlv, fiscal);
+
+  const fiscalNotice = isCO
+    ? null
+    : `Los cálculos tributarios de ${fiscalCountry} aún no están configurados. Impuestos, retenciones y prestaciones se muestran en cero hasta cargar reglas locales.`;
 
   return {
     totalVentas,
@@ -229,7 +265,10 @@ export function calcularMétricasFinancieras(
     activeMonthsCountScale,
     salariosRealesPagados,
     totalEgresosReales,
-    egresosRealesPorCategoria
+    egresosRealesPorCategoria,
+    fiscalApplies: isCO,
+    fiscalCountry,
+    fiscalNotice,
   };
 }
 
