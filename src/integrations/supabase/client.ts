@@ -6,8 +6,15 @@ import type { Database } from './types';
 // Publishable keys are intentionally safe to expose in a browser. This
 // fallback keeps the Lovable deployment operational while it does not inject
 // VITE_* values into the built client. Never place a secret/service-role key here.
-const DEFAULT_SUPABASE_URL = 'https://rrjyfyihdnbvbtdxygyp.supabase.co';
-const DEFAULT_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_b5j2ar7b9fz2XNr95JwYCQ_Eyasabcn';
+//
+// This MUST always match the Supabase project Lovable Cloud actually manages
+// for this app (confirmed by extracting it directly from a working preview
+// build). A previous version of this fallback pointed at an abandoned
+// external Supabase project and silently sent all traffic there whenever a
+// deploy didn't inject VITE_SUPABASE_URL -- that's what broke Google login
+// on the custom domain while the Lovable preview kept working fine.
+const DEFAULT_SUPABASE_URL = 'https://izkhdzzyqfopjveaagwk.supabase.co';
+const DEFAULT_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_xqtnBMKSFDZkMX1gN-N33A_s3ivXEwI';
 
 export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL;
 export const SUPABASE_PUBLISHABLE_KEY =
