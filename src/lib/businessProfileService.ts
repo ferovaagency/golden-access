@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { db } from './db';
 
 export interface BusinessProfile {
   user_id: string;
@@ -14,23 +14,22 @@ export interface BusinessProfile {
 }
 
 export async function getBusinessProfile(userId: string): Promise<BusinessProfile | null> {
-  const { data, error } = await (supabase as any)
-    .from('business_profile')
+  const { data, error } = await db<BusinessProfile>('business_profile')
     .select('*')
     .eq('user_id', userId)
     .maybeSingle();
   if (error) throw new Error(`[businessProfileService] getBusinessProfile: ${error.message}`);
-  return data as BusinessProfile | null;
+  return data;
 }
 
 export async function upsertBusinessProfile(userId: string, patch: Partial<BusinessProfile>): Promise<BusinessProfile> {
-  const { data, error } = await (supabase as any)
-    .from('business_profile')
+  const { data, error } = await db<BusinessProfile>('business_profile')
     .upsert({ ...patch, user_id: userId, updated_at: new Date().toISOString() })
     .select('*')
     .single();
   if (error) throw new Error(`[businessProfileService] upsertBusinessProfile: ${error.message}`);
-  return data as BusinessProfile;
+  if (!data) throw new Error('[businessProfileService] upsertBusinessProfile: sin datos de respuesta.');
+  return data;
 }
 
 export async function skipOnboarding(userId: string): Promise<BusinessProfile> {

@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { db } from './db';
 import type { PlanId } from './planService';
 
 export interface AdminCustomer {
@@ -22,9 +23,12 @@ export interface FeedbackItem {
   created_at: string;
 }
 
+interface TeamMemberRoleRow {
+  rol: string | null;
+}
+
 export async function getMyTeamRole(email: string): Promise<string | null> {
-  const { data, error } = await (supabase as any)
-    .from('crm_team_members')
+  const { data, error } = await db<TeamMemberRoleRow>('crm_team_members')
     .select('rol')
     .eq('email', email)
     .maybeSingle();

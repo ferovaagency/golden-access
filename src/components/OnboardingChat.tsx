@@ -4,6 +4,7 @@ import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, type UIMessage } from 'ai';
 import { Sparkles, CheckCircle2, Circle, PenLine } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { db } from '../lib/db';
 import { getSupabaseFunctionUrl } from '../integrations/supabase/client';
 import { BusinessProfile, getBusinessProfile, upsertBusinessProfile, skipOnboarding } from '../lib/businessProfileService';
 import { Conversation, ConversationContent } from './ai-elements/conversation';
@@ -31,6 +32,14 @@ function getText(message: UIMessage): string {
   return (message.parts || []).map((part: any) => part.type === 'text' ? part.text : '').join('');
 }
 
+interface OnboardingMessageRow {
+  id: string;
+  role: string;
+  parts: unknown;
+  content: string | null;
+  created_at: string;
+}
+
 export default function OnboardingChat({ user, onDone }: Props) {
   const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
   const [initialMessages, setInitialMessages] = useState<UIMessage[]>([]);
@@ -56,15 +65,14 @@ export default function OnboardingChat({ user, onDone }: Props) {
     let cancelled = false;
     (async () => {
       const [{ data }] = await Promise.all([
-        (supabase as any)
-          .from('onboarding_messages')
+        db<OnboardingMessageRow>('onboarding_messages')
           .select('id, role, parts, content, created_at')
           .eq('user_id', user.id)
           .order('created_at', { ascending: true }),
         refreshProfile(),
       ]);
       if (cancelled) return;
-      const mapped = (data || []).map((m: any) => ({
+      const mapped = (data ?? []).map((m) => ({
         id: m.id,
         role: m.role,
         parts: Array.isArray(m.parts) && m.parts.length ? m.parts : [{ type: 'text', text: m.content || '' }],

@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { db } from './db';
 
 export interface ModuleOverride {
   id: string;
@@ -8,13 +8,13 @@ export interface ModuleOverride {
 }
 
 export async function listMyOverrides(userId: string): Promise<ModuleOverride[]> {
-  const { data, error } = await (supabase as any).from('admin_module_overrides').select('*').eq('user_id', userId);
+  const { data, error } = await db<ModuleOverride>('admin_module_overrides').select('*').eq('user_id', userId);
   if (error) throw error;
-  return (data || []) as ModuleOverride[];
+  return data ?? [];
 }
 
 export async function upsertOverride(userId: string, module: string, enabled: boolean): Promise<void> {
-  const { error } = await (supabase as any).from('admin_module_overrides').upsert(
+  const { error } = await db('admin_module_overrides').upsert(
     { user_id: userId, module, enabled, updated_at: new Date().toISOString() },
     { onConflict: 'user_id,module' },
   );

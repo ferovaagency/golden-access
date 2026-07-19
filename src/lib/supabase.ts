@@ -11,6 +11,7 @@ import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../integrations/supabase/client';
 import { lovable } from '../integrations/lovable/index';
 import type { PlanId } from './planService';
+import { db } from './db';
 
 export { supabase };
 export type AuthUser = User;
@@ -161,8 +162,7 @@ export const checkSubscription = async (userId: string): Promise<boolean> => {
 // separado de crm_team_members: esa tabla es el allowlist del equipo interno
 // de Ferova y no debe mezclarse con el acceso de un cliente real.
 export const resolveAccess = async (userId: string, email: string): Promise<{ hasPaid: boolean; plan: PlanId }> => {
-  const { data: sub, error: subError } = await (supabase as any)
-    .from('user_subscriptions')
+  const { data: sub, error: subError } = await db<{ id: string; status: string; expires_at: string | null; plan: PlanId | null }>('user_subscriptions')
     .select('id, status, expires_at, plan')
     .eq('user_id', userId)
     .eq('status', 'active')
@@ -175,8 +175,7 @@ export const resolveAccess = async (userId: string, email: string): Promise<{ ha
   }
 
   if (email) {
-    const { data: courtesy, error: courtesyError } = await (supabase as any)
-      .from('courtesy_access_grants')
+    const { data: courtesy, error: courtesyError } = await db<{ plan: PlanId | null }>('courtesy_access_grants')
       .select('plan')
       .eq('email', email)
       .maybeSingle();

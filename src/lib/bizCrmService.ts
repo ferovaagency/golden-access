@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { db } from './db';
 
 // CRM y Ventas propio de cada cliente pyme -- multi-tenant, filtrado siempre
 // por user_id. Independiente del CRM interno de Ferova (crmService.ts).
@@ -21,28 +21,26 @@ export interface Contacto {
 }
 
 export async function listContactos(userId: string): Promise<Contacto[]> {
-  const { data, error } = await (supabase as any)
-    .from('biz_crm_contactos')
+  const { data, error } = await db<Contacto>('biz_crm_contactos')
     .select('*')
     .eq('user_id', userId)
     .order('updated_at', { ascending: false });
   if (error) throw new Error(`[bizCrmService] listContactos: ${error.message}`);
-  return data as Contacto[];
+  return data ?? [];
 }
 
 export async function upsertContacto(userId: string, contacto: Partial<Contacto> & { id: string }): Promise<Contacto> {
-  const { data, error } = await (supabase as any)
-    .from('biz_crm_contactos')
+  const { data, error } = await db<Contacto & { user_id: string }>('biz_crm_contactos')
     .upsert({ ...contacto, user_id: userId, updated_at: new Date().toISOString() })
     .select('*')
     .single();
   if (error) throw new Error(`[bizCrmService] upsertContacto: ${error.message}`);
-  return data as Contacto;
+  if (!data) throw new Error('[bizCrmService] upsertContacto: sin datos de respuesta.');
+  return data;
 }
 
 export async function deleteContacto(userId: string, id: string): Promise<void> {
-  const { error } = await (supabase as any)
-    .from('biz_crm_contactos')
+  const { error } = await db('biz_crm_contactos')
     .delete()
     .eq('user_id', userId)
     .eq('id', id);

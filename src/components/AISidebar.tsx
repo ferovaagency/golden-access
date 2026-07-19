@@ -4,6 +4,7 @@ import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, type UIMessage } from 'ai';
 import { Sparkles, PanelRightClose, PanelRightOpen, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { db } from '../lib/db';
 import { getSupabaseFunctionUrl, SUPABASE_PUBLISHABLE_KEY } from '../integrations/supabase/client';
 import { Conversation, ConversationContent } from './ai-elements/conversation';
 import { Message, MessageContent, MessageResponse } from './ai-elements/message';
@@ -24,6 +25,14 @@ function getText(message: UIMessage): string {
   return (message.parts || []).map((p: any) => p.type === 'text' ? p.text : '').join('');
 }
 
+interface AssistantMessageRow {
+  id: string;
+  role: string;
+  parts: unknown;
+  content: string | null;
+  created_at: string;
+}
+
 export default function AISidebar({ user, collapsed, onToggle, width, onResize, currentArea }: Props) {
   const [initialMessages, setInitialMessages] = useState<UIMessage[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -34,14 +43,13 @@ export default function AISidebar({ user, collapsed, onToggle, width, onResize, 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await (supabase as any)
-        .from('business_assistant_messages')
+      const { data } = await db<AssistantMessageRow>('business_assistant_messages')
         .select('id, role, parts, content, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(80);
       if (cancelled) return;
-      const mapped = (data || []).reverse().map((m: any) => ({
+      const mapped = (data ?? []).reverse().map((m) => ({
         id: m.id,
         role: m.role,
         parts: Array.isArray(m.parts) && m.parts.length ? m.parts : [{ type: 'text', text: m.content || '' }],
@@ -122,8 +130,7 @@ export default function AISidebar({ user, collapsed, onToggle, width, onResize, 
   };
 
   const clearHistory = async () => {
-    const { error: deleteError } = await (supabase as any)
-      .from('business_assistant_messages')
+    const { error: deleteError } = await db('business_assistant_messages')
       .delete()
       .eq('user_id', user.id);
     if (deleteError) return;

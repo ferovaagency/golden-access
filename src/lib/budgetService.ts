@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { db } from './db';
 import type { AppData } from '../types';
 
 export type BudgetOrigin = 'auto' | 'manual';
@@ -13,19 +13,20 @@ export interface BudgetLine {
   notas?: string | null;
 }
 
+type BudgetLineRow = Omit<BudgetLine, 'monto_presupuestado'> & { monto_presupuestado: number | string };
+
 export async function listBudget(userId: string, periodo: string): Promise<BudgetLine[]> {
-  const { data, error } = await (supabase as any)
-    .from('finance_budget_monthly')
+  const { data, error } = await db<BudgetLineRow>('finance_budget_monthly')
     .select('*')
     .eq('user_id', userId)
     .eq('periodo', periodo)
     .order('categoria');
   if (error) throw error;
-  return (data || []).map((b: any) => ({ ...b, monto_presupuestado: Number(b.monto_presupuestado) }));
+  return (data ?? []).map((b) => ({ ...b, monto_presupuestado: Number(b.monto_presupuestado) }));
 }
 
 export async function upsertBudgetLine(userId: string, line: Omit<BudgetLine, 'id'>): Promise<void> {
-  const { error } = await (supabase as any).from('finance_budget_monthly').upsert(
+  const { error } = await db<BudgetLineRow & { user_id: string; updated_at: string }>('finance_budget_monthly').upsert(
     { user_id: userId, ...line, updated_at: new Date().toISOString() },
     { onConflict: 'user_id,periodo,categoria' },
   );
@@ -33,7 +34,7 @@ export async function upsertBudgetLine(userId: string, line: Omit<BudgetLine, 'i
 }
 
 export async function deleteBudgetLine(id: string): Promise<void> {
-  const { error } = await (supabase as any).from('finance_budget_monthly').delete().eq('id', id);
+  const { error } = await db('finance_budget_monthly').delete().eq('id', id);
   if (error) throw error;
 }
 

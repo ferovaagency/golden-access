@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { db } from './db';
 
 export interface Campaign {
   id: string;
@@ -34,7 +34,18 @@ export interface CampaignMetrics {
   notas?: string | null;
 }
 
-const toNum = (r: any): CampaignMetrics => ({
+type CampaignMetricsRow = Omit<CampaignMetrics, 'inversion' | 'impresiones' | 'clics' | 'ticket_promedio' | 'costo_entrega' | 'comision' | 'costo_profesional' | 'ltv'> & {
+  inversion: number | string;
+  impresiones: number | string;
+  clics: number | string;
+  ticket_promedio: number | string;
+  costo_entrega: number | string;
+  comision: number | string;
+  costo_profesional: number | string | null;
+  ltv: number | string;
+};
+
+const toNum = (r: CampaignMetricsRow): CampaignMetrics => ({
   ...r,
   inversion: Number(r.inversion),
   impresiones: Number(r.impresiones),
@@ -47,36 +58,39 @@ const toNum = (r: any): CampaignMetrics => ({
 });
 
 export async function listCampaigns(userId: string): Promise<Campaign[]> {
-  const { data, error } = await (supabase as any).from('marketing_campaigns').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+  const { data, error } = await db<Campaign>('marketing_campaigns').select('*').eq('user_id', userId).order('created_at', { ascending: false });
   if (error) throw error;
-  return (data || []) as Campaign[];
+  return data ?? [];
 }
 
 export async function listMetrics(userId: string): Promise<CampaignMetrics[]> {
-  const { data, error } = await (supabase as any).from('marketing_campaign_metrics').select('*').eq('user_id', userId).order('periodo', { ascending: false });
+  const { data, error } = await db<CampaignMetricsRow>('marketing_campaign_metrics').select('*').eq('user_id', userId).order('periodo', { ascending: false });
   if (error) throw error;
-  return (data || []).map(toNum);
+  return (data ?? []).map(toNum);
 }
 
 export async function createCampaign(userId: string, input: Omit<Campaign, 'id'>): Promise<Campaign> {
-  const { data, error } = await (supabase as any).from('marketing_campaigns').insert({ user_id: userId, ...input }).select('*').single();
+  const { data, error } = await db<Campaign & { user_id: string }>('marketing_campaigns').insert({ user_id: userId, ...input }).select('*').single();
   if (error) throw error;
-  return data as Campaign;
+  if (!data) throw new Error('No se pudo crear la campaña.');
+  return data;
 }
 
 export async function deleteCampaign(id: string): Promise<void> {
-  const { error } = await (supabase as any).from('marketing_campaigns').delete().eq('id', id);
+  const { error } = await db('marketing_campaigns').delete().eq('id', id);
   if (error) throw error;
 }
 
 export async function upsertMetrics(userId: string, m: Omit<CampaignMetrics, 'id'> & { id?: string }): Promise<CampaignMetrics> {
-  const payload: any = { user_id: userId, ...m };
+  const payload = { user_id: userId, ...m };
   if (m.id) {
-    const { data, error } = await (supabase as any).from('marketing_campaign_metrics').update(payload).eq('id', m.id).select('*').single();
+    const { data, error } = await db<CampaignMetricsRow & { user_id: string }>('marketing_campaign_metrics').update(payload).eq('id', m.id).select('*').single();
     if (error) throw error;
+    if (!data) throw new Error('No se pudo actualizar la métrica.');
     return toNum(data);
   }
-  const { data, error } = await (supabase as any).from('marketing_campaign_metrics').insert(payload).select('*').single();
+  const { data, error } = await db<CampaignMetricsRow & { user_id: string }>('marketing_campaign_metrics').insert(payload).select('*').single();
   if (error) throw error;
+  if (!data) throw new Error('No se pudo crear la métrica.');
   return toNum(data);
 }

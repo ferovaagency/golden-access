@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Herramienta, OtroGasto, Servicio, Cliente, Config } from '../types';
 import { convertToCop, calcularPrestaciones, calcularCostosHerramientas, isColombiaFiscal, type FiscalContext } from '../lib/calculations';
-import { Trash2, ShieldAlert, Plus, HelpCircle, PenTool, LayoutGrid, Edit2, X, Check, Paperclip, Info } from 'lucide-react';
+import { ShieldAlert, Plus, HelpCircle, PenTool, LayoutGrid, Edit2, Paperclip, Info } from 'lucide-react';
 import ComprobanteUpload from './ComprobanteUpload';
+import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
 
 interface GastosAdminProps {
   herramientas: Herramienta[];
@@ -530,35 +531,13 @@ export default function GastosAdmin({
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
                           )}
-                          {confirmDeleteToolId === h.id ? (
-                            <div className="flex items-center gap-1 bg-[#1a1110] border border-[#c97a61]/30 p-1 rounded">
-                              <button 
-                                type="button"
-                                onClick={() => handleDeleteTool(h.id)}
-                                title="Confirmar eliminación"
-                                className="text-[#a8c98a] hover:text-[#bde89b] font-bold text-xs px-1 cursor-pointer"
-                              >
-                                <Check className="w-3.5 h-3.5" />
-                              </button>
-                              <button 
-                                type="button"
-                                onClick={() => setConfirmDeleteToolId(null)}
-                                title="Cancelar"
-                                className="text-[#c97a61] hover:text-[#e08970] font-bold text-xs px-1 cursor-pointer"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          ) : (
-                            <button 
-                              type="button"
-                              onClick={() => setConfirmDeleteToolId(h.id)}
-                              title="Eliminar herramienta"
-                              className="bg-[#0f0e0c]/40 text-[#c97a61] hover:text-[#e08970] p-1.5 transition rounded-lg hover:bg-[#c97a61]/10 cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
+                          <InlineDeleteConfirm
+                            confirming={confirmDeleteToolId === h.id}
+                            onRequestConfirm={() => setConfirmDeleteToolId(h.id)}
+                            onConfirm={() => handleDeleteTool(h.id)}
+                            onCancel={() => setConfirmDeleteToolId(null)}
+                            requestTitle="Eliminar herramienta"
+                          />
                         </div>
                       </td>
                     </tr>
@@ -711,35 +690,14 @@ export default function GastosAdmin({
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
                             
-                            {confirmDeleteOtroId === g.id ? (
-                              <div className="flex items-center gap-1 bg-[#1a1110] border border-[#c97a61]/30 p-1 rounded">
-                                <button 
-                                  type="button"
-                                  onClick={() => handleDeleteOtro(g.id)}
-                                  title="Confirmar"
-                                  className="text-[#a8c98a] hover:text-[#bde89b] font-bold text-xs px-1 cursor-pointer items-center justify-center flex"
-                                >
-                                  <Check className="w-3 h-3" />
-                                </button>
-                                <button 
-                                  type="button"
-                                  onClick={() => setConfirmDeleteOtroId(null)}
-                                  title="Cancelar"
-                                  className="text-[#c97a61] hover:text-[#e08970] font-bold text-xs px-1 cursor-pointer items-center justify-center flex"
-                                >
-                                  <X className="w-3 h-3" />
-                                </button>
-                              </div>
-                            ) : (
-                              <button 
-                                type="button"
-                                onClick={() => setConfirmDeleteOtroId(g.id)}
-                                title="Eliminar gasto"
-                                className="text-[#c97a61] hover:text-[#e08970] p-1 rounded cursor-pointer"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            )}
+                            <InlineDeleteConfirm
+                              confirming={confirmDeleteOtroId === g.id}
+                              onRequestConfirm={() => setConfirmDeleteOtroId(g.id)}
+                              onConfirm={() => handleDeleteOtro(g.id)}
+                              onCancel={() => setConfirmDeleteOtroId(null)}
+                              requestTitle="Eliminar gasto"
+                              size="sm"
+                            />
                           </div>
                         </td>
                       </tr>

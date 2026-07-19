@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { db } from './db';
 
 export type PayableStatus = 'pendiente' | 'pagada' | 'vencida' | 'cancelada';
 
@@ -20,29 +20,31 @@ export interface Payable {
   notas?: string | null;
 }
 
+type PayableRow = Omit<Payable, 'valor' | 'monto_pagado'> & { valor: number | string; monto_pagado: number | string | null };
+
 export async function listPayables(userId: string): Promise<Payable[]> {
-  const { data, error } = await (supabase as any)
-    .from('finance_payables')
+  const { data, error } = await db<PayableRow>('finance_payables')
     .select('*')
     .eq('user_id', userId)
     .order('vencimiento', { ascending: true, nullsFirst: false });
   if (error) throw error;
-  return (data || []).map((p: any) => ({ ...p, valor: Number(p.valor), monto_pagado: p.monto_pagado != null ? Number(p.monto_pagado) : null }));
+  return (data ?? []).map((p) => ({ ...p, valor: Number(p.valor), monto_pagado: p.monto_pagado != null ? Number(p.monto_pagado) : null }));
 }
 
 export async function createPayable(userId: string, input: Omit<Payable, 'id'>): Promise<Payable> {
-  const { data, error } = await (supabase as any).from('finance_payables').insert({ user_id: userId, ...input }).select('*').single();
+  const { data, error } = await db<Payable & { user_id: string }>('finance_payables').insert({ user_id: userId, ...input }).select('*').single();
   if (error) throw error;
-  return data as Payable;
+  if (!data) throw new Error('No se pudo crear la cuenta por pagar.');
+  return data;
 }
 
 export async function updatePayable(id: string, patch: Partial<Omit<Payable, 'id'>>): Promise<void> {
-  const { error } = await (supabase as any).from('finance_payables').update(patch).eq('id', id);
+  const { error } = await db<Payable>('finance_payables').update(patch).eq('id', id);
   if (error) throw error;
 }
 
 export async function deletePayable(id: string): Promise<void> {
-  const { error } = await (supabase as any).from('finance_payables').delete().eq('id', id);
+  const { error } = await db('finance_payables').delete().eq('id', id);
   if (error) throw error;
 }
 

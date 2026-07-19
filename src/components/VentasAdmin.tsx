@@ -2,17 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Venta, Cliente, Servicio, Config } from '../types';
 import { convertToCop } from '../lib/calculations';
 import { useToast, errMsg } from './ui/toast';
-import { 
-  Plus, 
-  Trash2, 
-  CheckCircle2, 
-  AlertCircle, 
-  Download, 
-  Search, 
+import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
+import {
+  Plus,
+  CheckCircle2,
+  AlertCircle,
+  Download,
+  Search,
   HelpCircle,
   FileSpreadsheet,
-  Check,
-  X,
   Edit2
 } from 'lucide-react';
 
@@ -770,32 +768,14 @@ export default function VentasAdmin({
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
 
-                              {confirmDeleteId === v.id ? (
-                                <div className="flex items-center justify-end gap-1 bg-[#1a1110] border border-[#c97a61]/30 p-1 rounded max-w-[70px] ml-auto">
-                                  <button 
-                                    onClick={() => handleDelete(v.id)}
-                                    title="Confirmar"
-                                    className="text-[#a8c98a] hover:text-[#bde89b] font-bold text-xs px-1 cursor-pointer"
-                                  >
-                                    <Check className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button 
-                                    onClick={() => setConfirmDeleteId(null)}
-                                    title="Cancelar"
-                                    className="text-[#c97a61] hover:text-[#e08970] font-bold text-xs px-1 cursor-pointer"
-                                  >
-                                    <X className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              ) : (
-                                <button 
-                                  onClick={() => setConfirmDeleteId(v.id)}
-                                  className="text-[#c97a61] hover:text-[#e08970] p-1.5 transition rounded-lg hover:bg-[#c97a61]/10 bg-[#0f0e0c]/40 cursor-pointer"
-                                  title="Borrar entrada"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              )}
+                              <InlineDeleteConfirm
+                                confirming={confirmDeleteId === v.id}
+                                onRequestConfirm={() => setConfirmDeleteId(v.id)}
+                                onConfirm={() => handleDelete(v.id)}
+                                onCancel={() => setConfirmDeleteId(null)}
+                                className="justify-end max-w-[70px] ml-auto"
+                                requestTitle="Borrar entrada"
+                              />
                             </div>
                           </td>
                         </tr>

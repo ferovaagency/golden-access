@@ -1,11 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import type { User } from '@supabase/supabase-js';
-import { initAuth, googleSignIn, linkGoogleIdentity, logout, getAccessToken, resolveAccess } from './lib/supabase';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
+import { googleSignIn, linkGoogleIdentity, getAccessToken } from './lib/supabase';
 import { backupAppDataToSheets, importSheetByUrl, syncExpenseDocumentsToSheets } from './lib/sheetsService';
 import * as financeService from './lib/financeService';
-import { isTeamMember } from './lib/crmService';
-import { getModules, type ModuleOverrides, PlanId } from './lib/planService';
-import { listMyOverrides } from './lib/moduleOverridesService';
+import { useAuthAndAccess } from './hooks/useAuthAndAccess';
 import { getBusinessProfile, BusinessProfile } from './lib/businessProfileService';
 import PlanOnboarding from './components/PlanOnboarding';
 import ProductTour from './components/ProductTour';
@@ -16,32 +13,35 @@ import { useFiscalProfile } from './hooks/useFiscalProfile';
 import { isSupabaseConfigured, supabaseConfigurationError } from './integrations/supabase/client';
 import { trackUserEvent } from './lib/userEngagementService';
 import { useToast, errMsg } from './components/ui/toast';
-
-// Unified Premium View Components
-import Home from './components/Home';
-import ClientesAdmin from './components/ClientesAdmin';
-import ServiciosAdmin from './components/ServiciosAdmin';
-import VentasAdmin from './components/VentasAdmin';
-import HorasAdmin from './components/HorasAdmin';
-import GastosAdmin from './components/GastosAdmin';
-import EquilibrioGlobal from './components/EquilibrioGlobal';
-import EquilibrioServicio from './components/EquilibrioServicio';
-import ImpuestosIva from './components/ImpuestosIva';
-import AlertasTributarias from './components/AlertasTributarias';
-import ConfigAdmin from './components/ConfigAdmin';
-import ProyectosAdmin from './components/ProyectosAdmin';
-import PagosEgresosAdmin from './components/PagosEgresosAdmin';
+import { LoadingState } from './components/ui/AsyncState';
 import AuthScreen from './components/AuthScreen';
 import Paywall from './components/Paywall';
-import AdminCRM, { CRMTab } from './components/AdminCRM';
+import type { CRMTab } from './components/AdminCRM';
 import AISidebar from './components/AISidebar';
-import CustomerCRM from './components/CustomerCRM';
-import SmartPlanner from './components/SmartPlanner';
-import ReportsView from './components/ReportsView';
 import CommandPalette from './components/CommandPalette';
 import TopBar from './components/TopBar';
-import FinanceOperativa from './components/FinanceOperativa';
-import MarketingROI from './components/MarketingROI';
+
+// Tab content: only one of these renders at a time (driven by activeTab), so
+// each is its own lazy chunk instead of bloating the main App bundle.
+const Home = lazy(() => import('./components/Home'));
+const ClientesAdmin = lazy(() => import('./components/ClientesAdmin'));
+const ServiciosAdmin = lazy(() => import('./components/ServiciosAdmin'));
+const VentasAdmin = lazy(() => import('./components/VentasAdmin'));
+const HorasAdmin = lazy(() => import('./components/HorasAdmin'));
+const GastosAdmin = lazy(() => import('./components/GastosAdmin'));
+const EquilibrioGlobal = lazy(() => import('./components/EquilibrioGlobal'));
+const EquilibrioServicio = lazy(() => import('./components/EquilibrioServicio'));
+const ImpuestosIva = lazy(() => import('./components/ImpuestosIva'));
+const AlertasTributarias = lazy(() => import('./components/AlertasTributarias'));
+const ConfigAdmin = lazy(() => import('./components/ConfigAdmin'));
+const ProyectosAdmin = lazy(() => import('./components/ProyectosAdmin'));
+const PagosEgresosAdmin = lazy(() => import('./components/PagosEgresosAdmin'));
+const AdminCRM = lazy(() => import('./components/AdminCRM'));
+const CustomerCRM = lazy(() => import('./components/CustomerCRM'));
+const SmartPlanner = lazy(() => import('./components/SmartPlanner'));
+const ReportsView = lazy(() => import('./components/ReportsView'));
+const FinanceOperativa = lazy(() => import('./components/FinanceOperativa'));
+const MarketingROI = lazy(() => import('./components/MarketingROI'));
 
 import {
   FolderKanban,
@@ -77,18 +77,12 @@ export default function App() {
     );
   }
 
-  const [user, setUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [hasPaid, setHasPaid] = useState(false);
-  const [isTeam, setIsTeam] = useState(false);
+  const {
+    user, authLoading, hasPaid, isTeam, plan, checkingPayment, modules,
+    setHasPaid, handleLogin: authLogin, handleSignOut,
+  } = useAuthAndAccess();
   const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
-  const [plan, setPlan] = useState<PlanId>('financiero');
-  const [checkingPayment, setCheckingPayment] = useState(false);
-  const [moduleOverrides, setModuleOverrides] = useState<ModuleOverrides>({});
-  const modules = React.useMemo(() => getModules(plan, isTeam, moduleOverrides), [plan, isTeam, moduleOverrides]);
 
-
-  
   // Finance data state (Supabase)
   const [sheetsLoading, setSheetsLoading] = useState(false);
   const [appData, setAppData] = useState<AppData | null>(null);
@@ -145,44 +139,14 @@ export default function App() {
   // (TRM quick-edit was moved out of the shell; kept in Ajustes.)
 
 
+  // Auth/access/session state lives in useAuthAndAccess (Fase 2 del roadmap).
+  // Finance data is a separate concern: bootstrap it whenever we have a
+  // logged-in user with paid access and haven't loaded it yet -- covers both
+  // the initial login and the Paywall's onPaid transition uniformly.
   useEffect(() => {
-    // Listen for Auth events (Supabase)
-    const unsubscribe = initAuth(
-      async (fUser: User) => {
-        setUser(fUser);
-        setAuthLoading(false);
-        setCheckingPayment(true);
-        const [access, team] = await Promise.all([
-          resolveAccess(fUser.id, fUser.email || ''),
-          isTeamMember(fUser.email || '').catch(() => false),
-        ]);
-        const overrides = await listMyOverrides(fUser.id).catch((error) => {
-          console.error('[App] module overrides error:', error);
-          return [];
-        });
-        setHasPaid(access.hasPaid || team);
-        setPlan(access.plan);
-        setIsTeam(team);
-        setModuleOverrides(Object.fromEntries(overrides.map((override) => [override.module, override.enabled])) as ModuleOverrides);
-        setCheckingPayment(false);
-        if (access.hasPaid || team) {
-          bootstrapFinanceData(fUser.id);
-        }
-      },
-      () => {
-        setUser(null);
-        setHasPaid(false);
-        setIsTeam(false);
-        setPlan('financiero');
-        setModuleOverrides({});
-        setAuthLoading(false);
-        setAppData(null);
-      }
-    );
-
-
-    return () => unsubscribe();
-  }, []);
+    if (user && hasPaid && appData === null) bootstrapFinanceData(user.id);
+    if (!user) setAppData(null);
+  }, [user, hasPaid]);
 
   // Si el cliente no tiene el módulo Financiero (plan solo "CRM y Ventas"),
   // ninguna de estas pestañas existe para él -- redirige a su módulo real.
@@ -196,21 +160,8 @@ export default function App() {
   }, [appData, modules.financiero, modules.crm_ventas, activeTab]);
 
   const handleLogin = async () => {
-    try {
-      setErrorMsg(null);
-      await googleSignIn();
-    } catch (err: any) {
-      console.error('Login error:', err);
-      setErrorMsg(`Fallo al autenticar: ${errMsg(err)}`);
-    }
-  };
-
-  const handleSignOut = async () => {
-    try {
-      await logout();
-    } catch (err) {
-      console.error('Signout error:', err);
-    }
+    setErrorMsg(null);
+    await authLogin((message) => setErrorMsg(`Fallo al autenticar: ${message}`));
   };
 
   // Load finance data from Supabase (source of truth) on login / refresh
@@ -466,10 +417,7 @@ export default function App() {
     return (
       <Paywall
         user={user}
-        onPaid={async () => {
-          setHasPaid(true);
-          bootstrapFinanceData(user.id);
-        }}
+        onPaid={() => setHasPaid(true)}
       />
     );
   }
@@ -864,7 +812,7 @@ export default function App() {
           )}
 
           {isReady && metrics && appData && (
-            <>
+            <Suspense fallback={<LoadingState label="Cargando módulo…" />}>
               {activeTab === 'planner' && <SmartPlanner />}
               {activeTab === 'reports' && user && <ReportsView user={user} />}
               {activeTab === 'finops' && <FinanceOperativa user={user} appData={appData} formatCop={formatCop} />}
@@ -915,7 +863,7 @@ export default function App() {
               {isTeam && activeTab.startsWith('crm-') && (
                 <AdminCRM user={user} embedded tab={activeTab.replace('crm-', '') as CRMTab} onTabChange={(t) => setActiveTab(`crm-${t}`)} />
               )}
-            </>
+            </Suspense>
           )}
         </div>
       </main>

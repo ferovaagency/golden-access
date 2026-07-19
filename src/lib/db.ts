@@ -12,7 +12,9 @@
  *   // data: AccountRow[] | null, error tipado.
  */
 
-import { supabase } from './supabase';
+// Import the raw client directly (not from ./supabase) to avoid a circular
+// dependency: ./supabase itself uses db() for a couple of queries.
+import { supabase } from '../integrations/supabase/client';
 import type { PostgrestError } from '@supabase/supabase-js';
 
 // Interface mínima que refleja lo que efectivamente usamos del builder.
@@ -35,7 +37,7 @@ export interface TableQuery<TRow> extends PromiseLike<{ data: TRow[] | null; err
   lte: (col: string, val: unknown) => TableQuery<TRow>;
   is: (col: string, val: unknown) => TableQuery<TRow>;
   ilike: (col: string, pattern: string) => TableQuery<TRow>;
-  order: (col: string, opts?: { ascending?: boolean }) => TableQuery<TRow>;
+  order: (col: string, opts?: { ascending?: boolean; nullsFirst?: boolean }) => TableQuery<TRow>;
   limit: (n: number) => TableQuery<TRow>;
   range: (from: number, to: number) => TableQuery<TRow>;
   maybeSingle: () => PromiseLike<{ data: TRow | null; error: PostgrestError | null }>;

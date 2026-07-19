@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Hora, Cliente, Servicio, Config, AppData } from '../types';
 import { FinancialMetrics, calcularProductividadClientes, calcularProductividadServicios } from '../lib/calculations';
-import { Clock, Plus, Trash2, Shield, Settings, Sliders, Check, X } from 'lucide-react';
+import { Clock, Plus, Shield, Settings, Sliders } from 'lucide-react';
+import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
 
 interface HorasAdminProps {
   horas: Hora[];
@@ -445,31 +446,13 @@ export default function HorasAdmin({
                         <td className="px-5 py-3 font-mono text-[#c9a961] font-semibold">{h.horas.toFixed(2)} hs</td>
                         <td className="px-5 py-3 text-[#a39d8e] max-w-xs truncate">{h.descripcion}</td>
                         <td className="px-5 py-3 text-right">
-                          {confirmDeleteId === h.id ? (
-                            <div className="flex items-center justify-end gap-1 bg-[#1a1110] border border-[#c97a61]/30 p-1 rounded max-w-[70px] ml-auto">
-                              <button 
-                                onClick={() => handleDeleteHora(h.id)}
-                                title="Confirmar"
-                                className="text-[#a8c98a] hover:text-[#bde89b] font-bold text-xs px-1 cursor-pointer"
-                              >
-                                <Check className="w-3.5 h-3.5" />
-                              </button>
-                              <button 
-                                onClick={() => setConfirmDeleteId(null)}
-                                title="Cancelar"
-                                className="text-[#c97a61] hover:text-[#e08970] font-bold text-xs px-1 cursor-pointer"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          ) : (
-                            <button 
-                              onClick={() => setConfirmDeleteId(h.id)}
-                              className="bg-[#0f0e0c]/40 text-[#c97a61] hover:text-[#e08970] p-1.5 transition rounded-lg hover:bg-[#c97a61]/10 cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
+                          <InlineDeleteConfirm
+                            confirming={confirmDeleteId === h.id}
+                            onRequestConfirm={() => setConfirmDeleteId(h.id)}
+                            onConfirm={() => handleDeleteHora(h.id)}
+                            onCancel={() => setConfirmDeleteId(null)}
+                            className="justify-end max-w-[70px] ml-auto"
+                          />
                         </td>
                       </tr>
                     ))

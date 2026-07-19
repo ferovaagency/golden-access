@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Servicio, Venta, Hora, Config } from '../types';
 import { convertToCop } from '../lib/calculations';
-import { Plus, Trash2, Tag, Percent, Clock, Briefcase, Edit2, Check, X } from 'lucide-react';
+import { Plus, Tag, Percent, Clock, Briefcase, Edit2 } from 'lucide-react';
 import { useToast, errMsg } from './ui/toast';
+import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
 
 interface ServiciosAdminProps {
   servicios: Servicio[];
@@ -308,32 +309,13 @@ export default function ServiciosAdmin({
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
-                            {confirmDeleteSrvId === s.id ? (
-                              <div className="flex items-center gap-1 bg-[#1a1110] border border-[#c97a61]/30 p-1 rounded">
-                                <button 
-                                  onClick={() => handleDeleteServicio(s.id)}
-                                  title="Confirmar eliminación"
-                                  className="text-[#a8c98a] hover:text-[#bde89b] font-bold text-xs px-1 cursor-pointer"
-                                >
-                                  <Check className="w-3.5 h-3.5" />
-                                </button>
-                                <button 
-                                  onClick={() => setConfirmDeleteSrvId(null)}
-                                  title="Cancelar"
-                                  className="text-[#c97a61] hover:text-[#e08970] font-bold text-xs px-1 cursor-pointer"
-                                >
-                                  <X className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            ) : (
-                              <button 
-                                onClick={() => setConfirmDeleteSrvId(s.id)}
-                                title="Eliminar servicio"
-                                className="bg-[#0f0e0c]/40 text-[#c97a61] hover:text-[#e08970] p-1.5 transition rounded-lg hover:bg-[#c97a61]/10 cursor-pointer"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            )}
+                            <InlineDeleteConfirm
+                              confirming={confirmDeleteSrvId === s.id}
+                              onRequestConfirm={() => setConfirmDeleteSrvId(s.id)}
+                              onConfirm={() => handleDeleteServicio(s.id)}
+                              onCancel={() => setConfirmDeleteSrvId(null)}
+                              requestTitle="Eliminar servicio"
+                            />
                           </div>
                         </td>
                       </tr>

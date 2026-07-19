@@ -1,7 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Bell, AlertTriangle, TrendingDown, Zap, CheckCircle2, X } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { db } from '../lib/db';
 import { listMyNotifications, markNotificationRead } from '../lib/userEngagementService';
+
+interface BlindspotRow {
+  id: string;
+  title: string;
+  detail: string | null;
+  urgency: 'low' | 'medium' | 'high' | 'critical';
+  category: string | null;
+  advice: string | null;
+  created_at: string;
+  resolved: boolean;
+}
 
 type Notif = {
   id: string;
@@ -35,15 +46,14 @@ export default function NotificationsBell({ userId, onNavigate }: Props) {
     if (!userId) return;
     let cancelled = false;
     (async () => {
-      const [{ data }, personal] = await Promise.all([(supabase as any)
-        .from('business_blindspots')
+      const [{ data }, personal] = await Promise.all([db<BlindspotRow>('business_blindspots')
         .select('id, title, detail, urgency, category, advice, created_at, resolved')
         .eq('user_id', userId)
         .eq('resolved', false)
         .order('created_at', { ascending: false })
         .limit(20), listMyNotifications(userId).catch(() => [])]);
       if (cancelled) return;
-      const blindspots = ((data as any[]) || []).map(r => ({
+      const blindspots = (data ?? []).map(r => ({
         id: r.id,
         title: r.title,
         detail: r.detail,

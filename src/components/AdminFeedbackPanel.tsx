@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { db } from '../lib/db';
 import { Loader2, MessageSquare, Bug, Lightbulb, HelpCircle, Send, Users } from 'lucide-react';
 import { listCustomers, type AdminCustomer } from '../lib/adminService';
 import { sendUserNotification } from '../lib/userEngagementService';
@@ -36,14 +37,14 @@ export default function AdminFeedbackPanel() {
     try {
       const [f, ev, customerRows] = await Promise.all([
         supabase.functions.invoke('admin-list-feedback'),
-        (supabase as any).from('saas_user_events').select('module, event_type, created_at, user_id').order('created_at', { ascending: false }).limit(500),
+        db<EventRow>('saas_user_events').select('module, event_type, created_at, user_id').order('created_at', { ascending: false }).limit(500),
         listCustomers().catch(() => []),
       ]);
       if (f.error) throw f.error;
       if ((f.data as any)?.ok === false) throw new Error((f.data as any).message);
       setFeedback(((f.data as any).feedback || []) as FeedbackRow[]);
       if (ev.error) throw ev.error;
-      setEvents((ev.data || []) as EventRow[]);
+      setEvents(ev.data ?? []);
       setCustomers(customerRows);
       setError(null);
     } catch (e) {
