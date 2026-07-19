@@ -81,6 +81,7 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
   const [hasPaid, setHasPaid] = useState(false);
   const [isTeam, setIsTeam] = useState(false);
+  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
   const [plan, setPlan] = useState<PlanId>('financiero');
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [moduleOverrides, setModuleOverrides] = useState<ModuleOverrides>({});
