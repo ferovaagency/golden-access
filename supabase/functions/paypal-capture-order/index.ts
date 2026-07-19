@@ -96,13 +96,13 @@ Deno.serve(async (req: Request) => {
     }
 
     const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const { error: insertErr } = await adminClient.from("user_subscriptions").insert({
+    const { error: insertErr } = await adminClient.from("user_subscriptions").upsert({
       user_id: userId,
       status: "active",
       provider: "paypal",
       provider_order_id: orderId,
       amount_usd: capturedAmount,
-    });
+    }, { onConflict: "provider,provider_order_id", ignoreDuplicates: true });
     if (insertErr) {
       return new Response(JSON.stringify({ ok: false, message: `Error guardando suscripcion: ${insertErr.message}` }), { status: 500 });
     }

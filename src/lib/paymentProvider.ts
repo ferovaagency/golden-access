@@ -1,5 +1,14 @@
 import { supabase } from './supabase';
 
+// Paddle's client-side token is meant to ship in the browser bundle (same
+// role as a Stripe publishable key, not a secret) -- safe to default here
+// when the Lovable build doesn't inject VITE_PADDLE_CLIENT_TOKEN.
+const DEFAULT_PADDLE_CLIENT_TOKEN = 'live_69ecb06c95173c17cb5475e1a2b';
+
+function paddleClientToken(): string | undefined {
+  return import.meta.env.VITE_PADDLE_CLIENT_TOKEN?.trim() || DEFAULT_PADDLE_CLIENT_TOKEN;
+}
+
 export type PaymentProviderStatus = 'ready' | 'awaiting_configuration' | 'unavailable';
 
 export interface CheckoutIntentResult {
@@ -41,7 +50,7 @@ function loadPaddle(): Promise<PaddleJs> {
 
 /** Only the public Paddle token belongs in the browser bundle. */
 export function getPaddleStatus(): PaymentProviderStatus {
-  return import.meta.env.VITE_PADDLE_CLIENT_TOKEN?.startsWith('live_') ? 'ready' : 'awaiting_configuration';
+  return paddleClientToken()?.startsWith('live_') ? 'ready' : 'awaiting_configuration';
 }
 
 /** Creates a server-side transaction for the current authenticated user. */
@@ -60,7 +69,7 @@ export async function createPaddleCheckoutIntent(planCode: string): Promise<Chec
 }
 
 export async function openPaddleCheckout(transactionId: string): Promise<CheckoutResult> {
-  const token = import.meta.env.VITE_PADDLE_CLIENT_TOKEN;
+  const token = paddleClientToken();
   if (getPaddleStatus() !== 'ready' || !token) {
     return { status: 'awaiting_configuration', message: 'Paddle todavia no esta configurado para este entorno.' };
   }

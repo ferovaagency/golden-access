@@ -9,6 +9,14 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const PAYPAL_IPN_ENV = (Deno.env.get("PAYPAL_ENV") || "live").toLowerCase();
+// Optional but recommended: without these, IPN authenticity is verified
+// (the notification really came from PayPal) but not that it was paid to
+// OUR account, in OUR currency, for at least the expected amount -- someone
+// could otherwise replay a genuine-but-unrelated IPN of their own with a
+// forged 'custom' field pointing at another user's account.
+const PAYPAL_RECEIVER_EMAIL = (Deno.env.get("PAYPAL_RECEIVER_EMAIL") || "").trim().toLowerCase();
+const PAYPAL_EXPECTED_CURRENCY = (Deno.env.get("PAYPAL_EXPECTED_CURRENCY") || "USD").toUpperCase();
+const PAYPAL_MIN_AMOUNT_USD = Number(Deno.env.get("PAYPAL_EXPECTED_AMOUNT_USD") || "0") || 0;
 
 const IPN_VERIFY_URL = PAYPAL_IPN_ENV === "sandbox"
   ? "https://ipnpb.sandbox.paypal.com/cgi-bin/webscr"
@@ -43,6 +51,8 @@ Deno.serve(async (req: Request) => {
     const userId = params.get("custom") || "";
     const txnId = params.get("txn_id") || params.get("subscr_id") || null;
     const amount = Number(params.get("mc_gross") || params.get("amount") || 0) || null;
+    const receiverEmail = (params.get("receiver_email") || params.get("business") || "").trim().toLowerCase();
+    const currency = (params.get("mc_currency") || "").toUpperCase();
 
     console.log("[paypal-ipn] verified event:", { txnType, paymentStatus, userId, txnId });
 
@@ -51,16 +61,37 @@ Deno.serve(async (req: Request) => {
       return new Response("ok (no custom field)", { status: 200 });
     }
 
+    const isActiveEvent = ACTIVE_TXN_TYPES.has(txnType) || paymentStatus === "Completed";
+
+    if (isActiveEvent) {
+      if (PAYPAL_RECEIVER_EMAIL && receiverEmail !== PAYPAL_RECEIVER_EMAIL) {
+        console.warn("[paypal-ipn] receiver_email mismatch, ignoring:", receiverEmail);
+        return new Response("ignored (receiver mismatch)", { status: 200 });
+      }
+      if (!PAYPAL_RECEIVER_EMAIL) console.warn("[paypal-ipn] PAYPAL_RECEIVER_EMAIL no configurado -- validando sin chequear receptor.");
+      if (currency && currency !== PAYPAL_EXPECTED_CURRENCY) {
+        console.warn("[paypal-ipn] currency mismatch, ignoring:", currency);
+        return new Response("ignored (currency mismatch)", { status: 200 });
+      }
+      if (PAYPAL_MIN_AMOUNT_USD > 0 && (amount ?? 0) < PAYPAL_MIN_AMOUNT_USD) {
+        console.warn("[paypal-ipn] amount below expected minimum, ignoring:", amount);
+        return new Response("ignored (amount below minimum)", { status: 200 });
+      }
+    }
+
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    if (ACTIVE_TXN_TYPES.has(txnType) || paymentStatus === "Completed") {
-      await admin.from("user_subscriptions").insert({
+    if (isActiveEvent) {
+      // upsert + ignoreDuplicates: PayPal redelivers IPNs (that's normal, not
+      // an edge case), so the same txn_id must not create a second row.
+      const { error: upsertErr } = await admin.from("user_subscriptions").upsert({
         user_id: userId,
         status: "active",
         provider: "paypal",
         provider_order_id: txnId,
         amount_usd: amount,
-      });
+      }, { onConflict: "provider,provider_order_id", ignoreDuplicates: true });
+      if (upsertErr) console.error("[paypal-ipn] upsert error:", upsertErr);
     } else if (CANCEL_TXN_TYPES.has(txnType) || paymentStatus === "Denied" || paymentStatus === "Failed") {
       await admin.from("user_subscriptions").update({ status: "cancelled" }).eq("user_id", userId).eq("status", "active");
     }
