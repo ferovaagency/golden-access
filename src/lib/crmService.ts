@@ -1,4 +1,5 @@
 import { supabase, getAccessToken } from './supabase';
+import { db } from './db';
 
 async function functionErrorMessage(error: any, fallback: string): Promise<Error> {
   const response = error?.context;
@@ -126,8 +127,7 @@ export async function isTeamMember(email: string): Promise<boolean> {
 }
 
 export async function getMyNotificationPhone(email: string): Promise<string | null> {
-  const { data, error } = await (supabase as any)
-    .from('crm_team_members')
+  const { data, error } = await db<{ telefono_notificaciones: string | null }>('crm_team_members')
     .select('telefono_notificaciones')
     .eq('email', email)
     .maybeSingle();
@@ -156,12 +156,12 @@ export async function upsertOportunidad(o: Partial<Oportunidad> & { id?: string 
   // State changes only send { id, estado }. An upsert treats that as a new
   // row unless every required field is included, so use UPDATE for existing
   // opportunities and reserve INSERT for newly created prospects.
-  const query = o.id
-    ? (supabase as any).from('crm_oportunidades').update(payload).eq('id', o.id)
-    : (supabase as any).from('crm_oportunidades').insert(payload);
+  const table = db<Oportunidad>('crm_oportunidades');
+  const query = o.id ? table.update(payload).eq('id', o.id) : table.insert(payload);
   const { data, error } = await query.select('*').single();
   if (error) throw new Error(`[crmService] upsertOportunidad: ${error.message}`);
-  return data as Oportunidad;
+  if (!data) throw new Error('[crmService] upsertOportunidad: sin datos de respuesta.');
+  return data;
 }
 
 export async function deleteOportunidad(id: string): Promise<void> {
@@ -194,9 +194,10 @@ export async function listCitas(): Promise<CitaDiagnostico[]> {
 }
 
 export async function upsertCita(c: Partial<CitaDiagnostico> & { id?: string }): Promise<CitaDiagnostico> {
-  const { data, error } = await (supabase as any).from('crm_citas_diagnostico').upsert(c).select('*').single();
+  const { data, error } = await db<CitaDiagnostico>('crm_citas_diagnostico').upsert(c).select('*').single();
   if (error) throw new Error(`[crmService] upsertCita: ${error.message}`);
-  return data as CitaDiagnostico;
+  if (!data) throw new Error('[crmService] upsertCita: sin datos de respuesta.');
+  return data;
 }
 
 export async function bookCita(payload: {
@@ -265,23 +266,25 @@ export interface RedditPost {
 export interface AcquisitionChannel { id: string; slug: string; label: string; color: string; active: boolean; }
 
 export async function listAcquisitionChannels(): Promise<AcquisitionChannel[]> {
-  const { data, error } = await (supabase as any).from('crm_acquisition_channels').select('*').order('label');
+  const { data, error } = await db<AcquisitionChannel>('crm_acquisition_channels').select('*').order('label');
   if (error) throw new Error(`[crmService] listAcquisitionChannels: ${error.message}`);
-  return (data || []) as AcquisitionChannel[];
+  return data ?? [];
 }
 
 export async function createAcquisitionChannel(label: string): Promise<AcquisitionChannel> {
   const slug = label.trim().toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
   if (!slug) throw new Error('Escribe un nombre válido para el canal.');
-  const { data, error } = await (supabase as any).from('crm_acquisition_channels').insert({ slug, label: label.trim() }).select('*').single();
+  const { data, error } = await db<AcquisitionChannel>('crm_acquisition_channels').insert({ slug, label: label.trim() }).select('*').single();
   if (error) throw new Error(`[crmService] createAcquisitionChannel: ${error.message}`);
-  return data as AcquisitionChannel;
+  if (!data) throw new Error('[crmService] createAcquisitionChannel: sin datos de respuesta.');
+  return data;
 }
 
 export async function updateAcquisitionChannel(id: string, patch: Partial<Pick<AcquisitionChannel, 'label' | 'color' | 'active'>>): Promise<AcquisitionChannel> {
-  const { data, error } = await (supabase as any).from('crm_acquisition_channels').update(patch).eq('id', id).select('*').single();
+  const { data, error } = await db<AcquisitionChannel>('crm_acquisition_channels').update(patch).eq('id', id).select('*').single();
   if (error) throw new Error(`[crmService] updateAcquisitionChannel: ${error.message}`);
-  return data as AcquisitionChannel;
+  if (!data) throw new Error('[crmService] updateAcquisitionChannel: sin datos de respuesta.');
+  return data;
 }
 
 export interface LinkedInSearchResult {
@@ -381,12 +384,12 @@ export async function upsertContenidoPotencial(c: Partial<ContenidoPotencial> & 
   // ON CONFLICT, así que Postgres exige las columnas NOT NULL omitidas (como
   // url_publicacion) aunque la fila ya exista y esto termine en un UPDATE. Con
   // id ya sabemos que la fila existe, así que actualizamos directamente.
-  const query = c.id
-    ? (supabase as any).from('crm_contenido_potencial').update(c).eq('id', c.id)
-    : (supabase as any).from('crm_contenido_potencial').insert(c);
+  const table = db<ContenidoPotencial>('crm_contenido_potencial');
+  const query = c.id ? table.update(c).eq('id', c.id) : table.insert(c);
   const { data, error } = await query.select('*').single();
   if (error) throw new Error(`[crmService] upsertContenidoPotencial: ${error.message}`);
-  return data as ContenidoPotencial;
+  if (!data) throw new Error('[crmService] upsertContenidoPotencial: sin datos de respuesta.');
+  return data;
 }
 
 // ============================================================
@@ -456,12 +459,11 @@ export async function addKnowledge(content: string, source?: string): Promise<vo
 }
 
 export async function getWhatsappInstance(): Promise<WhatsappInstance | null> {
-  const { data, error } = await (supabase as any)
-    .from('crm_whatsapp_instances')
+  const { data, error } = await db<WhatsappInstance>('crm_whatsapp_instances')
     .select('*')
     .maybeSingle();
   if (error) throw new Error(`[crmService] getWhatsappInstance: ${error.message}`);
-  return data as WhatsappInstance | null;
+  return data;
 }
 
 export async function connectWhatsappInstance(): Promise<WhatsappInstance> {
@@ -506,37 +508,35 @@ export interface ReviewSource {
 }
 
 export async function listReviewSources(): Promise<ReviewSource[]> {
-  const { data, error } = await (supabase as any)
-    .from('crm_review_sources')
+  const { data, error } = await db<ReviewSource>('crm_review_sources')
     .select('*')
     .order('plataforma')
     .order('nombre');
   if (error) throw new Error(`[crmService] listReviewSources: ${error.message}`);
-  return data as ReviewSource[];
+  return data ?? [];
 }
 
 export async function upsertReviewSource(source: Partial<ReviewSource> & Pick<ReviewSource, 'plataforma' | 'nombre' | 'profile_url'>): Promise<ReviewSource> {
-  const { data, error } = await (supabase as any)
-    .from('crm_review_sources')
+  const { data, error } = await db<ReviewSource>('crm_review_sources')
     .upsert({ ...source, updated_at: new Date().toISOString() })
     .select('*')
     .single();
   if (error) throw new Error(`[crmService] upsertReviewSource: ${error.message}`);
-  return data as ReviewSource;
+  if (!data) throw new Error('[crmService] upsertReviewSource: sin datos de respuesta.');
+  return data;
 }
 
 export async function deleteReviewSource(id: string): Promise<void> {
-  const { error } = await (supabase as any).from('crm_review_sources').delete().eq('id', id);
+  const { error } = await db('crm_review_sources').delete().eq('id', id);
   if (error) throw new Error(`[crmService] deleteReviewSource: ${error.message}`);
 }
 
 export async function listResenas(): Promise<Resena[]> {
-  const { data, error } = await (supabase as any)
-    .from('crm_resenas')
+  const { data, error } = await db<Resena>('crm_resenas')
     .select('*')
     .order('detectada_en', { ascending: false });
   if (error) throw new Error(`[crmService] listResenas: ${error.message}`);
-  return data as Resena[];
+  return data ?? [];
 }
 
 export async function scanResenas(days = 30): Promise<{ inserted: number; scanned: number; already_saved: number; skipped: number }> {
@@ -558,6 +558,6 @@ export async function scanSortlistLeads(days = 30): Promise<{ inserted: number; 
 }
 
 export async function markResenaRespondida(id: string, respondida: boolean): Promise<void> {
-  const { error } = await (supabase as any).from('crm_resenas').update({ respondida }).eq('id', id);
+  const { error } = await db('crm_resenas').update({ respondida }).eq('id', id);
   if (error) throw new Error(`[crmService] markResenaRespondida: ${error.message}`);
 }
