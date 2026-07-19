@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { Loader2, MessageSquare, Bug, Lightbulb, HelpCircle, Send, Users } from 'lucide-react';
 import { listCustomers, type AdminCustomer } from '../lib/adminService';
 import { sendUserNotification } from '../lib/userEngagementService';
+import { useToast, errMsg } from './ui/toast';
 
 type FeedbackRow = {
   id: string;
@@ -16,6 +17,7 @@ type FeedbackRow = {
 type EventRow = { module: string; event_type: string; created_at: string; user_id: string | null };
 
 export default function AdminFeedbackPanel() {
+  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
   const [feedback, setFeedback] = useState<FeedbackRow[]>([]);
   const [events, setEvents] = useState<EventRow[]>([]);
   const [customers, setCustomers] = useState<AdminCustomer[]>([]);
@@ -57,7 +59,7 @@ export default function AdminFeedbackPanel() {
     const prev = feedback;
     setFeedback((f) => f.map((x) => (x.id === id ? { ...x, estado } : x)));
     const { error } = await supabase.functions.invoke('admin-update-feedback-status', { body: { id, estado } });
-    if (error) { setFeedback(prev); alert(error.message); }
+    if (error) { setFeedback(prev); toastErr(error.message); }
   };
 
   const filtered = useMemo(
@@ -106,9 +108,9 @@ export default function AdminFeedbackPanel() {
     try {
       await sendUserNotification(targetUserId, notificationTitle.trim(), notificationMessage.trim(), notificationTab);
       setNotificationMessage('');
-      alert('Notificación enviada al panel del usuario.');
+      toastErr('Notificación enviada al panel del usuario.');
     } catch (error: any) {
-      alert(`No se pudo enviar: ${error?.message || error}`);
+      toastErr(`No se pudo enviar: ${error?.message || error}`);
     } finally {
       setSending(false);
     }

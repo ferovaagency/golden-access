@@ -5,6 +5,7 @@ import { buildFinancialStatement, financialStatementCsv } from '../lib/financial
 import { getAccessToken } from '../lib/supabase';
 import { syncFinancialStatementToSheets } from '../lib/sheetsService';
 import { useFiscalProfile } from '../hooks/useFiscalProfile';
+import { useToast, errMsg } from './ui/toast';
 
 interface Props {
   userId: string;
@@ -16,6 +17,7 @@ interface Props {
 const buttonClass = 'inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50';
 
 export default function FinancialStatement({ userId, appData, period, formatCop }: Props) {
+  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
   const { profile } = useFiscalProfile(userId);
   const [syncing, setSyncing] = useState(false);
   const statement = useMemo(() => buildFinancialStatement(appData, period, profile), [appData, period, profile]);
@@ -36,22 +38,22 @@ export default function FinancialStatement({ userId, appData, period, formatCop 
     const html = `<!doctype html><html><head><meta charset="utf-8"><title>Estado financiero ${safe(period)}</title><style>body{font-family:Arial,sans-serif;color:#0f172a;padding:40px}h1{margin:0}p{color:#64748b}table{border-collapse:collapse;width:100%;margin-top:24px}td,th{border-bottom:1px solid #e2e8f0;padding:10px;text-align:left}td:last-child,th:last-child{text-align:right}.total{font-weight:700;background:#f8fafc}.note{font-size:12px;margin-top:20px}@media print{button{display:none}}</style></head><body><h1>Ferova One · Estado financiero básico</h1><p>Periodo: ${safe(period)} · Generado: ${safe(new Date(statement.generatedAt).toLocaleString('es-CO'))}</p><table><thead><tr><th>Sección</th><th>Concepto</th><th>Valor</th></tr></thead><tbody>${rows}</tbody></table>${statement.fiscalNotice ? `<p class="note">${safe(statement.fiscalNotice)}</p>` : ''}<p class="note">Documento gerencial informativo. No reemplaza estados financieros certificados por un contador.</p><button onclick="window.print()">Guardar como PDF / imprimir</button></body></html>`;
     const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
     const opened = window.open(url, '_blank', 'noopener,noreferrer');
-    if (!opened) alert('El navegador bloqueó la ventana de impresión. Permite ventanas emergentes e inténtalo de nuevo.');
+    if (!opened) toastErr('El navegador bloqueó la ventana de impresión. Permite ventanas emergentes e inténtalo de nuevo.');
     window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
   };
 
   const syncToSheets = async () => {
     const token = getAccessToken();
     if (!token) {
-      alert('Conecta nuevamente Google desde Ajustes para guardar este estado en Sheets. El acceso no se conserva en el navegador por seguridad.');
+      toastErr('Conecta nuevamente Google desde Ajustes para guardar este estado en Sheets. El acceso no se conserva en el navegador por seguridad.');
       return;
     }
     setSyncing(true);
     try {
       await syncFinancialStatementToSheets(token, statement);
-      alert('Estado financiero guardado en la pestaña EstadoFinanciero de tu Google Sheet.');
+      toastErr('Estado financiero guardado en la pestaña EstadoFinanciero de tu Google Sheet.');
     } catch (error: any) {
-      alert(`No se pudo guardar en Sheets: ${error?.message || error}`);
+      toastErr(`No se pudo guardar en Sheets: ${error?.message || error}`);
     } finally {
       setSyncing(false);
     }

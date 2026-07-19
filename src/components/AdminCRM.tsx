@@ -72,6 +72,7 @@ import {
   updateFeedbackStatus,
 } from '../lib/adminService';
 import type { PlanId } from '../lib/planService';
+import { useToast, errMsg } from './ui/toast';
 
 const ESTADOS: EstadoOportunidad[] = ['nuevo', 'contactado', 'calificando', 'propuesta_enviada', 'negociacion', 'ganado', 'perdido'];
 
@@ -85,6 +86,7 @@ interface Props {
 }
 
 export default function AdminCRM({ user, embedded = false, tab: controlledTab, onTabChange }: Props) {
+  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
   const [authorized, setAuthorized] = useState<boolean | null>(null);
   const [internalTab, setInternalTab] = useState<CRMTab>('pipeline');
   const tab: CRMTab = controlledTab ?? internalTab;
@@ -256,7 +258,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setExpandedPlaybookId(updated.id);
       setAutoEnrichNotice(`✓ "${updated.nombre_contacto}" enriquecido con Apollo y playbook generado — revísalo en la pestaña Pipeline.`);
     } catch (err: any) {
-      setAutoEnrichNotice(`No se pudo enriquecer automáticamente con Apollo: ${err.message || err}`);
+      setAutoEnrichNotice(`No se pudo enriquecer automáticamente con Apollo: ${errMsg(err)}`);
     } finally {
       setAutoEnriching(false);
     }
@@ -280,7 +282,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setCustomers(c);
       setFeedbackList(f);
     } catch (err: any) {
-      alert(`Error cargando el portal de clientes: ${err.message || err}`);
+      toastErr(`Error cargando el portal de clientes: ${errMsg(err)}`);
     } finally {
       setLoadingCustomers(false);
     }
@@ -324,7 +326,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setNotifyPhoneInput(notifyPhone || '');
       setChannels(acquisitionChannels);
     } catch (err: any) {
-      alert(`Error cargando el CRM: ${err.message || err}`);
+      toastErr(`Error cargando el CRM: ${errMsg(err)}`);
     } finally {
       setLoading(false);
     }
@@ -336,7 +338,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       const updated = await saveBotConfig({ bot_enabled: !botConfig.bot_enabled });
       setBotConfig(updated);
     } catch (err: any) {
-      alert(`Error activando/desactivando el bot: ${err.message || err}`);
+      toastErr(`Error activando/desactivando el bot: ${errMsg(err)}`);
     }
   };
 
@@ -346,7 +348,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       const updated = await saveBotConfig({ custom_prompt: promptDraft });
       setBotConfig(updated);
     } catch (err: any) {
-      alert(`Error guardando el prompt: ${err.message || err}`);
+      toastErr(`Error guardando el prompt: ${errMsg(err)}`);
     } finally {
       setSavingPrompt(false);
     }
@@ -362,7 +364,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setNewKnowledgeSource('');
       setKnowledge(await listKnowledge());
     } catch (err: any) {
-      alert(`Error entrenando al bot: ${err.message || err}`);
+      toastErr(`Error entrenando al bot: ${errMsg(err)}`);
     } finally {
       setSavingKnowledge(false);
     }
@@ -373,7 +375,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       await deleteKnowledge(id);
       setKnowledge(knowledge.filter((k) => k.id !== id));
     } catch (err: any) {
-      alert(`Error eliminando: ${err.message || err}`);
+      toastErr(`Error eliminando: ${errMsg(err)}`);
     }
   };
 
@@ -385,7 +387,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       await sendWhatsapp(oportunidadId, text);
       setWhatsappDrafts({ ...whatsappDrafts, [oportunidadId]: '' });
     } catch (err: any) {
-      alert(`Error enviando WhatsApp: ${err.message || err}`);
+      toastErr(`Error enviando WhatsApp: ${errMsg(err)}`);
     } finally {
       setSendingWhatsapp(null);
     }
@@ -409,20 +411,20 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setBookNombre(''); setBookEmail(''); setBookTelefono('');
       setBookOportunidadId(''); setBookFecha(''); setBookNotas('');
     } catch (err: any) {
-      alert(`Error agendando la cita: ${err.message || err}`);
+      toastErr(`Error agendando la cita: ${errMsg(err)}`);
     } finally {
       setBooking(false);
     }
   };
 
   const handleCancelCita = async (id: string) => {
-    if (!window.confirm('¿Cancelar esta cita y eliminarla del calendario?')) return;
+    if (!(await askConfirm({ description: '¿Cancelar esta cita y eliminarla del calendario?', destructive: true, confirmText: 'Sí, continuar' }))) return;
     setCancellingId(id);
     try {
       const updated = await cancelCita(id);
       setCitas(citas.map((c) => (c.id === id ? updated : c)));
     } catch (err: any) {
-      alert(`Error cancelando: ${err.message || err}`);
+      toastErr(`Error cancelando: ${errMsg(err)}`);
     } finally {
       setCancellingId(null);
     }
@@ -435,9 +437,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       const [freshCitas, freshOpps] = await Promise.all([listCitas(), listOportunidades()]);
       setCitas(freshCitas);
       setOportunidades(freshOpps);
-      alert(`Reservas revisadas: ${result.scanned}. Nuevas citas importadas: ${result.inserted}.`);
+      toastErr(`Reservas revisadas: ${result.scanned}. Nuevas citas importadas: ${result.inserted}.`);
     } catch (err: any) {
-      alert(`Error sincronizando reservas: ${err.message || err}`);
+      toastErr(`Error sincronizando reservas: ${errMsg(err)}`);
     } finally {
       setSyncingBookings(false);
     }
@@ -450,7 +452,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       const instance = await connectWhatsappInstance();
       setWhatsappInstance(instance);
     } catch (err: any) {
-      alert(`Error generando QR: ${err.message || err}`);
+      toastErr(`Error generando QR: ${errMsg(err)}`);
     } finally {
       setConnectingWhatsapp(false);
     }
@@ -499,7 +501,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setNotifyPhoneSaved(saved);
       setNotifyPhoneInput(saved || '');
     } catch (err: any) {
-      alert(`Error guardando el teléfono de notificaciones: ${err.message || err}`);
+      toastErr(`Error guardando el teléfono de notificaciones: ${errMsg(err)}`);
     } finally {
       setSavingNotifyPhone(false);
     }
@@ -511,7 +513,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       await setCustomerPlan(customer.user_id, newPlan);
       setCustomers((prev) => prev.map((c) => (c.user_id === customer.user_id ? { ...c, plan: newPlan } : c)));
     } catch (err: any) {
-      alert(`Error cambiando el plan: ${err.message || err}`);
+      toastErr(`Error cambiando el plan: ${errMsg(err)}`);
     } finally {
       setSavingPlanFor(null);
     }
@@ -526,9 +528,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setCourtesyEmail('');
       setCourtesyNotas('');
       await refreshClientesTab();
-      alert('✓ Acceso de cortesía otorgado.');
+      toastOk('Acceso de cortesía otorgado.');
     } catch (err: any) {
-      alert(`Error dando acceso de cortesía: ${err.message || err}`);
+      toastErr(`Error dando acceso de cortesía: ${errMsg(err)}`);
     } finally {
       setGrantingCourtesy(false);
     }
@@ -539,14 +541,14 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       await updateFeedbackStatus(item.id, estado);
       setFeedbackList((prev) => prev.map((f) => (f.id === item.id ? { ...f, estado } : f)));
     } catch (err: any) {
-      alert(`Error actualizando el feedback: ${err.message || err}`);
+      toastErr(`Error actualizando el feedback: ${errMsg(err)}`);
     }
   };
 
   const handleAnalyzeContenido = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!anaUrl.trim() || anaTexto.trim().length < 30) {
-      alert('Pega la URL y al menos 30 caracteres del texto de la publicación.');
+      toastErr('Pega la URL y al menos 30 caracteres del texto de la publicación.');
       return;
     }
     setAnalyzing(true);
@@ -562,7 +564,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setAnaUrl(''); setAnaAutor(''); setAnaTexto('');
       await maybeAutoEnrichApollo({ plataforma: anaPlataforma, url: capturedUrl, autor: capturedAutor, texto: capturedTexto, score: created.score_potencial });
     } catch (err: any) {
-      alert(`Error analizando: ${err.message || err}`);
+      toastErr(`Error analizando: ${errMsg(err)}`);
     } finally {
       setAnalyzing(false);
     }
@@ -570,13 +572,13 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
   const handleFetchSubreddit = async () => {
     const sub = subInput.trim().replace(/^r\//i, '');
-    if (!sub) { alert('Escribe el nombre del subreddit (ej. SEO, digitalmarketing, colombia).'); return; }
+    if (!sub) { toastErr('Escribe el nombre del subreddit (ej. SEO, digitalmarketing, colombia).'); return; }
     setFetchingSub(true);
     try {
       const posts = await fetchSubredditPosts({ subreddit: sub, listing: subListing, limit: subLimit, timeframe: subTimeframe });
       setSubPosts(posts);
     } catch (err: any) {
-      alert(`Error trayendo r/${sub}: ${err.message || err}`);
+      toastErr(`Error trayendo r/${sub}: ${errMsg(err)}`);
     } finally {
       setFetchingSub(false);
     }
@@ -584,7 +586,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
   const handleAnalyzeRedditPost = async (post: RedditPost) => {
     const texto = `${post.title}\n\n${post.selftext || '(publicación sin texto propio; probable link o imagen)'}`;
-    if (texto.length < 30) { alert('La publicación es demasiado corta para analizar.'); return; }
+    if (texto.length < 30) { toastErr('La publicación es demasiado corta para analizar.'); return; }
     setAnalyzingPostId(post.id);
     try {
       const created = await analyzeContenido({
@@ -598,7 +600,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       // los descarta automáticamente y solo avisa si el score era alto.
       await maybeAutoEnrichApollo({ plataforma: 'reddit', url: post.url, autor: `u/${post.author}`, texto, score: created.score_potencial });
     } catch (err: any) {
-      alert(`Error analizando: ${err.message || err}`);
+      toastErr(`Error analizando: ${errMsg(err)}`);
     } finally {
       setAnalyzingPostId(null);
     }
@@ -606,7 +608,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
   const handleSearchRedditKw = async () => {
     const keywords = kwInput.split(',').map((s) => s.trim()).filter(Boolean);
-    if (keywords.length === 0) { alert('Escribe al menos una palabra clave.'); return; }
+    if (keywords.length === 0) { toastErr('Escribe al menos una palabra clave.'); return; }
     const subreddits = kwSubs.split(',').map((s) => s.trim().replace(/^r\//i, '')).filter(Boolean);
     setSearchingKw(true);
     setKwWarning(null);
@@ -615,7 +617,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setKwPosts(posts);
       setKwWarning(warning);
     } catch (err: any) {
-      alert(`Error buscando: ${err.message || err}`);
+      toastErr(`Error buscando: ${errMsg(err)}`);
     } finally {
       setSearchingKw(false);
     }
@@ -623,7 +625,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
   const handleSearchLinkedIn = async () => {
     const keywords = liInput.split(',').map((s) => s.trim()).filter(Boolean);
-    if (keywords.length === 0) { alert('Escribe al menos una palabra clave.'); return; }
+    if (keywords.length === 0) { toastErr('Escribe al menos una palabra clave.'); return; }
     setSearchingLi(true);
     setLiWarning(null);
     try {
@@ -631,7 +633,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setLiResults(results);
       setLiWarning(warning);
     } catch (err: any) {
-      alert(`Error buscando en LinkedIn: ${err.message || err}`);
+      toastErr(`Error buscando en LinkedIn: ${errMsg(err)}`);
     } finally {
       setSearchingLi(false);
     }
@@ -639,7 +641,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
   const handleAnalyzeLinkedInResult = async (result: LinkedInSearchResult) => {
     const texto = `${result.title}\n\n${result.snippet}`;
-    if (texto.trim().length < 30) { alert('El resultado no trae suficiente texto para analizar.'); return; }
+    if (texto.trim().length < 30) { toastErr('El resultado no trae suficiente texto para analizar.'); return; }
     setAnalyzingPostId(result.id);
     try {
       const created = await analyzeContenido({
@@ -651,7 +653,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setContenido([created, ...contenido]);
       await maybeAutoEnrichApollo({ plataforma: 'linkedin', url: result.url, autor: result.author, texto, score: created.score_potencial });
     } catch (err: any) {
-      alert(`Error analizando: ${err.message || err}`);
+      toastErr(`Error analizando: ${errMsg(err)}`);
     } finally {
       setAnalyzingPostId(null);
     }
@@ -670,7 +672,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setOportunidades(oportunidades.map((x) => (x.id === o.id ? updated : x)));
       setExpandedPlaybookId(o.id);
     } catch (err: any) {
-      alert(`Error enriqueciendo con Apollo: ${err.message || err}`);
+      toastErr(`Error enriqueciendo con Apollo: ${errMsg(err)}`);
     } finally {
       setEnrichingId(null);
     }
@@ -682,7 +684,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     const domains = apolloDomains.split(',').map((d) => d.trim()).filter(Boolean);
     const locations = apolloLocations.split(',').map((l) => l.trim()).filter(Boolean);
     if (!titles.length && !apolloKeywords.trim() && !domains.length && !locations.length) {
-      alert('Define al menos un filtro: cargo, palabra clave, dominio o ubicación.');
+      toastErr('Define al menos un filtro: cargo, palabra clave, dominio o ubicación.');
       return;
     }
     setImportingApollo(true);
@@ -698,7 +700,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setApolloImportResult(result);
       if (result.oportunidades.length) setOportunidades([...result.oportunidades, ...oportunidades]);
     } catch (err: any) {
-      alert(`Error importando de Apollo: ${err.message || err}`);
+      toastErr(`Error importando de Apollo: ${errMsg(err)}`);
     } finally {
       setImportingApollo(false);
     }
@@ -716,7 +718,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setSortlistLeadsResult(`Escaneados ${res.scanned} correos · ${res.inserted} lead(s) nuevo(s) importados · ${res.already_saved} ya procesados · ${res.skipped} sin lead.`);
       if (res.oportunidades.length) setOportunidades([...res.oportunidades, ...oportunidades]);
     } catch (err: any) {
-      alert(`Error escaneando leads de Sortlist: ${err.message || err}`);
+      toastErr(`Error escaneando leads de Sortlist: ${errMsg(err)}`);
     } finally {
       setScanningSortlistLeads(false);
     }
@@ -739,7 +741,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setResenas(await listResenas());
       setReviewSources(await listReviewSources());
     } catch (err: any) {
-      alert(`Error escaneando Gmail: ${err.message || err}`);
+      toastErr(`Error escaneando Gmail: ${errMsg(err)}`);
     } finally {
       setScanningResenas(false);
     }
@@ -761,7 +763,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setSourceUrl('');
       setSourceQuery('');
     } catch (err: any) {
-      alert(`Error guardando fuente: ${err.message || err}`);
+      toastErr(`Error guardando fuente: ${errMsg(err)}`);
     } finally {
       setSavingSource(false);
     }
@@ -772,7 +774,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       await deleteReviewSource(id);
       setReviewSources(reviewSources.filter((s) => s.id !== id));
     } catch (err: any) {
-      alert(`Error eliminando fuente: ${err.message || err}`);
+      toastErr(`Error eliminando fuente: ${errMsg(err)}`);
     }
   };
 
@@ -781,7 +783,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       await markResenaRespondida(r.id, !r.respondida);
       setResenas(resenas.map((x) => (x.id === r.id ? { ...x, respondida: !r.respondida } : x)));
     } catch (err: any) {
-      alert(`Error actualizando: ${err.message || err}`);
+      toastErr(`Error actualizando: ${errMsg(err)}`);
     }
   };
 
@@ -814,7 +816,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setNewVendedor('');
       setNewCommissionPercent('');
     } catch (err: any) {
-      alert(`Error creando oportunidad: ${err.message || err}`);
+      toastErr(`Error creando oportunidad: ${errMsg(err)}`);
     }
   };
 
@@ -823,7 +825,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       const updated = await upsertOportunidad({ id: o.id, estado });
       setOportunidades(oportunidades.map((x) => (x.id === o.id ? updated : x)));
     } catch (err: any) {
-      alert(`Error actualizando estado: ${err.message || err}`);
+      toastErr(`Error actualizando estado: ${errMsg(err)}`);
     }
   };
 
@@ -832,7 +834,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       const updated = await upsertOportunidad({ id: o.id, canal_origen });
       setOportunidades(oportunidades.map((x) => (x.id === o.id ? updated : x)));
     } catch (err: any) {
-      alert(`Error actualizando canal: ${err.message || err}`);
+      toastErr(`Error actualizando canal: ${errMsg(err)}`);
     }
   };
 
@@ -843,7 +845,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       const updated = await upsertOportunidad({ id: o.id, ...next });
       setOportunidades((current) => current.map((item) => item.id === o.id ? updated : item));
     } catch (err: any) {
-      alert(`Error actualizando comisión: ${err.message || err}`);
+      toastErr(`Error actualizando comisión: ${errMsg(err)}`);
     }
   };
 
@@ -855,17 +857,17 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setNewChannel('');
       setCanalOrigen(created.slug);
     } catch (err: any) {
-      alert(`Error creando canal: ${err.message || err}`);
+      toastErr(`Error creando canal: ${errMsg(err)}`);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('¿Eliminar esta oportunidad?')) return;
+    if (!(await askConfirm({ description: '¿Eliminar esta oportunidad?', destructive: true, confirmText: 'Sí, continuar' }))) return;
     try {
       await deleteOportunidad(id);
       setOportunidades(oportunidades.filter((o) => o.id !== id));
     } catch (err: any) {
-      alert(`Error eliminando: ${err.message || err}`);
+      toastErr(`Error eliminando: ${errMsg(err)}`);
     }
   };
 
@@ -874,7 +876,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       const updated = await upsertContenidoPotencial({ id: c.id, estado });
       setContenido(contenido.map((x) => (x.id === c.id ? updated : x)));
     } catch (err: any) {
-      alert(`Error actualizando contenido: ${err.message || err}`);
+      toastErr(`Error actualizando contenido: ${errMsg(err)}`);
     }
   };
 

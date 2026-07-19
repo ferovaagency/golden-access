@@ -20,6 +20,7 @@ import {
   X,
 } from 'lucide-react';
 import ComprobanteUpload from './ComprobanteUpload';
+import { useToast, errMsg } from './ui/toast';
 
 interface PagosEgresosAdminProps {
   pagosEgresos: PagoEgreso[];
@@ -28,6 +29,7 @@ interface PagosEgresosAdminProps {
 }
 
 export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePagosEgresos }: PagosEgresosAdminProps) {
+  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -83,7 +85,7 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
   const handleAddPago = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!concepto.trim() || !monto || Number(monto) <= 0) {
-      alert('Por favor, indica un concepto de pago y un monto mayor que cero.');
+      toastErr('Por favor, indica un concepto de pago y un monto mayor que cero.');
       return;
     }
 
@@ -113,7 +115,7 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
       resetForm();
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err: any) {
-      alert(`Error al registrar pago: ${err.message || err}`);
+      toastErr(`Error al registrar pago: ${errMsg(err)}`);
     } finally {
       setSaving(false);
     }
@@ -133,7 +135,7 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
   };
 
   const handleDeletePago = async (id: string) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este registro de pago?')) return;
+    if (!(await askConfirm({ description: '¿Estás seguro de que deseas eliminar este registro de pago?', destructive: true, confirmText: 'Sí, continuar' }))) return;
     setSaving(true);
     setSuccessMsg('');
     const updated = pagosEgresos.filter(p => p.id !== id);
@@ -142,7 +144,7 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
       setSuccessMsg('Registro de pago eliminado con éxito.');
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err: any) {
-      alert(`Error al eliminar: ${err.message || err}`);
+      toastErr(`Error al eliminar: ${errMsg(err)}`);
     } finally {
       setSaving(false);
     }

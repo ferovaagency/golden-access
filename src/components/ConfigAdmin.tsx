@@ -7,6 +7,7 @@ import { copyText } from '../lib/clipboard';
 import FiscalProfileSection from './FiscalProfileSection';
 import BusinessProfileSettings from './BusinessProfileSettings';
 import type { BusinessProfile } from '../lib/businessProfileService';
+import { useToast, errMsg } from './ui/toast';
 
 interface ConfigAdminProps {
   userId: string;
@@ -43,6 +44,7 @@ export default function ConfigAdmin({
   onImportFromSheetsUrl,
   formatCop
 }: ConfigAdminProps) {
+  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copiedStatus, setCopiedStatus] = useState<string | null>(null);
   const [sheetUrl, setSheetUrl] = useState('');
@@ -73,7 +75,7 @@ export default function ConfigAdmin({
       setTrm(official.trm);
       setTrmNotice(`TRM oficial: $${official.trm.toLocaleString('es-CO')} (${official.source}${official.vigente_desde ? `, vigente desde ${official.vigente_desde.slice(0, 10)}` : ''}). Revisa y pulsa "Actualizar Parámetros" para guardarla.`);
     } catch (err: any) {
-      setTrmNotice(`No se pudo obtener la TRM oficial: ${err.message || err}`);
+      setTrmNotice(`No se pudo obtener la TRM oficial: ${errMsg(err)}`);
     } finally {
       setFetchingTrm(false);
     }
@@ -102,9 +104,9 @@ export default function ConfigAdmin({
         tarifa_iva: config.tarifa_iva ?? 0.19
       };
       await onSaveConfig(updated);
-      alert('Configuración y variables DIAN 2026 actualizadas correctamente.');
+      toastErr('Configuración y variables DIAN 2026 actualizadas correctamente.');
     } catch (err: any) {
-      alert(`Ocurrió un error al guardar: ${err.message || err}`);
+      toastErr(`Ocurrió un error al guardar: ${errMsg(err)}`);
     } finally {
       setIsSubmitting(false);
     }

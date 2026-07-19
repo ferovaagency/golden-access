@@ -3,12 +3,14 @@ import { createPortal } from 'react-dom';
 import type { User } from '@supabase/supabase-js';
 import { MessageSquarePlus, X, CheckCircle2 } from 'lucide-react';
 import { submitFeedback, FeedbackTipo } from '../lib/feedbackService';
+import { useToast, errMsg } from './ui/toast';
 
 interface Props {
   user: User;
 }
 
 export default function FeedbackWidget({ user }: Props) {
+  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
   const [open, setOpen] = useState(false);
   const [tipo, setTipo] = useState<FeedbackTipo>('sugerencia');
   const [mensaje, setMensaje] = useState('');
@@ -28,7 +30,7 @@ export default function FeedbackWidget({ user }: Props) {
       await submitFeedback(user.id, user.email || null, tipo, mensaje.trim());
       setSent(true);
     } catch (err: any) {
-      alert(`No se pudo enviar: ${err.message || err}`);
+      toastErr(`No se pudo enviar: ${errMsg(err)}`);
     } finally {
       setSubmitting(false);
     }

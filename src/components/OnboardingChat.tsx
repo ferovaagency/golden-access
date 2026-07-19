@@ -11,6 +11,7 @@ import { Message, MessageContent, MessageResponse } from './ai-elements/message'
 import { PromptInput, PromptInputFooter, PromptInputSubmit, PromptInputTextarea } from './ai-elements/prompt-input';
 import { Shimmer } from './ai-elements/shimmer';
 import { AiDisclosure } from './AiDisclosure';
+import { useToast, errMsg } from './ui/toast';
 
 interface Props {
   user: User;
@@ -31,6 +32,7 @@ function getText(message: UIMessage): string {
 }
 
 export default function OnboardingChat({ user, onDone }: Props) {
+  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
   const [initialMessages, setInitialMessages] = useState<UIMessage[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [input, setInput] = useState('');
@@ -119,7 +121,7 @@ export default function OnboardingChat({ user, onDone }: Props) {
   };
 
   const handleSkip = async () => {
-    if (!confirm('¿Seguro que quieres saltar esto? Puedes completar los datos de tu negocio más tarde desde Ajustes.')) return;
+    if (!(await askConfirm({ description: '¿Seguro que quieres saltar esto? Puedes completar los datos de tu negocio más tarde desde Ajustes.', destructive: true, confirmText: 'Sí, continuar' }))) return;
     const saved = await skipOnboarding(user.id);
     onDone(saved);
   };
@@ -146,7 +148,7 @@ export default function OnboardingChat({ user, onDone }: Props) {
       if (completado) onDone(saved);
       else setManualMode(false);
     } catch (err: any) {
-      alert(`Error guardando: ${err.message || err}`);
+      toastErr(`Error guardando: ${errMsg(err)}`);
     } finally {
       setSavingManual(false);
     }
