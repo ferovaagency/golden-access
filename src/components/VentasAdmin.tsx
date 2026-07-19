@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Venta, Cliente, Servicio, Config } from '../types';
 import { convertToCop } from '../lib/calculations';
+import { useToast, errMsg } from './ui/toast';
 import { 
   Plus, 
   Trash2, 
@@ -34,6 +35,7 @@ export default function VentasAdmin({
   formatCop, 
   formatUsd 
 }: VentasAdminProps) {
+  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
   // Form states
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
   const [clienteId, setClienteId] = useState('');
@@ -151,7 +153,7 @@ export default function VentasAdmin({
 
   const handleAddAbonoItem = () => {
     if (!newAbonoMonto || Number(newAbonoMonto) <= 0) {
-      alert('Por favor introduce un monto de abono mayor a 0.');
+      toastErr('Por favor introduce un monto de abono mayor a 0.');
       return;
     }
     const item = {
@@ -181,7 +183,7 @@ export default function VentasAdmin({
   const handleAddVenta = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!clienteId || !servicioId) {
-      alert('Por favor selecciona un cliente y un servicio válidos.');
+      toastErr('Por favor selecciona un cliente y un servicio válidos.');
       return;
     }
 

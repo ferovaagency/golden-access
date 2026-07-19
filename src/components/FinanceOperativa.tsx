@@ -13,6 +13,7 @@ import ComprobanteUpload from './ComprobanteUpload';
 import { getAccessToken } from '../lib/supabase';
 import { syncPayablesToSheets, syncReceivablesToSheets } from '../lib/sheetsService';
 import FinancialStatement from './FinancialStatement';
+import { useToast, errMsg } from './ui/toast';
 
 type SubTab = 'estado' | 'cuentas' | 'metodos' | 'deudas' | 'cobrar' | 'pagar' | 'presupuesto' | 'flujo';
 
@@ -22,6 +23,7 @@ const btnPrimary = 'inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3
 const btnGhost = 'inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50';
 
 function currentPeriodo(): string {
+  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
@@ -468,7 +470,7 @@ function BudgetTab({ userId, appData, periodo, formatCop }: { userId: string; ap
       <div className={cardClass}>
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <h3 className="font-semibold text-slate-900">Presupuesto {periodo}</h3>
-          <button onClick={async () => { const n = await seedBudget(userId, appData, periodo); alert(`Sembradas ${n} categorías desde tus datos reales.`); reload(); }} className={btnGhost}><RefreshCcw className="w-3.5 h-3.5" /> Sembrar desde datos reales</button>
+          <button onClick={async () => { const n = await seedBudget(userId, appData, periodo); toastErr(`Sembradas ${n} categorías desde tus datos reales.`); reload(); }} className={btnGhost}><RefreshCcw className="w-3.5 h-3.5" /> Sembrar desde datos reales</button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
           <input className={inputClass} placeholder="Categoría" value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} />

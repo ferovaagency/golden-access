@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { Plus, Loader2, Trash2, Pencil, X, Phone, Mail, Building2 } from 'lucide-react';
 import { Contacto, ContactoEstado, listContactos, upsertContacto, deleteContacto } from '../lib/bizCrmService';
+import { useToast, errMsg } from './ui/toast';
 
 interface Props {
   user: User;
@@ -28,6 +29,7 @@ function formatMoney(val: number, moneda: 'COP' | 'USD') {
 }
 
 export default function CustomerCRM({ user }: Props) {
+  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
   const [contactos, setContactos] = useState<Contacto[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -40,7 +42,7 @@ export default function CustomerCRM({ user }: Props) {
     try {
       setContactos(await listContactos(user.id));
     } catch (err: any) {
-      alert(`Error cargando tus contactos: ${err.message || err}`);
+      toastErr(`Error cargando tus contactos: ${errMsg(err)}`);
     } finally {
       setLoading(false);
     }
@@ -82,7 +84,7 @@ export default function CustomerCRM({ user }: Props) {
       setModalOpen(false);
       await refresh();
     } catch (err: any) {
-      alert(`Error guardando: ${err.message || err}`);
+      toastErr(`Error guardando: ${errMsg(err)}`);
     } finally {
       setSaving(false);
     }
@@ -93,18 +95,18 @@ export default function CustomerCRM({ user }: Props) {
     try {
       await upsertContacto(user.id, { ...c, estado });
     } catch (err: any) {
-      alert(`Error moviendo el contacto: ${err.message || err}`);
+      toastErr(`Error moviendo el contacto: ${errMsg(err)}`);
       refresh();
     }
   };
 
   const handleDelete = async (c: Contacto) => {
-    if (!confirm(`¿Eliminar a "${c.nombre_contacto}"?`)) return;
+    if (!(await askConfirm({ description: `¿Eliminar a "${c.nombre_contacto}"?`, destructive: true, confirmText: 'Sí, continuar' }))) return;
     try {
       await deleteContacto(user.id, c.id);
       setContactos((prev) => prev.filter((x) => x.id !== c.id));
     } catch (err: any) {
-      alert(`Error eliminando: ${err.message || err}`);
+      toastErr(`Error eliminando: ${errMsg(err)}`);
     }
   };
 

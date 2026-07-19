@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Paperclip, Loader2, ExternalLink } from 'lucide-react';
 import { getAccessToken } from '../lib/supabase';
 import { findOrCreateComprobantesFolder, uploadFileToDrive } from '../lib/sheetsService';
+import { useToast, errMsg } from './ui/toast';
 
 // Sube una imagen/PDF (factura pagada o comprobante de pago) al Drive del
 // propio usuario y devuelve el link -- nunca se guarda el archivo en
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function ComprobanteUpload({ currentUrl, currentNombre, onUploaded, label = 'Adjuntar comprobante' }: Props) {
+  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -23,7 +25,7 @@ export default function ComprobanteUpload({ currentUrl, currentNombre, onUploade
     if (!file) return;
     const token = getAccessToken();
     if (!token) {
-      alert('Primero conecta tu cuenta de Google desde Ajustes > Respaldo en Google Sheets para poder subir comprobantes a tu Drive.');
+      toastErr('Primero conecta tu cuenta de Google desde Ajustes > Respaldo en Google Sheets para poder subir comprobantes a tu Drive.');
       return;
     }
     setUploading(true);
@@ -35,7 +37,7 @@ export default function ComprobanteUpload({ currentUrl, currentNombre, onUploade
       const message = err?.message === 'UNAUTHORIZED'
         ? 'Tu conexión con Google expiró. Reconéctala desde Ajustes > Respaldo en Google Sheets.'
         : (err?.message || String(err));
-      alert(`No se pudo subir el archivo: ${message}`);
+      toastErr(`No se pudo subir el archivo: ${message}`);
     } finally {
       setUploading(false);
     }

@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Circle, Sparkles } from 'lucide-re
 import type { BusinessProfile } from '../lib/businessProfileService';
 import { upsertBusinessProfile } from '../lib/businessProfileService';
 import type { ModuleFlags, PlanId } from '../lib/planService';
+import { useToast, errMsg } from './ui/toast';
 
 interface Props {
   user: User;
@@ -20,6 +21,7 @@ const planNames: Record<string, string> = {
 };
 
 export default function PlanOnboarding({ user, plan, modules, profile, onDone }: Props) {
+  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -60,7 +62,7 @@ export default function PlanOnboarding({ user, plan, modules, profile, onDone }:
       localStorage.removeItem(`ferova.product-tour.${user.id}`);
       onDone(saved);
     } catch (error: any) {
-      alert(`No pudimos guardar la configuración: ${error?.message || error}`);
+      toastErr(`No pudimos guardar la configuración: ${error?.message || error}`);
     } finally {
       setSaving(false);
     }

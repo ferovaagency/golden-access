@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Cliente, Venta, Hora, Config } from '../types';
 import { convertToCop } from '../lib/calculations';
 import { Plus, Trash2, CheckCircle2, XCircle, Globe, Search, Check, X } from 'lucide-react';
+import { useToast, errMsg } from './ui/toast';
 
 interface ClientesAdminProps {
   clientes: Cliente[];
@@ -30,6 +31,7 @@ export default function ClientesAdmin({
   formatCop, 
   formatUsd 
 }: ClientesAdminProps) {
+  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
   // Form State
   const [nombre, setNombre] = useState('');
   const [id, setId] = useState('');
@@ -55,7 +57,7 @@ export default function ClientesAdmin({
     if (!nombre.trim()) return;
 
     if (clientes.some(c => c.id.toLowerCase() === id.toLowerCase())) {
-      alert('Ya existe un cliente con este ID único.');
+      toastErr('Ya existe un cliente con este ID único.');
       return;
     }
 

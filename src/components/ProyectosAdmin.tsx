@@ -3,6 +3,7 @@ import { AppData, Cliente } from '../types';
 import { updateProjectClient } from '../domains/projects/projectService';
 import type { ProjectDeliverable, ProjectKpi, ProjectObjective } from '../domains/projects/types';
 import { useProjectPortfolio } from '../hooks/useProjectPortfolio';
+import { useToast, errMsg } from './ui/toast';
 import { 
   Target, 
   TrendingUp, 
@@ -27,6 +28,7 @@ interface ProyectosAdminProps {
 }
 
 export default function ProyectosAdmin({ projectData, onSaveClientes }: ProyectosAdminProps) {
+  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
   const projects = useProjectPortfolio(projectData);
   const activeClientes = projects.map((project) => project.client);
   const [selectedClientId, setSelectedClientId] = useState<string>('');
@@ -103,7 +105,7 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
       setSuccessMsg('¡Seguimiento de proyecto guardado y sincronizado con Sheets!');
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err: any) {
-      alert(`Error al guardar: ${err.message || err}`);
+      toastErr(`Error al guardar: ${errMsg(err)}`);
     } finally {
       setSaving(false);
     }
@@ -142,7 +144,7 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
   const addKpi = () => {
     if (!newKpiNombre.trim()) return;
     if (objectives.length > 0 && !newKpiObjectiveId) {
-      alert('Selecciona el objetivo al que aporta este KPI.');
+      toastErr('Selecciona el objetivo al que aporta este KPI.');
       return;
     }
     const initialValue = Number(newKpiActual.replace(/[^0-9.-]/g, ''));

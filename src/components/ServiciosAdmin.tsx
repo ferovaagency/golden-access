@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Servicio, Venta, Hora, Config } from '../types';
 import { convertToCop } from '../lib/calculations';
 import { Plus, Trash2, Tag, Percent, Clock, Briefcase, Edit2, Check, X } from 'lucide-react';
+import { useToast, errMsg } from './ui/toast';
 
 interface ServiciosAdminProps {
   servicios: Servicio[];
@@ -20,6 +21,7 @@ export default function ServiciosAdmin({
   onSaveServicios,
   formatCop
 }: ServiciosAdminProps) {
+  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
   // Form State
   const [srvNombre, setSrvNombre] = useState('');
   const [srvId, setSrvId] = useState('');
@@ -70,7 +72,7 @@ export default function ServiciosAdmin({
     } else {
       // Mode Create
       if (servicios.some(s => s.id.toLowerCase() === srvId.trim().toLowerCase())) {
-        alert('Ya existe un servicio configurado con este identificador.');
+        toastErr('Ya existe un servicio configurado con este identificador.');
         return;
       }
 
