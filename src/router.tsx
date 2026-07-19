@@ -11,6 +11,7 @@ const App = lazy(() => import('./App'));
 const AdminCRMRoute = lazy(() => import('./routes/AdminRoute'));
 const Privacidad = lazy(() => import('./routes/Privacidad'));
 const Terminos = lazy(() => import('./routes/Terminos'));
+const Landing = lazy(() => import('./routes/Landing'));
 
 function RouteFallback() {
   return (
