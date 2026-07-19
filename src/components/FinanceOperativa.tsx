@@ -457,6 +457,7 @@ function PayablesTab({ userId, formatCop }: { userId: string; formatCop: (n: num
 
 /* ------------------ BUDGET ------------------ */
 function BudgetTab({ userId, appData, periodo, formatCop }: { userId: string; appData: AppData; periodo: string; formatCop: (n: number) => string }) {
+  const { success: toastOk } = useToast();
   const [items, setItems] = useState<BudgetLine[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingLine, setEditingLine] = useState<BudgetLine | null>(null);
