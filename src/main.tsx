@@ -9,10 +9,13 @@ import '@fontsource/figtree/500.css';
 import '@fontsource/figtree/600.css';
 import '@fontsource/figtree/700.css';
 import Router from './router';
+import { ToastProvider } from './components/ui/toast';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Router />
+    <ToastProvider>
+      <Router />
+    </ToastProvider>
   </StrictMode>,
 );
