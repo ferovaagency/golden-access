@@ -15,6 +15,7 @@ import { calcularMétricasFinancieras } from './lib/calculations';
 import { useFiscalProfile } from './hooks/useFiscalProfile';
 import { isSupabaseConfigured, supabaseConfigurationError } from './integrations/supabase/client';
 import { trackUserEvent } from './lib/userEngagementService';
+import { useToast, errMsg } from './components/ui/toast';
 
 // Unified Premium View Components
 import Home from './components/Home';
