@@ -36,6 +36,7 @@ export default function Router() {
       <ErrorBoundary>
         <Suspense fallback={<RouteFallback />}>
           <Routes>
+            <Route path="/landing" element={<Landing />} />
             <Route path="/privacidad" element={<Privacidad />} />
             <Route path="/terminos" element={<Terminos />} />
             <Route path="/admin/*" element={<AdminCRMRoute />} />
