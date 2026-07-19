@@ -9,7 +9,11 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 const PAYPAL_CLIENT_ID = Deno.env.get("PAYPAL_CLIENT_ID");
 const PAYPAL_CLIENT_SECRET = Deno.env.get("PAYPAL_CLIENT_SECRET");
 const PAYPAL_ENV = (Deno.env.get("PAYPAL_ENV") || "live").toLowerCase();
-const EXPECTED_AMOUNT_USD = Number(Deno.env.get("PAYPAL_EXPECTED_AMOUNT_USD") || "29.00");
+// No fallback on purpose: a stale hardcoded price would silently accept
+// underpayments (or reject valid payments) if this secret is ever missing
+// or out of sync with the real plan price.
+const PAYPAL_EXPECTED_AMOUNT_RAW = Deno.env.get("PAYPAL_EXPECTED_AMOUNT_USD");
+const EXPECTED_AMOUNT_USD = PAYPAL_EXPECTED_AMOUNT_RAW ? Number(PAYPAL_EXPECTED_AMOUNT_RAW) : null;
 
 const PAYPAL_API_BASE = PAYPAL_ENV === "sandbox"
   ? "https://api-m.sandbox.paypal.com"
@@ -45,6 +49,10 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    if (EXPECTED_AMOUNT_USD === null || Number.isNaN(EXPECTED_AMOUNT_USD)) {
+      return new Response(JSON.stringify({ ok: false, message: "PAYPAL_EXPECTED_AMOUNT_USD no configurado." }), { status: 500 });
+    }
+
     const authHeader = req.headers.get("Authorization") || "";
     const jwt = authHeader.replace("Bearer ", "");
 

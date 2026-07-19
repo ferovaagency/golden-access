@@ -76,18 +76,26 @@ Deno.serve(async (req) => {
       return jsonResponse({ ok: false, message: "No pude crear la instancia de WhatsApp", status: create.status, details: create.text });
     }
 
+    // Not fatal to the QR-connect flow if this fails, but the caller must
+    // know: silently swallowing this means incoming WhatsApp messages never
+    // reach whatsapp-webhook and nothing about the UI would say why.
+    let webhookConfigured = false;
+    let webhookError: string | null = null;
     if (WEBHOOK_TOKEN) {
       const webhookUrl = `${SUPABASE_URL}/functions/v1/whatsapp-webhook?token=${encodeURIComponent(WEBHOOK_TOKEN)}`;
-      await evo(`/webhook/set/${instanceName}`, {
+      const webhookRes = await evo(`/webhook/set/${instanceName}`, {
         method: "POST",
         body: JSON.stringify({ webhook: { enabled: true, url: webhookUrl, events: ["MESSAGES_UPSERT", "CONNECTION_UPDATE"] } }),
-      }).catch(() => null);
+      }).catch((err) => ({ ok: false, text: err instanceof Error ? err.message : String(err) } as any));
+      webhookConfigured = !!webhookRes?.ok;
+      if (!webhookConfigured) webhookError = webhookRes?.text || "No se pudo registrar el webhook.";
     }
 
     const connect = await evo(`/instance/connect/${instanceName}`, { method: "GET" });
     const qr = pickQr(connect.data) || pickQr(create.data);
     const pairingCode = connect.data?.pairingCode || connect.data?.pairing_code || null;
     const status = qr ? "qr_ready" : (connect.ok ? "connecting" : "error");
+    const lastError = !connect.ok ? connect.text : (webhookError ? `Webhook no registrado: ${webhookError}` : null);
 
     const { data: saved, error } = await admin.from("crm_whatsapp_instances").upsert({
       user_id: user.id,
@@ -95,12 +103,12 @@ Deno.serve(async (req) => {
       status,
       qr_code: qr,
       pairing_code: pairingCode,
-      last_error: connect.ok ? null : connect.text,
+      last_error: lastError,
       updated_at: new Date().toISOString(),
     }).select("*").single();
     if (error) throw error;
 
-    return jsonResponse({ ok: true, configured: true, instance: saved });
+    return jsonResponse({ ok: true, configured: true, webhook_configured: webhookConfigured, instance: saved });
   } catch (err) {
     console.error("[whatsapp-connect] error", err);
     return jsonResponse({ ok: false, message: err instanceof Error ? err.message : String(err) });

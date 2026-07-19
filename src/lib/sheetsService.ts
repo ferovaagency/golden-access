@@ -11,31 +11,30 @@ export async function findSpreadsheet(accessToken: string): Promise<{ id: string
   const q = encodeURIComponent("name = 'Ferova_OS_Financiero' and mimeType = 'application/vnd.google-apps.spreadsheet' and trashed = false");
   const url = `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,webViewLink)`;
 
-  try {
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
+  // Only a confirmed empty result means "the spreadsheet doesn't exist yet"
+  // (null, safe to create one). A network/API error must propagate instead
+  // of resolving to null -- callers treat null as "create a new one", and a
+  // transient Google failure here previously caused a duplicate spreadsheet
+  // to be created instead of reusing the user's existing one.
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
 
-    if (!res.ok) {
-      if (res.status === 401) {
-        throw new Error('UNAUTHORIZED');
-      }
-      throw new Error(`Error buscando archivo en Drive: ${res.statusText}`);
+  if (!res.ok) {
+    if (res.status === 401) {
+      throw new Error('UNAUTHORIZED');
     }
-
-    const data = await res.json();
-    if (data.files && data.files.length > 0) {
-      return {
-        id: data.files[0].id,
-        webViewLink: data.files[0].webViewLink,
-      };
-    }
-    return null;
-  } catch (err: any) {
-    if (err.message === 'UNAUTHORIZED') throw err;
-    console.error('Error in findSpreadsheet:', err);
-    return null;
+    throw new Error(`Error buscando archivo en Drive: ${res.statusText}`);
   }
+
+  const data = await res.json();
+  if (data.files && data.files.length > 0) {
+    return {
+      id: data.files[0].id,
+      webViewLink: data.files[0].webViewLink,
+    };
+  }
+  return null;
 }
 
 /**
