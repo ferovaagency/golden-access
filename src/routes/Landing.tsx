@@ -1,0 +1,369 @@
+import { Link } from 'react-router-dom';
+import {
+  Sparkles, Brain, LineChart, Users, CalendarClock, MessageSquare,
+  Zap, ShieldCheck, ArrowRight, Check, Bot, Target, TrendingUp,
+} from 'lucide-react';
+
+/**
+ * Public sales landing at /landing.
+ * Nocturnal-adjacent but tuned to the app's current light theme:
+ * dark hero with gold accents, then light module demos below.
+ * No backend calls — pure presentation, safe to ship even while the
+ * production Supabase reconnect is pending.
+ */
+export default function Landing() {
+  return (
+    <div className="min-h-screen bg-white text-slate-900 font-sans">
+      <Header />
+      <Hero />
+      <SocialProof />
+      <ModulesGrid />
+      <PlannerDemo />
+      <FinanceDemo />
+      <CrmDemo />
+      <AiDemo />
+      <Pricing />
+      <Faq />
+      <Footer />
+    </div>
+  );
+}
+
+function Header() {
+  return (
+    <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/80 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        <Link to="/landing" className="flex items-center gap-2 font-semibold tracking-tight">
+          <div className="grid h-8 w-8 place-items-center rounded-lg bg-slate-900 text-amber-300">
+            <Sparkles className="h-4 w-4" />
+          </div>
+          <span>Ferova One</span>
+        </Link>
+        <nav className="hidden items-center gap-6 text-sm text-slate-600 md:flex">
+          <a href="#modulos" className="hover:text-slate-900">Módulos</a>
+          <a href="#planner" className="hover:text-slate-900">Planner</a>
+          <a href="#precios" className="hover:text-slate-900">Precios</a>
+          <a href="#faq" className="hover:text-slate-900">FAQ</a>
+        </nav>
+        <Link
+          to="/"
+          className="rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+        >
+          Iniciar sesión
+        </Link>
+      </div>
+    </header>
+  );
+}
+
+function Hero() {
+  return (
+    <section className="relative overflow-hidden bg-slate-950 text-white">
+      <div
+        className="absolute inset-0 opacity-40"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle at 20% 20%, rgba(251,191,36,0.15), transparent 40%), radial-gradient(circle at 80% 60%, rgba(59,130,246,0.18), transparent 45%)',
+        }}
+      />
+      <div className="relative mx-auto max-w-6xl px-4 py-24 md:py-32">
+        <div className="mx-auto max-w-3xl text-center">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-medium text-amber-200">
+            <Sparkles className="h-3.5 w-3.5" />
+            Sistema operativo de negocio con IA
+          </span>
+          <h1 className="mt-6 font-serif text-4xl leading-tight tracking-tight md:text-6xl">
+            Finanzas, CRM y un asistente que <em className="text-amber-300 not-italic">piensa por vos</em>.
+          </h1>
+          <p className="mt-6 text-lg text-slate-300 md:text-xl">
+            Ferova One reemplaza tu hoja de cálculo, tu CRM y tu agenda con una sola plataforma que aprende de tu negocio y te dice qué hacer cada día.
+          </p>
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 rounded-full bg-amber-300 px-6 py-3 font-medium text-slate-950 hover:bg-amber-200"
+            >
+              Empezar ahora <ArrowRight className="h-4 w-4" />
+            </Link>
+            <a
+              href="#modulos"
+              className="inline-flex items-center gap-2 rounded-full border border-white/20 px-6 py-3 font-medium text-white hover:bg-white/5"
+            >
+              Ver demos
+            </a>
+          </div>
+          <p className="mt-4 text-xs text-slate-400">USD 50 / mes · Sin permanencia · Cancelás cuando quieras</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SocialProof() {
+  const items = [
+    { k: '6', v: 'módulos integrados' },
+    { k: '1', v: 'asistente IA siempre activo' },
+    { k: '100%', v: 'de tus datos, tuyos' },
+    { k: '24/7', v: 'operación autónoma' },
+  ];
+  return (
+    <section className="border-b border-slate-200 bg-slate-50">
+      <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-4 py-10 md:grid-cols-4">
+        {items.map((i) => (
+          <div key={i.v} className="text-center">
+            <div className="font-serif text-3xl text-slate-900">{i.k}</div>
+            <div className="mt-1 text-xs uppercase tracking-widest text-slate-500">{i.v}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ModulesGrid() {
+  const modules = [
+    { icon: Brain, title: 'Smart Planner', desc: 'Agenda por energía. Brain dump, priorización y reprogramación automática.', color: 'bg-violet-100 text-violet-700' },
+    { icon: LineChart, title: 'Finanzas operativas', desc: 'Ingresos, egresos, impuestos y flujo de caja proyectado. IVA colombiano soportado.', color: 'bg-emerald-100 text-emerald-700' },
+    { icon: Users, title: 'CRM inteligente', desc: 'Prospectos, oportunidades, enriquecimiento con Apollo y outreach generado por IA.', color: 'bg-blue-100 text-blue-700' },
+    { icon: MessageSquare, title: 'WhatsApp con memoria', desc: 'Conecta tu número, responde con IA y registra cada conversación como oportunidad.', color: 'bg-teal-100 text-teal-700' },
+    { icon: CalendarClock, title: 'Calendar sync', desc: 'Sincroniza Google Calendar y tu link de reserva. Nada se te pasa.', color: 'bg-orange-100 text-orange-700' },
+    { icon: Bot, title: 'Asistente ejecutivo', desc: 'Panel lateral siempre presente que ve tus datos y te da la siguiente jugada.', color: 'bg-amber-100 text-amber-700' },
+  ];
+  return (
+    <section id="modulos" className="mx-auto max-w-6xl px-4 py-20">
+      <div className="mx-auto max-w-2xl text-center">
+        <h2 className="font-serif text-3xl md:text-4xl">Un módulo para cada parte del negocio</h2>
+        <p className="mt-3 text-slate-600">Todos conectados. Toda tu operación en una sola pantalla.</p>
+      </div>
+      <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {modules.map((m) => (
+          <div key={m.title} className="rounded-2xl border border-slate-200 bg-white p-6 transition hover:border-slate-300 hover:shadow-sm">
+            <div className={`grid h-10 w-10 place-items-center rounded-lg ${m.color}`}>
+              <m.icon className="h-5 w-5" />
+            </div>
+            <h3 className="mt-4 font-semibold">{m.title}</h3>
+            <p className="mt-1 text-sm text-slate-600">{m.desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function DemoFrame({
+  id, eyebrow, title, desc, children, reverse = false,
+}: { id: string; eyebrow: string; title: string; desc: string; children: React.ReactNode; reverse?: boolean }) {
+  return (
+    <section id={id} className="border-t border-slate-200 bg-slate-50">
+      <div className={`mx-auto grid max-w-6xl items-center gap-10 px-4 py-20 md:grid-cols-2 ${reverse ? 'md:[&>div:first-child]:order-2' : ''}`}>
+        <div>
+          <span className="text-xs font-semibold uppercase tracking-widest text-amber-600">{eyebrow}</span>
+          <h2 className="mt-2 font-serif text-3xl md:text-4xl">{title}</h2>
+          <p className="mt-3 text-slate-600">{desc}</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">{children}</div>
+      </div>
+    </section>
+  );
+}
+
+function PlannerDemo() {
+  const blocks = [
+    { t: '09:00', label: 'Focus profundo — Cerrar propuesta Nova', tone: 'bg-violet-50 border-violet-200 text-violet-900', tag: 'Energía alta' },
+    { t: '11:00', label: 'Llamada Mariana (CRM warm)', tone: 'bg-blue-50 border-blue-200 text-blue-900', tag: 'Reunión' },
+    { t: '14:00', label: 'Admin ligera — Facturar octubre', tone: 'bg-slate-50 border-slate-200 text-slate-700', tag: 'Energía baja' },
+    { t: '16:30', label: 'Espacio protegido — Estrategia Q1', tone: 'bg-amber-50 border-amber-200 text-amber-900', tag: 'Bloqueado' },
+  ];
+  return (
+    <DemoFrame
+      id="planner"
+      eyebrow="Smart Planner"
+      title="Tu día, planeado por tu energía"
+      desc="Escribís lo que tenés en la cabeza. La IA lo clasifica, lo prioriza y lo distribuye en tu agenda respetando cuándo pensás mejor."
+    >
+      <div className="space-y-2">
+        {blocks.map((b) => (
+          <div key={b.t} className={`flex items-center gap-3 rounded-xl border p-3 ${b.tone}`}>
+            <span className="w-14 font-mono text-xs opacity-70">{b.t}</span>
+            <span className="flex-1 text-sm font-medium">{b.label}</span>
+            <span className="rounded-full bg-white/60 px-2 py-0.5 text-[10px] uppercase tracking-wide">{b.tag}</span>
+          </div>
+        ))}
+        <div className="mt-4 rounded-xl bg-slate-900 p-3 text-xs text-slate-300">
+          <span className="text-amber-300">IA:</span> Detecté 2 tareas pendientes de ayer. ¿Las corro a mañana temprano?
+        </div>
+      </div>
+    </DemoFrame>
+  );
+}
+
+function FinanceDemo() {
+  const rows = [
+    { c: 'Ingresos octubre', v: '$ 18.420.000', d: '+12%', up: true },
+    { c: 'Egresos operativos', v: '$ 6.870.000', d: '−4%', up: true },
+    { c: 'IVA a pagar', v: '$ 1.240.000', d: 'Vence 20', up: false },
+    { c: 'Flujo proyectado 30d', v: '$ 9.310.000', d: 'Sano', up: true },
+  ];
+  return (
+    <DemoFrame
+      id="finance"
+      eyebrow="Finanzas operativas"
+      title="Lo que ganás, lo que debés, lo que viene"
+      desc="Importa desde Google Sheets, registra ventas y egresos, y ve tu salud financiera en tiempo real. Impuestos colombianos calculados automáticamente."
+      reverse
+    >
+      <div className="space-y-2">
+        {rows.map((r) => (
+          <div key={r.c} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3">
+            <div>
+              <div className="text-xs text-slate-500">{r.c}</div>
+              <div className="font-serif text-lg">{r.v}</div>
+            </div>
+            <span className={`rounded-full px-2 py-0.5 text-xs ${r.up ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'}`}>
+              {r.d}
+            </span>
+          </div>
+        ))}
+      </div>
+    </DemoFrame>
+  );
+}
+
+function CrmDemo() {
+  const leads = [
+    { n: 'Nova Studio', s: 'Propuesta enviada', temp: 'Caliente', tone: 'bg-red-100 text-red-700' },
+    { n: 'Marca Alfa', s: 'Esperando decisión', temp: 'Tibio', tone: 'bg-amber-100 text-amber-800' },
+    { n: 'Ecomm Delta', s: 'Primer contacto', temp: 'Frío', tone: 'bg-slate-100 text-slate-700' },
+  ];
+  return (
+    <DemoFrame
+      id="crm"
+      eyebrow="CRM"
+      title="Prospectos enriquecidos, outreach hecho"
+      desc="Pega un dominio o una lista de correos. Apollo trae la info, la IA escribe el primer mensaje y vos aprobás."
+    >
+      <div className="space-y-2">
+        {leads.map((l) => (
+          <div key={l.n} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3">
+            <div>
+              <div className="font-medium">{l.n}</div>
+              <div className="text-xs text-slate-500">{l.s}</div>
+            </div>
+            <span className={`rounded-full px-2 py-0.5 text-xs ${l.tone}`}>{l.temp}</span>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-sm text-white"
+        >
+          <Zap className="h-4 w-4 text-amber-300" /> Generar outreach con IA
+        </button>
+      </div>
+    </DemoFrame>
+  );
+}
+
+function AiDemo() {
+  return (
+    <DemoFrame
+      id="ai"
+      eyebrow="Asistente ejecutivo"
+      title="Una IA que ve tu negocio entero"
+      desc="No es un chatbot genérico. El asistente lee tus finanzas, tu CRM y tu agenda, y te dice qué está fallando antes de que lo notes."
+      reverse
+    >
+      <div className="space-y-3">
+        <div className="rounded-xl bg-slate-50 p-3 text-sm text-slate-700">
+          <span className="font-medium text-slate-900">Vos:</span> ¿Cómo vamos este mes?
+        </div>
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          <span className="font-medium">IA:</span> Ingresos +12% vs. septiembre, pero <b>3 oportunidades</b> del CRM llevan más de 7 días sin movimiento. La más grande vale $ 4.2M. ¿Te preparo el follow-up?
+        </div>
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <Target className="h-3.5 w-3.5" /> Proactivo · <TrendingUp className="h-3.5 w-3.5" /> Contextual · <ShieldCheck className="h-3.5 w-3.5" /> Privado
+        </div>
+      </div>
+    </DemoFrame>
+  );
+}
+
+function Pricing() {
+  const features = [
+    'Todos los módulos incluidos',
+    'Asistente IA sin límite razonable',
+    'Google Calendar, Sheets y WhatsApp',
+    'CRM + enriquecimiento Apollo',
+    'Soporte por correo',
+  ];
+  return (
+    <section id="precios" className="border-t border-slate-200 bg-white">
+      <div className="mx-auto max-w-3xl px-4 py-20 text-center">
+        <h2 className="font-serif text-3xl md:text-4xl">Un solo plan. Todo incluido.</h2>
+        <p className="mt-3 text-slate-600">Sin trucos, sin escalar por usuarios, sin sorpresas.</p>
+        <div className="mx-auto mt-10 max-w-md rounded-3xl border border-slate-200 bg-slate-50 p-8 text-left shadow-sm">
+          <div className="flex items-baseline gap-1">
+            <span className="font-serif text-5xl">USD 50</span>
+            <span className="text-slate-500">/ mes</span>
+          </div>
+          <p className="mt-1 text-sm text-slate-500">Facturado mensualmente. Cancelás cuando quieras.</p>
+          <ul className="mt-6 space-y-2">
+            {features.map((f) => (
+              <li key={f} className="flex items-start gap-2 text-sm">
+                <Check className="mt-0.5 h-4 w-4 text-emerald-600" /> {f}
+              </li>
+            ))}
+          </ul>
+          <Link
+            to="/"
+            className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-3 font-medium text-white hover:bg-slate-800"
+          >
+            Empezar ahora <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Faq() {
+  const qa = [
+    { q: '¿Necesito instalar algo?', a: 'No. Ferova One es 100% web. Iniciás sesión con Google y ya está.' },
+    { q: '¿Mis datos están seguros?', a: 'Sí. Cada cuenta está aislada por permisos a nivel de base de datos. Solo vos ves tus datos.' },
+    { q: '¿Funciona fuera de Colombia?', a: 'Sí. La calculadora de impuestos está preparada para Colombia; el resto de módulos funciona en cualquier país.' },
+    { q: '¿Puedo cancelar?', a: 'Cuando quieras. Sin permanencia, sin penalidades.' },
+  ];
+  return (
+    <section id="faq" className="border-t border-slate-200 bg-slate-50">
+      <div className="mx-auto max-w-3xl px-4 py-20">
+        <h2 className="text-center font-serif text-3xl md:text-4xl">Preguntas frecuentes</h2>
+        <div className="mt-10 space-y-3">
+          {qa.map((i) => (
+            <details key={i.q} className="group rounded-xl border border-slate-200 bg-white p-4">
+              <summary className="cursor-pointer list-none font-medium">
+                <span className="flex items-center justify-between">
+                  {i.q}
+                  <span className="ml-4 text-slate-400 group-open:rotate-45 transition">+</span>
+                </span>
+              </summary>
+              <p className="mt-2 text-sm text-slate-600">{i.a}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="border-t border-slate-200 bg-white">
+      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-slate-500 md:flex-row">
+        <div>© {new Date().getFullYear()} Ferova One. Todos los derechos reservados.</div>
+        <div className="flex gap-4">
+          <Link to="/terminos" className="hover:text-slate-900">Términos</Link>
+          <Link to="/privacidad" className="hover:text-slate-900">Privacidad</Link>
+        </div>
+      </div>
+    </footer>
+  );
+}
