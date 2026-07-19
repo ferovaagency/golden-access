@@ -470,7 +470,7 @@ function BudgetTab({ userId, appData, periodo, formatCop }: { userId: string; ap
       <div className={cardClass}>
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <h3 className="font-semibold text-slate-900">Presupuesto {periodo}</h3>
-          <button onClick={async () => { const n = await seedBudget(userId, appData, periodo); toastErr(`Sembradas ${n} categorías desde tus datos reales.`); reload(); }} className={btnGhost}><RefreshCcw className="w-3.5 h-3.5" /> Sembrar desde datos reales</button>
+          <button onClick={async () => { const n = await seedBudget(userId, appData, periodo); toastOk(`Sembradas ${n} categorías desde tus datos reales.`); reload(); }} className={btnGhost}><RefreshCcw className="w-3.5 h-3.5" /> Sembrar desde datos reales</button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
           <input className={inputClass} placeholder="Categoría" value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} />
