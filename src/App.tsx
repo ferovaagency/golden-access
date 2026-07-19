@@ -201,7 +201,7 @@ export default function App() {
       await googleSignIn();
     } catch (err: any) {
       console.error('Login error:', err);
-      setErrorMsg(`Fallo al autenticar: ${err.message || err}`);
+      setErrorMsg(`Fallo al autenticar: ${errMsg(err)}`);
     }
   };
 
@@ -227,7 +227,7 @@ export default function App() {
       setAppData(data);
     } catch (err: any) {
       console.error('Finance data bootstrap error:', err);
-      setErrorMsg(`Error al cargar tus datos financieros: ${err.message || err}`);
+      setErrorMsg(`Error al cargar tus datos financieros: ${errMsg(err)}`);
     } finally {
       setSheetsLoading(false);
     }
@@ -245,7 +245,7 @@ export default function App() {
           await linkGoogleIdentity();
         }
       } catch (err: any) {
-        alert(`No se pudo iniciar la conexión con Google: ${err.message || err}`);
+        toastErr(`No se pudo iniciar la conexión con Google: ${errMsg(err)}`);
       }
       // El flujo de OAuth redirige la página; el usuario deberá pulsar "Respaldar ahora" de nuevo tras volver.
       return;
@@ -255,9 +255,9 @@ export default function App() {
     try {
       const { sheetLink } = await backupAppDataToSheets(appData, token);
       setLastSheetBackupLink(sheetLink);
-      alert('✨ ¡Respaldo en Google Sheets actualizado con éxito!');
+      toastOk('¡Respaldo en Google Sheets actualizado con éxito!');
     } catch (err: any) {
-      alert(`Fallo en el respaldo a Sheets: ${err.message || err}`);
+      toastErr(`Fallo en el respaldo a Sheets: ${errMsg(err)}`);
     } finally {
       setIsBackingUpToSheets(false);
     }
@@ -275,15 +275,15 @@ export default function App() {
   const handleImportFromSheetsUrl = async (rawUrl: string) => {
     if (!user) return;
     const url = (rawUrl || '').trim();
-    if (!url) { alert('Pega el link de tu Google Sheet.'); return; }
-    if (!confirm('Esto reemplazará tus datos actuales con los de la hoja indicada. ¿Continuar?')) return;
+    if (!url) { toastErr('Pega el link de tu Google Sheet.'); return; }
+    if (!(await askConfirm({ description: 'Esto reemplazará tus datos actuales con los de la hoja indicada. ¿Continuar?', destructive: true, confirmText: 'Sí, continuar' }))) return;
     setSheetsLoading(true);
     try {
       const data = await importSheetByUrl(url, getAccessToken());
       await persistImportedFinanceData(data);
-      alert('✨ Importación completada.');
+      toastOk('Importación completada.');
     } catch (err: any) {
-      alert(`Fallo al importar: ${err.message || err}\n\nAsegúrate de:\n1) Que la hoja esté compartida con la cuenta Google conectada o pública con link.\n2) Que use la estructura Ferova_OS_Financiero y tenga estas pestañas exactas: Config, Clientes, Servicios, Herramientas, OtrosGastos, Ventas, Horas, Respaldos y PagosEgresos.`);
+      toastErr(`Fallo al importar: ${errMsg(err)}\n\nAsegúrate de:\n1) Que la hoja esté compartida con la cuenta Google conectada o pública con link.\n2) Que use la estructura Ferova_OS_Financiero y tenga estas pestañas exactas: Config, Clientes, Servicios, Herramientas, OtrosGastos, Ventas, Horas, Respaldos y PagosEgresos.`);
     } finally {
       setSheetsLoading(false);
     }
@@ -294,19 +294,19 @@ export default function App() {
     const token = getAccessToken();
     if (!token) {
       try { await googleSignIn(); }
-      catch (err: any) { alert(`No se pudo conectar Google: ${err.message || err}`); }
+      catch (err: any) { toastErr(`No se pudo conectar Google: ${errMsg(err)}`); }
       return;
     }
-    if (!confirm('Esto buscará tu hoja "Ferova_OS_Financiero" en Google Drive y reemplazará tus datos actuales. ¿Continuar?')) return;
+    if (!(await askConfirm({ description: 'Esto buscará tu hoja "Ferova_OS_Financiero" en Google Drive y reemplazará tus datos actuales. ¿Continuar?', destructive: true, confirmText: 'Sí, continuar' }))) return;
     setSheetsLoading(true);
     try {
       const sheet = await import('./lib/sheetsService').then((m) => m.findSpreadsheet(token));
       if (!sheet?.id) throw new Error('No encontré una hoja llamada Ferova_OS_Financiero en tu Google Drive. También puedes pegar el link exacto abajo.');
       const data = await import('./lib/sheetsService').then((m) => m.fetchSpreadsheetData(sheet.id, token));
       await persistImportedFinanceData(data);
-      alert('✨ Hoja importada desde tu Google Drive.');
+      toastOk('Hoja importada desde tu Google Drive.');
     } catch (err: any) {
-      alert(`Fallo al importar tu hoja: ${err.message || err}`);
+      toastErr(`Fallo al importar tu hoja: ${errMsg(err)}`);
     } finally {
       setSheetsLoading(false);
     }
@@ -321,7 +321,7 @@ export default function App() {
       await financeService.saveClientes(user.id, updatedClientes);
       setAppData({ ...appData, clientes: updatedClientes });
     } catch (err: any) {
-      alert(`Error guardando clientes: ${err.message || err}`);
+      toastErr(`Error guardando clientes: ${errMsg(err)}`);
     } finally {
       setSheetsLoading(false);
     }
@@ -334,7 +334,7 @@ export default function App() {
       await financeService.saveServicios(user.id, updatedServicios);
       setAppData({ ...appData, servicios: updatedServicios });
     } catch (err: any) {
-      alert(`Error guardando servicios: ${err.message || err}`);
+      toastErr(`Error guardando servicios: ${errMsg(err)}`);
     } finally {
       setSheetsLoading(false);
     }
@@ -347,7 +347,7 @@ export default function App() {
       await financeService.saveHerramientas(user.id, updatedHerramientas);
       setAppData({ ...appData, herramientas: updatedHerramientas });
     } catch (err: any) {
-      alert(`Error guardando herramientas: ${err.message || err}`);
+      toastErr(`Error guardando herramientas: ${errMsg(err)}`);
     } finally {
       setSheetsLoading(false);
     }
@@ -362,7 +362,7 @@ export default function App() {
       if (googleToken) await syncExpenseDocumentsToSheets(googleToken, updatedGastos, appData.pagosEgresos || []);
       setAppData({ ...appData, otrosGastos: updatedGastos });
     } catch (err: any) {
-      alert(`Error guardando gastos: ${err.message || err}`);
+      toastErr(`Error guardando gastos: ${errMsg(err)}`);
     } finally {
       setSheetsLoading(false);
     }
@@ -377,7 +377,7 @@ export default function App() {
       if (googleToken) await syncExpenseDocumentsToSheets(googleToken, appData.otrosGastos || [], updatedPagos);
       setAppData({ ...appData, pagosEgresos: updatedPagos });
     } catch (err: any) {
-      alert(`Error guardando pagos/egresos: ${err.message || err}`);
+      toastErr(`Error guardando pagos/egresos: ${errMsg(err)}`);
     } finally {
       setSheetsLoading(false);
     }
@@ -390,7 +390,7 @@ export default function App() {
       await financeService.saveVentas(user.id, updatedVentas);
       setAppData({ ...appData, ventas: updatedVentas });
     } catch (err: any) {
-      alert(`Error guardando ventas: ${err.message || err}`);
+      toastErr(`Error guardando ventas: ${errMsg(err)}`);
     } finally {
       setSheetsLoading(false);
     }
@@ -403,7 +403,7 @@ export default function App() {
       await financeService.saveHoras(user.id, updatedHoras);
       setAppData({ ...appData, horas: updatedHoras });
     } catch (err: any) {
-      alert(`Error guardando horas: ${err.message || err}`);
+      toastErr(`Error guardando horas: ${errMsg(err)}`);
     } finally {
       setSheetsLoading(false);
     }
@@ -417,7 +417,7 @@ export default function App() {
       await financeService.saveConfig(user.id, fullConfig);
       setAppData({ ...appData, config: fullConfig });
     } catch (err: any) {
-      alert(`Error actualizando constantes: ${err.message || err}`);
+      toastErr(`Error actualizando constantes: ${errMsg(err)}`);
     } finally {
       setSheetsLoading(false);
     }
@@ -603,7 +603,7 @@ export default function App() {
                           await handleSaveConfig({ trm: val });
                           setIsEditingTrm(false);
                         } catch (err: any) {
-                          alert(`Error de guardado TRM: ${err.message || err}`);
+                          toastErr(`Error de guardado TRM: ${errMsg(err)}`);
                         }
                       }
                     }}
