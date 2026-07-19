@@ -56,10 +56,10 @@ export default function NotificationsBell({ userId, onNavigate }: Props) {
       const blindspots: Notif[] = (data ?? []).map(r => ({
         id: r.id,
         title: r.title,
-        detail: r.detail,
+        detail: r.detail ?? undefined,
         urgency: r.urgency,
-        category: r.category,
-        advice: r.advice,
+        category: r.category ?? undefined,
+        advice: r.advice ?? undefined,
         createdAt: r.created_at,
       }));
       const direct = personal.map((notification) => ({ id: notification.id, title: notification.title, detail: notification.message, urgency: 'low' as const, category: `De ${notification.sender_name}`, createdAt: notification.created_at, actionTab: notification.action_tab, personal: true }));
