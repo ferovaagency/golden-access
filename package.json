@@ -10,7 +10,7 @@
     "clean": "rm -rf dist server.js",
     "typecheck": "tsc --noEmit",
     "lint": "npm run typecheck",
-    "test": "tsx tests/planService.test.ts",
+    "test": "tsx tests/planService.test.ts && tsx tests/calculations.test.ts && tsx tests/pricingIdeal.test.ts && tsx tests/roiCalc.test.ts",
     "build:dev": "vite build --mode development"
   },
   "dependencies": {
