@@ -79,24 +79,34 @@ export const initAuth = (
 
 // ============================================================
 // Google Sign-in (managed por Lovable Cloud)
+// Solo identidad (openid/email/profile) para que el login sea confiable.
+// Los scopes de Workspace (Sheets, Drive, Gmail, Calendar) se piden aparte
+// desde ConnectGoogleScreen para no bloquear el sign-in inicial.
 // ============================================================
-const GOOGLE_EXTRA_SCOPES = GOOGLE_SCOPES.join(' ');
-
 export const googleSignIn = async () => {
   const result = await lovable.auth.signInWithOAuth('google', {
     redirect_uri: window.location.origin,
     extraParams: {
-      access_type: 'offline',
-      prompt: 'consent',
-      scope: `openid email profile ${GOOGLE_EXTRA_SCOPES}`,
+      prompt: 'select_account',
     },
   });
   if (result.error) throw result.error;
   return result;
 };
 
-// Alias: en Cloud, reautorizar = firmar de nuevo con el mismo helper.
-export const linkGoogleIdentity = googleSignIn;
+// Reautorizar solicitando los scopes de Workspace.
+export const linkGoogleIdentity = async () => {
+  const result = await lovable.auth.signInWithOAuth('google', {
+    redirect_uri: window.location.origin,
+    extraParams: {
+      access_type: 'offline',
+      prompt: 'consent',
+      scope: `openid email profile ${GOOGLE_SCOPES.join(' ')}`,
+    },
+  });
+  if (result.error) throw result.error;
+  return result;
+};
 
 // ============================================================
 // Email / Password
