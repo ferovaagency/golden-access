@@ -11,6 +11,7 @@ const App = lazy(() => import('./App'));
 const AdminCRMRoute = lazy(() => import('./routes/AdminRoute'));
 const Privacidad = lazy(() => import('./routes/Privacidad'));
 const Terminos = lazy(() => import('./routes/Terminos'));
+const Landing = lazy(() => import('./routes/Landing'));
 
 function RouteFallback() {
   return (
@@ -35,6 +36,7 @@ export default function Router() {
       <ErrorBoundary>
         <Suspense fallback={<RouteFallback />}>
           <Routes>
+            <Route path="/landing" element={<Landing />} />
             <Route path="/privacidad" element={<Privacidad />} />
             <Route path="/terminos" element={<Terminos />} />
             <Route path="/admin/*" element={<AdminCRMRoute />} />
