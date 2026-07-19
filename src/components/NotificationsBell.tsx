@@ -53,7 +53,7 @@ export default function NotificationsBell({ userId, onNavigate }: Props) {
         .order('created_at', { ascending: false })
         .limit(20), listMyNotifications(userId).catch(() => [])]);
       if (cancelled) return;
-      const blindspots = (data ?? []).map(r => ({
+      const blindspots: Notif[] = (data ?? []).map(r => ({
         id: r.id,
         title: r.title,
         detail: r.detail,
