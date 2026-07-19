@@ -23,7 +23,6 @@ const btnPrimary = 'inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3
 const btnGhost = 'inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50';
 
 function currentPeriodo(): string {
-  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
