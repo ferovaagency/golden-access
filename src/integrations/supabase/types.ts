@@ -65,6 +65,57 @@ export type Database = {
         }
         Relationships: []
       }
+      biz_crm_contactos: {
+        Row: {
+          created_at: string
+          email: string | null
+          empresa: string | null
+          estado: string
+          fecha_proxima_accion: string | null
+          id: string
+          moneda: string
+          nombre_contacto: string
+          notas: string | null
+          proxima_accion: string | null
+          telefono: string | null
+          updated_at: string
+          user_id: string
+          valor_estimado: number | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          empresa?: string | null
+          estado?: string
+          fecha_proxima_accion?: string | null
+          id: string
+          moneda?: string
+          nombre_contacto: string
+          notas?: string | null
+          proxima_accion?: string | null
+          telefono?: string | null
+          updated_at?: string
+          user_id: string
+          valor_estimado?: number | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          empresa?: string | null
+          estado?: string
+          fecha_proxima_accion?: string | null
+          id?: string
+          moneda?: string
+          nombre_contacto?: string
+          notas?: string | null
+          proxima_accion?: string | null
+          telefono?: string | null
+          updated_at?: string
+          user_id?: string
+          valor_estimado?: number | null
+        }
+        Relationships: []
+      }
       business_assistant_messages: {
         Row: {
           content: string | null
@@ -203,6 +254,45 @@ export type Database = {
         }
         Relationships: []
       }
+      business_profile: {
+        Row: {
+          ciudad: string | null
+          created_at: string
+          industria: string | null
+          nombre_negocio: string | null
+          onboarding_completado: boolean
+          tamano_equipo: string | null
+          telefono_contacto: string | null
+          tipo_negocio: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ciudad?: string | null
+          created_at?: string
+          industria?: string | null
+          nombre_negocio?: string | null
+          onboarding_completado?: boolean
+          tamano_equipo?: string | null
+          telefono_contacto?: string | null
+          tipo_negocio?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ciudad?: string | null
+          created_at?: string
+          industria?: string | null
+          nombre_negocio?: string | null
+          onboarding_completado?: boolean
+          tamano_equipo?: string | null
+          telefono_contacto?: string | null
+          tipo_negocio?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ceo_reports: {
         Row: {
           created_at: string
@@ -251,6 +341,57 @@ export type Database = {
           updated_at?: string
           user_id?: string
           wins?: Json
+        }
+        Relationships: []
+      }
+      courtesy_access_grants: {
+        Row: {
+          created_at: string
+          email: string
+          granted_by: string | null
+          notas: string | null
+          plan: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          granted_by?: string | null
+          notas?: string | null
+          plan?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          granted_by?: string | null
+          notas?: string | null
+          plan?: string
+        }
+        Relationships: []
+      }
+      crm_acquisition_channels: {
+        Row: {
+          active: boolean
+          color: string
+          created_at: string
+          id: string
+          label: string
+          slug: string
+        }
+        Insert: {
+          active?: boolean
+          color?: string
+          created_at?: string
+          id?: string
+          label: string
+          slug: string
+        }
+        Update: {
+          active?: boolean
+          color?: string
+          created_at?: string
+          id?: string
+          label?: string
+          slug?: string
         }
         Relationships: []
       }
@@ -459,8 +600,11 @@ export type Database = {
           apollo_enriched_at: string | null
           canal_origen: string
           closed_at: string | null
+          comision_porcentaje: number | null
+          comision_valor: number | null
           created_at: string
           email: string | null
+          email_message_id: string | null
           empresa: string | null
           estado: string
           fecha_siguiente_accion: string | null
@@ -483,14 +627,18 @@ export type Database = {
           telefono: string | null
           updated_at: string
           valor_estimado: number | null
+          vendedor: string | null
         }
         Insert: {
           apollo_data?: Json | null
           apollo_enriched_at?: string | null
           canal_origen?: string
           closed_at?: string | null
+          comision_porcentaje?: number | null
+          comision_valor?: number | null
           created_at?: string
           email?: string | null
+          email_message_id?: string | null
           empresa?: string | null
           estado?: string
           fecha_siguiente_accion?: string | null
@@ -513,14 +661,18 @@ export type Database = {
           telefono?: string | null
           updated_at?: string
           valor_estimado?: number | null
+          vendedor?: string | null
         }
         Update: {
           apollo_data?: Json | null
           apollo_enriched_at?: string | null
           canal_origen?: string
           closed_at?: string | null
+          comision_porcentaje?: number | null
+          comision_valor?: number | null
           created_at?: string
           email?: string | null
+          email_message_id?: string | null
           empresa?: string | null
           estado?: string
           fecha_siguiente_accion?: string | null
@@ -543,6 +695,7 @@ export type Database = {
           telefono?: string | null
           updated_at?: string
           valor_estimado?: number | null
+          vendedor?: string | null
         }
         Relationships: []
       }
@@ -636,18 +789,21 @@ export type Database = {
           email: string
           nombre: string | null
           rol: string
+          telefono_notificaciones: string | null
         }
         Insert: {
           created_at?: string
           email: string
           nombre?: string | null
           rol?: string
+          telefono_notificaciones?: string | null
         }
         Update: {
           created_at?: string
           email?: string
           nombre?: string | null
           rol?: string
+          telefono_notificaciones?: string | null
         }
         Relationships: []
       }
@@ -1142,6 +1298,8 @@ export type Database = {
       finance_otros_gastos: {
         Row: {
           categoria: string
+          comprobante_nombre: string | null
+          comprobante_url: string | null
           id: string
           moneda: string
           monto: number
@@ -1150,6 +1308,8 @@ export type Database = {
         }
         Insert: {
           categoria?: string
+          comprobante_nombre?: string | null
+          comprobante_url?: string | null
           id: string
           moneda?: string
           monto?: number
@@ -1158,6 +1318,8 @@ export type Database = {
         }
         Update: {
           categoria?: string
+          comprobante_nombre?: string | null
+          comprobante_url?: string | null
           id?: string
           moneda?: string
           monto?: number
@@ -1169,6 +1331,8 @@ export type Database = {
       finance_pagos_egresos: {
         Row: {
           categoria: string
+          comprobante_nombre: string | null
+          comprobante_url: string | null
           concepto: string
           fecha: string
           id: string
@@ -1180,6 +1344,8 @@ export type Database = {
         }
         Insert: {
           categoria: string
+          comprobante_nombre?: string | null
+          comprobante_url?: string | null
           concepto: string
           fecha: string
           id: string
@@ -1191,6 +1357,8 @@ export type Database = {
         }
         Update: {
           categoria?: string
+          comprobante_nombre?: string | null
+          comprobante_url?: string | null
           concepto?: string
           fecha?: string
           id?: string
@@ -1207,6 +1375,8 @@ export type Database = {
           account_id: string | null
           concepto: string | null
           created_at: string
+          documento_nombre: string | null
+          documento_url: string | null
           estado: string
           factura: string | null
           fecha_pago_real: string | null
@@ -1225,6 +1395,8 @@ export type Database = {
           account_id?: string | null
           concepto?: string | null
           created_at?: string
+          documento_nombre?: string | null
+          documento_url?: string | null
           estado?: string
           factura?: string | null
           fecha_pago_real?: string | null
@@ -1243,6 +1415,8 @@ export type Database = {
           account_id?: string | null
           concepto?: string | null
           created_at?: string
+          documento_nombre?: string | null
+          documento_url?: string | null
           estado?: string
           factura?: string | null
           fecha_pago_real?: string | null
@@ -1370,6 +1544,8 @@ export type Database = {
           cliente_id: string | null
           concepto: string
           created_at: string
+          documento_nombre: string | null
+          documento_url: string | null
           estado: string
           factura: string | null
           id: string
@@ -1384,6 +1560,8 @@ export type Database = {
           cliente_id?: string | null
           concepto: string
           created_at?: string
+          documento_nombre?: string | null
+          documento_url?: string | null
           estado?: string
           factura?: string | null
           id?: string
@@ -1398,6 +1576,8 @@ export type Database = {
           cliente_id?: string | null
           concepto?: string
           created_at?: string
+          documento_nombre?: string | null
+          documento_url?: string | null
           estado?: string
           factura?: string | null
           id?: string
@@ -1547,6 +1727,7 @@ export type Database = {
           clics: number
           comision: number
           costo_entrega: number
+          costo_profesional: number
           created_at: string
           id: string
           impresiones: number
@@ -1568,6 +1749,7 @@ export type Database = {
           clics?: number
           comision?: number
           costo_entrega?: number
+          costo_profesional?: number
           created_at?: string
           id?: string
           impresiones?: number
@@ -1589,6 +1771,7 @@ export type Database = {
           clics?: number
           comision?: number
           costo_entrega?: number
+          costo_profesional?: number
           created_at?: string
           id?: string
           impresiones?: number
@@ -1678,6 +1861,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      onboarding_messages: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          parts: Json
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          parts?: Json
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          parts?: Json
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       paddle_webhook_events: {
         Row: {
@@ -2040,13 +2250,17 @@ export type Database = {
           energy_required: Database["public"]["Enums"]["planner_energy"]
           estimated_minutes: number
           goal_id: string | null
+          google_calendar_event_id: string | null
           id: string
           postponed_count: number
           priority: Database["public"]["Enums"]["planner_priority"]
           project_ref: string | null
+          recurrence_days: number[]
+          recurrence_until: string | null
           scheduled_for: string | null
           source_inbox_id: string | null
           status: Database["public"]["Enums"]["planner_task_status"]
+          sync_to_google_calendar: boolean
           title: string
           updated_at: string
           user_id: string
@@ -2063,13 +2277,17 @@ export type Database = {
           energy_required?: Database["public"]["Enums"]["planner_energy"]
           estimated_minutes?: number
           goal_id?: string | null
+          google_calendar_event_id?: string | null
           id?: string
           postponed_count?: number
           priority?: Database["public"]["Enums"]["planner_priority"]
           project_ref?: string | null
+          recurrence_days?: number[]
+          recurrence_until?: string | null
           scheduled_for?: string | null
           source_inbox_id?: string | null
           status?: Database["public"]["Enums"]["planner_task_status"]
+          sync_to_google_calendar?: boolean
           title: string
           updated_at?: string
           user_id: string
@@ -2086,13 +2304,17 @@ export type Database = {
           energy_required?: Database["public"]["Enums"]["planner_energy"]
           estimated_minutes?: number
           goal_id?: string | null
+          google_calendar_event_id?: string | null
           id?: string
           postponed_count?: number
           priority?: Database["public"]["Enums"]["planner_priority"]
           project_ref?: string | null
+          recurrence_days?: number[]
+          recurrence_until?: string | null
           scheduled_for?: string | null
           source_inbox_id?: string | null
           status?: Database["public"]["Enums"]["planner_task_status"]
+          sync_to_google_calendar?: boolean
           title?: string
           updated_at?: string
           user_id?: string
@@ -2263,12 +2485,46 @@ export type Database = {
         }
         Relationships: []
       }
+      user_notifications: {
+        Row: {
+          action_tab: string | null
+          created_at: string
+          id: string
+          message: string
+          read_at: string | null
+          sender_name: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          action_tab?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          read_at?: string | null
+          sender_name?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          action_tab?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          read_at?: string | null
+          sender_name?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_subscriptions: {
         Row: {
           amount_usd: number | null
           created_at: string
           expires_at: string | null
           id: string
+          plan: string
           provider: string
           provider_order_id: string | null
           status: string
@@ -2279,6 +2535,7 @@ export type Database = {
           created_at?: string
           expires_at?: string | null
           id?: string
+          plan?: string
           provider?: string
           provider_order_id?: string | null
           status: string
@@ -2289,6 +2546,7 @@ export type Database = {
           created_at?: string
           expires_at?: string | null
           id?: string
+          plan?: string
           provider?: string
           provider_order_id?: string | null
           status?: string
