@@ -85,7 +85,10 @@ export const initAuth = (
 // ============================================================
 export const googleSignIn = async () => {
   const result = await lovable.auth.signInWithOAuth('google', {
-    redirect_uri: window.location.origin,
+    // "/" is now the public landing page (no session check at all), not the
+    // app shell -- redirecting there after Google OAuth stranded logged-in
+    // users on the marketing page instead of landing them on /app.
+    redirect_uri: `${window.location.origin}/app`,
     extraParams: {
       prompt: 'select_account',
     },
