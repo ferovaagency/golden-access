@@ -45,9 +45,12 @@ Deno.serve(async (req) => {
     }
 
     const json = await res.json();
+    // Solo eventos que claramente vienen de nuestro link de reserva o son
+    // diagnósticos -- "tiene asistentes" era demasiado amplio y traía
+    // cualquier reunión del calendario a la lista de Citas.
     const events = (json.items || []).filter((event: any) => {
       const haystack = `${event.summary || ""}\n${event.description || ""}\n${event.htmlLink || ""}`.toLowerCase();
-      return event.status !== "cancelled" && !event.recurringEventId && (haystack.includes("calendar.app.google") || haystack.includes("diagn") || (event.attendees || []).length);
+      return event.status !== "cancelled" && !event.recurringEventId && (haystack.includes("calendar.app.google") || haystack.includes("diagn"));
     });
 
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -86,6 +89,9 @@ Deno.serve(async (req) => {
       }
 
       const meetLink = event.hangoutLink || event.conferenceData?.entryPoints?.find((e: any) => e.entryPointType === "video")?.uri || null;
+      // Si la reunión ya pasó, no queremos que aparezca como "agendada" en
+      // la lista de pendientes -- se registra directo como completada.
+      const alreadyEnded = end ? new Date(end).getTime() < Date.now() : new Date(start).getTime() < Date.now();
       const { data: cita, error: citaErr } = await admin.from("crm_citas_diagnostico").insert({
         oportunidad_id: oportunidad?.id || null,
         nombre_prospecto: nombre,
@@ -93,7 +99,7 @@ Deno.serve(async (req) => {
         telefono_prospecto: phone,
         fecha_hora: new Date(start).toISOString(),
         duracion_min: duration,
-        estado: "agendada",
+        estado: alreadyEnded ? "completada" : "agendada",
         es_pagada: false,
         calendar_event_id: event.id,
         meet_link: meetLink,

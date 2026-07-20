@@ -27,7 +27,8 @@ export default function ServiciosAdmin({
   const [srvNombre, setSrvNombre] = useState('');
   const [srvId, setSrvId] = useState('');
   const [srvCostoUnitario, setSrvCostoUnitario] = useState(0);
-  const [srvMargenPct, setSrvMargenPct] = useState(''); // vacío = sin margen propio, usa el 30% por defecto
+  const [srvMargenPct, setSrvMargenPct] = useState(''); // vacío = sin margen propio, usa el margen mínimo por defecto
+  const [srvPrecioHabitual, setSrvPrecioHabitual] = useState(''); // vacío = no informado
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [confirmDeleteSrvId, setConfirmDeleteSrvId] = useState<string | null>(null);
 
@@ -37,6 +38,7 @@ export default function ServiciosAdmin({
     setSrvNombre(s.nombre);
     setSrvCostoUnitario(s.costo_unitario);
     setSrvMargenPct(s.margen_objetivo != null ? String(Math.round(s.margen_objetivo * 100)) : '');
+    setSrvPrecioHabitual(s.precio_habitual != null ? String(s.precio_habitual) : '');
   };
 
   const handleCancelEdit = () => {
@@ -45,6 +47,7 @@ export default function ServiciosAdmin({
     setSrvNombre('');
     setSrvCostoUnitario(0);
     setSrvMargenPct('');
+    setSrvPrecioHabitual('');
   };
 
   const handleCreateServicio = async (e: React.FormEvent) => {
@@ -52,6 +55,7 @@ export default function ServiciosAdmin({
     if (!srvNombre.trim()) return;
 
     const margenObjetivo = srvMargenPct.trim() === '' ? null : Number(srvMargenPct) / 100;
+    const precioHabitual = srvPrecioHabitual.trim() === '' ? null : Number(srvPrecioHabitual);
 
     if (editingServiceId) {
       // Mode Edit
@@ -62,6 +66,7 @@ export default function ServiciosAdmin({
             nombre: srvNombre.trim(),
             costo_unitario: Number(srvCostoUnitario),
             margen_objetivo: margenObjetivo,
+            precio_habitual: precioHabitual,
             descripcion: s.descripcion || `Línea de servicio general para ${srvNombre.trim()}`
           };
         }
@@ -84,6 +89,7 @@ export default function ServiciosAdmin({
         nombre: srvNombre.trim(),
         costo_unitario: Number(srvCostoUnitario),
         margen_objetivo: margenObjetivo,
+        precio_habitual: precioHabitual,
         descripcion: `Línea de servicio general para ${srvNombre.trim()}`
       };
 
@@ -95,6 +101,7 @@ export default function ServiciosAdmin({
       setSrvId('');
       setSrvCostoUnitario(0);
       setSrvMargenPct('');
+      setSrvPrecioHabitual('');
     }
   };
 
@@ -216,7 +223,20 @@ export default function ServiciosAdmin({
                 onChange={(e) => setSrvMargenPct(e.target.value)}
                 className="w-full bg-slate-50 text-slate-900 font-mono border border-slate-200 p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
               />
-              <p className="text-[10px] text-slate-400 mt-1">Define el precio ideal sugerido en Equilibrio por Servicio. Cada servicio puede tener su propio %; si lo dejas vacío, se usa 30% por defecto.</p>
+              <p className="text-[10px] text-slate-400 mt-1">Define el precio ideal sugerido en Equilibrio por Servicio. Cada servicio puede tener su propio %; si lo dejas vacío, se usa el margen mínimo de tu configuración.</p>
+            </div>
+
+            <div>
+              <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Precio de venta de referencia (COP) — opcional</label>
+              <input
+                type="number"
+                min="0"
+                placeholder="Ej: 950000"
+                value={srvPrecioHabitual}
+                onChange={(e) => setSrvPrecioHabitual(e.target.value)}
+                className="w-full bg-slate-50 text-slate-900 font-mono border border-slate-200 p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
+              />
+              <p className="text-[10px] text-slate-400 mt-1">Lo que cobrás hoy por esta línea. Equilibrio por Servicio lo compara contra el precio ideal (costo + margen) y te dice si deberías subirlo o bajarlo.</p>
             </div>
 
             <button
@@ -276,8 +296,13 @@ export default function ServiciosAdmin({
                         <td className="px-5 py-4 font-semibold text-slate-900">
                           {s.nombre}
                           <span className="block text-[9px] font-normal text-slate-400">
-                            Margen objetivo: {s.margen_objetivo != null ? `${Math.round(s.margen_objetivo * 100)}%` : '30% (por defecto)'}
+                            Margen objetivo: {s.margen_objetivo != null ? `${Math.round(s.margen_objetivo * 100)}%` : `${Math.round((config.margen_minimo ?? 0.30) * 100)}% (mínimo por defecto)`}
                           </span>
+                          {s.precio_habitual != null && (
+                            <span className="block text-[9px] font-normal text-slate-400">
+                              Vende a: {formatCop(s.precio_habitual)}
+                            </span>
+                          )}
                         </td>
                         <td className="px-5 py-4 text-right font-mono text-slate-900">
                           {formatCop(stats.unitDirectCost)}

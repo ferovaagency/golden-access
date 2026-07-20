@@ -1051,6 +1051,7 @@ export type Database = {
         Row: {
           horas_objetivo_mes: number
           ibc_porcentaje: number
+          margen_minimo: number
           meta_ventas_mensual: number
           retencion_servicio_min_uvt: number
           salario_propuesto: number
@@ -1071,6 +1072,7 @@ export type Database = {
         Insert: {
           horas_objetivo_mes?: number
           ibc_porcentaje?: number
+          margen_minimo?: number
           meta_ventas_mensual?: number
           retencion_servicio_min_uvt?: number
           salario_propuesto?: number
@@ -1091,6 +1093,7 @@ export type Database = {
         Update: {
           horas_objetivo_mes?: number
           ibc_porcentaje?: number
+          margen_minimo?: number
           meta_ventas_mensual?: number
           retencion_servicio_min_uvt?: number
           salario_propuesto?: number

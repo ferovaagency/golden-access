@@ -8,7 +8,15 @@ interface Props {
   onUpdated: (profile: BusinessProfile) => void;
 }
 
-const emptyForm = { nombre_negocio: '', industria: '', tipo_negocio: '', tamano_equipo: '', ciudad: '', telefono_contacto: '' };
+const DIAS = [
+  { value: 1, label: 'Lun' }, { value: 2, label: 'Mar' }, { value: 3, label: 'Mié' },
+  { value: 4, label: 'Jue' }, { value: 5, label: 'Vie' }, { value: 6, label: 'Sáb' }, { value: 0, label: 'Dom' },
+];
+
+const emptyForm = {
+  nombre_negocio: '', industria: '', tipo_negocio: '', tamano_equipo: '', ciudad: '', telefono_contacto: '',
+  dias_laborales: [1, 2, 3, 4, 5] as number[], horario_inicio: '08:00', horario_fin: '18:00',
+};
 
 export default function BusinessProfileSettings({ userId, profile, onUpdated }: Props) {
   const [form, setForm] = useState(emptyForm);
@@ -20,11 +28,23 @@ export default function BusinessProfileSettings({ userId, profile, onUpdated }: 
       nombre_negocio: profile?.nombre_negocio || '', industria: profile?.industria || '',
       tipo_negocio: profile?.tipo_negocio || '', tamano_equipo: profile?.tamano_equipo || '',
       ciudad: profile?.ciudad || '', telefono_contacto: profile?.telefono_contacto || '',
+      dias_laborales: profile?.dias_laborales?.length ? profile.dias_laborales : [1, 2, 3, 4, 5],
+      horario_inicio: profile?.horario_inicio || '08:00', horario_fin: profile?.horario_fin || '18:00',
     });
   }, [profile]);
 
-  const update = (field: keyof typeof form, value: string) => {
+  const update = (field: keyof typeof emptyForm, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
+    setNotice(null);
+  };
+
+  const toggleDia = (dia: number) => {
+    setForm((current) => ({
+      ...current,
+      dias_laborales: current.dias_laborales.includes(dia)
+        ? current.dias_laborales.filter((d) => d !== dia)
+        : [...current.dias_laborales, dia].sort(),
+    }));
     setNotice(null);
   };
 
@@ -55,6 +75,28 @@ export default function BusinessProfileSettings({ userId, profile, onUpdated }: 
         <label className="text-xs font-medium text-slate-600">Tamaño del equipo<input value={form.tamano_equipo} onChange={(e) => update('tamano_equipo', e.target.value)} maxLength={80} placeholder="Ej. 1–5 personas" className={fieldClass} /></label>
         <label className="text-xs font-medium text-slate-600">Ciudad<input value={form.ciudad} onChange={(e) => update('ciudad', e.target.value)} maxLength={100} placeholder="Ej. Bogotá" className={fieldClass} /></label>
         <label className="text-xs font-medium text-slate-600">Teléfono de contacto<input type="tel" value={form.telefono_contacto} onChange={(e) => update('telefono_contacto', e.target.value)} maxLength={40} placeholder="Ej. +57 300 000 0000" className={fieldClass} /></label>
+        <div className="sm:col-span-2 lg:col-span-3">
+          <p className="text-xs font-medium text-slate-600">Días laborales</p>
+          <p className="mt-0.5 text-[11px] text-slate-400">El Planner y el asistente usan esto para agendar y reprogramar dentro de tu horario real.</p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {DIAS.map((d) => (
+              <button
+                key={d.value}
+                type="button"
+                onClick={() => toggleDia(d.value)}
+                className={`min-h-9 rounded-lg border px-3 text-xs font-semibold transition ${
+                  form.dias_laborales.includes(d.value)
+                    ? 'border-blue-300 bg-blue-50 text-blue-700'
+                    : 'border-slate-200 bg-white text-slate-400 hover:bg-slate-50'
+                }`}
+              >
+                {d.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <label className="text-xs font-medium text-slate-600">Horario de inicio<input type="time" value={form.horario_inicio} onChange={(e) => update('horario_inicio', e.target.value)} className={fieldClass} /></label>
+        <label className="text-xs font-medium text-slate-600">Horario de fin<input type="time" value={form.horario_fin} onChange={(e) => update('horario_fin', e.target.value)} className={fieldClass} /></label>
         <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:col-span-2 sm:flex-row sm:items-center sm:justify-between lg:col-span-3">
           <div aria-live="polite" className="min-h-5 text-xs text-slate-600">{notice && <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-600" />{notice}</span>}</div>
           <button disabled={saving} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Guardar identidad</button>

@@ -28,20 +28,23 @@ export interface PrecioIdealResult {
 export function calcularPrecioIdeal(
   servicio: Servicio,
   overheadPorUnidad: number,
+  margenPorDefecto = 0.30,
 ): PrecioIdealResult {
   const notas: string[] = [];
   const costoUnitario = servicio.costo_entrega_estimado ?? servicio.costo_unitario ?? 0;
   const overhead = Math.max(overheadPorUnidad || 0, 0);
   const costoTotalUnitario = costoUnitario + overhead;
 
+  const margenDefault = margenPorDefecto > 0 && margenPorDefecto < 1 ? margenPorDefecto : 0.30;
+  const margenDefaultPct = `${(margenDefault * 100).toFixed(0)} %`;
   const margenRaw = servicio.margen_objetivo;
-  let margenAplicado = 0.30; // default seguro 30 % cuando no hay margen configurado
+  let margenAplicado = margenDefault;
   if (margenRaw != null) {
-    if (margenRaw <= 0) notas.push('Margen objetivo en 0 o negativo — se usa 30 % por defecto.');
-    else if (margenRaw >= 1) notas.push('Margen objetivo ≥ 100 % — se usa 30 % por defecto.');
+    if (margenRaw <= 0) notas.push(`Margen objetivo en 0 o negativo — se usa ${margenDefaultPct} por defecto.`);
+    else if (margenRaw >= 1) notas.push(`Margen objetivo ≥ 100 % — se usa ${margenDefaultPct} por defecto.`);
     else margenAplicado = margenRaw;
   } else {
-    notas.push('Sin margen objetivo configurado — se usa 30 % por defecto.');
+    notas.push(`Sin margen objetivo configurado — se usa ${margenDefaultPct} por defecto (margen mínimo de tu configuración).`);
   }
 
   let precioIdeal: number | null = null;

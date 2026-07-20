@@ -15,6 +15,8 @@ export interface Config {
   salario_propuesto: number;
   horas_objetivo_mes: number;
   meta_ventas_mensual: number;
+  /** Margen mínimo por defecto (0 a 1) para servicios sin margen_objetivo propio. */
+  margen_minimo: number;
 }
 
 export interface Cliente {

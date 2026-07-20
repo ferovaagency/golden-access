@@ -37,6 +37,7 @@ const DEFAULT_CONFIG: Omit<Config, never> = {
   salario_propuesto: 4000000,
   horas_objetivo_mes: 160,
   meta_ventas_mensual: 12000000,
+  margen_minimo: 0.30,
 };
 
 function throwIfError<T>(label: string, res: { data: T; error: any }): T {
@@ -49,7 +50,7 @@ async function loadConfig(userId: string): Promise<Config> {
   if (res.error) throw new Error(`[financeService] loadConfig: ${res.error.message}`);
   if (res.data) {
     const { user_id, updated_at, ...config } = res.data as any;
-    return config as Config;
+    return { ...DEFAULT_CONFIG, ...config } as Config;
   }
   // Multiple screens can load finance data at the same time after sign-in.
   // Seed once and let the subsequent read return the canonical row instead
@@ -62,7 +63,7 @@ async function loadConfig(userId: string): Promise<Config> {
   const createdRes = await supabase.from('finance_config').select('*').eq('user_id', userId).single();
   const created = throwIfError('loadConfig (seed read)', createdRes as any);
   const { user_id, updated_at, ...config } = created as any;
-  return config as Config;
+  return { ...DEFAULT_CONFIG, ...config } as Config;
 }
 
 export async function loadFinanceData(userId: string): Promise<AppData> {

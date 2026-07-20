@@ -94,10 +94,13 @@ export const googleSignIn = async () => {
   return result;
 };
 
-// Reautorizar solicitando los scopes de Workspace.
+// Reautorizar solicitando los scopes de Workspace. redirect_uri usa la ruta
+// actual (no solo el origin) para que, tras el ida y vuelta por Google, el
+// usuario vuelva a la pantalla desde la que pidió reconectar (ej. /admin) en
+// vez de aterrizar siempre en el dashboard del cliente.
 export const linkGoogleIdentity = async () => {
   const result = await lovable.auth.signInWithOAuth('google', {
-    redirect_uri: window.location.origin,
+    redirect_uri: window.location.origin + window.location.pathname,
     extraParams: {
       access_type: 'offline',
       prompt: 'consent',
@@ -121,7 +124,9 @@ export const emailSignUp = async (email: string, password: string) => {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: window.location.origin },
+    // "/" is now the public landing page, not the app -- a confirmed signup
+    // should land in the product, not back on the marketing site.
+    options: { emailRedirectTo: `${window.location.origin}/app` },
   });
   if (error) throw error;
   return data;

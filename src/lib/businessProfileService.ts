@@ -8,6 +8,12 @@ export interface BusinessProfile {
   tamano_equipo: string | null;
   ciudad: string | null;
   telefono_contacto: string | null;
+  /** 0=domingo..6=sábado, mismo formato que planner_tasks.recurrence_days. */
+  dias_laborales: number[];
+  /** "HH:MM" */
+  horario_inicio: string;
+  /** "HH:MM" */
+  horario_fin: string;
   onboarding_completado: boolean;
   created_at: string;
   updated_at: string;

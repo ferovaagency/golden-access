@@ -46,7 +46,7 @@ function Header() {
           <a href="#faq" className="hover:text-slate-900">FAQ</a>
         </nav>
         <Link
-          to="/"
+          to="/app"
           className="rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
         >
           Iniciar sesión
@@ -80,7 +80,7 @@ function Hero() {
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
-              to="/"
+              to="/app"
               className="inline-flex items-center gap-2 rounded-full bg-amber-300 px-6 py-3 font-medium text-slate-950 hover:bg-amber-200"
             >
               Empezar ahora <ArrowRight className="h-4 w-4" />
@@ -314,7 +314,7 @@ function Pricing() {
             ))}
           </ul>
           <Link
-            to="/"
+            to="/app"
             className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-3 font-medium text-white hover:bg-slate-800"
           >
             Empezar ahora <ArrowRight className="h-4 w-4" />

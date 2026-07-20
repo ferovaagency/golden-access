@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
-import { googleSignIn, linkGoogleIdentity, getAccessToken } from './lib/supabase';
+import { linkGoogleIdentity, getAccessToken } from './lib/supabase';
 import { backupAppDataToSheets, importSheetByUrl, syncExpenseDocumentsToSheets } from './lib/sheetsService';
 import * as financeService from './lib/financeService';
 import { useAuthAndAccess } from './hooks/useAuthAndAccess';
@@ -90,9 +90,21 @@ export default function App() {
   const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
   const { profile: fiscalProfile } = useFiscalProfile(user?.id);
 
-  // Google Sheets backup (optional, manual)
+  // Google Sheets backup (optional, manual). Persisted per user in
+  // localStorage -- previously it was only in-memory React state, so the
+  // link the user just imported/backed up from disappeared on every reload.
   const [isBackingUpToSheets, setIsBackingUpToSheets] = useState(false);
-  const [lastSheetBackupLink, setLastSheetBackupLink] = useState<string | null>(null);
+  const [lastSheetBackupLink, setLastSheetBackupLinkState] = useState<string | null>(null);
+  useEffect(() => {
+    if (!user) { setLastSheetBackupLinkState(null); return; }
+    setLastSheetBackupLinkState(localStorage.getItem(`ferova.sheets.link.${user.id}`));
+  }, [user]);
+  const saveLastSheetBackupLink = (link: string | null) => {
+    setLastSheetBackupLinkState(link);
+    if (!user) return;
+    if (link) localStorage.setItem(`ferova.sheets.link.${user.id}`, link);
+    else localStorage.removeItem(`ferova.sheets.link.${user.id}`);
+  };
 
   // Filter and view state
   const [selectedMonth, setSelectedMonth] = useState<string>('Todos');
@@ -190,11 +202,10 @@ export default function App() {
     let token = getAccessToken();
     if (!token) {
       try {
-        if (user?.identities?.some((i) => i.provider === 'google')) {
-          await googleSignIn();
-        } else {
-          await linkGoogleIdentity();
-        }
+        // Siempre el flujo con scopes de Workspace (Sheets/Drive): tener a
+        // Google como identidad de login no implica haber concedido esos
+        // permisos, y googleSignIn() nunca los pide.
+        await linkGoogleIdentity();
       } catch (err: any) {
         toastErr(`No se pudo iniciar la conexión con Google: ${errMsg(err)}`);
       }
@@ -205,7 +216,7 @@ export default function App() {
     setIsBackingUpToSheets(true);
     try {
       const { sheetLink } = await backupAppDataToSheets(appData, token);
-      setLastSheetBackupLink(sheetLink);
+      saveLastSheetBackupLink(sheetLink);
       toastOk('¡Respaldo en Google Sheets actualizado con éxito!');
     } catch (err: any) {
       toastErr(`Fallo en el respaldo a Sheets: ${errMsg(err)}`);
@@ -232,6 +243,7 @@ export default function App() {
     try {
       const data = await importSheetByUrl(url, getAccessToken());
       await persistImportedFinanceData(data);
+      saveLastSheetBackupLink(url);
       toastOk('Importación completada.');
     } catch (err: any) {
       toastErr(`Fallo al importar: ${errMsg(err)}\n\nAsegúrate de:\n1) Que la hoja esté compartida con la cuenta Google conectada o pública con link.\n2) Que use la estructura Ferova_OS_Financiero y tenga estas pestañas exactas: Config, Clientes, Servicios, Herramientas, OtrosGastos, Ventas, Horas, Respaldos y PagosEgresos.`);
@@ -244,7 +256,9 @@ export default function App() {
     if (!user) return;
     const token = getAccessToken();
     if (!token) {
-      try { await googleSignIn(); }
+      // Necesita scopes de Drive/Sheets, no solo identidad -- googleSignIn()
+      // no los pide y este flujo nunca podía encontrar nada tras "reconectar".
+      try { await linkGoogleIdentity(); }
       catch (err: any) { toastErr(`No se pudo conectar Google: ${errMsg(err)}`); }
       return;
     }
@@ -255,6 +269,7 @@ export default function App() {
       if (!sheet?.id) throw new Error('No encontré una hoja llamada Ferova_OS_Financiero en tu Google Drive. También puedes pegar el link exacto abajo.');
       const data = await import('./lib/sheetsService').then((m) => m.fetchSpreadsheetData(sheet.id, token));
       await persistImportedFinanceData(data);
+      saveLastSheetBackupLink(sheet.webViewLink || `https://docs.google.com/spreadsheets/d/${sheet.id}`);
       toastOk('Hoja importada desde tu Google Drive.');
     } catch (err: any) {
       toastErr(`Fallo al importar tu hoja: ${errMsg(err)}`);

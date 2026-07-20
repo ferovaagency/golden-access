@@ -164,7 +164,7 @@ export default function EquilibrioServicio({
                     const overheadUnit = totalQuantitySoldSrv > 0
                       ? costoFijoAsignadoSrv / totalQuantitySoldSrv
                       : costoFijoAsignadoSrv / Math.max(unidadesEquilibrioEstimadas, 1);
-                    const ideal = calcularPrecioIdeal(srv, overheadUnit);
+                    const ideal = calcularPrecioIdeal(srv, overheadUnit, config.margen_minimo);
                     if (!ideal.precioIdeal) return null;
                     const brechaHabitual = ideal.vsHabitual;
                     return (

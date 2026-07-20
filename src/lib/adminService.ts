@@ -52,6 +52,18 @@ export async function setCustomerPlan(user_id: string, plan: PlanId): Promise<vo
   if (!data?.ok) throw new Error(data?.message || 'No se pudo cambiar el plan.');
 }
 
+/**
+ * Revoca el acceso de un cliente (cancela su suscripción activa y borra su
+ * grant de cortesía si tenía uno). No borra su cuenta ni sus datos --
+ * reversible, se puede volver a dar de alta con setCustomerPlan o
+ * grantCourtesyAccess.
+ */
+export async function revokeCustomerAccess(user_id: string): Promise<void> {
+  const { data, error } = await supabase.functions.invoke('admin-revoke-access', { body: { user_id } });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo revocar el acceso.');
+}
+
 export async function grantCourtesyAccess(email: string, plan: PlanId, notas?: string): Promise<void> {
   const { data, error } = await supabase.functions.invoke('admin-grant-courtesy-access', { body: { email, plan, notas } });
   if (error) throw error;

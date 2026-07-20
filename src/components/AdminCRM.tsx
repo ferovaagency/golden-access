@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import QRCode from 'qrcode';
 import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles, Download, MessageSquare, Zap, Copy, Search, Star, RefreshCw, CheckCircle2, Link2, Bell } from 'lucide-react';
-import { getAccessToken, googleSignIn, logout } from '../lib/supabase';
+import { getAccessToken, linkGoogleIdentity, logout } from '../lib/supabase';
 import { copyText } from '../lib/clipboard';
 import { PIPELINE_STAGES } from './crm/constants';
 import { PlaybookCard } from './crm/PlaybookCard';
@@ -67,6 +67,7 @@ import {
   getMyTeamRole,
   listCustomers,
   setCustomerPlan,
+  revokeCustomerAccess,
   grantCourtesyAccess,
   listFeedback,
   updateFeedbackStatus,
@@ -519,6 +520,25 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     }
   };
 
+  const handleRevokeAccess = async (customer: AdminCustomer) => {
+    if (!(await askConfirm({
+      title: 'Revocar acceso',
+      description: `Esto cancela el acceso de ${customer.nombre_negocio || customer.email} (${customer.estado_suscripcion === 'cortesia' ? 'cortesía' : 'suscripción activa'}). Sus datos NO se borran y puedes volver a darle acceso después. ¿Continuar?`,
+      destructive: true,
+      confirmText: 'Sí, revocar',
+    }))) return;
+    setSavingPlanFor(customer.user_id);
+    try {
+      await revokeCustomerAccess(customer.user_id);
+      setCustomers((prev) => prev.map((c) => (c.user_id === customer.user_id ? { ...c, estado_suscripcion: 'sin_pago' as const } : c)));
+      toastOk('Acceso revocado.');
+    } catch (err: any) {
+      toastErr(`Error revocando el acceso: ${errMsg(err)}`);
+    } finally {
+      setSavingPlanFor(null);
+    }
+  };
+
   const handleGrantCourtesy = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!courtesyEmail.trim()) return;
@@ -711,7 +731,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     setSortlistLeadsResult(null);
     try {
       if (!getAccessToken()) {
-        await googleSignIn();
+        // Necesita scopes de Workspace (Gmail), no solo identidad -- googleSignIn()
+        // no los pide y dejaba este flujo sin permiso real tras "reconectar".
+        await linkGoogleIdentity();
         return;
       }
       const res = await scanSortlistLeads(30);
@@ -733,7 +755,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     setScanResult(null);
     try {
       if (!getAccessToken()) {
-        await googleSignIn();
+        // Necesita scopes de Workspace (Gmail), no solo identidad -- googleSignIn()
+        // no los pide y dejaba este flujo sin permiso real tras "reconectar".
+        await linkGoogleIdentity();
         return;
       }
       const res = await scanResenas(30);
@@ -921,7 +945,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               <span className="text-[10px] font-mono text-[#8a8377] uppercase tracking-wider">CRM interno · no visible para clientes</span>
             </div>
             <div className="flex items-center gap-4">
-              <a href="/" className="text-[#8a8377] hover:text-blue-700 flex items-center gap-1 text-xs font-mono">← Volver a Ferova One</a>
+              <a href="/app" className="text-[#8a8377] hover:text-blue-700 flex items-center gap-1 text-xs font-mono">← Volver a Ferova One</a>
               <button onClick={() => logout()} className="text-[#8a8377] hover:text-red-600 flex items-center gap-1 text-xs font-mono">
                 <LogOut className="w-3.5 h-3.5" /> Cerrar sesión
               </button>
@@ -2163,6 +2187,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                         <th className="py-2 pr-3">Plan</th>
                         <th className="py-2 pr-3">Onboarding</th>
                         <th className="py-2 pr-3">Registrado</th>
+                        {teamRole === 'owner' && <th className="py-2 pr-3">Acciones</th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -2204,6 +2229,19 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                           <td className="py-2 pr-3 text-[#8a8377] font-mono text-[10px]">
                             {new Date(c.created_at).toLocaleDateString('es-CO')}
                           </td>
+                          {teamRole === 'owner' && (
+                            <td className="py-2 pr-3">
+                              {c.estado_suscripcion !== 'sin_pago' && (
+                                <button
+                                  onClick={() => handleRevokeAccess(c)}
+                                  disabled={savingPlanFor === c.user_id}
+                                  className="text-red-600 hover:text-[#e08970] font-mono text-[10px] px-2 py-1 rounded border border-[#c97a61]/30 hover:bg-[#c97a61]/10 disabled:opacity-50"
+                                >
+                                  Revocar acceso
+                                </button>
+                              )}
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>

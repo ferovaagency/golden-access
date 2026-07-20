@@ -59,6 +59,7 @@ export default function ConfigAdmin({
   const [salarioPropuesto, setSalarioPropuesto] = useState(config.salario_propuesto);
   const [metaVentasMensual, setMetaVentasMensual] = useState(config.meta_ventas_mensual);
   const [horasObjetivoMes, setHorasObjetivoMes] = useState(config.horas_objetivo_mes);
+  const [margenMinimoPct, setMargenMinimoPct] = useState(Math.round((config.margen_minimo ?? 0.30) * 100));
 
   const [topeNoDeclaranteUvt, setTopeNoDeclaranteUvt] = useState(config.tope_no_declarante_uvt || 1400);
   const [topeNoPagaRentaUvt, setTopeNoPagaRentaUvt] = useState(config.tope_no_paga_renta_uvt || 1090);
@@ -98,13 +99,14 @@ export default function ConfigAdmin({
         salario_propuesto: Number(salarioPropuesto),
         meta_ventas_mensual: Number(metaVentasMensual),
         horas_objetivo_mes: Number(horasObjetivoMes),
+        margen_minimo: Math.min(Math.max(Number(margenMinimoPct) / 100, 0), 0.99),
         tarifa_salud: config.tarifa_salud ?? 0.125,
         tarifa_pension: config.tarifa_pension ?? 0.16,
         ibc_porcentaje: config.ibc_porcentaje ?? 0.40,
         tarifa_iva: config.tarifa_iva ?? 0.19
       };
       await onSaveConfig(updated);
-      toastErr('Configuración y variables DIAN 2026 actualizadas correctamente.');
+      toastOk('Configuración y variables DIAN 2026 actualizadas correctamente.');
     } catch (err: any) {
       toastErr(`Ocurrió un error al guardar: ${errMsg(err)}`);
     } finally {
@@ -347,11 +349,11 @@ export default function ConfigAdmin({
               <h4 className="font-semibold text-[#c9a961] border-b border-slate-200 pb-1.5 uppercase font-mono text-[10px] tracking-wider">
                 4. Parámetros de Operación Ferova Agency
               </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-sans">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-sans">
                 <div>
                   <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Sueldo Base Deseado</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={salarioPropuesto}
                     onChange={(e) => setSalarioPropuesto(Number(e.target.value))}
                     required
@@ -361,8 +363,8 @@ export default function ConfigAdmin({
 
                 <div>
                   <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Cuota Comercial Ventas / Mes</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={metaVentasMensual}
                     onChange={(e) => setMetaVentasMensual(Number(e.target.value))}
                     required
@@ -372,13 +374,27 @@ export default function ConfigAdmin({
 
                 <div>
                   <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Objetivo Capacidad Horas / Mes</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={horasObjetivoMes}
                     onChange={(e) => setHorasObjetivoMes(Number(e.target.value))}
                     required
                     className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded font-mono focus:outline-none"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Margen Mínimo por Defecto (%)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="99"
+                    value={margenMinimoPct}
+                    onChange={(e) => setMargenMinimoPct(Number(e.target.value))}
+                    required
+                    className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded font-mono focus:outline-none"
+                  />
+                  <span className="text-[10px] text-slate-400 block mt-1">Se usa en Equilibrio por Servicio cuando ese servicio no tiene su propio margen objetivo.</span>
                 </div>
               </div>
             </div>

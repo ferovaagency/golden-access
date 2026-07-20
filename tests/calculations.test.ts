@@ -28,6 +28,7 @@ const config: Config = {
   salario_propuesto: 5_000_000,
   horas_objetivo_mes: 160,
   meta_ventas_mensual: 30_000_000,
+  margen_minimo: 0.30,
 };
 
 const clientes: Cliente[] = [
