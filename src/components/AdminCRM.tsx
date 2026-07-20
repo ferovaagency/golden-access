@@ -21,6 +21,7 @@ import {
   listKnowledge,
   addKnowledge,
   deleteKnowledge,
+  assistWhatsappBot,
   sendWhatsapp,
   bookCita,
   cancelCita,
@@ -124,9 +125,11 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
   const [promptDraft, setPromptDraft] = useState('');
   const [savingPrompt, setSavingPrompt] = useState(false);
+  const [assistingPrompt, setAssistingPrompt] = useState(false);
   const [newKnowledge, setNewKnowledge] = useState('');
   const [newKnowledgeSource, setNewKnowledgeSource] = useState('');
   const [savingKnowledge, setSavingKnowledge] = useState(false);
+  const [assistingKnowledge, setAssistingKnowledge] = useState(false);
 
   const [whatsappDrafts, setWhatsappDrafts] = useState<Record<string, string>>({});
   const [sendingWhatsapp, setSendingWhatsapp] = useState<string | null>(null);
@@ -352,6 +355,30 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       toastErr(`Error guardando el prompt: ${errMsg(err)}`);
     } finally {
       setSavingPrompt(false);
+    }
+  };
+
+  const handleAssistPrompt = async () => {
+    if (!promptDraft.trim()) { toastErr('Escribe una idea del prompt antes de mejorarla con IA.'); return; }
+    setAssistingPrompt(true);
+    try {
+      setPromptDraft(await assistWhatsappBot('prompt', promptDraft.trim()));
+    } catch (err: any) {
+      toastErr(`Error mejorando el prompt: ${errMsg(err)}`);
+    } finally {
+      setAssistingPrompt(false);
+    }
+  };
+
+  const handleAssistKnowledge = async () => {
+    if (!newKnowledge.trim()) { toastErr('Escribe una idea antes de mejorarla con IA.'); return; }
+    setAssistingKnowledge(true);
+    try {
+      setNewKnowledge(await assistWhatsappBot('knowledge', newKnowledge.trim()));
+    } catch (err: any) {
+      toastErr(`Error mejorando el texto: ${errMsg(err)}`);
+    } finally {
+      setAssistingKnowledge(false);
     }
   };
 

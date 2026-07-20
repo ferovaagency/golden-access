@@ -458,6 +458,14 @@ export async function addKnowledge(content: string, source?: string): Promise<vo
   if (!data?.ok) throw new Error(data?.message || 'No se pudo agregar el conocimiento.');
 }
 
+/** Convierte una idea suelta en un prompt o entrada de conocimiento lista para revisar y guardar. */
+export async function assistWhatsappBot(mode: 'prompt' | 'knowledge', draft: string): Promise<string> {
+  const { data, error } = await supabase.functions.invoke('whatsapp-bot-assist', { body: { mode, draft } });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo generar el texto con IA.');
+  return data.result as string;
+}
+
 export async function getWhatsappInstance(): Promise<WhatsappInstance | null> {
   const { data, error } = await db<WhatsappInstance>('crm_whatsapp_instances')
     .select('*')
