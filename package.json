@@ -18,6 +18,8 @@
     "@fontsource/figtree": "^5.2.10",
     "@fontsource/outfit": "^5.2.8",
     "@lovable.dev/cloud-auth-js": "^1.1.2",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
     "@supabase/supabase-js": "^2.110.0",
     "@tailwindcss/vite": "^4.1.14",
     "@types/qrcode": "^1.5.6",
@@ -31,6 +33,7 @@
     "react-markdown": "^10.1.0",
     "react-router-dom": "6",
     "recharts": "^3.8.1",
+    "three": "^0.185.1",
     "vite": "^6.2.3",
     "zod": "^4.4.3"
   },

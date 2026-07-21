@@ -7,6 +7,7 @@ import {
   Plug, LayoutGrid, ScanSearch, Wand2, PlayCircle, AlertTriangle,
 } from 'lucide-react';
 import { AnimatedCard } from '../components/motion/AnimatedCard';
+import { HeroUniverse } from '../components/three/HeroUniverse';
 
 /**
  * Landing v2 -- ruta nueva y aditiva (/landing-v2), no reemplaza /landing.
@@ -138,7 +139,7 @@ function Hero() {
           </div>
           <p className="mt-4 text-xs text-[#8a8377]">USD 50 / mes · Sin permanencia · Cancelás cuando quieras</p>
         </div>
-        <TiltPreviewCard />
+        <HeroUniverse poster={<TiltPreviewCard />} />
       </div>
     </section>
   );
