@@ -48,6 +48,42 @@ Deno.serve(async (req) => {
     // block the owner from turning a brain dump into editable planner tasks.
     const gateway = key ? createLovableAiGatewayProvider(key) : null;
 
+    // Contexto real para que la IA no adivine en el vacío:
+    // - Clientes reales, para resolver detected_client a un client_ref válido
+    //   (antes se guardaba el texto suelto de la IA, que casi nunca coincidía
+    //   con un id real y la insignia de cliente nunca aparecía en el bloque).
+    // - Duración histórica real por categoría, para anclar la estimación de
+    //   tiempo a lo que de verdad se demora esta persona, no a un promedio
+    //   genérico.
+    const [{ data: clientRows }, { data: doneTasks }] = await Promise.all([
+      admin.from("finance_clientes").select("id,nombre").eq("user_id", userId),
+      admin.from("planner_tasks").select("category,actual_minutes").eq("user_id", userId).eq("status", "done").not("actual_minutes", "is", null).limit(300),
+    ]);
+    const clients = (clientRows || []) as { id: string; nombre: string }[];
+    const avgByCategory: Record<string, number> = {};
+    const sums: Record<string, { total: number; count: number }> = {};
+    for (const t of (doneTasks || []) as { category: string; actual_minutes: number }[]) {
+      const bucket = sums[t.category] || { total: 0, count: 0 };
+      bucket.total += t.actual_minutes;
+      bucket.count += 1;
+      sums[t.category] = bucket;
+    }
+    for (const [category, { total, count }] of Object.entries(sums)) avgByCategory[category] = Math.round(total / count);
+
+    function resolveClientRef(detectedName: string | null): string | null {
+      if (!detectedName) return null;
+      const normalized = detectedName.trim().toLowerCase();
+      const exact = clients.find((c) => c.nombre.trim().toLowerCase() === normalized);
+      if (exact) return exact.id;
+      const partial = clients.find((c) => normalized.includes(c.nombre.trim().toLowerCase()) || c.nombre.trim().toLowerCase().includes(normalized));
+      return partial?.id || null;
+    }
+
+    const clientsContext = clients.length ? `Clientes reales del negocio (usa EXACTAMENTE uno de estos nombres si el texto se refiere a alguno; si no coincide con ninguno, deja detected_client en null): ${clients.map((c) => c.nombre).join(", ")}.` : "Todavía no hay clientes cargados en el sistema.";
+    const durationContext = Object.keys(avgByCategory).length
+      ? `Duración histórica REAL de esta persona por categoría (úsala como ancla salvo que la tarea claramente sea distinta): ${Object.entries(avgByCategory).map(([cat, min]) => `${cat}=${min}min`).join(", ")}.`
+      : "Todavía no hay historial de duración real -- estima de forma conservadora.";
+
     const results = [] as any[];
     for (const line of entries.slice(0, 20)) {
       let extracted: z.infer<typeof ClassifySchema> | null = null;
@@ -56,7 +92,7 @@ Deno.serve(async (req) => {
         const { output } = await generateText({
           model: gateway("google/gemini-3.5-flash"),
           output: Output.object({ schema: ClassifySchema }),
-          system: "You are an executive assistant that classifies brain-dump lines from a business owner. Respond in the same language as the input. Estimate a realistic duration (5-240 min). Set priority=urgent only for explicit deadlines <48h or 'urgent/asap'. Detect deadline as ISO if the text mentions a date/time. Extract client/project names if mentioned. Category deep_work=focus/writing/design, admin=paperwork/taxes/emails, calls=phone/whatsapp/meet, creative=ideas/content, learning=read/study, personal=life. Confidence 0-1.",
+          system: `You are an executive assistant that classifies brain-dump lines from a business owner. Respond in the same language as the input. Estimate a realistic duration (5-240 min). Set priority=urgent only for explicit deadlines <48h or 'urgent/asap'. Detect deadline as ISO if the text mentions a date/time. Extract client/project names if mentioned. Category deep_work=focus/writing/design, admin=paperwork/taxes/emails, calls=phone/whatsapp/meet, creative=ideas/content, learning=read/study, personal=life. Confidence 0-1.\n${clientsContext}\n${durationContext}`,
           prompt: `Line: """${line}"""\nToday: ${new Date().toISOString()}`,
         });
         extracted = output as any;
@@ -106,7 +142,7 @@ Deno.serve(async (req) => {
           estimated_minutes: c.detected_duration_min,
           deadline: c.detected_deadline,
           project_ref: c.detected_project,
-          client_ref: c.detected_client,
+          client_ref: resolveClientRef(c.detected_client),
           source_inbox_id: inboxRow.id,
           ai_notes: c.reasoning,
         }).select("*").single();

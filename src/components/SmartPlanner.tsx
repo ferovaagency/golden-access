@@ -178,8 +178,9 @@ export default function SmartPlanner() {
           <div className="flex items-start gap-3">
             <div className="grid h-9 w-9 place-items-center rounded-xl bg-blue-100 text-blue-700"><Sunrise className="h-4 w-4" /></div>
             <div>
-              <p className="text-xs uppercase tracking-widest text-slate-500 font-semibold">Briefing de hoy</p>
-              <p className="text-base font-semibold text-slate-900 mt-1">{p.briefing?.headline || 'Todavía no hay briefing generado.'}</p>
+              <p className="text-xs uppercase tracking-widest text-slate-500 font-semibold">Resumen del día (generado por IA)</p>
+              <p className="text-base font-semibold text-slate-900 mt-1">{p.briefing?.headline || 'Todavía no hay resumen generado.'}</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Solo un vistazo narrativo — tu lista real de tareas está en "Bandeja de tareas", más abajo.</p>
             </div>
           </div>
           <button
@@ -234,13 +235,14 @@ export default function SmartPlanner() {
 
       {/* Timeline of blocks */}
       {plannerView === 'day' && <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500">Bloques del {new Date(p.date + 'T00:00').toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })}</h2>
+        <div className="mb-1 flex items-center justify-between">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500">Tu agenda del {new Date(p.date + 'T00:00').toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })}</h2>
           <div className="flex items-center gap-3">
             <span className="text-[11px] text-slate-400">{p.blocks.length} bloques</span>
             <button onClick={() => setShowBlockForm((value) => !value)} className="text-xs font-semibold text-blue-700 hover:text-blue-900">{showBlockForm ? 'Cancelar' : '+ Bloque protegido'}</button>
           </div>
         </div>
+        <p className="mb-3 text-[11px] text-slate-400">Esto sí es horario: cada bloque tiene una hora fija. "Reorganizar mi día" puede moverlos, excepto los marcados <span className="inline-flex items-center gap-0.5 text-amber-700"><Lock className="h-2.5 w-2.5" />Protegido</span>.</p>
         {showBlockForm && (
           <form onSubmit={createProtectedBlock} className="mb-3 grid gap-2 rounded-2xl border border-blue-200 bg-blue-50 p-3 sm:grid-cols-[1fr_auto_auto_auto] sm:items-end">
             <label className="text-xs text-slate-600">Evento o compromiso
@@ -269,7 +271,7 @@ export default function SmartPlanner() {
 
       {/* Tasks queue */}
       <section>
-        <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500">Bandeja de tareas · {openTasks.length}</h2><span className="text-[11px] text-slate-400">Edita agenda, entrega, prioridad, cliente y recurrencia.</span></div>
+        <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500">Tu lista de tareas · {openTasks.length}</h2><span className="text-[11px] text-slate-400">Esto es lo que tenés pendiente. Edita agenda, entrega, prioridad, cliente y recurrencia; "Reorganizar mi día" las convierte en bloques de la agenda.</span></div>
         {taskSaveNotice && <div className="mb-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">{taskSaveNotice}</div>}
         {editingTask && (
           <form onSubmit={saveTaskEditor} className="mb-3 rounded-2xl border border-blue-200 bg-blue-50 p-4">

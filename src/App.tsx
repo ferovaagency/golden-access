@@ -458,7 +458,20 @@ export default function App() {
   // Los miembros del equipo de Ferova (isTeam) no son clientes reales, no pasan por esto.
   const isReady = appData !== null;
   if (isReady && !isTeam && !businessProfile?.onboarding_completado) {
-    return <PlanOnboarding user={user} plan={plan} modules={modules} profile={businessProfile} onDone={(profile) => setBusinessProfile(profile)} />;
+    return (
+      <PlanOnboarding
+        user={user}
+        plan={plan}
+        modules={modules}
+        profile={businessProfile}
+        appData={appData}
+        onSaveClientes={handleSaveClientes}
+        onSaveServicios={handleSaveServicios}
+        onSaveConfig={handleSaveConfig}
+        onSaveOtrosGastos={handleSaveOtrosGastos}
+        onDone={(profile) => setBusinessProfile(profile)}
+      />
+    );
   }
 
   // Estado 3: Pagado => Dashboard (los datos viven en Supabase, Google es solo respaldo opcional)

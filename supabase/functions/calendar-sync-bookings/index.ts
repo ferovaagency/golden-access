@@ -48,12 +48,42 @@ Deno.serve(async (req) => {
     // Solo eventos que claramente vienen de nuestro link de reserva o son
     // diagnósticos -- "tiene asistentes" era demasiado amplio y traía
     // cualquier reunión del calendario a la lista de Citas.
-    const events = (json.items || []).filter((event: any) => {
+    let events = (json.items || []).filter((event: any) => {
       const haystack = `${event.summary || ""}\n${event.description || ""}\n${event.htmlLink || ""}`.toLowerCase();
       return event.status !== "cancelled" && !event.recurringEventId && (haystack.includes("calendar.app.google") || haystack.includes("diagn"));
     });
 
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // Modo preview: no inserta nada, solo devuelve candidatos para que la
+    // persona elija cuáles importar como citas. Igual filtra los que ya
+    // existen, para no ofrecer de nuevo algo ya importado.
+    const preview = body?.preview === true;
+    const selectedIds: string[] | null = Array.isArray(body?.event_ids) ? body.event_ids.map(String) : null;
+    if (selectedIds) events = events.filter((event: any) => selectedIds.includes(event.id));
+
+    if (preview) {
+      const candidates: any[] = [];
+      for (const event of events) {
+        const { data: existing } = await admin.from("crm_citas_diagnostico").select("id").eq("calendar_event_id", event.id).maybeSingle();
+        if (existing) continue;
+        const attendee = (event.attendees || []).find((a: any) => a.email && a.email !== user.email) || (event.attendees || [])[0];
+        const email = attendee?.email || null;
+        const start = event.start?.dateTime || event.start?.date;
+        const end = event.end?.dateTime || event.end?.date;
+        if (!start) continue;
+        candidates.push({
+          event_id: event.id,
+          nombre: nameFromEvent(event, email),
+          email,
+          fecha_hora: new Date(start).toISOString(),
+          duracion_min: end ? Math.max(15, Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000)) : 30,
+          ya_paso: new Date(end || start).getTime() < Date.now(),
+        });
+      }
+      return new Response(JSON.stringify({ ok: true, preview: true, scanned: events.length, candidates }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     const created: any[] = [];
     let skipped = 0;
 

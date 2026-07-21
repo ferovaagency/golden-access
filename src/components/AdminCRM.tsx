@@ -26,6 +26,8 @@ import {
   bookCita,
   cancelCita,
   syncBookingLinkCitas,
+  previewBookingLinkCitas,
+  BookingCandidate,
   analyzeContenido,
   listServiciosCatalogo,
   fetchSubredditPosts,
@@ -164,6 +166,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const [bookNotas, setBookNotas] = useState('');
   const [booking, setBooking] = useState(false);
   const [syncingBookings, setSyncingBookings] = useState(false);
+  const [bookingCandidates, setBookingCandidates] = useState<BookingCandidate[] | null>(null);
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<string>>(new Set());
+  const [importingCandidates, setImportingCandidates] = useState(false);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   // Content analyzer
@@ -461,16 +466,41 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
   const handleSyncBookingLink = async () => {
     setSyncingBookings(true);
+    setBookingCandidates(null);
     try {
-      const result = await syncBookingLinkCitas(30);
+      const { scanned, candidates } = await previewBookingLinkCitas(30);
+      setBookingCandidates(candidates);
+      setSelectedCandidateIds(new Set(candidates.map((c) => c.event_id)));
+      if (candidates.length === 0) toastOk(`Reservas revisadas: ${scanned}. No hay reservas nuevas para importar.`);
+    } catch (err: any) {
+      toastErr(`Error buscando reservas: ${errMsg(err)}`);
+    } finally {
+      setSyncingBookings(false);
+    }
+  };
+
+  const toggleCandidateSelection = (eventId: string) => {
+    setSelectedCandidateIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(eventId)) next.delete(eventId); else next.add(eventId);
+      return next;
+    });
+  };
+
+  const handleImportSelectedCandidates = async () => {
+    if (selectedCandidateIds.size === 0) return;
+    setImportingCandidates(true);
+    try {
+      const result = await syncBookingLinkCitas(30, Array.from(selectedCandidateIds));
       const [freshCitas, freshOpps] = await Promise.all([listCitas(), listOportunidades()]);
       setCitas(freshCitas);
       setOportunidades(freshOpps);
-      toastErr(`Reservas revisadas: ${result.scanned}. Nuevas citas importadas: ${result.inserted}.`);
+      toastOk(`Importadas ${result.inserted} citas nuevas.`);
+      setBookingCandidates(null);
     } catch (err: any) {
-      toastErr(`Error sincronizando reservas: ${errMsg(err)}`);
+      toastErr(`Error importando reservas: ${errMsg(err)}`);
     } finally {
-      setSyncingBookings(false);
+      setImportingCandidates(false);
     }
   };
 
@@ -1475,8 +1505,34 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   className="w-full bg-emerald-50 border border-emerald-100 text-emerald-700 font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${syncingBookings ? 'animate-spin' : ''}`} />
-                  {syncingBookings ? 'Buscando reservas...' : 'Traer reservas del link'}
+                  {syncingBookings ? 'Buscando reservas...' : 'Buscar reservas nuevas'}
                 </button>
+                {bookingCandidates && bookingCandidates.length > 0 && (
+                  <div className="border border-emerald-200 rounded-lg p-3 space-y-2 bg-emerald-50/40">
+                    <p className="text-[9px] text-slate-600 font-mono uppercase tracking-wider">Elige cuáles traer a Citas ({selectedCandidateIds.size}/{bookingCandidates.length})</p>
+                    <div className="max-h-56 overflow-y-auto space-y-1.5">
+                      {bookingCandidates.map((c) => (
+                        <label key={c.event_id} className="flex items-start gap-2 bg-white border border-slate-200 rounded p-2 cursor-pointer">
+                          <input type="checkbox" className="mt-0.5" checked={selectedCandidateIds.has(c.event_id)} onChange={() => toggleCandidateSelection(c.event_id)} />
+                          <span className="flex-1 min-w-0">
+                            <span className="block font-semibold text-slate-900 truncate">{c.nombre}</span>
+                            <span className="block text-[9px] text-slate-500 font-mono">
+                              {new Date(c.fecha_hora).toLocaleString('es-CO')} · {c.duracion_min} min{c.ya_paso ? ' · ya pasó' : ''}{c.email ? ` · ${c.email}` : ''}
+                            </span>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={handleImportSelectedCandidates} disabled={importingCandidates || selectedCandidateIds.size === 0} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded text-[11px] disabled:opacity-50">
+                        {importingCandidates ? 'Importando...' : `Importar seleccionadas (${selectedCandidateIds.size})`}
+                      </button>
+                      <button type="button" onClick={() => setBookingCandidates(null)} className="px-3 py-2 rounded border border-slate-200 text-slate-600 text-[11px] font-semibold hover:bg-slate-50">
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </form>
 

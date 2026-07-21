@@ -222,8 +222,25 @@ export async function cancelCita(cita_id: string): Promise<CitaDiagnostico> {
   return data.cita as CitaDiagnostico;
 }
 
-export async function syncBookingLinkCitas(days = 30): Promise<{ scanned: number; inserted: number; skipped: number; citas: CitaDiagnostico[] }> {
-  const { data, error } = await supabase.functions.invoke('calendar-sync-bookings', { body: { days } });
+export interface BookingCandidate {
+  event_id: string;
+  nombre: string;
+  email: string | null;
+  fecha_hora: string;
+  duracion_min: number;
+  ya_paso: boolean;
+}
+
+/** Busca reservas del link sin importar nada todavía -- para que la persona elija cuáles traer a Citas. */
+export async function previewBookingLinkCitas(days = 30): Promise<{ scanned: number; candidates: BookingCandidate[] }> {
+  const { data, error } = await supabase.functions.invoke('calendar-sync-bookings', { body: { days, preview: true } });
+  if (error) throw await functionErrorMessage(error, 'No se pudieron buscar reservas.');
+  if (!data?.ok) throw new Error(data?.message || 'No se pudieron buscar reservas.');
+  return { scanned: data.scanned, candidates: data.candidates as BookingCandidate[] };
+}
+
+export async function syncBookingLinkCitas(days = 30, eventIds?: string[]): Promise<{ scanned: number; inserted: number; skipped: number; citas: CitaDiagnostico[] }> {
+  const { data, error } = await supabase.functions.invoke('calendar-sync-bookings', { body: { days, ...(eventIds ? { event_ids: eventIds } : {}) } });
   if (error) throw await functionErrorMessage(error, 'No se pudieron sincronizar reservas.');
   if (!data?.ok) throw new Error(data?.message || 'No se pudieron sincronizar reservas.');
   return data;
