@@ -1,8 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactElement } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { AlertTriangle, ArrowDown, ArrowRight, ArrowUp, BriefcaseBusiness, CalendarCheck, CheckCircle2, CircleDollarSign, Clock3, HeartPulse, Plus, ShieldCheck, Users, Wallet } from 'lucide-react';
 import type { AppData } from '../types';
 import type { FinancialMetrics } from '../lib/calculations';
+import { isFerovaUiV2Enabled } from '../lib/featureFlags';
+import type { Signal, Tone } from './executive/types';
+import { ExecutiveHero } from './executive/ExecutiveHero';
+import { KpiStrip, type KpiItem } from './executive/KpiStrip';
+import { ExecutiveBrief } from './executive/ExecutiveBrief';
+import { BusinessHealth } from './executive/BusinessHealth';
+import { BlindSpots } from './executive/BlindSpots';
+import { RecentActivity } from './executive/RecentActivity';
+import { PrioritiesList } from './executive/PrioritiesList';
+import { QuickActionsGrid } from './executive/QuickActionsGrid';
 
 interface HomeProps {
   data: AppData;
@@ -10,15 +20,6 @@ interface HomeProps {
   selectedMonth: string;
   formatCop: (value: number) => string;
   onNavigate: (tab: string) => void;
-}
-
-type Tone = 'positive' | 'warning' | 'critical' | 'neutral';
-
-interface Signal {
-  title: string;
-  detail: string;
-  tone: Tone;
-  action?: { label: string; tab: string };
 }
 
 const toneStyles: Record<Tone, string> = {
@@ -92,6 +93,50 @@ export default function Home({ data, metrics, selectedMonth, formatCop, onNaviga
     { label: 'Ver proyectos', icon: BriefcaseBusiness, tab: 'proyectos' },
     { label: 'Gestionar clientes', icon: Users, tab: 'clientes' },
   ];
+
+  // Rediseno Ferova One v2 (docs/DESIGN_SYSTEM_V2.md, Fase 3): mismos health/
+  // blindSpots/priorities/activity/quickActions/sectionOrder de arriba, solo
+  // cambia la presentacion. Ningun calculo financiero se toca aqui.
+  if (isFerovaUiV2Enabled()) {
+    const kpiItems: KpiItem[] = [
+      { key: 'ingresos', label: 'Ingresos', value: metrics.totalVentas, format: formatCop, detail: 'Ventas del período', icon: CircleDollarSign },
+      { key: 'utilidadOp', label: 'Utilidad operativa', value: metrics.utilidadOperacional, format: formatCop, detail: 'Después de costos y gastos', icon: Wallet },
+      { key: 'utilidadNeta', label: 'Utilidad neta', value: metrics.utilidadNeta, format: formatCop, detail: 'Estimación después de impuestos', icon: ShieldCheck },
+      { key: 'clientes', label: 'Clientes activos', value: activeClients.length, format: (v) => String(Math.round(v)), detail: 'Cuentas en seguimiento', icon: Users },
+      { key: 'horas', label: 'Horas registradas', value: totalHours, format: (v) => `${Math.round(v)} h`, detail: 'Capacidad del período', icon: Clock3 },
+    ];
+
+    const reorderableSections: Record<HomeSectionId, ReactElement> = {
+      quick: <QuickActionsGrid actions={quickActions} onNavigate={onNavigate} />,
+      priorities: (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.35fr_0.65fr]">
+          <PrioritiesList priorities={priorities} onNavigate={onNavigate} />
+          <BusinessHealth health={health} onNavigate={onNavigate} />
+        </div>
+      ),
+      blind: <BlindSpots spots={blindSpots} onNavigate={onNavigate} />,
+      activity: <RecentActivity entries={activity} />,
+    };
+
+    return (
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 pb-10">
+        <ExecutiveHero
+          eyebrow="Executive Control Center"
+          title="Tu negocio, en una mirada."
+          subtitle="Prioridades, salud y señales que requieren tu atención para el período seleccionado."
+          primaryAction={{ label: 'Revisar proyectos', onClick: () => onNavigate('proyectos') }}
+        />
+        <KpiStrip items={kpiItems} periodKey={selectedMonth} />
+        <ExecutiveBrief health={health} topPriority={priorities[0]} onNavigate={onNavigate} />
+        {sectionOrder.map((id) => (
+          <div key={id} className="space-y-1.5">
+            <div className="flex justify-end"><OrderControls id={id} order={sectionOrder} onMove={moveSection} /></div>
+            {reorderableSections[id]}
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 pb-10 animate-fade-in">
