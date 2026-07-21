@@ -128,6 +128,7 @@ export async function loadFinanceData(userId: string): Promise<AppData> {
     costo_entrega_estimado: s.costo_entrega_estimado != null ? Number(s.costo_entrega_estimado) : null,
     margen_objetivo: s.margen_objetivo != null ? Number(s.margen_objetivo) : null,
     precio_habitual: s.precio_habitual != null ? Number(s.precio_habitual) : null,
+    precio_habitual_moneda: (s.precio_habitual_moneda as 'COP' | 'USD') || 'COP',
     precio_ofrecido: s.precio_ofrecido != null ? Number(s.precio_ofrecido) : null,
   }));
 
@@ -265,6 +266,7 @@ export async function saveServicios(userId: string, list: Servicio[]) {
     costo_entrega_estimado: s.costo_entrega_estimado ?? null,
     margen_objetivo: s.margen_objetivo ?? null,
     precio_habitual: s.precio_habitual ?? null,
+    precio_habitual_moneda: s.precio_habitual_moneda || 'COP',
     precio_ofrecido: s.precio_ofrecido ?? null,
   })));
 }

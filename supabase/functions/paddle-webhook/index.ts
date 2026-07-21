@@ -100,6 +100,10 @@ Deno.serve(async (req) => {
   }
 
   const providerOrderId = typeof data.id === 'string' ? data.id : eventId;
+  // Paddle's customer id (ctm_...), present on transaction/subscription events.
+  // Stored so authenticated in-app pages can init Paddle.js with pwCustomer
+  // and get Retain's payment-recovery/cancellation-flow features.
+  const customerId = typeof data.customer_id === 'string' ? data.customer_id : null;
   const { data: existingRows, error: lookupError } = await admin
     .from('user_subscriptions')
     .select('id')
@@ -110,10 +114,12 @@ Deno.serve(async (req) => {
 
   let subscriptionError = lookupError;
   if (!subscriptionError && existingRows?.[0]) {
-    const { error } = await admin.from('user_subscriptions').update({ status: mappedStatus, provider_order_id: providerOrderId }).eq('id', existingRows[0].id);
+    const update: Record<string, unknown> = { status: mappedStatus, provider_order_id: providerOrderId };
+    if (customerId) update.provider_customer_id = customerId;
+    const { error } = await admin.from('user_subscriptions').update(update).eq('id', existingRows[0].id);
     subscriptionError = error;
   } else if (!subscriptionError && mappedStatus !== 'cancelled') {
-    const { error } = await admin.from('user_subscriptions').insert({ user_id: userId, status: mappedStatus, provider: 'paddle', provider_order_id: providerOrderId, amount_usd: null });
+    const { error } = await admin.from('user_subscriptions').insert({ user_id: userId, status: mappedStatus, provider: 'paddle', provider_order_id: providerOrderId, provider_customer_id: customerId, amount_usd: null });
     subscriptionError = error;
   }
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { initAuth, googleSignIn, logout, resolveAccess } from '../lib/supabase';
 import { isTeamMember } from '../lib/crmService';
@@ -19,12 +19,20 @@ export function useAuthAndAccess() {
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [moduleOverrides, setModuleOverrides] = useState<ModuleOverrides>({});
   const modules = useMemo(() => getModules(plan, isTeam, moduleOverrides), [plan, isTeam, moduleOverrides]);
+  const loadedUserId = useRef<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = initAuth(
       async (fUser: User) => {
         setUser(fUser);
         setAuthLoading(false);
+        // Supabase fires onAuthStateChange for TOKEN_REFRESHED too, which
+        // happens almost every time the tab regains focus (background tabs
+        // pause the refresh timer). Re-running the full access/team/overrides
+        // fetch on every one of those made the whole app flash back to a
+        // loading state -- felt like a reload even though nothing changed.
+        if (loadedUserId.current === fUser.id) return;
+        loadedUserId.current = fUser.id;
         setCheckingPayment(true);
         const [access, team] = await Promise.all([
           resolveAccess(fUser.id, fUser.email || ''),
@@ -41,6 +49,7 @@ export function useAuthAndAccess() {
         setCheckingPayment(false);
       },
       () => {
+        loadedUserId.current = null;
         setUser(null);
         setHasPaid(false);
         setIsTeam(false);

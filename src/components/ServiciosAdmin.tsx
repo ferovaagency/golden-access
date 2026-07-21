@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Servicio, Venta, Hora, Config } from '../types';
 import { convertToCop } from '../lib/calculations';
-import { Plus, Tag, Percent, Clock, Briefcase, Edit2 } from 'lucide-react';
+import { Plus, Tag, Percent, Clock, Briefcase, Edit2, Download, Upload } from 'lucide-react';
 import { useToast, errMsg } from './ui/toast';
 import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
+import { downloadServiciosTemplate, parseServiciosCsv } from '../lib/csvImportExport';
 
 interface ServiciosAdminProps {
   servicios: Servicio[];
@@ -29,8 +30,26 @@ export default function ServiciosAdmin({
   const [srvCostoUnitario, setSrvCostoUnitario] = useState(0);
   const [srvMargenPct, setSrvMargenPct] = useState(''); // vacío = sin margen propio, usa el margen mínimo por defecto
   const [srvPrecioHabitual, setSrvPrecioHabitual] = useState(''); // vacío = no informado
+  const [srvPrecioHabitualMoneda, setSrvPrecioHabitualMoneda] = useState<'COP' | 'USD'>('COP');
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [confirmDeleteSrvId, setConfirmDeleteSrvId] = useState<string | null>(null);
+  const [uploadingCsv, setUploadingCsv] = useState(false);
+  const csvInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCsvUpload = async (file: File) => {
+    setUploadingCsv(true);
+    try {
+      const text = await file.text();
+      const merged = parseServiciosCsv(text, servicios);
+      await onSaveServicios(merged);
+      toastOk(`Importados ${merged.length - servicios.length >= 0 ? merged.length - servicios.length : 0} servicios nuevos (${merged.length} en total).`);
+    } catch (err: any) {
+      toastErr(`Error importando el CSV: ${errMsg(err)}`);
+    } finally {
+      setUploadingCsv(false);
+      if (csvInputRef.current) csvInputRef.current.value = '';
+    }
+  };
 
   const handleStartEdit = (s: Servicio) => {
     setEditingServiceId(s.id);
@@ -39,6 +58,7 @@ export default function ServiciosAdmin({
     setSrvCostoUnitario(s.costo_unitario);
     setSrvMargenPct(s.margen_objetivo != null ? String(Math.round(s.margen_objetivo * 100)) : '');
     setSrvPrecioHabitual(s.precio_habitual != null ? String(s.precio_habitual) : '');
+    setSrvPrecioHabitualMoneda(s.precio_habitual_moneda || 'COP');
   };
 
   const handleCancelEdit = () => {
@@ -48,6 +68,7 @@ export default function ServiciosAdmin({
     setSrvCostoUnitario(0);
     setSrvMargenPct('');
     setSrvPrecioHabitual('');
+    setSrvPrecioHabitualMoneda('COP');
   };
 
   const handleCreateServicio = async (e: React.FormEvent) => {
@@ -67,6 +88,7 @@ export default function ServiciosAdmin({
             costo_unitario: Number(srvCostoUnitario),
             margen_objetivo: margenObjetivo,
             precio_habitual: precioHabitual,
+            precio_habitual_moneda: srvPrecioHabitualMoneda,
             descripcion: s.descripcion || `Línea de servicio general para ${srvNombre.trim()}`
           };
         }
@@ -90,6 +112,7 @@ export default function ServiciosAdmin({
         costo_unitario: Number(srvCostoUnitario),
         margen_objetivo: margenObjetivo,
         precio_habitual: precioHabitual,
+        precio_habitual_moneda: srvPrecioHabitualMoneda,
         descripcion: `Línea de servicio general para ${srvNombre.trim()}`
       };
 
@@ -102,6 +125,7 @@ export default function ServiciosAdmin({
       setSrvCostoUnitario(0);
       setSrvMargenPct('');
       setSrvPrecioHabitual('');
+      setSrvPrecioHabitualMoneda('COP');
     }
   };
 
@@ -153,9 +177,20 @@ export default function ServiciosAdmin({
     <div className="space-y-8 animate-fade-in text-slate-900">
 
       {/* Header */}
-      <div className="border-b border-slate-200 pb-5">
-        <h2 className="text-xl font-display font-medium text-blue-600">Portafolio de Líneas de Servicio</h2>
-        <p className="text-xs text-slate-500 font-mono mt-1">Configuración de precios de referencia, costos directos y rentabilidades por servicio</p>
+      <div className="border-b border-slate-200 pb-5 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-display font-medium text-blue-600">Portafolio de Líneas de Servicio</h2>
+          <p className="text-xs text-slate-500 font-mono mt-1">Configuración de precios de referencia, costos directos y rentabilidades por servicio</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={downloadServiciosTemplate} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+            <Download className="w-3.5 h-3.5" /> Plantilla CSV
+          </button>
+          <button type="button" onClick={() => csvInputRef.current?.click()} disabled={uploadingCsv} className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
+            <Upload className="w-3.5 h-3.5" /> {uploadingCsv ? 'Subiendo...' : 'Subir CSV'}
+          </button>
+          <input ref={csvInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleCsvUpload(f); }} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -227,15 +262,25 @@ export default function ServiciosAdmin({
             </div>
 
             <div>
-              <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Precio de venta de referencia (COP) — opcional</label>
-              <input
-                type="number"
-                min="0"
-                placeholder="Ej: 950000"
-                value={srvPrecioHabitual}
-                onChange={(e) => setSrvPrecioHabitual(e.target.value)}
-                className="w-full bg-slate-50 text-slate-900 font-mono border border-slate-200 p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
-              />
+              <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Precio de venta de referencia — opcional</label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="Ej: 950000"
+                  value={srvPrecioHabitual}
+                  onChange={(e) => setSrvPrecioHabitual(e.target.value)}
+                  className="flex-1 min-w-0 bg-slate-50 text-slate-900 font-mono border border-slate-200 p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
+                />
+                <select
+                  value={srvPrecioHabitualMoneda}
+                  onChange={(e) => setSrvPrecioHabitualMoneda(e.target.value as 'COP' | 'USD')}
+                  className="w-20 shrink-0 bg-slate-50 text-slate-900 font-mono border border-slate-200 p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
+                >
+                  <option value="COP">COP</option>
+                  <option value="USD">USD</option>
+                </select>
+              </div>
               <p className="text-[10px] text-slate-400 mt-1">Lo que cobrás hoy por esta línea. Equilibrio por Servicio lo compara contra el precio ideal (costo + margen) y te dice si deberías subirlo o bajarlo.</p>
             </div>
 
@@ -300,7 +345,7 @@ export default function ServiciosAdmin({
                           </span>
                           {s.precio_habitual != null && (
                             <span className="block text-[9px] font-normal text-slate-400">
-                              Vende a: {formatCop(s.precio_habitual)}
+                              Vende a: {s.precio_habitual_moneda === 'USD' ? `US$${s.precio_habitual.toLocaleString('en-US')}` : formatCop(s.precio_habitual)}
                             </span>
                           )}
                         </td>

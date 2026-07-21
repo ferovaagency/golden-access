@@ -1605,6 +1605,7 @@ export type Database = {
           no_incluye: string | null
           nombre: string
           precio_habitual: number | null
+          precio_habitual_moneda: string
           precio_ofrecido: number | null
           user_id: string
         }
@@ -1619,6 +1620,7 @@ export type Database = {
           no_incluye?: string | null
           nombre: string
           precio_habitual?: number | null
+          precio_habitual_moneda?: string
           precio_ofrecido?: number | null
           user_id: string
         }
@@ -1633,6 +1635,7 @@ export type Database = {
           no_incluye?: string | null
           nombre?: string
           precio_habitual?: number | null
+          precio_habitual_moneda?: string
           precio_ofrecido?: number | null
           user_id?: string
         }
@@ -2529,6 +2532,7 @@ export type Database = {
           id: string
           plan: string
           provider: string
+          provider_customer_id: string | null
           provider_order_id: string | null
           status: string
           user_id: string
@@ -2540,6 +2544,7 @@ export type Database = {
           id?: string
           plan?: string
           provider?: string
+          provider_customer_id?: string | null
           provider_order_id?: string | null
           status: string
           user_id: string
@@ -2551,6 +2556,7 @@ export type Database = {
           id?: string
           plan?: string
           provider?: string
+          provider_customer_id?: string | null
           provider_order_id?: string | null
           status?: string
           user_id?: string

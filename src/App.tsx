@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
-import { linkGoogleIdentity, getAccessToken } from './lib/supabase';
+import { linkGoogleIdentity, getAccessToken, saveGoogleLinkReturnTab, consumeGoogleLinkReturnTab } from './lib/supabase';
 import { backupAppDataToSheets, importSheetByUrl, syncExpenseDocumentsToSheets } from './lib/sheetsService';
 import * as financeService from './lib/financeService';
 import { useAuthAndAccess } from './hooks/useAuthAndAccess';
@@ -12,6 +12,7 @@ import { calcularMétricasFinancieras } from './lib/calculations';
 import { useFiscalProfile } from './hooks/useFiscalProfile';
 import { isSupabaseConfigured, supabaseConfigurationError } from './integrations/supabase/client';
 import { trackUserEvent } from './lib/userEngagementService';
+import { ensurePaddleJsReady, getMyPaddleCustomerId } from './lib/paymentProvider';
 import { useToast, errMsg } from './components/ui/toast';
 import { LoadingState } from './components/ui/AsyncState';
 import AuthScreen from './components/AuthScreen';
@@ -99,6 +100,20 @@ export default function App() {
     if (!user) { setLastSheetBackupLinkState(null); return; }
     setLastSheetBackupLinkState(localStorage.getItem(`ferova.sheets.link.${user.id}`));
   }, [user]);
+
+  // Paddle Retain needs Paddle.js initialized on in-app authenticated pages
+  // too, not just the Paywall checkout screen -- otherwise it can't show
+  // in-app payment-recovery banners or the cancellation-flow survey to an
+  // already-paying customer just using the app. pwCustomer only applies
+  // once we know their Paddle customer id (set after their first payment).
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    getMyPaddleCustomerId(user.id)
+      .then((customerId) => { if (!cancelled) void ensurePaddleJsReady(customerId); })
+      .catch(() => { if (!cancelled) void ensurePaddleJsReady(); });
+    return () => { cancelled = true; };
+  }, [user?.id]);
   const saveLastSheetBackupLink = (link: string | null) => {
     setLastSheetBackupLinkState(link);
     if (!user) return;
@@ -108,7 +123,7 @@ export default function App() {
 
   // Filter and view state
   const [selectedMonth, setSelectedMonth] = useState<string>('Todos');
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
+  const [activeTab, setActiveTab] = useState<string>(() => consumeGoogleLinkReturnTab() || 'dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [aiCollapsed, setAiCollapsed] = useState<boolean>(() => {
@@ -205,6 +220,7 @@ export default function App() {
         // Siempre el flujo con scopes de Workspace (Sheets/Drive): tener a
         // Google como identidad de login no implica haber concedido esos
         // permisos, y googleSignIn() nunca los pide.
+        saveGoogleLinkReturnTab(activeTab);
         await linkGoogleIdentity();
       } catch (err: any) {
         toastErr(`No se pudo iniciar la conexión con Google: ${errMsg(err)}`);
@@ -258,6 +274,7 @@ export default function App() {
     if (!token) {
       // Necesita scopes de Drive/Sheets, no solo identidad -- googleSignIn()
       // no los pide y este flujo nunca podía encontrar nada tras "reconectar".
+      saveGoogleLinkReturnTab(activeTab);
       try { await linkGoogleIdentity(); }
       catch (err: any) { toastErr(`No se pudo conectar Google: ${errMsg(err)}`); }
       return;

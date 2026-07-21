@@ -164,7 +164,12 @@ export default function EquilibrioServicio({
                     const overheadUnit = totalQuantitySoldSrv > 0
                       ? costoFijoAsignadoSrv / totalQuantitySoldSrv
                       : costoFijoAsignadoSrv / Math.max(unidadesEquilibrioEstimadas, 1);
-                    const ideal = calcularPrecioIdeal(srv, overheadUnit, config.margen_minimo);
+                    // vsHabitual compara en COP -- si el precio de referencia está en
+                    // USD, se convierte primero o la comparación queda mal escalada.
+                    const precioHabitualCop = srv.precio_habitual != null
+                      ? convertToCop(srv.precio_habitual, srv.precio_habitual_moneda || 'COP', config.trm)
+                      : null;
+                    const ideal = calcularPrecioIdeal({ ...srv, precio_habitual: precioHabitualCop }, overheadUnit, config.margen_minimo);
                     if (!ideal.precioIdeal) return null;
                     const brechaHabitual = ideal.vsHabitual;
                     return (
@@ -178,9 +183,9 @@ export default function EquilibrioServicio({
                             <span className="font-display font-bold text-[#c9a961] text-base">{formatCop(ideal.precioIdeal)}</span>
                           </div>
                           <div className="text-[10px] text-[#8a8377]">{ideal.formulaHumana}</div>
-                          {srv.precio_habitual != null && brechaHabitual != null && (
+                          {precioHabitualCop != null && brechaHabitual != null && (
                             <div className="flex justify-between text-[#a39d8e] pt-1 border-t border-[#2a2620]/60">
-                              <span>vs precio habitual ({formatCop(srv.precio_habitual)}):</span>
+                              <span>vs precio habitual ({srv.precio_habitual_moneda === 'USD' ? `US$${srv.precio_habitual!.toLocaleString('en-US')} · ` : ''}{formatCop(precioHabitualCop)}):</span>
                               <span className={brechaHabitual > 0 ? 'text-[#c99a61]' : 'text-[#a8c98a]'}>
                                 {brechaHabitual > 0 ? '↑ subir ' : '↓ bajar '}{formatCop(Math.abs(brechaHabitual))}
                               </span>

@@ -92,6 +92,7 @@ function FlujoTab({ userId, periodo, appData, formatCop }: { userId: string; per
   ];
   return (
     <div className="space-y-4">
+      <p className="text-xs text-slate-500">Vista de solo lectura: resume lo que ya cargaste en Cuentas, Deudas, Por cobrar, Por pagar y Presupuesto. No se edita nada aquí — para cambiar un número, ve a la pestaña correspondiente.</p>
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         {kpis.map(([label, value]) => (
           <div key={label} className={cardClass}>
@@ -155,7 +156,8 @@ function AccountsTab({ userId, formatCop }: { userId: string; formatCop: (n: num
   return (
     <div className="space-y-4">
       <div className={cardClass}>
-        <h3 className="font-semibold text-slate-900 mb-3">{editingId ? 'Editar cuenta' : 'Nueva cuenta'}</h3>
+        <h3 className="font-semibold text-slate-900 mb-1">{editingId ? 'Editar cuenta' : 'Nueva cuenta'}</h3>
+        <p className="text-xs text-slate-500 mb-3">Dónde vive tu plata: bancos, efectivo, tarjetas de crédito o créditos/préstamos. El saldo inicial es el saldo con el que arrancas a registrar (no hace falta que sea $0). Cupo, día de corte y día de pago solo aplican a tarjetas de crédito.</p>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
           <input className={inputClass} placeholder="Nombre" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} />
           <select className={inputClass} value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value as AccountType })}>
@@ -219,7 +221,8 @@ function PaymentMethodsTab({ userId }: { userId: string }) {
   return (
     <div className="space-y-4">
       <div className={cardClass}>
-        <h3 className="font-semibold text-slate-900 mb-3">{editingId ? 'Editar método de pago' : 'Nuevo método de pago'}</h3>
+        <h3 className="font-semibold text-slate-900 mb-1">{editingId ? 'Editar método de pago' : 'Nuevo método de pago'}</h3>
+        <p className="text-xs text-slate-500 mb-3">No es lo mismo que "Cuentas": aquí registras CÓMO te pagan o pagas (transferencia, efectivo, tarjeta), no dónde queda la plata. Sirve para etiquetar movimientos y ver por qué medio entra o sale más dinero.</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
           <input className={inputClass} placeholder="Nombre (ej. Bancolombia débito)" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} />
           <select className={inputClass} value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value as PaymentMethodType })}>
@@ -266,7 +269,8 @@ function DebtsTab({ userId, formatCop }: { userId: string; formatCop: (n: number
   return (
     <div className="space-y-4">
       <div className={cardClass}>
-        <h3 className="font-semibold text-slate-900 mb-3">{editingId ? 'Editar deuda' : 'Nueva deuda'}</h3>
+        <h3 className="font-semibold text-slate-900 mb-1">{editingId ? 'Editar deuda' : 'Nueva deuda'}</h3>
+        <p className="text-xs text-slate-500 mb-3">Créditos o préstamos que TÚ debes (banco, tarjeta a cuotas, préstamo personal) — no facturas de proveedores, eso va en "Por pagar". Tasa es la tasa de interés mensual (ej. 0.021 = 2.1%). Usa "Pagar" en la tabla para registrar cada abono.</p>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
           <input className={inputClass} placeholder="Nombre" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} />
           <input className={inputClass} type="number" placeholder="Saldo inicial" value={form.saldo_inicial} onChange={(e) => setForm({ ...form, saldo_inicial: Number(e.target.value) })} />
@@ -334,7 +338,8 @@ function ReceivablesTab({ userId, appData, formatCop }: { userId: string; appDat
   return (
     <div className="space-y-4">
       <div className={cardClass}>
-        <h3 className="font-semibold text-slate-900 mb-3">{editingId ? 'Editar cuenta por cobrar' : 'Nueva cuenta por cobrar'}</h3>
+        <h3 className="font-semibold text-slate-900 mb-1">{editingId ? 'Editar cuenta por cobrar' : 'Nueva cuenta por cobrar'}</h3>
+        <p className="text-xs text-slate-500 mb-3">Plata que un cliente te debe (factura emitida, aún sin pagar). Usa "Abonar" en la tabla cuando el cliente pague parcial o total — el saldo se recalcula solo.</p>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
           <select className={inputClass} value={form.cliente_id} onChange={(e) => setForm({ ...form, cliente_id: e.target.value })}>
             <option value="">— Cliente —</option>
@@ -408,7 +413,8 @@ function PayablesTab({ userId, formatCop }: { userId: string; formatCop: (n: num
   return (
     <div className="space-y-4">
       <div className={cardClass}>
-        <h3 className="font-semibold text-slate-900 mb-3">{editingId ? 'Editar cuenta por pagar' : 'Nueva cuenta por pagar'}</h3>
+        <h3 className="font-semibold text-slate-900 mb-1">{editingId ? 'Editar cuenta por pagar' : 'Nueva cuenta por pagar'}</h3>
+        <p className="text-xs text-slate-500 mb-3">Plata que TÚ le debes a un proveedor o contratista (factura recibida, aún sin pagar) — no es una deuda tuya con un banco, eso va en "Deudas". Usa "Pagar" en la tabla cuando la liquides.</p>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
           <input className={inputClass} placeholder="Proveedor" value={form.proveedor} onChange={(e) => setForm({ ...form, proveedor: e.target.value })} />
           <input className={inputClass} placeholder="Factura #" value={form.factura} onChange={(e) => setForm({ ...form, factura: e.target.value })} />
@@ -472,6 +478,7 @@ function BudgetTab({ userId, appData, periodo, formatCop }: { userId: string; ap
           <h3 className="font-semibold text-slate-900">Presupuesto {periodo}</h3>
           <button onClick={async () => { const n = await seedBudget(userId, appData, periodo); toastOk(`Sembradas ${n} categorías desde tus datos reales.`); reload(); }} className={btnGhost}><RefreshCcw className="w-3.5 h-3.5" /> Sembrar desde datos reales</button>
         </div>
+        <p className="text-xs text-slate-500 mb-3">Cuánto planeas gastar por categoría este mes (no lo que ya gastaste — eso se compara solo en "Flujo de caja"). "Sembrar desde datos reales" crea una línea por cada categoría de gasto que ya tienes registrada, usando el promedio como punto de partida.</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
           <input className={inputClass} placeholder="Categoría" value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} />
           <input className={inputClass} type="number" placeholder="Monto presupuestado" value={form.monto_presupuestado} onChange={(e) => setForm({ ...form, monto_presupuestado: Number(e.target.value) })} />

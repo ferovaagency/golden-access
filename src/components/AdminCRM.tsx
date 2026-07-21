@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import QRCode from 'qrcode';
 import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles, Download, MessageSquare, Zap, Copy, Search, Star, RefreshCw, CheckCircle2, Link2, Bell } from 'lucide-react';
-import { getAccessToken, linkGoogleIdentity, logout } from '../lib/supabase';
+import { getAccessToken, linkGoogleIdentity, logout, saveGoogleLinkReturnTab } from '../lib/supabase';
 import { copyText } from '../lib/clipboard';
 import { PIPELINE_STAGES } from './crm/constants';
 import { PlaybookCard } from './crm/PlaybookCard';
@@ -761,6 +761,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       if (!getAccessToken()) {
         // Necesita scopes de Workspace (Gmail), no solo identidad -- googleSignIn()
         // no los pide y dejaba este flujo sin permiso real tras "reconectar".
+        if (embedded) saveGoogleLinkReturnTab(`crm-${tab}`);
         await linkGoogleIdentity();
         return;
       }
@@ -785,6 +786,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       if (!getAccessToken()) {
         // Necesita scopes de Workspace (Gmail), no solo identidad -- googleSignIn()
         // no los pide y dejaba este flujo sin permiso real tras "reconectar".
+        if (embedded) saveGoogleLinkReturnTab(`crm-${tab}`);
         await linkGoogleIdentity();
         return;
       }

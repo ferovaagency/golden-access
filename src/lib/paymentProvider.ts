@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { db } from './db';
 
 // Paddle's client-side token is meant to ship in the browser bundle (same
 // role as a Stripe publishable key, not a secret) -- safe to default here
@@ -23,7 +24,7 @@ export interface CheckoutResult {
 }
 
 interface PaddleJs {
-  Initialize(options: { token: string }): void;
+  Initialize(options: { token: string; pwCustomer?: { id: string } }): void;
   Checkout: { open(options: { transactionId: string }): void };
 }
 
@@ -53,6 +54,30 @@ export function getPaddleStatus(): PaymentProviderStatus {
   return paddleClientToken()?.startsWith('live_') ? 'ready' : 'awaiting_configuration';
 }
 
+/**
+ * Include + Initialize Paddle.js on its own, independent of opening a
+ * checkout. Paddle's docs call for this on public marketing pages and on
+ * in-app authenticated pages too (not just the checkout screen) so Retain
+ * can run payment-recovery emails, term-optimization prompts, and in-app
+ * cancellation flows outside the checkout moment. Safe to call from
+ * multiple pages/mounts -- no-ops if already initialized with this token.
+ * pwCustomerId is optional and only applies to logged-in pages where we
+ * already know the visitor's Paddle customer id.
+ */
+export async function ensurePaddleJsReady(pwCustomerId?: string | null): Promise<void> {
+  const token = paddleClientToken();
+  if (getPaddleStatus() !== 'ready' || !token) return;
+  try {
+    const paddle = await loadPaddle();
+    if (initializedToken === token) return;
+    paddle.Initialize(pwCustomerId ? { token, pwCustomer: { id: pwCustomerId } } : { token });
+    initializedToken = token;
+  } catch (error) {
+    // Best-effort: a Retain-only init failing must never block the page.
+    console.warn('[paymentProvider] ensurePaddleJsReady:', error);
+  }
+}
+
 /** Creates a server-side transaction for the current authenticated user. */
 export async function createPaddleCheckoutIntent(planCode: string): Promise<CheckoutIntentResult> {
   if (getPaddleStatus() !== 'ready') {
@@ -68,18 +93,26 @@ export async function createPaddleCheckoutIntent(planCode: string): Promise<Chec
   return { status: 'ready', transactionId: data.transaction_id };
 }
 
+/** Paddle customer id (ctm_...) saved by paddle-webhook once the user has ever paid; null if they haven't yet. */
+export async function getMyPaddleCustomerId(userId: string): Promise<string | null> {
+  const { data } = await db<{ provider_customer_id: string | null }>('user_subscriptions')
+    .select('provider_customer_id')
+    .eq('user_id', userId)
+    .eq('provider', 'paddle')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data?.provider_customer_id ?? null;
+}
+
 export async function openPaddleCheckout(transactionId: string): Promise<CheckoutResult> {
-  const token = paddleClientToken();
-  if (getPaddleStatus() !== 'ready' || !token) {
+  if (getPaddleStatus() !== 'ready') {
     return { status: 'awaiting_configuration', message: 'Paddle todavia no esta configurado para este entorno.' };
   }
   try {
-    const paddle = await loadPaddle();
-    if (initializedToken !== token) {
-      paddle.Initialize({ token });
-      initializedToken = token;
-    }
-    paddle.Checkout.open({ transactionId });
+    await ensurePaddleJsReady();
+    if (!window.Paddle) throw new Error('Paddle.js no se cargo correctamente.');
+    window.Paddle.Checkout.open({ transactionId });
     return { status: 'ready' };
   } catch (error) {
     return { status: 'unavailable', message: error instanceof Error ? error.message : 'No fue posible abrir Paddle Checkout.' };

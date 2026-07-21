@@ -1,8 +1,10 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Sparkles, Brain, LineChart, Users, CalendarClock, MessageSquare,
   Zap, ShieldCheck, ArrowRight, Check, Bot, Target, TrendingUp,
 } from 'lucide-react';
+import { ensurePaddleJsReady } from '../lib/paymentProvider';
 
 /**
  * Public sales landing at /landing.
@@ -12,6 +14,12 @@ import {
  * production Supabase reconnect is pending.
  */
 export default function Landing() {
+  // Paddle Retain (payment-recovery emails, cancellation-flow links) can
+  // redirect here, so Paddle.js needs to already be loaded on this public
+  // page -- not just on the in-app checkout screen. Fire-and-forget: never
+  // blocks rendering, third-party script only (no Supabase call).
+  useEffect(() => { void ensurePaddleJsReady(); }, []);
+
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans">
       <Header />

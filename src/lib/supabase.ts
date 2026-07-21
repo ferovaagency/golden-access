@@ -97,6 +97,23 @@ export const googleSignIn = async () => {
   return result;
 };
 
+// El pathname (ej. /app) no alcanza para volver a la pestaña exacta dentro
+// del SPA -- activeTab vive en estado de React, no en la URL. Antes de
+// redirigir a Google se guarda aquí; App.tsx lo consume una sola vez al
+// montar tras el ida y vuelta, así "reconectar" desde Reseñas no te devuelve
+// al dashboard vacío.
+const GOOGLE_LINK_RETURN_TAB_KEY = 'ferova.google_link.return_tab';
+export function saveGoogleLinkReturnTab(tab: string) {
+  try { sessionStorage.setItem(GOOGLE_LINK_RETURN_TAB_KEY, tab); } catch { /* storage no disponible, no es crítico */ }
+}
+export function consumeGoogleLinkReturnTab(): string | null {
+  try {
+    const tab = sessionStorage.getItem(GOOGLE_LINK_RETURN_TAB_KEY);
+    if (tab) sessionStorage.removeItem(GOOGLE_LINK_RETURN_TAB_KEY);
+    return tab;
+  } catch { return null; }
+}
+
 // Reautorizar solicitando los scopes de Workspace. redirect_uri usa la ruta
 // actual (no solo el origin) para que, tras el ida y vuelta por Google, el
 // usuario vuelva a la pantalla desde la que pidió reconectar (ej. /admin) en

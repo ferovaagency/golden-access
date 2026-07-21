@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Cliente, Venta, Hora, Config } from '../types';
 import { convertToCop } from '../lib/calculations';
-import { Plus, CheckCircle2, XCircle, Globe, Search } from 'lucide-react';
+import { Plus, CheckCircle2, XCircle, Globe, Search, Download, Upload } from 'lucide-react';
 import { useToast, errMsg } from './ui/toast';
 import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
+import { downloadClientesTemplate, parseClientesCsv } from '../lib/csvImportExport';
 
 interface ClientesAdminProps {
   clientes: Cliente[];
@@ -42,6 +43,23 @@ export default function ClientesAdmin({
   const [notas, setNotas] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [confirmDeleteCliId, setConfirmDeleteCliId] = useState<string | null>(null);
+  const [uploadingCsv, setUploadingCsv] = useState(false);
+  const csvInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCsvUpload = async (file: File) => {
+    setUploadingCsv(true);
+    try {
+      const text = await file.text();
+      const merged = parseClientesCsv(text, clientes);
+      await onSaveClientes(merged);
+      toastOk(`Importados ${merged.length - clientes.length >= 0 ? merged.length - clientes.length : 0} clientes nuevos (${merged.length} en total).`);
+    } catch (err: any) {
+      toastErr(`Error importando el CSV: ${errMsg(err)}`);
+    } finally {
+      setUploadingCsv(false);
+      if (csvInputRef.current) csvInputRef.current.value = '';
+    }
+  };
 
   // Handle country changes to set currency automatically
   const handleCountryChange = (pCode: string) => {
@@ -130,9 +148,20 @@ export default function ClientesAdmin({
     <div className="space-y-8 animate-fade-in text-slate-900">
 
       {/* Title block */}
-      <div className="border-b border-slate-200 pb-5">
-        <h2 className="text-xl font-display font-medium text-blue-600">Maestro de Clientes</h2>
-        <p className="text-xs text-slate-500 font-mono mt-1">Configuración fiscal y de localización por cliente</p>
+      <div className="border-b border-slate-200 pb-5 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-display font-medium text-blue-600">Maestro de Clientes</h2>
+          <p className="text-xs text-slate-500 font-mono mt-1">Configuración fiscal y de localización por cliente</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={downloadClientesTemplate} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+            <Download className="w-3.5 h-3.5" /> Plantilla CSV
+          </button>
+          <button type="button" onClick={() => csvInputRef.current?.click()} disabled={uploadingCsv} className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
+            <Upload className="w-3.5 h-3.5" /> {uploadingCsv ? 'Subiendo...' : 'Subir CSV'}
+          </button>
+          <input ref={csvInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleCsvUpload(f); }} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">

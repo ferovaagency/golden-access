@@ -44,8 +44,10 @@ export interface Servicio {
   costo_entrega_estimado?: number | null;
   /** Margen objetivo entre 0 y 1 (ej: 0.35 = 35%). */
   margen_objetivo?: number | null;
-  /** Precio histórico que ya cobrás; solo lectura desde el motor de "precio ideal". */
+  /** Precio de referencia de venta actual (lo que cobrás hoy por esta línea). */
   precio_habitual?: number | null;
+  /** Moneda de precio_habitual. Default COP. */
+  precio_habitual_moneda?: 'COP' | 'USD' | null;
   /** Precio publicado actual; solo lectura desde el motor de "precio ideal". */
   precio_ofrecido?: number | null;
 }
