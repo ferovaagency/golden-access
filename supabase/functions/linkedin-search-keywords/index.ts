@@ -9,7 +9,16 @@ import * as cheerio from 'npm:cheerio@1';
 const BodySchema = z.object({
   keywords: z.array(z.string().trim().min(1).max(80)).min(1).max(10),
   limit: z.number().int().min(1).max(30).default(12),
+  timeframe: z.enum(['day', 'week', 'month', 'year', 'all']).default('month'),
 });
+
+// DuckDuckGo's html endpoint honors a native `df` (date filter) param -- this
+// filters at the source, unlike trying to parse a "posted 3d ago" string out
+// of scraped markup (fragile and inconsistent between DDG/Bing).
+const DDG_DATE_FILTER: Record<string, string | undefined> = { day: 'd', week: 'w', month: 'm', year: 'y', all: undefined };
+// Bing's UI date filter only exposes day/week/month via `qft`; year/all fall
+// through unfiltered (still ranked by relevance, just not date-restricted).
+const BING_DATE_FILTER: Record<string, string | undefined> = { day: 'filterui:date:day', week: 'filterui:date:week', month: 'filterui:date:month', year: undefined, all: undefined };
 
 function cleanText(input: string): string {
   return input.replace(/\s+/g, ' ').trim();
@@ -139,7 +148,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { keywords, limit } = parsed.data;
+    const { keywords, limit, timeframe } = parsed.data;
     const serviceTerms = keywords.slice(0, 6).map((keyword) => keyword.split(/\s+/)[0]).filter(Boolean);
     const query = `site:linkedin.com/posts ("busco agencia" OR "busco freelance" OR "necesito agencia" OR "recomienden") (${serviceTerms.join(' OR ')})`;
 
@@ -155,6 +164,7 @@ Deno.serve(async (req) => {
     try {
       const ddgUrl = new URL('https://html.duckduckgo.com/html/');
       ddgUrl.searchParams.set('q', query);
+      if (DDG_DATE_FILTER[timeframe]) ddgUrl.searchParams.set('df', DDG_DATE_FILTER[timeframe]!);
       const ddgRes = await fetch(ddgUrl.toString(), {
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; FerovaOS/1.0; +https://ferova.agency)',
@@ -175,6 +185,7 @@ Deno.serve(async (req) => {
         const bingUrl = new URL('https://www.bing.com/search');
         bingUrl.searchParams.set('q', query);
         bingUrl.searchParams.set('count', String(Math.min(limit * 2, 30)));
+        if (BING_DATE_FILTER[timeframe]) bingUrl.searchParams.set('qft', `+${BING_DATE_FILTER[timeframe]}`);
         const bingRes = await fetch(bingUrl.toString(), {
           headers: {
             'User-Agent': 'Mozilla/5.0 (compatible; FerovaOS/1.0; +https://ferova.agency)',
@@ -198,6 +209,7 @@ Deno.serve(async (req) => {
         rssUrl.searchParams.set('q', query);
         rssUrl.searchParams.set('format', 'rss');
         rssUrl.searchParams.set('count', String(Math.min(limit * 2, 30)));
+        if (BING_DATE_FILTER[timeframe]) rssUrl.searchParams.set('qft', `+${BING_DATE_FILTER[timeframe]}`);
         const rssRes = await fetch(rssUrl.toString(), {
           headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FerovaOS/1.0; +https://ferova.agency)', 'Accept': 'application/rss+xml,text/xml,*/*' },
         });

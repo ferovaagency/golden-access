@@ -324,6 +324,7 @@ export async function searchRedditByKeywords(payload: {
 export async function searchLinkedInByKeywords(payload: {
   keywords: string[];
   limit?: number;
+  timeframe?: 'day' | 'week' | 'month' | 'year' | 'all';
 }): Promise<{ results: LinkedInSearchResult[]; warning: string | null }> {
   const { data, error } = await supabase.functions.invoke('linkedin-search-keywords', { body: payload });
   if (error) throw error;

@@ -196,6 +196,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   // LinkedIn public discovery
   const [liInput, setLiInput] = useState(DEFAULT_KEYWORDS);
   const [liLimit, setLiLimit] = useState(12);
+  const [liTimeframe, setLiTimeframe] = useState<'day' | 'week' | 'month' | 'year' | 'all'>('month');
   const [liResults, setLiResults] = useState<LinkedInSearchResult[]>([]);
   const [searchingLi, setSearchingLi] = useState(false);
   const [liWarning, setLiWarning] = useState<string | null>(null);
@@ -676,7 +677,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     setSearchingLi(true);
     setLiWarning(null);
     try {
-      const { results, warning } = await searchLinkedInByKeywords({ keywords, limit: liLimit });
+      const { results, warning } = await searchLinkedInByKeywords({ keywords, limit: liLimit, timeframe: liTimeframe });
       setLiResults(results);
       setLiWarning(warning);
     } catch (err: any) {
@@ -1540,13 +1541,20 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               <p className="text-[#8a8377] font-mono text-[10px] leading-relaxed">
                 Funciona igual que Reddit: busca automáticamente señales públicas relacionadas con servicios de Ferova. Luego eliges qué resultado analizar y guardar.
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-[1fr_110px_150px] gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_130px_90px_150px] gap-2">
                 <input
                   value={liInput}
                   onChange={(e) => setLiInput(e.target.value)}
                   placeholder="SEO, Shopify, automatización IA"
                   className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900 font-mono"
                 />
+                <select value={liTimeframe} onChange={(e) => setLiTimeframe(e.target.value as any)} className="bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900">
+                  <option value="day">Último día</option>
+                  <option value="week">Semana</option>
+                  <option value="month">Mes</option>
+                  <option value="year">Año</option>
+                  <option value="all">Siempre</option>
+                </select>
                 <input
                   type="number"
                   min={1}
@@ -1990,16 +1998,27 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   value={promptDraft}
                   onChange={(e) => setPromptDraft(e.target.value)}
                   rows={6}
-                  placeholder="Eres el asistente de ventas de Ferova Agency..."
+                  placeholder="Ej: quiero que venda paquetes SEO y agende diagnósticos gratis..."
                   className="w-full bg-slate-50/50 border border-slate-200 p-2.5 rounded text-slate-900"
                 />
-                <button
-                  onClick={handleSavePrompt}
-                  disabled={savingPrompt}
-                  className="w-full bg-[#c9a961] hover:bg-[#b09252] text-black font-bold py-2 rounded disabled:opacity-50"
-                >
-                  {savingPrompt ? 'Guardando...' : 'Guardar prompt'}
-                </button>
+                <p className="text-[10px] text-slate-400">Escribe la idea con tus palabras y usa "Mejorar con IA" para convertirla en un prompt completo antes de guardar.</p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleAssistPrompt}
+                    disabled={assistingPrompt}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 border border-blue-200 text-blue-700 hover:bg-blue-50 font-semibold py-2 rounded disabled:opacity-50"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" /> {assistingPrompt ? 'Mejorando...' : 'Mejorar con IA'}
+                  </button>
+                  <button
+                    onClick={handleSavePrompt}
+                    disabled={savingPrompt}
+                    className="flex-1 bg-[#c9a961] hover:bg-[#b09252] text-black font-bold py-2 rounded disabled:opacity-50"
+                  >
+                    {savingPrompt ? 'Guardando...' : 'Guardar prompt'}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -2014,6 +2033,14 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   required
                   className="w-full bg-slate-50/50 border border-slate-200 p-2.5 rounded text-slate-900"
                 />
+                <button
+                  type="button"
+                  onClick={handleAssistKnowledge}
+                  disabled={assistingKnowledge}
+                  className="w-full inline-flex items-center justify-center gap-1.5 border border-blue-200 text-blue-700 hover:bg-blue-50 font-semibold py-2 rounded disabled:opacity-50"
+                >
+                  <Sparkles className="w-3.5 h-3.5" /> {assistingKnowledge ? 'Mejorando...' : 'Mejorar con IA'}
+                </button>
                 <input
                   value={newKnowledgeSource}
                   onChange={(e) => setNewKnowledgeSource(e.target.value)}
