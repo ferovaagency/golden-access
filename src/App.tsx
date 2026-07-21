@@ -20,6 +20,9 @@ import type { CRMTab } from './components/AdminCRM';
 import AISidebar from './components/AISidebar';
 import CommandPalette from './components/CommandPalette';
 import TopBar from './components/TopBar';
+import { AppShell } from './components/layout/AppShell';
+import type { NavigationSection } from './components/layout/navigationTypes';
+import { isFerovaUiV2Enabled } from './lib/featureFlags';
 
 // Tab content: only one of these renders at a time (driven by activeTab), so
 // each is its own lazy chunk instead of bloating the main App bundle.
@@ -58,9 +61,6 @@ import {
   Database,
   X,
 } from 'lucide-react';
-
-type NavigationItem = { id: string; label: string; hint: string; group?: 'Finanzas' | 'Planner' | 'Ventas' };
-type NavigationSection = { id: string; label: string; icon: React.ComponentType<{ className?: string }>; items: NavigationItem[] };
 
 export default function App() {
   if (!isSupabaseConfigured) {
@@ -516,13 +516,267 @@ export default function App() {
     setIsMobileMenuOpen(false);
   };
 
+  // Extras del header (TRM, clientes activos, link de respaldo Sheets, toggle
+  // IA, feedback) -- compartidos tal cual entre el shell actual y AppShell v2.
+  // El re-skin visual de estos widgets puntuales queda para cuando se migre
+  // el modulo/pantalla al que pertenecen, no para la Fase 2 (shell+nav).
+  const headerExtrasNode = (
+    <>
+      {isReady && appData && (
+        <div className="hidden md:flex items-center gap-2 bg-white px-3 py-2 rounded-2xl border border-slate-200 text-xs shadow-sm">
+          <span className="text-slate-500 text-xs">TRM</span>
+          {isEditingTrm ? (
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const val = Number(headerTrm);
+                if (val > 0) {
+                  try {
+                    await handleSaveConfig({ trm: val });
+                    setIsEditingTrm(false);
+                  } catch (err: any) {
+                    toastErr(`Error de guardado TRM: ${errMsg(err)}`);
+                  }
+                }
+              }}
+              className="flex items-center gap-1.5"
+            >
+              <input
+                type="number"
+                value={headerTrm}
+                onChange={(e) => setHeaderTrm(e.target.value)}
+                className="w-16 bg-slate-50 text-slate-900 border border-slate-200 p-0.5 px-1 rounded text-xs font-mono focus:outline-none focus:border-[#c9a961]"
+                autoFocus
+              />
+              <button type="submit" className="text-emerald-600 hover:text-emerald-700 font-bold px-1 cursor-pointer" title="Guardar TRM">✓</button>
+              <button
+                type="button"
+                onClick={() => { setHeaderTrm(String(appData.config.trm)); setIsEditingTrm(false); }}
+                className="text-[#c97a61] hover:text-[#c97a61]/80 font-bold px-1 cursor-pointer"
+                title="Cancelar"
+              >
+                ✕
+              </button>
+            </form>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <span className="text-blue-600 font-bold">{formatCop(appData.config.trm)}</span>
+              <button onClick={() => setIsEditingTrm(true)} className="text-slate-400 hover:text-slate-900 text-[9px] hover:underline cursor-pointer">[✏️]</button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {isReady && appData && (
+        <div className="hidden sm:flex items-center gap-2 bg-white px-3 py-2 rounded-2xl border border-slate-200 text-xs text-slate-600 shadow-sm">
+          <div className="w-2 h-2 rounded-full bg-emerald-500" />
+          <span>CLIENTES: <strong className="text-slate-900">{appData.clientes.filter(c => c.activo).length}</strong></span>
+        </div>
+      )}
+
+      {lastSheetBackupLink && (
+        <a
+          href={lastSheetBackupLink}
+          target="_blank"
+          rel="noreferrer"
+          className="bg-slate-100 hover:bg-[#23201c] transition px-3 py-1.5 rounded border border-slate-200 text-xs font-mono text-slate-500 flex items-center gap-2"
+        >
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <Database className="w-3.5 h-3.5 text-emerald-500" />
+          <span className="hidden sm:inline">Respaldo en Sheets</span>
+        </a>
+      )}
+
+      <button onClick={() => setAiCollapsed((value) => !value)} className="hidden md:flex items-center gap-2 rounded-2xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700">
+        {aiCollapsed ? 'Abrir asistente' : 'Colapsar asistente'}
+      </button>
+      <FeedbackWidget user={user} />
+    </>
+  );
+
+  const periodBarNode = isReady && appData ? (
+    <div className="bg-white/90 border-b border-slate-200 py-3 text-xs">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-blue-600" />
+          <span className="font-mono text-slate-500 text-[10px] uppercase font-bold tracking-wider">Ventana Periodo DIAN:</span>
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="bg-slate-50 text-slate-900 border border-slate-200 text-xs p-1 rounded font-mono focus:outline-none focus:border-[#c9a961]"
+          >
+            <option value="Todos">Histórico Completo (COP)</option>
+            {Array.from({ length: 12 }).map((_, i) => {
+              const mStr = `2026-${String(i + 1).padStart(2, '0')}`;
+              return <option key={mStr} value={mStr}>{mStr}</option>;
+            })}
+          </select>
+        </div>
+
+        {metrics && (
+          <div className="hidden items-center gap-4 text-[10px] font-mono tracking-wider text-slate-500 lg:flex">
+            <div><span>FACTURACIÓN:</span> <strong className="text-slate-900">{formatCop(metrics.totalVentas)}</strong></div>
+            <div className="w-px h-3 bg-[#2a2620]" />
+            <div><span>NÓMINA RETIROS:</span> <strong className="text-slate-900">{formatCop(metrics.salarioPropuesto)}</strong></div>
+            <div className="w-px h-3 bg-[#2a2620]" />
+            <div>
+              <span>NETO DISPONIBLE:</span>{' '}
+              <strong style={{ color: metrics.utilidadNeta >= 0 ? '#a8c98a' : '#c97a61' }}>{formatCop(metrics.utilidadNeta)}</strong>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  ) : null;
+
+  const aiSidebarNode = (
+    <AISidebar user={user} collapsed={aiCollapsed} onToggle={() => setAiCollapsed((v) => !v)} width={aiWidth} onResize={setAiWidth} currentArea={NAVIGATION_SECTIONS.find((section) => section.items.some((item) => item.id === activeTab))?.label} />
+  );
+
+  const footerNode = (
+    <footer className="bg-white border-t border-slate-200 py-6 text-center text-[10px] font-mono text-slate-400 shrink-0 uppercase tracking-widest mt-12">
+      Ferova One © 2026 • Finanzas, Growth CRM y asistente con datos reales • <a href="/privacidad" className="underline hover:text-slate-700">Privacidad</a> • <a href="/terminos" className="underline hover:text-slate-700">Términos</a>
+    </footer>
+  );
+
+  // Contenido del modulo activo: identico switch/Suspense para ambos shells,
+  // asi el rediseno de layout nunca puede tocar la logica de que se renderiza.
+  const mainContent = (
+    <>
+      <TopBar userId={user.id} onOpenPalette={() => setPaletteOpen(true)} onNavigate={handleNavigate} />
+      {sheetsLoading && (
+        <div className="bg-blue-50 border-b border-blue-100 text-blue-700 py-2 text-center text-xs font-semibold flex items-center justify-center gap-2">
+          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Guardando cambios…
+        </div>
+      )}
+
+      <div className="max-w-6xl mx-auto px-0 sm:px-4 lg:px-10 py-4 sm:py-8">
+        {errorMsg && (
+          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 flex gap-3 text-sm text-red-900">
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <div className="space-y-1.5 w-full">
+              <p className="font-semibold">Inconveniente de sincronización</p>
+              <p className="text-red-700 leading-relaxed">{errorMsg}</p>
+              <button onClick={() => user && bootstrapFinanceData(user.id)} className="underline text-red-900 font-semibold text-xs">Reintentar</button>
+            </div>
+          </div>
+        )}
+
+        {!isReady && !errorMsg && (
+          <div className="rounded-2xl border border-[var(--line)] bg-white p-16 text-center space-y-3">
+            <Loader2 className="w-6 h-6 animate-spin text-blue-600 mx-auto" />
+            <p className="text-sm text-slate-500">Cargando tu negocio…</p>
+          </div>
+        )}
+
+        {isReady && metrics && appData && (
+          <Suspense fallback={<LoadingState label="Cargando módulo…" />}>
+            {activeTab === 'planner' && <SmartPlanner />}
+            {activeTab === 'reports' && user && <ReportsView user={user} />}
+            {activeTab === 'finops' && <FinanceOperativa user={user} appData={appData} formatCop={formatCop} />}
+            {activeTab === 'marketingRoi' && <MarketingROI user={user} formatCop={formatCop} />}
+            {activeTab === 'dashboard' && (
+              <Home
+                data={appData}
+                metrics={metrics}
+                selectedMonth={selectedMonth}
+                formatCop={formatCop}
+                onNavigate={setActiveTab}
+              />
+            )}
+            {activeTab === 'ventas' && (
+              <VentasAdmin ventas={appData.ventas} clientes={appData.clientes} servicios={appData.servicios} config={appData.config} onSaveVentas={handleSaveVentas} formatCop={formatCop} formatUsd={formatUsd} />
+            )}
+            {activeTab === 'horas' && (
+              <HorasAdmin horas={appData.horas} clientes={appData.clientes} servicios={appData.servicios} ventas={appData.ventas} config={appData.config} metrics={metrics} selectedMonth={selectedMonth} onSaveHoras={handleSaveHoras} onSaveConfig={handleSaveConfig} formatCop={formatCop} />
+            )}
+            {activeTab === 'clientes' && (
+              <ClientesAdmin clientes={appData.clientes} ventas={appData.ventas} horas={appData.horas} config={appData.config} onSaveClientes={handleSaveClientes} formatCop={formatCop} formatUsd={formatUsd} />
+            )}
+            {activeTab === 'proyectos' && (
+              <ProyectosAdmin
+                projectData={appData}
+                onSaveClientes={handleSaveClientes}
+              />
+            )}
+            {activeTab === 'pagosEgresos' && (
+              <PagosEgresosAdmin pagosEgresos={appData.pagosEgresos || []} config={appData.config} onSavePagosEgresos={handleSavePagosEgresos} />
+            )}
+            {activeTab === 'gastos' && (
+              <GastosAdmin herramientas={appData.herramientas} otrosGastos={appData.otrosGastos} servicios={appData.servicios} clientes={appData.clientes} config={appData.config} fiscalProfile={fiscalProfile} onSaveHerramientas={handleSaveHerramientas} onSaveOtrosGastos={handleSaveOtrosGastos} onSaveConfig={handleSaveConfig} formatCop={formatCop} formatUsd={formatUsd} />
+            )}
+            {activeTab === 'equilibrioGlobal' && <EquilibrioGlobal metrics={metrics} formatCop={formatCop} />}
+            {activeTab === 'equilibrioServicio' && (
+              <EquilibrioServicio servicios={appData.servicios} herramientas={appData.herramientas} clientes={appData.clientes} ventas={appData.ventas} config={appData.config} selectedMonth={selectedMonth} formatCop={formatCop} />
+            )}
+            {activeTab === 'iva' && <ImpuestosIva data={appData} metrics={metrics} formatCop={formatCop} />}
+            {activeTab === 'alertas' && <AlertasTributarias metrics={metrics} config={appData.config} ventas={appData.ventas} formatCop={formatCop} />}
+            {activeTab === 'servicios' && (
+              <ServiciosAdmin servicios={appData.servicios} ventas={appData.ventas} horas={appData.horas} config={appData.config} onSaveServicios={handleSaveServicios} formatCop={formatCop} />
+            )}
+            {activeTab === 'ajustes' && (
+              <ConfigAdmin userId={user.id} businessProfile={businessProfile} onBusinessProfileUpdated={setBusinessProfile} config={appData.config} ventas={appData.ventas} clientes={appData.clientes} horas={appData.horas} hasGoogleToken={!!getAccessToken()} lastSheetBackupLink={lastSheetBackupLink} isBackingUpToSheets={isBackingUpToSheets} onSaveConfig={handleSaveConfig} onBackupToSheets={handleBackupToSheets} onImportFromSheets={handleImportFromSheets} onImportFromSheetsUrl={handleImportFromSheetsUrl} formatCop={formatCop} />
+            )}
+            {activeTab === 'ventas-crm' && modules.crm_ventas && <CustomerCRM user={user} />}
+            {isTeam && activeTab.startsWith('crm-') && (
+              <AdminCRM user={user} embedded tab={activeTab.replace('crm-', '') as CRMTab} onTabChange={(t) => setActiveTab(`crm-${t}`)} />
+            )}
+          </Suspense>
+        )}
+      </div>
+    </>
+  );
+
+  const overlaysNode = (
+    <>
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        onNavigate={handleNavigate}
+        isTeam={isTeam}
+        hasFinance={!!modules.financiero}
+        onOpenAI={() => setAiCollapsed(false)}
+        onOpenNotifications={() => handleNavigate('home')}
+      />
+      <ProductTour userId={user.id} modules={modules} onNavigate={handleNavigate} />
+    </>
+  );
+
+  // Rediseno Ferova One v2 (docs/DESIGN_SYSTEM_V2.md, Fase 2): mismo
+  // activeTab/modules/handlers de arriba, solo cambia el layout que los
+  // envuelve. Apagado por defecto via VITE_FEROVA_UI_V2.
+  if (isFerovaUiV2Enabled()) {
+    return (
+      <>
+        <AppShell
+          sections={visibleNavigationSections}
+          activeSectionId={activeSectionId}
+          activeTab={activeTab}
+          onNavigateTab={navigateTo}
+          user={user}
+          onSignOut={handleSignOut}
+          headerExtras={headerExtrasNode}
+          periodBar={periodBarNode}
+          aiSidebar={aiSidebarNode}
+          footer={footerNode}
+          mobileMenuOpen={isMobileMenuOpen}
+          onToggleMobileMenu={() => setIsMobileMenuOpen((v) => !v)}
+          onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
+        >
+          {mainContent}
+        </AppShell>
+        {overlaysNode}
+      </>
+    );
+  }
+
   return (
     <div className="ferova-light-theme min-h-screen bg-[#f7f8fb] flex flex-col text-[#1f2937] font-sans">
-      
+
       {/* 1. Header component */}
       <header className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-[#dbe4ee] relative z-20">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          
+
           <div className="flex min-w-0 items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-sm font-bold uppercase">
               F
@@ -541,96 +795,7 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-4">
-            
-            {/* 1.1 TRM Editable Quick Panel */}
-            {isReady && appData && (
-              <div className="hidden md:flex items-center gap-2 bg-white px-3 py-2 rounded-2xl border border-slate-200 text-xs shadow-sm">
-                <span className="text-slate-500 text-xs">TRM</span>
-                {isEditingTrm ? (
-                  <form 
-                    onSubmit={async (e) => {
-                      e.preventDefault();
-                      const val = Number(headerTrm);
-                      if (val > 0) {
-                        try {
-                          await handleSaveConfig({ trm: val });
-                          setIsEditingTrm(false);
-                        } catch (err: any) {
-                          toastErr(`Error de guardado TRM: ${errMsg(err)}`);
-                        }
-                      }
-                    }}
-                    className="flex items-center gap-1.5"
-                  >
-                    <input 
-                      type="number"
-                      value={headerTrm}
-                      onChange={(e) => setHeaderTrm(e.target.value)}
-                      className="w-16 bg-slate-50 text-slate-900 border border-slate-200 p-0.5 px-1 rounded text-xs font-mono focus:outline-none focus:border-[#c9a961]"
-                      autoFocus
-                    />
-                    <button 
-                      type="submit" 
-                      className="text-emerald-600 hover:text-emerald-700 font-bold px-1 cursor-pointer"
-                      title="Guardar TRM"
-                    >
-                      ✓
-                    </button>
-                    <button 
-                      type="button" 
-                      onClick={() => {
-                        setHeaderTrm(String(appData.config.trm));
-                        setIsEditingTrm(false);
-                      }} 
-                      className="text-[#c97a61] hover:text-[#c97a61]/80 font-bold px-1 cursor-pointer"
-                      title="Cancelar"
-                    >
-                      ✕
-                    </button>
-                  </form>
-                ) : (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-blue-600 font-bold">{formatCop(appData.config.trm)}</span>
-                    <button 
-                      onClick={() => setIsEditingTrm(true)}
-                      className="text-slate-400 hover:text-slate-900 text-[9px] hover:underline cursor-pointer"
-                    >
-                      [✏️]
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* 1.2 Display de Clientes Activos */}
-            {isReady && appData && (
-                <div className="hidden sm:flex items-center gap-2 bg-white px-3 py-2 rounded-2xl border border-slate-200 text-xs text-slate-600 shadow-sm">
-                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span>
-                  CLIENTES: <strong className="text-slate-900">{appData.clientes.filter(c => c.activo).length}</strong>
-                </span>
-              </div>
-            )}
-            
-            {/* Google Sheets backup link, if one exists */}
-            {lastSheetBackupLink && (
-              <a
-                href={lastSheetBackupLink}
-                target="_blank"
-                rel="noreferrer"
-                className="bg-slate-100 hover:bg-[#23201c] transition px-3 py-1.5 rounded border border-slate-200 text-xs font-mono text-slate-500 flex items-center gap-2"
-              >
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <Database className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="hidden sm:inline">Respaldo en Sheets</span>
-              </a>
-            )}
-
-            {/* Profile component user info */}
-              <button onClick={() => setAiCollapsed((value) => !value)} className="hidden md:flex items-center gap-2 rounded-2xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700">
-                {aiCollapsed ? 'Abrir asistente' : 'Colapsar asistente'}
-              </button>
-              <FeedbackWidget user={user} />
+            {headerExtrasNode}
 
               <div className="flex items-center gap-2.5 bg-white p-1.5 pr-3.5 rounded-2xl border border-slate-200 shadow-sm">
               <div className="w-7 h-7 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-center">
@@ -640,8 +805,8 @@ export default function App() {
                 <span className="font-semibold text-slate-900 block">{(user.user_metadata as any)?.full_name || (user.user_metadata as any)?.name || 'Mafe'}</span>
                 <span className="text-slate-400 block font-mono text-[9px] max-w-40 truncate">{user.email}</span>
               </div>
-              
-              <button 
+
+              <button
                 onClick={handleSignOut}
                 className="bg-slate-50/60 p-1.5 rounded border border-slate-200 text-slate-400 hover:text-[#c97a61] cursor-pointer transition ml-1"
                 title="Cerrar sesion Workspace"
@@ -651,7 +816,7 @@ export default function App() {
             </div>
 
             {/* Mobile menu trigger */}
-            <button 
+            <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="lg:hidden bg-white border border-slate-200 p-2 rounded text-slate-500"
             >
@@ -708,55 +873,11 @@ export default function App() {
       )}
 
       {/* 2. Global Period Selection Rail */}
-      {isReady && appData && (
-        <div className="bg-white/90 border-b border-slate-200 py-3 text-xs">
-          <div className="max-w-[1440px] mx-auto px-4 sm:px-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-blue-600" />
-              <span className="font-mono text-slate-500 text-[10px] uppercase font-bold tracking-wider">Ventana Periodo DIAN:</span>
-              <select 
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="bg-slate-50 text-slate-900 border border-slate-200 text-xs p-1 rounded font-mono focus:outline-none focus:border-[#c9a961]"
-              >
-                <option value="Todos">Histórico Completo (COP)</option>
-                {Array.from({ length: 12 }).map((_, i) => {
-                  const mStr = `2026-${String(i + 1).padStart(2, '0')}`;
-                  return (
-                    <option key={mStr} value={mStr}>{mStr}</option>
-                  );
-                })}
-              </select>
-            </div>
-
-            {/* Quick calculations layout bar */}
-            {metrics && (
-              <div className="hidden items-center gap-4 text-[10px] font-mono tracking-wider text-slate-500 lg:flex">
-                <div>
-                  <span>FACTURACIÓN:</span> <strong className="text-slate-900">{formatCop(metrics.totalVentas)}</strong>
-                </div>
-                <div className="w-px h-3 bg-[#2a2620]" />
-                <div>
-                  <span>NÓMINA RETIROS:</span> <strong className="text-slate-900">{formatCop(metrics.salarioPropuesto)}</strong>
-                </div>
-                <div className="w-px h-3 bg-[#2a2620]" />
-                <div>
-                  <span>NETO DISPONIBLE:</span>{' '}
-                  <strong style={{ color: metrics.utilidadNeta >= 0 ? '#a8c98a' : '#c97a61' }}>
-                    {formatCop(metrics.utilidadNeta)}
-                  </strong>
-                </div>
-              </div>
-            )}
-
-          </div>
-        </div>
-      )}
+      {periodBarNode}
 
       {/* 3. Main layout tabs container */}
        <div className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-6 flex flex-col lg:flex-row gap-6">
-        
+
         {/* Top-level navigation: every existing page lives inside one of five sections. */}
         <aside className="hidden shrink-0 lg:block lg:w-72">
           <nav className="space-y-2 rounded-3xl border border-slate-200 bg-white p-3 shadow-sm shadow-slate-200/30">
@@ -790,108 +911,17 @@ export default function App() {
 
       {/* MAIN CONTENT */}
       <main className="flex-1 min-w-0 overflow-y-auto">
-        <TopBar userId={user.id} onOpenPalette={() => setPaletteOpen(true)} onNavigate={handleNavigate} />
-        {sheetsLoading && (
-          <div className="bg-blue-50 border-b border-blue-100 text-blue-700 py-2 text-center text-xs font-semibold flex items-center justify-center gap-2">
-            <Loader2 className="w-3.5 h-3.5 animate-spin" /> Guardando cambios…
-          </div>
-        )}
-
-        <div className="max-w-6xl mx-auto px-0 sm:px-4 lg:px-10 py-4 sm:py-8">
-          {errorMsg && (
-            <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 flex gap-3 text-sm text-red-900">
-              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-              <div className="space-y-1.5 w-full">
-                <p className="font-semibold">Inconveniente de sincronización</p>
-                <p className="text-red-700 leading-relaxed">{errorMsg}</p>
-                <button onClick={() => user && bootstrapFinanceData(user.id)} className="underline text-red-900 font-semibold text-xs">Reintentar</button>
-              </div>
-            </div>
-          )}
-
-          {!isReady && !errorMsg && (
-            <div className="rounded-2xl border border-[var(--line)] bg-white p-16 text-center space-y-3">
-              <Loader2 className="w-6 h-6 animate-spin text-blue-600 mx-auto" />
-              <p className="text-sm text-slate-500">Cargando tu negocio…</p>
-            </div>
-          )}
-
-          {isReady && metrics && appData && (
-            <Suspense fallback={<LoadingState label="Cargando módulo…" />}>
-              {activeTab === 'planner' && <SmartPlanner />}
-              {activeTab === 'reports' && user && <ReportsView user={user} />}
-              {activeTab === 'finops' && <FinanceOperativa user={user} appData={appData} formatCop={formatCop} />}
-              {activeTab === 'marketingRoi' && <MarketingROI user={user} formatCop={formatCop} />}
-              {activeTab === 'dashboard' && (
-                <Home
-                  data={appData} 
-                  metrics={metrics} 
-                  selectedMonth={selectedMonth} 
-                  formatCop={formatCop} 
-                  onNavigate={setActiveTab}
-                />
-              )}
-              {activeTab === 'ventas' && (
-                <VentasAdmin ventas={appData.ventas} clientes={appData.clientes} servicios={appData.servicios} config={appData.config} onSaveVentas={handleSaveVentas} formatCop={formatCop} formatUsd={formatUsd} />
-              )}
-              {activeTab === 'horas' && (
-                <HorasAdmin horas={appData.horas} clientes={appData.clientes} servicios={appData.servicios} ventas={appData.ventas} config={appData.config} metrics={metrics} selectedMonth={selectedMonth} onSaveHoras={handleSaveHoras} onSaveConfig={handleSaveConfig} formatCop={formatCop} />
-              )}
-              {activeTab === 'clientes' && (
-                <ClientesAdmin clientes={appData.clientes} ventas={appData.ventas} horas={appData.horas} config={appData.config} onSaveClientes={handleSaveClientes} formatCop={formatCop} formatUsd={formatUsd} />
-              )}
-              {activeTab === 'proyectos' && (
-                <ProyectosAdmin 
-                  projectData={appData}
-                  onSaveClientes={handleSaveClientes}
-                />
-              )}
-              {activeTab === 'pagosEgresos' && (
-                <PagosEgresosAdmin pagosEgresos={appData.pagosEgresos || []} config={appData.config} onSavePagosEgresos={handleSavePagosEgresos} />
-              )}
-              {activeTab === 'gastos' && (
-                <GastosAdmin herramientas={appData.herramientas} otrosGastos={appData.otrosGastos} servicios={appData.servicios} clientes={appData.clientes} config={appData.config} fiscalProfile={fiscalProfile} onSaveHerramientas={handleSaveHerramientas} onSaveOtrosGastos={handleSaveOtrosGastos} onSaveConfig={handleSaveConfig} formatCop={formatCop} formatUsd={formatUsd} />
-              )}
-              {activeTab === 'equilibrioGlobal' && <EquilibrioGlobal metrics={metrics} formatCop={formatCop} />}
-              {activeTab === 'equilibrioServicio' && (
-                <EquilibrioServicio servicios={appData.servicios} herramientas={appData.herramientas} clientes={appData.clientes} ventas={appData.ventas} config={appData.config} selectedMonth={selectedMonth} formatCop={formatCop} />
-              )}
-              {activeTab === 'iva' && <ImpuestosIva data={appData} metrics={metrics} formatCop={formatCop} />}
-              {activeTab === 'alertas' && <AlertasTributarias metrics={metrics} config={appData.config} ventas={appData.ventas} formatCop={formatCop} />}
-              {activeTab === 'servicios' && (
-                <ServiciosAdmin servicios={appData.servicios} ventas={appData.ventas} horas={appData.horas} config={appData.config} onSaveServicios={handleSaveServicios} formatCop={formatCop} />
-              )}
-              {activeTab === 'ajustes' && (
-                <ConfigAdmin userId={user.id} businessProfile={businessProfile} onBusinessProfileUpdated={setBusinessProfile} config={appData.config} ventas={appData.ventas} clientes={appData.clientes} horas={appData.horas} hasGoogleToken={!!getAccessToken()} lastSheetBackupLink={lastSheetBackupLink} isBackingUpToSheets={isBackingUpToSheets} onSaveConfig={handleSaveConfig} onBackupToSheets={handleBackupToSheets} onImportFromSheets={handleImportFromSheets} onImportFromSheetsUrl={handleImportFromSheetsUrl} formatCop={formatCop} />
-              )}
-              {activeTab === 'ventas-crm' && modules.crm_ventas && <CustomerCRM user={user} />}
-              {isTeam && activeTab.startsWith('crm-') && (
-                <AdminCRM user={user} embedded tab={activeTab.replace('crm-', '') as CRMTab} onTabChange={(t) => setActiveTab(`crm-${t}`)} />
-              )}
-            </Suspense>
-          )}
-        </div>
+        {mainContent}
       </main>
 
-        <AISidebar user={user} collapsed={aiCollapsed} onToggle={() => setAiCollapsed((v) => !v)} width={aiWidth} onResize={setAiWidth} currentArea={NAVIGATION_SECTIONS.find((section) => section.items.some((item) => item.id === activeTab))?.label} />
+        {aiSidebarNode}
 
       </div>
 
       {/* 4. Footer */}
-      <footer className="bg-white border-t border-slate-200 py-6 text-center text-[10px] font-mono text-slate-400 shrink-0 uppercase tracking-widest mt-12">
-        Ferova One © 2026 • Finanzas, Growth CRM y asistente con datos reales • <a href="/privacidad" className="underline hover:text-slate-700">Privacidad</a> • <a href="/terminos" className="underline hover:text-slate-700">Términos</a>
-      </footer>
+      {footerNode}
 
-      <CommandPalette
-        open={paletteOpen}
-        onClose={() => setPaletteOpen(false)}
-        onNavigate={handleNavigate}
-        isTeam={isTeam}
-        hasFinance={!!modules.financiero}
-        onOpenAI={() => setAiCollapsed(false)}
-        onOpenNotifications={() => handleNavigate('home')}
-      />
-      <ProductTour userId={user.id} modules={modules} onNavigate={handleNavigate} />
+      {overlaysNode}
     </div>
   );
 }

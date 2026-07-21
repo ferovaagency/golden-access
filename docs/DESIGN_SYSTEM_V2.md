@@ -220,7 +220,7 @@ src/routes/LandingV2.tsx
 
 - [x] Fase 1 (parcial) — tokens `--ferova-*` en `src/index.css`, feature flag `VITE_FEROVA_UI_V2`, primitivos `AnimatedCard`/`StaggerGroup`.
 - [ ] Fase 0 — inventario visual formal.
-- [ ] Fase 2 — AppShell + navegación.
+- [x] Fase 2 — AppShell + navegación. `src/components/layout/{AppShell,WorkspaceHeader,PrimaryNavigation,ContextNavigation}.tsx`. `App.tsx` ramifica el layout completo detrás de `isFerovaUiV2Enabled()`; `activeTab`, `modules`, `NAVIGATION_SECTIONS`, todos los handlers y el switch de módulos (`mainContent`) son la misma variable compartida entre el shell viejo y el nuevo — cero lógica duplicada. `PrimaryNavigation` solo muestra las secciones (icon+label, cápsula borgoña); los items de la sección activa se mueven a `ContextNavigation` en el área de contenido (regla de subnavegación del manual). Pendiente de una prueba interactiva logueada (typecheck/build/AuthScreen verificados; no hay credenciales de una cuenta paga+onboarded a mano para clickear el shell autenticado real).
 - [ ] Fase 3 — Executive Control Center.
 - [ ] Fase 4 — IA + Planner.
 - [ ] Fase 5 — Finanzas + CRM.
