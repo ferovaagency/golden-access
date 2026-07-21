@@ -12,6 +12,7 @@ import { getPostBySlug, getRelatedPosts } from '../lib/posts';
 import { getAuthor } from '../../content/authors';
 import { getCategory } from '../../content/categories';
 import { AnimatedCard } from '../../components/motion/AnimatedCard';
+import { trackEvent } from '../../lib/analytics';
 
 interface TocItem { id: string; text: string; level: number }
 
@@ -36,6 +37,10 @@ export default function BlogPostPage() {
     });
     setToc(items);
   }, [post?.meta.slug]);
+
+  useEffect(() => {
+    if (post) trackEvent('blog_article_view', { slug: post.meta.slug, category: post.meta.category });
+  }, [post]);
 
   if (!post) return <Navigate to="/blog" replace />;
 
@@ -122,6 +127,7 @@ export default function BlogPostPage() {
           <p className="font-display text-lg font-semibold text-[#1f1b16]">{post.meta.cta.label}</p>
           <Link
             to={post.meta.cta.href}
+            onClick={() => trackEvent('blog_cta_click', { slug: post.meta.slug })}
             className="mt-3 inline-flex items-center gap-2 rounded-[var(--ferova-radius-pill)] bg-[var(--ferova-brand)] px-5 py-2.5 text-sm font-medium font-display text-white hover:bg-[var(--ferova-brand-2)]"
           >
             Empezar ahora

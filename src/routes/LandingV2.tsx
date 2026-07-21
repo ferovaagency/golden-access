@@ -9,6 +9,8 @@ import {
 import { AnimatedCard } from '../components/motion/AnimatedCard';
 import { SeoHead } from '../seo/SeoHead';
 import { organizationSchema, softwareApplicationSchema } from '../seo/StructuredData';
+import { trackEvent } from '../lib/analytics';
+import { useInViewOnce } from '../lib/useInViewOnce';
 
 /**
  * Landing v2 -- ruta nueva y aditiva (/landing-v2), no reemplaza /landing.
@@ -80,6 +82,7 @@ function Header() {
         </nav>
         <Link
           to="/app"
+          onClick={() => trackEvent('login_click', { path: 'header-/landing-v2' })}
           className="rounded-[var(--ferova-radius-pill)] bg-[var(--ferova-brand)] px-4 py-2 text-sm font-medium font-display text-white hover:bg-[var(--ferova-brand-2)]"
         >
           Iniciar sesión
@@ -140,10 +143,10 @@ function Hero() {
             Ferova One convierte datos dispersos en decisiones. Finanzas, CRM, Planner y un asistente con IA que ya sabe qué está pasando en tu negocio.
           </p>
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
-            <Link to="/app" className="inline-flex items-center gap-2 rounded-[var(--ferova-radius-pill)] bg-[var(--ferova-brand)] px-6 py-3 font-medium font-display text-white hover:bg-[var(--ferova-brand-2)]">
+            <Link to="/app" onClick={() => trackEvent('hero_primary_cta', { path: '/landing-v2' })} className="inline-flex items-center gap-2 rounded-[var(--ferova-radius-pill)] bg-[var(--ferova-brand)] px-6 py-3 font-medium font-display text-white hover:bg-[var(--ferova-brand-2)]">
               Empezar ahora <ArrowRight className="h-4 w-4" />
             </Link>
-            <a href="#modulos" className="inline-flex items-center gap-2 rounded-[var(--ferova-radius-pill)] border border-[var(--ferova-line)] px-6 py-3 font-medium font-display text-[#57524a] hover:bg-[var(--ferova-soft)]">
+            <a href="#modulos" onClick={() => trackEvent('hero_demo_open', { path: '/landing-v2' })} className="inline-flex items-center gap-2 rounded-[var(--ferova-radius-pill)] border border-[var(--ferova-line)] px-6 py-3 font-medium font-display text-[#57524a] hover:bg-[var(--ferova-soft)]">
               Ver demos
             </a>
           </div>
@@ -267,7 +270,11 @@ function ExecutiveDemo() {
                 <p className="mt-0.5 text-xs" style={{ color: '#92400e' }}>Faltan $ 2.100.000 para el punto de equilibrio de {period}.</p>
               </div>
             </div>
-            <button className="mt-4 flex w-full items-center gap-2 rounded-[var(--ferova-radius-control)] p-3 text-left text-sm" style={{ backgroundColor: 'var(--ferova-ai)' }}>
+            <button
+              onClick={() => trackEvent('module_demo_interaction', { path: '/landing-v2', demo: 'executive-ai-query' })}
+              className="mt-4 flex w-full items-center gap-2 rounded-[var(--ferova-radius-control)] p-3 text-left text-sm"
+              style={{ backgroundColor: 'var(--ferova-ai)' }}
+            >
               <Bot className="h-4 w-4 text-[var(--ferova-gold)]" />
               <span className="text-[#1f1b16]">Preguntarle a la IA cómo vamos este mes</span>
             </button>
@@ -400,7 +407,11 @@ function CrmDemo() {
             <span className="rounded-[var(--ferova-radius-pill)] bg-[var(--ferova-soft)] px-2 py-0.5 text-xs text-[#57524a]">{l.temp}</span>
           </div>
         ))}
-        <button type="button" className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-[var(--ferova-radius-control)] bg-[var(--ferova-brand)] px-3 py-2 text-sm font-display text-white">
+        <button
+          type="button"
+          onClick={() => trackEvent('module_demo_interaction', { path: '/landing-v2', demo: 'crm-outreach' })}
+          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-[var(--ferova-radius-control)] bg-[var(--ferova-brand)] px-3 py-2 text-sm font-display text-white"
+        >
           <Zap className="h-4 w-4" /> Generar outreach con IA
         </button>
       </div>
@@ -510,8 +521,9 @@ function Pricing() {
     'CRM + enriquecimiento Apollo',
     'Soporte por correo',
   ];
+  const sectionRef = useInViewOnce<HTMLElement>(() => trackEvent('pricing_view', { path: '/landing-v2' }));
   return (
-    <section id="precios" className="border-t border-[var(--ferova-line)] bg-[var(--ferova-canvas)]">
+    <section id="precios" ref={sectionRef} className="border-t border-[var(--ferova-line)] bg-[var(--ferova-canvas)]">
       <div className="mx-auto max-w-3xl px-4 py-20 text-center">
         <Reveal>
           <h2 className="font-display text-3xl md:text-4xl">Un solo plan. Todo incluido.</h2>
@@ -532,7 +544,7 @@ function Pricing() {
                 </li>
               ))}
             </ul>
-            <Link to="/app" className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-[var(--ferova-radius-pill)] bg-[var(--ferova-brand)] px-6 py-3 font-medium font-display text-white hover:bg-[var(--ferova-brand-2)]">
+            <Link to="/app" onClick={() => trackEvent('pricing_cta', { path: '/landing-v2' })} className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-[var(--ferova-radius-pill)] bg-[var(--ferova-brand)] px-6 py-3 font-medium font-display text-white hover:bg-[var(--ferova-brand-2)]">
               Empezar ahora <ArrowRight className="h-4 w-4" />
             </Link>
           </div>

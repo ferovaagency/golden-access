@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react';
 import ErrorBoundary from './components/ErrorBoundary';
 import NotFound from './components/NotFound';
 import MaintenancePage from './components/MaintenancePage';
+import { usePageView } from './lib/usePageView';
 
 // Lazy-loaded route entrypoints. `/app` hosts the full tab-based shell
 // (App.tsx: login screen when logged out, dashboard when logged in) — turn 5
@@ -27,6 +28,12 @@ const BlogCategoryPage = lazy(() => import('./blog/pages/BlogCategoryPage'));
 const BlogPostPage = lazy(() => import('./blog/pages/BlogPostPage'));
 const AuthorPage = lazy(() => import('./blog/pages/AuthorPage'));
 
+/** Dispara page_view en cada navegacion -- debe vivir dentro de BrowserRouter para usar useLocation. */
+function PageViewTracker() {
+  usePageView();
+  return null;
+}
+
 function RouteFallback() {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -47,6 +54,7 @@ export default function Router() {
 
   return (
     <BrowserRouter>
+      <PageViewTracker />
       <ErrorBoundary>
         <Suspense fallback={<RouteFallback />}>
           <Routes>

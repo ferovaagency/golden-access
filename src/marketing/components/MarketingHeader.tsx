@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
+import { trackEvent } from '../../lib/analytics';
 
 /** Header compartido de la capa publica (Manual_Landing_Blog_SEO, sec. 4 y 8.1). Sticky, translucido. */
 export function MarketingHeader() {
@@ -18,7 +19,7 @@ export function MarketingHeader() {
           <Link to="/blog" className="hover:text-[#1f1b16]">Blog</Link>
         </nav>
         <div className="flex items-center gap-3">
-          <Link to="/app" className="hidden text-sm font-medium text-[#57524a] hover:text-[#1f1b16] sm:inline">Iniciar sesión</Link>
+          <Link to="/app" onClick={() => trackEvent('login_click', { path: 'header' })} className="hidden text-sm font-medium text-[#57524a] hover:text-[#1f1b16] sm:inline">Iniciar sesión</Link>
           <Link
             to="/app"
             className="rounded-[var(--ferova-radius-pill)] bg-[var(--ferova-brand)] px-4 py-2 text-sm font-medium font-display text-white hover:bg-[var(--ferova-brand-2)]"

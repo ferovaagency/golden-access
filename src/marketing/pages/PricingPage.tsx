@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Check } from 'lucide-react';
 import { MarketingHeader } from '../components/MarketingHeader';
@@ -6,6 +7,7 @@ import { Reveal } from '../components/Reveal';
 import { SeoHead } from '../../seo/SeoHead';
 import { breadcrumbSchema, softwareApplicationSchema } from '../../seo/StructuredData';
 import { AnimatedCard } from '../../components/motion/AnimatedCard';
+import { trackEvent } from '../../lib/analytics';
 
 // El precio ya se usa consistentemente en el resto del producto (Landing,
 // LandingV2, paywall). Manual_Landing_Blog_SEO sec. 2/14: de todos modos
@@ -29,6 +31,7 @@ const FAQ = [
 ];
 
 export default function PricingPage() {
+  useEffect(() => { trackEvent('pricing_view', { path: '/precios' }); }, []);
   return (
     <div className="min-h-screen bg-[var(--ferova-canvas)] text-[#1f1b16] font-sans">
       <SeoHead
@@ -64,7 +67,7 @@ export default function PricingPage() {
                 </li>
               ))}
             </ul>
-            <Link to="/app" className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-[var(--ferova-radius-pill)] bg-[var(--ferova-brand)] px-6 py-3 font-medium font-display text-white hover:bg-[var(--ferova-brand-2)]">
+            <Link to="/app" onClick={() => trackEvent('pricing_cta', { path: '/precios' })} className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-[var(--ferova-radius-pill)] bg-[var(--ferova-brand)] px-6 py-3 font-medium font-display text-white hover:bg-[var(--ferova-brand-2)]">
               Empezar ahora <ArrowRight className="h-4 w-4" />
             </Link>
           </AnimatedCard>

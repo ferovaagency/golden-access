@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { googleSignIn, emailSignIn, emailSignUp } from '../lib/supabase';
+import { trackEvent } from '../lib/analytics';
 
 export default function AuthScreen() {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
@@ -12,6 +13,11 @@ export default function AuthScreen() {
 
   const handleGoogle = async () => {
     setError(null);
+    // Google redirige la pagina de inmediato -- no hay forma de distinguir
+    // signup vs login en este click (recien se sabe al volver, comparando
+    // user.created_at). Se cuenta como login_click; signup_complete real
+    // solo se rastrea hoy para el flujo de email.
+    trackEvent('login_click', { method: 'google' });
     try {
       await googleSignIn();
     } catch (e: any) {
@@ -26,9 +32,12 @@ export default function AuthScreen() {
     setInfo(null);
     try {
       if (mode === 'signin') {
+        trackEvent('login_click', { method: 'email' });
         await emailSignIn(email, password);
       } else {
+        trackEvent('signup_start', { method: 'email' });
         await emailSignUp(email, password);
+        trackEvent('signup_complete', { method: 'email' });
         setInfo('Revisa tu correo para confirmar tu cuenta antes de iniciar sesión.');
       }
     } catch (e: any) {

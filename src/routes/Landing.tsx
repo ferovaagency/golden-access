@@ -5,6 +5,8 @@ import {
 } from 'lucide-react';
 import { SeoHead } from '../seo/SeoHead';
 import { organizationSchema, websiteSchema, softwareApplicationSchema } from '../seo/StructuredData';
+import { trackEvent } from '../lib/analytics';
+import { useInViewOnce } from '../lib/useInViewOnce';
 
 /**
  * Public sales landing at /landing.
@@ -55,6 +57,7 @@ function Header() {
         </nav>
         <Link
           to="/app"
+          onClick={() => trackEvent('login_click', { path: 'header-/' })}
           className="rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
         >
           Iniciar sesión
@@ -89,12 +92,14 @@ function Hero() {
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
               to="/app"
+              onClick={() => trackEvent('hero_primary_cta', { path: '/' })}
               className="inline-flex items-center gap-2 rounded-full bg-amber-300 px-6 py-3 font-medium text-slate-950 hover:bg-amber-200"
             >
               Empezar ahora <ArrowRight className="h-4 w-4" />
             </Link>
             <a
               href="#modulos"
+              onClick={() => trackEvent('hero_demo_open', { path: '/' })}
               className="inline-flex items-center gap-2 rounded-full border border-white/20 px-6 py-3 font-medium text-white hover:bg-white/5"
             >
               Ver demos
@@ -303,8 +308,9 @@ function Pricing() {
     'CRM + enriquecimiento Apollo',
     'Soporte por correo',
   ];
+  const sectionRef = useInViewOnce<HTMLElement>(() => trackEvent('pricing_view', { path: '/' }));
   return (
-    <section id="precios" className="border-t border-slate-200 bg-white">
+    <section id="precios" ref={sectionRef} className="border-t border-slate-200 bg-white">
       <div className="mx-auto max-w-3xl px-4 py-20 text-center">
         <h2 className="font-serif text-3xl md:text-4xl">Un solo plan. Todo incluido.</h2>
         <p className="mt-3 text-slate-600">Sin trucos, sin escalar por usuarios, sin sorpresas.</p>
@@ -323,6 +329,7 @@ function Pricing() {
           </ul>
           <Link
             to="/app"
+            onClick={() => trackEvent('pricing_cta', { path: '/' })}
             className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-3 font-medium text-white hover:bg-slate-800"
           >
             Empezar ahora <ArrowRight className="h-4 w-4" />
