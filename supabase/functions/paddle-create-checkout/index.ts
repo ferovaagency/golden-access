@@ -37,7 +37,17 @@ Deno.serve(async (req) => {
   const priceMap = getPriceMap();
   const planCode = typeof body.plan_code === 'string' ? body.plan_code : '';
   const priceId = priceMap?.[planCode];
-  if (!priceId) return json({ message: 'El plan solicitado no esta disponible.' }, 422);
+  if (!priceId) {
+    // Diagnostic only: expone las CLAVES del mapa de planes (ej. "completo"),
+    // nunca los pri_... -- sirve para ver si PADDLE_PRICE_MAP_JSON tiene mal
+    // el JSON o le falta/sobra una clave, sin exponer nada sensible.
+    return json({
+      message: 'El plan solicitado no esta disponible.',
+      requested_plan_code: planCode,
+      price_map_parsed: priceMap !== null,
+      available_plan_codes: priceMap ? Object.keys(priceMap) : [],
+    }, 422);
+  }
 
   const paddleResponse = await fetch('https://api.paddle.com/transactions', {
     method: 'POST',
