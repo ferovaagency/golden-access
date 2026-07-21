@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { AppData } from '../types';
 import { FinancialMetrics } from '../lib/calculations';
-import { ShieldCheck, HelpCircle, ArrowRightLeft, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, ArrowRightLeft, AlertTriangle } from 'lucide-react';
 
 interface ImpuestosIvaProps {
   data: AppData;

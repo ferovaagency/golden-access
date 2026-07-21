@@ -44,7 +44,7 @@ export default function ConfigAdmin({
   onImportFromSheetsUrl,
   formatCop
 }: ConfigAdminProps) {
-  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
+  const { success: toastOk, error: toastErr } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copiedStatus, setCopiedStatus] = useState<string | null>(null);
   const [sheetUrl, setSheetUrl] = useState('');

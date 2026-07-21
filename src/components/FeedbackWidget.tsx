@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function FeedbackWidget({ user }: Props) {
-  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
+  const { error: toastErr } = useToast();
   const [open, setOpen] = useState(false);
   const [tipo, setTipo] = useState<FeedbackTipo>('sugerencia');
   const [mensaje, setMensaje] = useState('');

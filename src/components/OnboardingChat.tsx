@@ -41,7 +41,7 @@ interface OnboardingMessageRow {
 }
 
 export default function OnboardingChat({ user, onDone }: Props) {
-  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
+  const { error: toastErr, confirm: askConfirm } = useToast();
   const [initialMessages, setInitialMessages] = useState<UIMessage[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [input, setInput] = useState('');

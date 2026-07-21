@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Hora, Cliente, Servicio, Config, AppData } from '../types';
 import { FinancialMetrics, calcularProductividadClientes, calcularProductividadServicios } from '../lib/calculations';
-import { Clock, Plus, Shield, Settings, Sliders } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
 
 interface HorasAdminProps {

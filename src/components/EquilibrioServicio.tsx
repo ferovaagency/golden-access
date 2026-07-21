@@ -1,8 +1,7 @@
-import React from 'react';
 import { Servicio, Herramienta, Cliente, Venta, Config } from '../types';
 import { convertToCop, calcularCostosHerramientas } from '../lib/calculations';
 import { calcularPrecioIdeal } from '../lib/pricingIdeal';
-import { Box, CheckSquare, Target, Activity, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 interface EquilibrioServicioProps {
   servicios: Servicio[];

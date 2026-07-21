@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Search, ArrowRight, Command as CommandIcon, Zap, LayoutGrid, FileText, CalendarCheck, Users, Wallet, Target, MessageCircle, Star, Sparkles } from 'lucide-react';
 
 export type CommandItem = {

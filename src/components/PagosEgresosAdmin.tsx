@@ -2,17 +2,10 @@ import React, { useState } from 'react';
 import { PagoEgreso, Config } from '../types';
 import {
   Coins,
-  Plus,
   Trash2,
   Search,
   Filter,
-  Calendar,
-  FileText,
-  DollarSign,
-  Wallet,
-  Save,
   Check,
-  Layers,
   ArrowDownCircle,
   TrendingDown,
   Paperclip,
@@ -29,7 +22,7 @@ interface PagosEgresosAdminProps {
 }
 
 export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePagosEgresos }: PagosEgresosAdminProps) {
-  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
+  const { error: toastErr, confirm: askConfirm } = useToast();
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);

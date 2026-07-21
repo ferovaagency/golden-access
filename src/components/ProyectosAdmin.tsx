@@ -1,21 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { AppData, Cliente } from '../types';
 import { updateProjectClient } from '../domains/projects/projectService';
 import type { ProjectDeliverable, ProjectKpi, ProjectObjective } from '../domains/projects/types';
 import { useProjectPortfolio } from '../hooks/useProjectPortfolio';
 import { useToast, errMsg } from './ui/toast';
-import { 
-  Target, 
-  TrendingUp, 
-  Palette, 
-  ClipboardList, 
-  UserCheck, 
-  Plus, 
-  CheckCircle, 
-  Trash2, 
-  ChevronRight, 
-  Sparkles, 
-  AlertCircle,
+import {
+  Target,
+  TrendingUp,
+  Palette,
+  ClipboardList,
+  UserCheck,
+  Plus,
+  Trash2,
   Save,
   Check,
   Percent,
@@ -28,7 +24,7 @@ interface ProyectosAdminProps {
 }
 
 export default function ProyectosAdmin({ projectData, onSaveClientes }: ProyectosAdminProps) {
-  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
+  const { error: toastErr } = useToast();
   const projects = useProjectPortfolio(projectData);
   const activeClientes = projects.map((project) => project.client);
   const [selectedClientId, setSelectedClientId] = useState<string>('');

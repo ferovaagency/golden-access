@@ -4,7 +4,7 @@ import { db } from '../lib/db';
 import { Loader2, MessageSquare, Bug, Lightbulb, HelpCircle, Send, Users } from 'lucide-react';
 import { listCustomers, type AdminCustomer } from '../lib/adminService';
 import { sendUserNotification } from '../lib/userEngagementService';
-import { useToast, errMsg } from './ui/toast';
+import { useToast } from './ui/toast';
 
 type FeedbackRow = {
   id: string;
@@ -18,7 +18,7 @@ type FeedbackRow = {
 type EventRow = { module: string; event_type: string; created_at: string; user_id: string | null };
 
 export default function AdminFeedbackPanel() {
-  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
+  const { error: toastErr } = useToast();
   const [feedback, setFeedback] = useState<FeedbackRow[]>([]);
   const [events, setEvents] = useState<EventRow[]>([]);
   const [customers, setCustomers] = useState<AdminCustomer[]>([]);

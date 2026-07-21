@@ -1,7 +1,6 @@
 // Blind Spots panel — the "what you are probably not seeing" section.
 // Groups findings by urgency and gives each a why / impact / action.
 
-import React from 'react';
 import { AlertTriangle, Check, Eye, Loader2, Sparkles, X } from 'lucide-react';
 import { useBusinessIntel } from '../hooks/useBusinessIntel';
 import type { BlindSpot, BlindSpotUrgency } from '../lib/biService';

@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Servicio, Venta, Hora, Config } from '../types';
 import { convertToCop } from '../lib/calculations';
-import { Plus, Tag, Percent, Clock, Briefcase, Edit2, Download, Upload } from 'lucide-react';
+import { Clock, Edit2, Download, Upload } from 'lucide-react';
 import { useToast, errMsg } from './ui/toast';
 import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
 import { downloadServiciosTemplate, parseServiciosCsv } from '../lib/csvImportExport';
@@ -23,7 +23,7 @@ export default function ServiciosAdmin({
   onSaveServicios,
   formatCop
 }: ServiciosAdminProps) {
-  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
+  const { success: toastOk, error: toastErr } = useToast();
   // Form State
   const [srvNombre, setSrvNombre] = useState('');
   const [srvId, setSrvId] = useState('');

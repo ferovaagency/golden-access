@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import type { AppData } from '../types';
 import { listPaymentMethods, createPaymentMethod, deletePaymentMethod, updatePaymentMethod, type PaymentMethod, type PaymentMethodType } from '../lib/paymentMethodsService';
@@ -13,7 +13,7 @@ import ComprobanteUpload from './ComprobanteUpload';
 import { getAccessToken } from '../lib/supabase';
 import { syncPayablesToSheets, syncReceivablesToSheets } from '../lib/sheetsService';
 import FinancialStatement from './FinancialStatement';
-import { useToast, errMsg } from './ui/toast';
+import { useToast } from './ui/toast';
 
 type SubTab = 'estado' | 'cuentas' | 'metodos' | 'deudas' | 'cobrar' | 'pagar' | 'presupuesto' | 'flujo';
 

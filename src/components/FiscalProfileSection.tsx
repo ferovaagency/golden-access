@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFiscalProfile } from '../hooks/useFiscalProfile';
 import { supabase } from '../lib/supabase';
 

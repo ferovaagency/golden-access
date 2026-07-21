@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Loader2, LogOut } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { googleSignIn, linkGoogleIdentity, logout } from '../lib/supabase';

@@ -29,7 +29,7 @@ function formatMoney(val: number, moneda: 'COP' | 'USD') {
 }
 
 export default function CustomerCRM({ user }: Props) {
-  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
+  const { error: toastErr, confirm: askConfirm } = useToast();
   const [contactos, setContactos] = useState<Contacto[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);

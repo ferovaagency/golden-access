@@ -1,4 +1,4 @@
-import { Config, AppData, Cliente, Servicio, Herramienta, OtroGasto, Venta, Hora, Respaldo } from '../types';
+import { AppData, Herramienta, Venta } from '../types';
 import type { FiscalProfile } from './fiscalProfileService';
 
 /**

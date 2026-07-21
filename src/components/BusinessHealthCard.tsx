@@ -2,7 +2,6 @@
 // entrepreneur sees the single number that matters, the delta vs. yesterday,
 // and the two/three most important reasons behind it.
 
-import React from 'react';
 import { Activity, ArrowDownRight, ArrowUpRight, Loader2, Minus, RefreshCw } from 'lucide-react';
 import { useBusinessIntel } from '../hooks/useBusinessIntel';
 

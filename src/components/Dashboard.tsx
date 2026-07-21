@@ -1,27 +1,21 @@
-import React from 'react';
 import { AppData } from '../types';
-import { FinancialMetrics, calcularProductividadClientes, calcularProductividadServicios } from '../lib/calculations';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  ResponsiveContainer, 
-  LineChart, 
-  Line, 
+import { FinancialMetrics, calcularProductividadServicios } from '../lib/calculations';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
   CartesianGrid,
   Legend
 } from 'recharts';
-import { 
-  ShieldAlert, 
-  TrendingUp, 
-  Globe, 
-  Clock, 
-  Briefcase, 
-  ChevronRight, 
-  PiggyBank, 
-  AlertTriangle 
+import {
+  ShieldAlert,
+  TrendingUp,
+  Clock
 } from 'lucide-react';
 
 interface DashboardProps {
@@ -34,22 +28,15 @@ interface DashboardProps {
 
 export default function Dashboard({ data, metrics, selectedMonth, formatCop, formatUsd }: DashboardProps) {
   const { config, ventas, horas, clientes } = data;
-  const { 
-    totalVentas, 
-    costosVariables, 
-    utilidadBruta, 
-    gastosOperativos, 
-    utilidadOperacional, 
-    salarioPropuesto, 
-    utilidadAntesImpuestos, 
-    impuestoRentaEstimado, 
-    utilidadNeta, 
-    margenContribucion, 
-    puntoEquilibrioVentas
+  const {
+    totalVentas,
+    utilidadBruta,
+    gastosOperativos,
+    utilidadOperacional,
+    salarioPropuesto,
+    utilidadAntesImpuestos,
+    utilidadNeta,
   } = metrics;
-
-  // Clientes activos count
-  const clientesActivos = clientes.filter(c => c.activo).length;
 
   // National vs International sales calculation
   let ventasNacionales = 0;
@@ -454,7 +441,7 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartServiceData}>
                   <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
-                  <YAxis stroke="#94a3b8" fontSize={11} tickFormatter={(v) => `$${(v/e6TotalOr1(v)).toFixed(1)}M`} />
+                  <YAxis stroke="#94a3b8" fontSize={11} tickFormatter={(v) => `$${(v / 1e6).toFixed(1)}M`} />
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', color: '#0f172a', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                     formatter={(v: any) => [formatCop(v), 'Utilidad']}
@@ -500,8 +487,4 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
 
     </div>
   );
-}
-
-function e6TotalOr1(v: number) {
-  return 1e6;
 }

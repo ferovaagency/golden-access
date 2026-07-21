@@ -1,4 +1,3 @@
-import React from 'react';
 import { Search, Command as CommandIcon } from 'lucide-react';
 import NotificationsBell from './NotificationsBell';
 

@@ -254,7 +254,7 @@ export function mapValuesToAppData(valuesBySheet: Record<string, any[][]>): AppD
   };
 
   // 2. Clientes mapping
-  const clientes: Cliente[] = parseTable(rawClientes, (row, get) => ({
+  const clientes: Cliente[] = parseTable(rawClientes, (_row, get) => ({
     id: cleanId(get(['id'], 0)),
     nombre: text(get(['nombre', 'cliente', 'cliente_nombre'], 1)),
     tipo: normalizeTipo(get(['tipo', 'localidad'], 2)),
@@ -271,7 +271,7 @@ export function mapValuesToAppData(valuesBySheet: Record<string, any[][]>): AppD
   }));
 
   // 3. Servicios mapping
-  const servicios: Servicio[] = parseTable(rawServicios, (row, get) => ({
+  const servicios: Servicio[] = parseTable(rawServicios, (_row, get) => ({
     id: cleanId(get(['id', 'servicio_id'], 0)),
     nombre: text(get(['nombre', 'servicio', 'servicio_nombre'], 1)),
     costo_unitario: toNumber(get(['costo_unitario', 'costo', 'coste'], 2)) || 0,
@@ -279,7 +279,7 @@ export function mapValuesToAppData(valuesBySheet: Record<string, any[][]>): AppD
   }));
 
   // 4. Herramientas mapping
-  const herramientas: Herramienta[] = parseTable(rawHerramientas, (row, get) => ({
+  const herramientas: Herramienta[] = parseTable(rawHerramientas, (_row, get) => ({
     id: cleanId(get(['id'], 0)),
     nombre: text(get(['nombre', 'herramienta'], 1)),
     monto: toNumber(get(['monto', 'valor', 'precio'], 2)) || 0,
@@ -290,7 +290,7 @@ export function mapValuesToAppData(valuesBySheet: Record<string, any[][]>): AppD
   }));
 
   // 5. Otros Gastos mapping
-  const otrosGastos: OtroGasto[] = parseTable(rawOtrosGastos, (row, get) => ({
+  const otrosGastos: OtroGasto[] = parseTable(rawOtrosGastos, (_row, get) => ({
     id: cleanId(get(['id'], 0)),
     nombre: text(get(['nombre', 'concepto'], 1)),
     monto: toNumber(get(['monto', 'valor'], 2)) || 0,
@@ -301,7 +301,7 @@ export function mapValuesToAppData(valuesBySheet: Record<string, any[][]>): AppD
   }));
 
   // 6. Ventas mapping
-  const ventas: Venta[] = parseTable(rawVentas, (row, get) => {
+  const ventas: Venta[] = parseTable(rawVentas, (_row, get) => {
     let parsedAbonos = [];
     const notasRaw = text(get(['notas', 'nota'], 13));
     const abonosRaw = text(get(['abonos_log', 'abonos', 'pagos', 'abonos log'], 14));
@@ -333,7 +333,7 @@ export function mapValuesToAppData(valuesBySheet: Record<string, any[][]>): AppD
   });
 
   // 7. Horas mapping
-  const horas: Hora[] = parseTable(rawHoras, (row, get) => ({
+  const horas: Hora[] = parseTable(rawHoras, (_row, get) => ({
     id: cleanId(get(['id', 'codigo', 'código'], 0)),
     fecha: toDateString(get(['fecha'], 1)),
     cliente_id: cleanId(get(['cliente_id', 'cliente id'], 2)),
@@ -345,14 +345,14 @@ export function mapValuesToAppData(valuesBySheet: Record<string, any[][]>): AppD
   }));
 
   // 8. Respaldos mapping
-  const respaldos: Respaldo[] = parseTable(rawRespaldos, (row, get) => ({
+  const respaldos: Respaldo[] = parseTable(rawRespaldos, (_row, get) => ({
     fecha: toDateString(get(['fecha'], 0)),
     usuario: text(get(['usuario'], 1)),
     snapshot_drive_id: text(get(['snapshot_drive_id', 'snapshot'], 2)),
   }));
 
   // 9. PagosEgresos mapping
-  const pagosEgresos: PagoEgreso[] = parseTable(rawPagosEgresos, (row, get) => ({
+  const pagosEgresos: PagoEgreso[] = parseTable(rawPagosEgresos, (_row, get) => ({
     id: cleanId(get(['id'], 0)),
     fecha: toDateString(get(['fecha'], 1)),
     concepto: text(get(['concepto', 'nombre'], 2)),

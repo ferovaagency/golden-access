@@ -1,16 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Venta, Cliente, Servicio, Config } from '../types';
 import { convertToCop } from '../lib/calculations';
-import { useToast, errMsg } from './ui/toast';
+import { useToast } from './ui/toast';
 import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
 import {
-  Plus,
-  CheckCircle2,
-  AlertCircle,
   Download,
   Search,
-  HelpCircle,
-  FileSpreadsheet,
   Edit2
 } from 'lucide-react';
 
@@ -33,7 +28,7 @@ export default function VentasAdmin({
   formatCop, 
   formatUsd 
 }: VentasAdminProps) {
-  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
+  const { error: toastErr } = useToast();
   // Form states
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
   const [clienteId, setClienteId] = useState('');
@@ -276,8 +271,6 @@ export default function VentasAdmin({
     ];
     
     const rows = ventas.map(v => {
-      const parentCli = clientes.find(c => c.id === v.cliente_id);
-      const dec = parentCli ? parentCli.declarante : true;
       const totalV = v.precio_venta_unitario * v.cantidad;
       const loopRet = calculateLoopRetention(v);
       const loopNet = totalV - loopRet;

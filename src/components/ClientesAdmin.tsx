@@ -1,7 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Cliente, Venta, Hora, Config } from '../types';
-import { convertToCop } from '../lib/calculations';
-import { Plus, CheckCircle2, XCircle, Globe, Search, Download, Upload } from 'lucide-react';
+import { Search, Download, Upload } from 'lucide-react';
 import { useToast, errMsg } from './ui/toast';
 import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
 import { downloadClientesTemplate, parseClientesCsv } from '../lib/csvImportExport';
@@ -33,7 +32,7 @@ export default function ClientesAdmin({
   formatCop, 
   formatUsd 
 }: ClientesAdminProps) {
-  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
+  const { success: toastOk, error: toastErr } = useToast();
   // Form State
   const [nombre, setNombre] = useState('');
   const [id, setId] = useState('');
@@ -68,7 +67,6 @@ export default function ClientesAdmin({
 
   // Resolve derived currency and client type (CO -> Nacional, otherwise -> Internacional)
   const isNacional = pais === 'CO';
-  const currency = isNacional ? 'COP' : 'USD';
   const tipo = isNacional ? 'Nacional' : 'Internacional';
 
   const handleCreateClient = async (e: React.FormEvent) => {

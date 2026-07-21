@@ -1,6 +1,5 @@
-import React from 'react';
 import { FinancialMetrics } from '../lib/calculations';
-import { Shield, Sparkles, Scale, Percent } from 'lucide-react';
+import { Shield, Sparkles, Scale } from 'lucide-react';
 
 interface EquilibrioGlobalProps {
   metrics: FinancialMetrics;
@@ -8,14 +7,12 @@ interface EquilibrioGlobalProps {
 }
 
 export default function EquilibrioGlobal({ metrics, formatCop }: EquilibrioGlobalProps) {
-  const { 
-    totalVentas, 
-    costosVariables, 
-    utilidadBruta, 
-    gastosOperativos, 
-    salarioPropuesto, 
-    margenContribucion, 
-    puntoEquilibrioVentas 
+  const {
+    totalVentas,
+    gastosOperativos,
+    salarioPropuesto,
+    margenContribucion,
+    puntoEquilibrioVentas
   } = metrics;
 
   // Expenses total

@@ -1,7 +1,6 @@
-import React from 'react';
 import { Config, Venta } from '../types';
 import { FinancialMetrics } from '../lib/calculations';
-import { ShieldAlert, BookOpen, AlertCircle, Sparkles, Milestone } from 'lucide-react';
+import { BookOpen, AlertCircle, Milestone } from 'lucide-react';
 
 interface AlertasTributariasProps {
   metrics: FinancialMetrics;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Herramienta, OtroGasto, Servicio, Cliente, Config } from '../types';
 import { convertToCop, calcularPrestaciones, calcularCostosHerramientas, isColombiaFiscal, type FiscalContext } from '../lib/calculations';
-import { ShieldAlert, Plus, HelpCircle, PenTool, LayoutGrid, Edit2, Paperclip, Info } from 'lucide-react';
+import { PenTool, LayoutGrid, Edit2, Paperclip, Info } from 'lucide-react';
 import ComprobanteUpload from './ComprobanteUpload';
 import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
 

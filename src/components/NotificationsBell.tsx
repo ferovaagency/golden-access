@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Bell, AlertTriangle, TrendingDown, Zap, CheckCircle2, X } from 'lucide-react';
 import { db } from '../lib/db';
 import { listMyNotifications, markNotificationRead } from '../lib/userEngagementService';

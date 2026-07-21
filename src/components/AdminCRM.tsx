@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import QRCode from 'qrcode';
-import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles, Download, MessageSquare, Zap, Copy, Search, Star, RefreshCw, CheckCircle2, Link2, Bell } from 'lucide-react';
+import { Loader2, LogOut, Ban, Plus, ExternalLink, Trash2, Send, Bot, CalendarPlus, XCircle, Sparkles, Download, MessageSquare, Zap, Search, Star, RefreshCw, CheckCircle2, Link2, Bell } from 'lucide-react';
 import { getAccessToken, linkGoogleIdentity, logout, saveGoogleLinkReturnTab } from '../lib/supabase';
 import { copyText } from '../lib/clipboard';
 import { PIPELINE_STAGES } from './crm/constants';
@@ -77,8 +77,6 @@ import {
 } from '../lib/adminService';
 import type { PlanId } from '../lib/planService';
 import { useToast, errMsg } from './ui/toast';
-
-const ESTADOS: EstadoOportunidad[] = ['nuevo', 'contactado', 'calificando', 'propuesta_enviada', 'negociacion', 'ganado', 'perdido'];
 
 export type CRMTab = 'pipeline' | 'citas' | 'contenido' | 'bot' | 'resenas' | 'clientes' | 'feedback' | 'analitica';
 

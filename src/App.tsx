@@ -80,7 +80,7 @@ export default function App() {
 
   const {
     user, authLoading, hasPaid, isTeam, plan, checkingPayment, modules,
-    setHasPaid, handleLogin: authLogin, handleSignOut,
+    setHasPaid, handleSignOut,
   } = useAuthAndAccess();
   const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
 
@@ -185,11 +185,6 @@ export default function App() {
       setActiveTab(modules.crm_ventas ? 'ventas-crm' : activeTab);
     }
   }, [appData, modules.financiero, modules.crm_ventas, activeTab]);
-
-  const handleLogin = async () => {
-    setErrorMsg(null);
-    await authLogin((message) => setErrorMsg(`Fallo al autenticar: ${message}`));
-  };
 
   // Load finance data from Supabase (source of truth) on login / refresh
   const bootstrapFinanceData = async (userId: string) => {
@@ -477,27 +472,6 @@ export default function App() {
   // Estado 3: Pagado => Dashboard (los datos viven en Supabase, Google es solo respaldo opcional)
 
   const metrics = isReady ? calcularMétricasFinancieras(appData, selectedMonth, fiscalProfile) : null;
-
-  // Visual Tab Categorization - Separates Operational Management from Financial Control
-  // Ambos bloques solo se muestran si el plan del cliente incluye el módulo Financiero.
-  const GESTION_OPERATIVA_TABS = modules.core_projects ? [
-    { id: 'proyectos', label: 'Proyectos', hint: 'KPIs y ejecución' },
-    { id: 'horas', label: 'Horas', hint: 'Rentabilidad por tiempo' },
-    { id: 'clientes', label: 'Clientes', hint: 'Cuentas activas' },
-    { id: 'servicios', label: 'Servicios', hint: 'Catálogo y costos' }
-  ] : [];
-
-  const GESTION_FINANCIERA_TABS = modules.financiero ? [
-    { id: 'dashboard', label: 'Inicio financiero', hint: 'Vista ejecutiva' },
-    { id: 'ventas', label: 'Ingresos', hint: 'Ventas y abonos' },
-    { id: 'pagosEgresos', label: 'Pagos', hint: 'Egresos registrados' },
-    { id: 'gastos', label: 'Costos', hint: 'Herramientas y gastos' },
-    { id: 'equilibrioGlobal', label: 'Equilibrio', hint: 'Punto global' },
-    { id: 'equilibrioServicio', label: 'Por servicio', hint: 'Margen unitario' },
-    { id: 'iva', label: 'IVA', hint: 'Control tributario' },
-    { id: 'alertas', label: 'Alertas', hint: 'Riesgos y topes' },
-    { id: 'ajustes', label: 'Ajustes', hint: 'Google Sheets y datos' }
-  ] : [];
 
   // Módulo "CRM y Ventas" propio del cliente -- distinto del CRM interno de Ferova (abajo).
   const CRM_GROWTH_TABS = isTeam ? [

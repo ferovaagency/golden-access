@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Paperclip, Loader2, ExternalLink } from 'lucide-react';
 import { getAccessToken } from '../lib/supabase';
 import { findOrCreateComprobantesFolder, uploadFileToDrive } from '../lib/sheetsService';
-import { useToast, errMsg } from './ui/toast';
+import { useToast } from './ui/toast';
 
 // Sube una imagen/PDF (factura pagada o comprobante de pago) al Drive del
 // propio usuario y devuelve el link -- nunca se guarda el archivo en
@@ -15,7 +15,7 @@ interface Props {
 }
 
 export default function ComprobanteUpload({ currentUrl, currentNombre, onUploaded, label = 'Adjuntar comprobante' }: Props) {
-  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
+  const { error: toastErr } = useToast();
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 

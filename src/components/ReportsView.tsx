@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { FileText, Loader2, Sparkles, TrendingUp, AlertTriangle, CheckCircle2, Target, RefreshCw, Calculator } from 'lucide-react';
+import { FileText, Loader2, Sparkles, AlertTriangle, CheckCircle2, Target, Calculator } from 'lucide-react';
 import { CeoReport, DecisionSimulation, ReportPeriod, generateReport, listReports, listSimulations, runSimulation } from '../lib/reportsService';
 import { AiDisclosure } from './AiDisclosure';
 

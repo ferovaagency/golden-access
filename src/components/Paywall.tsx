@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Loader2, ShieldCheck, LogOut } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { logout, checkSubscription } from '../lib/supabase';

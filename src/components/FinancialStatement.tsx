@@ -1,11 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Download, FileSpreadsheet, Printer } from 'lucide-react';
 import type { AppData } from '../types';
 import { buildFinancialStatement, financialStatementCsv } from '../lib/financialStatement';
 import { getAccessToken } from '../lib/supabase';
 import { syncFinancialStatementToSheets } from '../lib/sheetsService';
 import { useFiscalProfile } from '../hooks/useFiscalProfile';
-import { useToast, errMsg } from './ui/toast';
+import { useToast } from './ui/toast';
 
 interface Props {
   userId: string;
@@ -17,7 +17,7 @@ interface Props {
 const buttonClass = 'inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50';
 
 export default function FinancialStatement({ userId, appData, period, formatCop }: Props) {
-  const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
+  const { success: toastOk, error: toastErr } = useToast();
   const { profile } = useFiscalProfile(userId);
   const [syncing, setSyncing] = useState(false);
   const statement = useMemo(() => buildFinancialStatement(appData, period, profile), [appData, period, profile]);
@@ -51,7 +51,7 @@ export default function FinancialStatement({ userId, appData, period, formatCop 
     setSyncing(true);
     try {
       await syncFinancialStatementToSheets(token, statement);
-      toastErr('Estado financiero guardado en la pestaña EstadoFinanciero de tu Google Sheet.');
+      toastOk('Estado financiero guardado en la pestaña EstadoFinanciero de tu Google Sheet.');
     } catch (error: any) {
       toastErr(`No se pudo guardar en Sheets: ${error?.message || error}`);
     } finally {
