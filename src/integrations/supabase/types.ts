@@ -258,6 +258,9 @@ export type Database = {
         Row: {
           ciudad: string | null
           created_at: string
+          dias_laborales: number[]
+          horario_fin: string
+          horario_inicio: string
           industria: string | null
           nombre_negocio: string | null
           onboarding_completado: boolean
@@ -270,6 +273,9 @@ export type Database = {
         Insert: {
           ciudad?: string | null
           created_at?: string
+          dias_laborales?: number[]
+          horario_fin?: string
+          horario_inicio?: string
           industria?: string | null
           nombre_negocio?: string | null
           onboarding_completado?: boolean
@@ -282,6 +288,9 @@ export type Database = {
         Update: {
           ciudad?: string | null
           created_at?: string
+          dias_laborales?: number[]
+          horario_fin?: string
+          horario_inicio?: string
           industria?: string | null
           nombre_negocio?: string | null
           onboarding_completado?: boolean
@@ -2628,7 +2637,9 @@ export type Database = {
       }
     }
     Functions: {
+      complete_past_crm_citas: { Args: never; Returns: undefined }
       is_team_member: { Args: never; Returns: boolean }
+      roll_forward_missed_planner_tasks: { Args: never; Returns: undefined }
     }
     Enums: {
       blindspot_category:
