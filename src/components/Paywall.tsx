@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Loader2, ShieldCheck, LogOut } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { logout, checkSubscription } from '../lib/supabase';
-import { createPaddleCheckoutIntent, getPaddleStatus, openPaddleCheckout } from '../lib/paymentProvider';
+import { getPaypalStatus, loadPaypal, confirmPaypalSubscription, PAYPAL_PLAN_ID } from '../lib/paymentProvider';
 
 interface PaywallProps {
   user: User;
@@ -12,18 +12,40 @@ interface PaywallProps {
 export default function Paywall({ user, onPaid }: PaywallProps) {
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const paddleStatus = getPaddleStatus();
+  const [confirming, setConfirming] = useState(false);
+  const paypalStatus = getPaypalStatus();
+  const buttonContainerRef = useRef<HTMLDivElement>(null);
 
-  const handleCheckout = async () => {
-    setError(null);
-    const intent = await createPaddleCheckoutIntent('completo');
-    if (intent.status !== 'ready' || !intent.transactionId) {
-      setError(intent.message || 'No fue posible iniciar el checkout.');
-      return;
-    }
-    const result = await openPaddleCheckout(intent.transactionId);
-    if (result.status !== 'ready') setError(result.message || 'No fue posible abrir el checkout.');
-  };
+  useEffect(() => {
+    if (paypalStatus !== 'ready' || !buttonContainerRef.current) return;
+    let cancelled = false;
+    loadPaypal()
+      .then((paypal) => {
+        if (cancelled || !buttonContainerRef.current) return;
+        paypal.Buttons({
+          style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'subscribe' },
+          createSubscription: (_data, actions) =>
+            actions.subscription.create({ plan_id: PAYPAL_PLAN_ID, custom_id: user.id }),
+          onApprove: async (data) => {
+            if (!data.subscriptionID) return;
+            setConfirming(true);
+            setError(null);
+            const result = await confirmPaypalSubscription(data.subscriptionID);
+            setConfirming(false);
+            if (result.status === 'ready') onPaid();
+            else setError(result.message || 'No fue posible confirmar la suscripcion.');
+          },
+          onError: (err) => {
+            console.error('[Paywall] PayPal Buttons error:', err);
+            setError('Ocurrio un error con PayPal. Intenta de nuevo.');
+          },
+        }).render(buttonContainerRef.current);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'No fue posible cargar PayPal.');
+      });
+    return () => { cancelled = true; };
+  }, [paypalStatus, user.id]);
 
   const handleCheckPayment = async () => {
     setChecking(true);
@@ -31,7 +53,7 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
     try {
       const paid = await checkSubscription(user.id);
       if (paid) onPaid();
-      else setError('Todavía no vemos una suscripción confirmada. Cuando Paddle confirme el pago, tu acceso se activará automáticamente.');
+      else setError('Todavía no vemos una suscripción confirmada. Cuando PayPal confirme el pago, tu acceso se activará automáticamente.');
     } catch (caught: unknown) {
       setError(`Error verificando el pago: ${caught instanceof Error ? caught.message : String(caught)}`);
     } finally {
@@ -52,7 +74,7 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
         </div>
 
         <div className="border-t border-b border-[#2a2620] py-5 space-y-3">
-          <p className="text-center text-sm font-semibold text-white">El precio y los impuestos se muestran de forma segura en Paddle.</p>
+          <p className="text-center text-sm font-semibold text-white">El precio y los impuestos se muestran de forma segura en PayPal.</p>
           <ul className="text-xs text-[#a39d8e] space-y-1.5 pl-4">
             <li>• Dashboard ejecutivo + KPIs en tiempo real</li>
             <li>• Sincronización con Google Sheets / Drive</li>
@@ -63,15 +85,23 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
 
         <div className="space-y-3">
           {error && <p className="text-xs text-red-400 bg-red-950/30 border border-red-900/50 rounded p-2">{error}</p>}
-          <button
-            onClick={handleCheckout}
-            disabled={paddleStatus !== 'ready'}
-            className="w-full flex items-center justify-center gap-2 bg-[#c9a961] hover:bg-[#b09252] text-black font-semibold font-display py-2.5 rounded transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {paddleStatus === 'ready' ? 'Continuar con Paddle' : 'Paddle pendiente de configuración'}
-          </button>
+          {confirming && (
+            <p className="text-xs text-[#c9a961] flex items-center justify-center gap-2">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Confirmando suscripción con PayPal…
+            </p>
+          )}
+          {paypalStatus === 'ready' ? (
+            <div ref={buttonContainerRef} />
+          ) : (
+            <button
+              disabled
+              className="w-full flex items-center justify-center gap-2 bg-[#c9a961] text-black font-semibold font-display py-2.5 rounded transition cursor-not-allowed opacity-50"
+            >
+              PayPal pendiente de configuración
+            </button>
+          )}
           <p className="text-[10px] text-[#8a8377] font-mono text-center leading-relaxed">
-            Paddle procesa la suscripción, factura y calcula los impuestos aplicables. Ferova One no recibe ni almacena datos de pago. Al continuar aceptas los <a href="/terminos" className="underline hover:text-white">Términos</a> y la <a href="/privacidad" className="underline hover:text-white">Política de Privacidad</a>.
+            PayPal procesa la suscripción, factura y calcula los impuestos aplicables. Ferova One no recibe ni almacena datos de pago. Al continuar aceptas los <a href="/terminos" className="underline hover:text-white">Términos</a> y la <a href="/privacidad" className="underline hover:text-white">Política de Privacidad</a>.
           </p>
           <button
             onClick={handleCheckPayment}

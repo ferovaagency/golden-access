@@ -12,7 +12,6 @@ import { calcularMétricasFinancieras } from './lib/calculations';
 import { useFiscalProfile } from './hooks/useFiscalProfile';
 import { isSupabaseConfigured, supabaseConfigurationError } from './integrations/supabase/client';
 import { trackUserEvent } from './lib/userEngagementService';
-import { ensurePaddleJsReady, getMyPaddleCustomerId } from './lib/paymentProvider';
 import { useToast, errMsg } from './components/ui/toast';
 import { LoadingState } from './components/ui/AsyncState';
 import AuthScreen from './components/AuthScreen';
@@ -101,19 +100,6 @@ export default function App() {
     setLastSheetBackupLinkState(localStorage.getItem(`ferova.sheets.link.${user.id}`));
   }, [user]);
 
-  // Paddle Retain needs Paddle.js initialized on in-app authenticated pages
-  // too, not just the Paywall checkout screen -- otherwise it can't show
-  // in-app payment-recovery banners or the cancellation-flow survey to an
-  // already-paying customer just using the app. pwCustomer only applies
-  // once we know their Paddle customer id (set after their first payment).
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    getMyPaddleCustomerId(user.id)
-      .then((customerId) => { if (!cancelled) void ensurePaddleJsReady(customerId); })
-      .catch(() => { if (!cancelled) void ensurePaddleJsReady(); });
-    return () => { cancelled = true; };
-  }, [user?.id]);
   const saveLastSheetBackupLink = (link: string | null) => {
     setLastSheetBackupLinkState(link);
     if (!user) return;

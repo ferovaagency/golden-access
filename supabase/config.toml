@@ -1,4 +1,4 @@
 project_id = "rrjyfyihdnbvbtdxygyp"
 
-[functions.paddle-webhook]
+[functions.paypal-webhook]
 verify_jwt = false
