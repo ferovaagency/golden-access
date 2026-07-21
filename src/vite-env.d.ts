@@ -19,3 +19,10 @@ declare module '*.json' {
   const value: any;
   export default value;
 }
+
+declare module '*.mdx' {
+  import type { ComponentType } from 'react';
+  export const meta: import('./content/blog/postMeta').PostMeta;
+  const MDXComponent: ComponentType<Record<string, unknown>>;
+  export default MDXComponent;
+}

@@ -7,10 +7,20 @@ import AuthScreen from '../components/AuthScreen';
 import AdminCRM from '../components/AdminCRM';
 import NotFound from '../components/NotFound';
 import { logger } from '../lib/logger';
+import { SeoHead } from '../seo/SeoHead';
 
 // Protected route for the internal Ferova CRM. Uses the team-member whitelist
 // enforced by RLS as the real authorization boundary.
 export default function AdminRoute() {
+  return (
+    <>
+      <SeoHead title="Administración" description="Panel interno de Ferova Agency." path="/admin" noindex />
+      <AdminRouteInner />
+    </>
+  );
+}
+
+function AdminRouteInner() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isTeam, setIsTeam] = useState<boolean | null>(null);

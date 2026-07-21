@@ -1,10 +1,12 @@
 import { Wrench } from 'lucide-react';
+import { SeoHead } from '../seo/SeoHead';
 
 // Rendered when VITE_MAINTENANCE_MODE=true. Keeps the app reachable but blocks
 // mutations while the team ships a risky migration.
 export default function MaintenancePage() {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+      <SeoHead title="Mantenimiento" description="Ferova One está en mantenimiento temporal." path="/maintenance" noindex />
       <div className="max-w-md w-full rounded-3xl border border-amber-100 bg-white p-8 shadow-xl text-center">
         <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-amber-50 text-amber-600">
           <Wrench className="h-6 w-6" />

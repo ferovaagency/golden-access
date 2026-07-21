@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import ErrorBoundary from './components/ErrorBoundary';
 import NotFound from './components/NotFound';
@@ -14,6 +14,18 @@ const Privacidad = lazy(() => import('./routes/Privacidad'));
 const Terminos = lazy(() => import('./routes/Terminos'));
 const Landing = lazy(() => import('./routes/Landing'));
 const LandingV2 = lazy(() => import('./routes/LandingV2'));
+
+// Capa publica indexable (Manual_Landing_Blog_SEO_Ferova_One, sec. 3 y 8).
+const FeaturesPage = lazy(() => import('./marketing/pages/FeaturesPage'));
+const FeatureFinancePage = lazy(() => import('./marketing/pages/FeatureFinancePage'));
+const FeatureCRMPage = lazy(() => import('./marketing/pages/FeatureCRMPage'));
+const FeaturePlannerPage = lazy(() => import('./marketing/pages/FeaturePlannerPage'));
+const FeatureAIPage = lazy(() => import('./marketing/pages/FeatureAIPage'));
+const PricingPage = lazy(() => import('./marketing/pages/PricingPage'));
+const BlogIndexPage = lazy(() => import('./blog/pages/BlogIndexPage'));
+const BlogCategoryPage = lazy(() => import('./blog/pages/BlogCategoryPage'));
+const BlogPostPage = lazy(() => import('./blog/pages/BlogPostPage'));
+const AuthorPage = lazy(() => import('./blog/pages/AuthorPage'));
 
 function RouteFallback() {
   return (
@@ -39,8 +51,19 @@ export default function Router() {
         <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route path="/" element={<Landing />} />
-            <Route path="/landing" element={<Landing />} />
+            {/* /landing -> / : el manual pide una sola URL canonica para la landing (sec. 6.4). */}
+            <Route path="/landing" element={<Navigate to="/" replace />} />
             <Route path="/landing-v2" element={<LandingV2 />} />
+            <Route path="/funciones" element={<FeaturesPage />} />
+            <Route path="/funciones/finanzas" element={<FeatureFinancePage />} />
+            <Route path="/funciones/crm" element={<FeatureCRMPage />} />
+            <Route path="/funciones/planner" element={<FeaturePlannerPage />} />
+            <Route path="/funciones/asistente-ia" element={<FeatureAIPage />} />
+            <Route path="/precios" element={<PricingPage />} />
+            <Route path="/blog" element={<BlogIndexPage />} />
+            <Route path="/blog/categoria/:slug" element={<BlogCategoryPage />} />
+            <Route path="/blog/:slug" element={<BlogPostPage />} />
+            <Route path="/autores/:slug" element={<AuthorPage />} />
             <Route path="/privacidad" element={<Privacidad />} />
             <Route path="/terminos" element={<Terminos />} />
             <Route path="/admin/*" element={<AdminCRMRoute />} />

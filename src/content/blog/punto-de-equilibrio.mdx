@@ -1,0 +1,50 @@
+import { BreakEvenCalculator } from '../../blog/components/BreakEvenCalculator';
+
+export const meta = {
+  title: 'Punto de equilibrio: fórmula, ejemplo y calculadora',
+  slug: 'punto-de-equilibrio',
+  description: 'Cuánto tenés que vender antes de empezar a ganar dinero de verdad. Fórmula, ejemplo paso a paso y una calculadora para tu propio negocio.',
+  publishedAt: '2026-07-03',
+  authorSlug: 'equipo-ferova',
+  category: 'rentabilidad',
+  tags: ['punto de equilibrio', 'rentabilidad', 'costos fijos'],
+  relatedSlugs: ['costo-hora-freelancer', 'flujo-de-caja-servicios', 'cliente-rentable'],
+  cta: { label: '¿Querés ver tu punto de equilibrio actualizado automáticamente?', href: '/app' },
+  status: 'published',
+  readingMinutes: 7,
+};
+
+Vender más no siempre significa ganar más. Si no sabés exactamente cuánto necesitás vender antes de que cada peso adicional empiece a ser utilidad real, estás operando a ciegas. El punto de equilibrio es ese número: la línea que separa "estoy financiando mis costos" de "estoy ganando dinero".
+
+## Qué es el punto de equilibrio
+
+Es el nivel de ventas en el que tus ingresos cubren exactamente tus costos fijos y variables — ni pierdes ni ganas. Todo lo que vendas por encima de ese punto es, en gran parte, utilidad.
+
+## La fórmula
+
+```
+Punto de equilibrio (unidades) = Costos fijos / (Precio de venta - Costo variable por unidad)
+```
+
+El denominador se llama **margen de contribución**: cuánto le queda a cada venta después de cubrir su propio costo variable, antes de tocar los costos fijos.
+
+## Ejemplo paso a paso
+
+Una consultora tiene costos fijos de $ 4.000.000 al mes (oficina, sueldos base, software). Cada proyecto se vende en $ 120.000 y tiene un costo variable (subcontratistas, comisiones) de $ 30.000.
+
+- Margen de contribución: 120.000 − 30.000 = $ 90.000
+- Punto de equilibrio: 4.000.000 / 90.000 = **44,4 → 45 proyectos al mes**
+
+Antes del proyecto 45, la consultora está pagando sus costos fijos. Desde el 45 en adelante, cada proyecto adicional aporta $ 90.000 de utilidad real.
+
+<BreakEvenCalculator />
+
+## Errores comunes al calcularlo
+
+- **Mezclar costos fijos y variables.** El arriendo es fijo; las comisiones por venta son variables. Si los mezclás, el número queda inflado o subestimado.
+- **Usar el precio promedio cuando vendés varios productos con márgenes distintos.** En ese caso conviene calcular el equilibrio por línea de producto o servicio, no de forma global.
+- **Calcularlo una vez y olvidarlo.** Costos fijos y precios cambian; el punto de equilibrio hay que revisarlo cada mes, no cada año.
+
+## Qué hacer con este número
+
+Conocer tu punto de equilibrio cambia cómo tomás decisiones: cuántos clientes necesitás mínimo, si un descuento es sostenible, y cuánto margen real tenés antes de aceptar un proyecto más barato solo por llenar la agenda.

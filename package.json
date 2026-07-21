@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
+    "sitemap": "node scripts/generate-sitemap.mjs",
+    "prebuild": "npm run sitemap",
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
@@ -18,6 +20,8 @@
     "@fontsource/figtree": "^5.2.10",
     "@fontsource/outfit": "^5.2.8",
     "@lovable.dev/cloud-auth-js": "^1.1.2",
+    "@mdx-js/react": "^3.1.1",
+    "@mdx-js/rollup": "^3.1.1",
     "@supabase/supabase-js": "^2.110.0",
     "@tailwindcss/vite": "^4.1.14",
     "@types/qrcode": "^1.5.6",

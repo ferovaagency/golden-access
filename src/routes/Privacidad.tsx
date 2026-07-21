@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { SeoHead } from '../seo/SeoHead';
 
 const Section = ({ title, children }: { title: string; children: ReactNode }) => (
   <section className="space-y-3">
@@ -10,6 +11,7 @@ const Section = ({ title, children }: { title: string; children: ReactNode }) =>
 export default function Privacidad() {
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-900 sm:px-6">
+      <SeoHead title="Política de Tratamiento de Datos" description="Política de tratamiento de datos personales de Ferova One." path="/privacidad" />
       <article className="mx-auto max-w-3xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
         <header className="border-b border-slate-200 pb-6">
           <p className="text-xs font-semibold uppercase tracking-widest text-blue-700">Ferova OS</p>

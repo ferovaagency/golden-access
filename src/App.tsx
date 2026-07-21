@@ -23,6 +23,7 @@ import TopBar from './components/TopBar';
 import { AppShell } from './components/layout/AppShell';
 import type { NavigationSection } from './components/layout/navigationTypes';
 import { isFerovaUiV2Enabled } from './lib/featureFlags';
+import { SeoHead } from './seo/SeoHead';
 
 // Tab content: only one of these renders at a time (driven by activeTab), so
 // each is its own lazy chunk instead of bloating the main App bundle.
@@ -62,7 +63,18 @@ import {
   X,
 } from 'lucide-react';
 
+// noindex garantizado sin importar en que estado (loading/auth/paywall/
+// onboarding/shell) este AppInner -- ver src/seo/SeoHead.tsx.
 export default function App() {
+  return (
+    <>
+      <SeoHead title="Panel privado" description="Área privada de Ferova One." path="/app" noindex />
+      <AppInner />
+    </>
+  );
+}
+
+function AppInner() {
   if (!isSupabaseConfigured) {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-slate-900">

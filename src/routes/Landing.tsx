@@ -3,6 +3,8 @@ import {
   Sparkles, Brain, LineChart, Users, CalendarClock, MessageSquare,
   Zap, ShieldCheck, ArrowRight, Check, Bot, Target, TrendingUp,
 } from 'lucide-react';
+import { SeoHead } from '../seo/SeoHead';
+import { organizationSchema, websiteSchema, softwareApplicationSchema } from '../seo/StructuredData';
 
 /**
  * Public sales landing at /landing.
@@ -14,6 +16,12 @@ import {
 export default function Landing() {
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans">
+      <SeoHead
+        title="Software para gestionar finanzas, ventas y proyectos"
+        description="Centraliza finanzas, CRM, proyectos y planificación con un asistente de IA que trabaja con los datos de tu negocio."
+        path="/"
+        jsonLd={[organizationSchema(), websiteSchema(), softwareApplicationSchema()]}
+      />
       <Header />
       <Hero />
       <SocialProof />

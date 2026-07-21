@@ -1,9 +1,15 @@
 import { Link } from 'react-router-dom';
 import { Compass } from 'lucide-react';
+import { SeoHead } from '../seo/SeoHead';
 
+// Nota: como SPA sin prerender, esta pagina no puede devolver un status HTTP
+// 404 real -- el servidor siempre responde 200 con index.html. El noindex
+// evita que Google la indexe; el status code real depende de resolver el
+// gap de prerendering (ver docs/SEO_LANDING_BLOG.md).
 export default function NotFound() {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+      <SeoHead title="Página no encontrada" description="Esta página no existe en Ferova One." path={typeof window !== 'undefined' ? window.location.pathname : '/404'} noindex />
       <div className="max-w-md w-full rounded-3xl border border-slate-200 bg-white p-8 shadow-xl text-center">
         <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-blue-50 text-blue-600">
           <Compass className="h-6 w-6" />

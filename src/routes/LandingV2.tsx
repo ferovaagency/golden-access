@@ -7,6 +7,8 @@ import {
   Plug, LayoutGrid, ScanSearch, Wand2, PlayCircle, AlertTriangle,
 } from 'lucide-react';
 import { AnimatedCard } from '../components/motion/AnimatedCard';
+import { SeoHead } from '../seo/SeoHead';
+import { organizationSchema, softwareApplicationSchema } from '../seo/StructuredData';
 
 /**
  * Landing v2 -- ruta nueva y aditiva (/landing-v2), no reemplaza /landing.
@@ -18,6 +20,15 @@ import { AnimatedCard } from '../components/motion/AnimatedCard';
 export default function LandingV2() {
   return (
     <div className="min-h-screen bg-[var(--ferova-canvas)] text-[#1f1b16] font-sans">
+      {/* noindex a proposito: preview pendiente de aprobacion, todavia no promovida a /.
+          Sacar noindex={true} cuando se decida activarla (ver docs/SEO_LANDING_BLOG.md). */}
+      <SeoHead
+        title="Ferova One (preview de diseño)"
+        description="Vista previa del rediseño de la landing de Ferova One."
+        path="/landing-v2"
+        noindex
+        jsonLd={[organizationSchema(), softwareApplicationSchema()]}
+      />
       <Header />
       <Hero />
       <TrustBar />
