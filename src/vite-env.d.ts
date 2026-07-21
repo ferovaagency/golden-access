@@ -7,6 +7,8 @@ interface ImportMetaEnv {
   /** PayPal client-side id. Público, seguro de exponer en el navegador. */
   readonly VITE_PAYPAL_CLIENT_ID?: string;
   readonly VITE_PAYWALL_PRICE_USD?: string;
+  /** Feature flag: activa el rediseño Ferova One v2 (ver Manual_Implementacion_Diseno_Ferova_One). */
+  readonly VITE_FEROVA_UI_V2?: string;
 }
 
 interface ImportMeta {

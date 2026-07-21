@@ -1,5 +1,7 @@
 # Ferova OS — UI Guidelines
 
+> Rediseño integral en curso detrás de `VITE_FEROVA_UI_V2` — ver [DESIGN_SYSTEM_V2.md](./DESIGN_SYSTEM_V2.md) para tokens, sistema de movimiento, 3D y el plan de fases completo. Las reglas de esta página siguen vigentes para el shell actual mientras dure la migración.
+
 ## Objetivo
 
 La interfaz debe ayudar a un negocio de servicios a entender qué hacer ahora, ejecutar una operación y verificar el resultado sin sobrecarga visual.

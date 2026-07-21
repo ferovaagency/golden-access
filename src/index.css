@@ -176,6 +176,35 @@ pre {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* ============================================================
+   Ferova One v2 -- design tokens (Manual_Implementacion_Diseno_Ferova_One)
+   Aditivo: no reemplaza ni renombra los tokens --bg/--surface/etc. de
+   arriba, que siguen alimentando el shell actual. Estos --ferova-* solo
+   se consumen desde componentes nuevos detras de VITE_FEROVA_UI_V2.
+   ============================================================ */
+:root {
+  --ferova-brand: #541014;
+  --ferova-brand-2: #6f1a21;
+  --ferova-navy: #2F2D56;
+  --ferova-gold: #C0930E;
+  --ferova-canvas: #FFFDF9;
+  --ferova-surface: #FFFFFF;
+  --ferova-soft: #F7F1E9;
+  --ferova-line: #E9E0D7;
+  --ferova-ai: #ECE9FF;
+  --ferova-positive: #E3F4EB;
+  --ferova-warning: #F3EAD6;
+  --ferova-danger: #F7E3E4;
+
+  --ferova-radius-control: 12px;
+  --ferova-radius-card: 20px;
+  --ferova-radius-hero: 28px;
+  --ferova-radius-pill: 999px;
+
+  --ferova-shadow: 0 8px 24px rgba(60, 35, 20, 0.05);
+  --ferova-shadow-hover: 0 18px 48px rgba(60, 35, 20, 0.09);
+}
+
 /* Material Button GSI */
 .gsi-material-button {
   -moz-user-select: none;
