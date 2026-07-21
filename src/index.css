@@ -237,3 +237,65 @@ pre {
   max-width: 400px;
   min-width: min-content;
 }
+
+/* ============================================================
+   Ferova One v2 -- reskin de modulos existentes (Fase 4/5, Manual_
+   Implementacion_Diseno_Ferova_One). Mismo mecanismo que .ferova-light-theme
+   arriba: override por CSS de las clases Tailwind ya usadas en Planner,
+   Finanzas, CRM, Proyectos, Clientes, Servicios, Config, Reportes y
+   Marketing ROI -- CERO cambios de JSX/logica en esos archivos. Aplicado
+   condicionalmente por App.tsx alrededor del contenido del modulo activo
+   cuando VITE_FEROVA_UI_V2 esta encendido.
+   ============================================================ */
+.ferova-v2-theme {
+  --ferova-ink: #1f1b16;
+  --ferova-ink-2: #3a352e;
+}
+
+.ferova-v2-theme .bg-white,
+.ferova-v2-theme .bg-slate-50 { background-color: var(--ferova-surface) !important; }
+.ferova-v2-theme .bg-slate-100 { background-color: var(--ferova-soft) !important; }
+.ferova-v2-theme .bg-slate-900 { background-color: var(--ferova-brand) !important; }
+.ferova-v2-theme .hover\:bg-slate-50:hover,
+.ferova-v2-theme .hover\:bg-slate-100:hover { background-color: var(--ferova-soft) !important; }
+
+.ferova-v2-theme .border-slate-100,
+.ferova-v2-theme .border-slate-200,
+.ferova-v2-theme .border-slate-300 { border-color: var(--ferova-line) !important; }
+
+.ferova-v2-theme .text-slate-900,
+.ferova-v2-theme .text-slate-800 { color: var(--ferova-ink) !important; }
+.ferova-v2-theme .text-slate-700 { color: var(--ferova-ink-2) !important; }
+.ferova-v2-theme .text-slate-600 { color: #57524a !important; }
+.ferova-v2-theme .text-slate-500 { color: #8a8377 !important; }
+.ferova-v2-theme .text-slate-400,
+.ferova-v2-theme .text-slate-300 { color: #a39a8a !important; }
+.ferova-v2-theme .hover\:text-slate-900:hover { color: var(--ferova-ink) !important; }
+
+/* Insignias de IA (icono Sparkles/Bot sobre fondo claro): gold sobre lavanda, no borgona -- manual sec. 2. */
+.ferova-v2-theme .bg-blue-50.text-blue-700,
+.ferova-v2-theme .bg-blue-50.text-blue-600 { background-color: var(--ferova-ai) !important; color: var(--ferova-gold) !important; }
+
+.ferova-v2-theme .bg-blue-600 { background-color: var(--ferova-brand) !important; }
+.ferova-v2-theme .bg-blue-700 { background-color: var(--ferova-brand-2) !important; }
+.ferova-v2-theme .bg-blue-50 { background-color: var(--ferova-ai) !important; }
+.ferova-v2-theme .hover\:bg-blue-600:hover,
+.ferova-v2-theme .hover\:bg-blue-700:hover,
+.ferova-v2-theme .hover\:bg-blue-800:hover { background-color: var(--ferova-brand-2) !important; }
+
+.ferova-v2-theme .text-blue-600,
+.ferova-v2-theme .text-blue-400 { color: var(--ferova-brand) !important; }
+.ferova-v2-theme .text-blue-700,
+.ferova-v2-theme .text-blue-800 { color: var(--ferova-brand-2) !important; }
+.ferova-v2-theme .hover\:text-blue-700:hover,
+.ferova-v2-theme .hover\:text-blue-900:hover { color: var(--ferova-brand-2) !important; }
+
+.ferova-v2-theme .border-blue-200,
+.ferova-v2-theme .border-blue-300 { border-color: color-mix(in srgb, var(--ferova-brand) 30%, transparent) !important; }
+.ferova-v2-theme .border-blue-500 { border-color: var(--ferova-brand) !important; }
+
+.ferova-v2-theme .text-violet-700 { color: var(--ferova-navy) !important; }
+.ferova-v2-theme .border-violet-200 { border-color: color-mix(in srgb, var(--ferova-navy) 30%, transparent) !important; }
+
+/* Positivo/advertencia/riesgo se dejan en su verde/ambar/rojo semantico
+   nativo de Tailwind -- son indicadores de estado, no del color de marca. */

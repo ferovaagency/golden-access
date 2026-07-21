@@ -595,7 +595,7 @@ export default function App() {
   );
 
   const periodBarNode = isReady && appData ? (
-    <div className="bg-white/90 border-b border-slate-200 py-3 text-xs">
+    <div className={`bg-white/90 border-b border-slate-200 py-3 text-xs ${isFerovaUiV2Enabled() ? 'ferova-v2-theme' : ''}`}>
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4 text-blue-600" />
@@ -630,7 +630,9 @@ export default function App() {
   ) : null;
 
   const aiSidebarNode = (
-    <AISidebar user={user} collapsed={aiCollapsed} onToggle={() => setAiCollapsed((v) => !v)} width={aiWidth} onResize={setAiWidth} currentArea={NAVIGATION_SECTIONS.find((section) => section.items.some((item) => item.id === activeTab))?.label} />
+    <div className={isFerovaUiV2Enabled() ? 'ferova-v2-theme' : undefined}>
+      <AISidebar user={user} collapsed={aiCollapsed} onToggle={() => setAiCollapsed((v) => !v)} width={aiWidth} onResize={setAiWidth} currentArea={NAVIGATION_SECTIONS.find((section) => section.items.some((item) => item.id === activeTab))?.label} />
+    </div>
   );
 
   const footerNode = (
@@ -641,8 +643,10 @@ export default function App() {
 
   // Contenido del modulo activo: identico switch/Suspense para ambos shells,
   // asi el rediseno de layout nunca puede tocar la logica de que se renderiza.
+  // La clase ferova-v2-theme (Fase 4/5) reskinea por CSS los modulos que
+  // todavia no se migraron componente a componente -- ver src/index.css.
   const mainContent = (
-    <>
+    <div className={isFerovaUiV2Enabled() ? 'ferova-v2-theme' : undefined}>
       <TopBar userId={user.id} onOpenPalette={() => setPaletteOpen(true)} onNavigate={handleNavigate} />
       {sheetsLoading && (
         <div className="bg-blue-50 border-b border-blue-100 text-blue-700 py-2 text-center text-xs font-semibold flex items-center justify-center gap-2">
@@ -724,7 +728,7 @@ export default function App() {
           </Suspense>
         )}
       </div>
-    </>
+    </div>
   );
 
   const overlaysNode = (
