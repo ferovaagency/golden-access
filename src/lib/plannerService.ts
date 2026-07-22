@@ -6,6 +6,7 @@ import { supabase } from '../integrations/supabase/client';
 import { invokeAi } from './ai/aiClient';
 import { logger } from './logger';
 import { logSuggestion } from './auditLogService';
+import { isPlannerTaskEligible, plannerDateKey } from './plannerScheduling';
 
 const log = logger.child('planner');
 
@@ -163,11 +164,6 @@ function nextDate(date: string) {
  * with `YYYY-MM-DD` postpones a task by one day and can leave old blocks in
  * the agenda.
  */
-export function plannerDateKey(value: string | null | undefined): string | null {
-  const match = value?.match(/^(\d{4}-\d{2}-\d{2})/);
-  return match?.[1] ?? null;
-}
-
 function dayOfWeek(date: string) {
   return new Date(`${date}T12:00:00Z`).getUTCDay();
 }
@@ -406,6 +402,9 @@ export const plannerService = {
     const fixedTaskIds = new Set((existingBlocks || [])
       .filter((block: PlannerBlock) => ['task', 'recurrence'].includes(block.source))
       .flatMap((block: PlannerBlock) => block.task_ids || []));
+    const automaticallyScheduledTaskIds = new Set<string>((existingBlocks || [])
+      .filter((block: PlannerBlock) => ['ai', 'planner-rules'].includes(block.source))
+      .flatMap((block: PlannerBlock) => (block.task_ids || []) as string[]));
     const ordered = [...(tasks || [])]
       // A recurring task already materializes protected instances, and a task
       // with a manual time must never receive a second automatic block.
@@ -424,8 +423,11 @@ export const plannerService = {
         // a task's future "Programar desde" date. Besides being slow, that
         // produced dozens of avoidable Edge Function errors for one click.
         const hasEligibleTask = remaining.some((task: PlannerTask) => {
-          const availableFrom = plannerDateKey(task.scheduled_for);
-          return !availableFrom || availableFrom <= planningDate;
+          // `scheduled_for` is also updated after an automatic placement. It
+          // must not become a permanent "not before" constraint on the next
+          // reorganization, otherwise today's agenda stays empty while the
+          // same tasks remain stranded in a future automatic block.
+          return isPlannerTaskEligible(task.id, task.scheduled_for, planningDate, automaticallyScheduledTaskIds);
         });
         if (!hasEligibleTask) {
           planningDate = nextDate(planningDate);
@@ -448,8 +450,7 @@ export const plannerService = {
           const task = remaining[index];
           // "Programar desde" is a promise to the user: a task can be due in
           // a month but intentionally held until, for example, two weeks out.
-          const availableFrom = plannerDateKey(task.scheduled_for);
-          if (availableFrom && availableFrom > planningDate) {
+          if (!isPlannerTaskEligible(task.id, task.scheduled_for, planningDate, automaticallyScheduledTaskIds)) {
             index += 1;
             continue;
           }
