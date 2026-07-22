@@ -2,5 +2,5 @@
 // Migracion incremental: mientras el flag este apagado, el shell/UI actual
 // sigue siendo la unica ruta -- ningun componente v2 se monta por defecto.
 export function isFerovaUiV2Enabled(): boolean {
-  return import.meta.env.VITE_FEROVA_UI_V2?.trim() === 'true';
+  return import.meta.env.VITE_FEROVA_UI_V2?.trim() !== 'false';
 }

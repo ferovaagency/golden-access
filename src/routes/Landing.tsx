@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { motion, useReducedMotion } from 'motion/react';
 import {
   Sparkles, Brain, LineChart, Users, CalendarClock, MessageSquare,
   Zap, ShieldCheck, ArrowRight, Check, Bot, Target, TrendingUp,
@@ -7,6 +8,7 @@ import { SeoHead } from '../seo/SeoHead';
 import { organizationSchema, websiteSchema, softwareApplicationSchema } from '../seo/StructuredData';
 import { trackEvent } from '../lib/analytics';
 import { useInViewOnce } from '../lib/useInViewOnce';
+import { HeroOrbit } from '../marketing/components/HeroOrbit';
 
 /**
  * Public sales landing at /landing.
@@ -68,8 +70,19 @@ function Header() {
 }
 
 function Hero() {
+  const reduceMotion = useReducedMotion();
   return (
-    <section className="relative overflow-hidden bg-slate-950 text-white">
+    <section className="relative isolate overflow-hidden bg-[#09122b] text-white">
+      <motion.div
+        className="absolute -left-28 top-0 h-[30rem] w-[30rem] rounded-full bg-[#981737]/40 blur-3xl"
+        animate={reduceMotion ? undefined : { x: [0, 80, 0], y: [0, 38, 0], scale: [1, 1.12, 1] }}
+        transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      <motion.div
+        className="absolute -right-24 bottom-0 h-[28rem] w-[28rem] rounded-full bg-[#52407f]/35 blur-3xl"
+        animate={reduceMotion ? undefined : { x: [0, -65, 0], y: [0, -32, 0], scale: [1.08, 1, 1.08] }}
+        transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+      />
       <div
         className="absolute inset-0 opacity-40"
         style={{
@@ -77,8 +90,8 @@ function Hero() {
             'radial-gradient(circle at 20% 20%, rgba(251,191,36,0.15), transparent 40%), radial-gradient(circle at 80% 60%, rgba(59,130,246,0.18), transparent 45%)',
         }}
       />
-      <div className="relative mx-auto max-w-6xl px-4 py-24 md:py-32">
-        <div className="mx-auto max-w-3xl text-center">
+      <div className="relative mx-auto grid max-w-6xl items-center gap-8 px-4 py-20 md:grid-cols-[1.1fr_.9fr] md:py-28">
+        <div className="max-w-3xl text-center md:text-left">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-medium text-amber-200">
             <Sparkles className="h-3.5 w-3.5" />
             Sistema operativo de negocio con IA
@@ -89,7 +102,7 @@ function Hero() {
           <p className="mt-6 text-lg text-slate-300 md:text-xl">
             Ferova One reemplaza tu hoja de cálculo, tu CRM y tu agenda con una sola plataforma que aprende de tu negocio y te dice qué hacer cada día.
           </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row md:justify-start">
             <Link
               to="/app"
               onClick={() => trackEvent('hero_primary_cta', { path: '/' })}
@@ -107,6 +120,14 @@ function Hero() {
           </div>
           <p className="mt-4 text-xs text-slate-400">USD 50 / mes · Sin permanencia · Cancelás cuando quieras</p>
         </div>
+        <motion.div
+          initial={reduceMotion ? false : { opacity: 0, scale: 0.94 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+          className="order-first md:order-none"
+        >
+          <HeroOrbit />
+        </motion.div>
       </div>
     </section>
   );

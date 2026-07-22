@@ -38,7 +38,7 @@ export function AppShell({
   const activeSection = sections.find((section) => section.id === activeSectionId);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--ferova-canvas)] font-sans text-[#1f1b16]">
+    <div className="ferova-v2-theme min-h-screen flex flex-col bg-[var(--ferova-canvas)] font-sans text-[#1f1b16]">
       <WorkspaceHeader
         user={user}
         onSignOut={onSignOut}

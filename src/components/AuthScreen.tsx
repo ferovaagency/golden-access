@@ -48,12 +48,13 @@ export default function AuthScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f8fb] bg-[linear-gradient(135deg,#f7f8fb_0%,#eef6ff_52%,#f8fbf4_100%)] flex flex-col justify-center items-center p-4 text-slate-900 font-sans">
-      <div className="max-w-md w-full bg-white border border-slate-200 rounded-3xl p-8 space-y-6 shadow-2xl shadow-slate-200/70 relative overflow-hidden">
-        <div className="absolute top-0 inset-x-0 h-1 bg-blue-600" />
+    <div className="min-h-screen bg-[var(--ferova-canvas)] bg-[radial-gradient(circle_at_12%_8%,#f3e6dd_0,transparent_32%),radial-gradient(circle_at_88%_6%,#ece9ff_0,transparent_28%)] flex flex-col justify-center items-center p-4 text-slate-900 font-sans">
+      <div className="max-w-md w-full bg-[var(--ferova-surface)] border border-[var(--ferova-line)] rounded-[28px] p-8 space-y-6 shadow-2xl shadow-[#541014]/10 relative overflow-hidden">
+        <div className="absolute top-0 inset-x-0 h-1.5 bg-[var(--ferova-brand)]" />
 
         <div className="space-y-2.5 text-center">
-          <h1 className="text-2xl font-bold font-display tracking-tight text-slate-950">
+          <span className="mx-auto grid h-11 w-11 place-items-center rounded-2xl bg-[var(--ferova-brand)] font-display text-lg font-bold text-white shadow-sm">F</span>
+          <h1 className="text-2xl font-bold font-display tracking-tight text-[#1f1b16]">
             Ferova One
           </h1>
           <p className="text-sm text-slate-500">
@@ -85,7 +86,7 @@ export default function AuthScreen() {
             placeholder="correo@empresa.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-white border border-slate-200 rounded-2xl px-3 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+            className="w-full bg-white border border-[var(--ferova-line)] rounded-2xl px-3 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[var(--ferova-brand)]"
           />
           <input
             type="password"
@@ -94,7 +95,7 @@ export default function AuthScreen() {
             placeholder="Contraseña"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-white border border-slate-200 rounded-2xl px-3 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+            className="w-full bg-white border border-[var(--ferova-line)] rounded-2xl px-3 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[var(--ferova-brand)]"
           />
 
           {error && (
@@ -111,7 +112,7 @@ export default function AuthScreen() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-2xl transition disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-2 bg-[var(--ferova-brand)] hover:bg-[var(--ferova-brand-2)] text-white font-semibold py-3 rounded-2xl transition disabled:opacity-60"
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
             {mode === 'signin' ? 'Iniciar sesión' : 'Crear cuenta'}
@@ -124,7 +125,7 @@ export default function AuthScreen() {
             setError(null);
             setInfo(null);
           }}
-          className="w-full text-sm text-slate-500 hover:text-blue-700"
+          className="w-full text-sm text-slate-500 hover:text-[var(--ferova-brand)]"
         >
           {mode === 'signin'
             ? '¿No tienes cuenta? Regístrate'
