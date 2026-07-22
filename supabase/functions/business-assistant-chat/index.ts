@@ -1,4 +1,4 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, streamText, type UIMessage } from "npm:ai";
 import { createLovableAiGatewayProvider, getLovableAiGatewayRunId, getLovableAiGatewayResponseHeaders, withLovableAiGatewayRunIdHeader } from "../_shared/ai-gateway.ts";
@@ -73,7 +73,7 @@ function deterministicReply(input: {
   return `${opener} ${facts.join(' ')}\n\n${actionIntro}\n${actions.slice(0, 3).map((action, index) => `${index + 1}. ${action}`).join('\n')}`;
 }
 
-async function trimStoredHistory(admin: ReturnType<typeof createClient>, userId: string) {
+async function trimStoredHistory(admin: SupabaseClient<any, "public", "public", any, any>, userId: string) {
   const { data, error } = await admin
     .from('business_assistant_messages')
     .select('id')

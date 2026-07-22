@@ -2,7 +2,7 @@
 // and insights in one place, and exposes typed actions that map 1:1 to
 // plannerService. Components should not touch supabase for planner data.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { plannerService, type CreatePlannerBlockInput, type PlannerBlock, type PlannerBriefing, type PlannerClient, type PlannerInbox, type PlannerInsight, type PlannerPlanResult, type PlannerTask, type UpdatePlannerTaskInput } from '../lib/plannerService';
+import { plannerService, type CreatePlannerBlockInput, type PlannerBlock, type PlannerBriefing, type PlannerClient, type PlannerInbox, type PlannerInsight, type PlannerTask, type UpdatePlannerTaskInput } from '../lib/plannerService';
 
 function today() { return new Date().toISOString().slice(0, 10); }
 
@@ -13,7 +13,6 @@ export function usePlanner() {
   const [blocks, setBlocks] = useState<PlannerBlock[]>([]);
   const [insights, setInsights] = useState<PlannerInsight[]>([]);
   const [briefing, setBriefing] = useState<PlannerBriefing | null>(null);
-  const [planPreview, setPlanPreview] = useState<PlannerPlanResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -56,9 +55,8 @@ export function usePlanner() {
       // intervals when the user has authorized Calendar; no token is persisted.
       if (!err) {
         const busyBlocks = await plannerService.calendarBusyBlocks(date);
-        const { data: plan, error: planError } = await plannerService.planDay(date, true, busyBlocks);
+        const { error: planError } = await plannerService.planDay(date, true, busyBlocks);
         if (planError) setError(planError.message);
-        else if (plan) setPlanPreview(null);
       }
       await refresh();
     } catch (err: any) {
@@ -76,25 +74,9 @@ export function usePlanner() {
       // the best agenda immediately, preserving protected/Calendar blocks.
       const { error: err } = await plannerService.planDay(date, true, busyBlocks);
       if (err) setError(err.message);
-      else setPlanPreview(null);
       await refresh();
     } catch (err: any) {
       setError(err?.message || 'No fue posible organizar la agenda.');
-    } finally {
-      setBusy(null);
-    }
-  }, [date, refresh]);
-
-  const applyPlan = useCallback(async () => {
-    setBusy('plan'); setError(null);
-    try {
-      const busyBlocks = await plannerService.calendarBusyBlocks(date);
-      const { error: err } = await plannerService.planDay(date, true, busyBlocks);
-      if (err) setError(err.message);
-      else setPlanPreview(null);
-      await refresh();
-    } catch (err: any) {
-      setError(err?.message || 'No fue posible aplicar el plan.');
     } finally {
       setBusy(null);
     }
@@ -151,9 +133,9 @@ export function usePlanner() {
   const dismissInsight = useCallback(async (id: string) => { await plannerService.dismissInsight(id); setInsights((prev) => prev.filter((i) => i.id !== id)); }, []);
 
   return {
-    inbox, tasks, clients, blocks, insights, briefing, planPreview, rescheduledCount,
+    inbox, tasks, clients, blocks, insights, briefing, rescheduledCount,
     loading, busy, error, date, setDate, timeZone,
-    refresh, classify, planDay, applyPlan, regenerateInsights, regenerateBriefing,
+    refresh, classify, planDay, regenerateInsights, regenerateBriefing,
     completeTask, updateTask, postponeTask, deleteTask, createBlock, dismissInsight,
   };
 }

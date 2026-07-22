@@ -188,21 +188,6 @@ export default function SmartPlanner() {
 
       {plannerView !== 'day' && <PlannerCalendar view={plannerView} date={p.date} tasks={openTasks} clients={p.clients} compact={compactCalendar} timeZone={p.timeZone} onSelectDate={(date) => { p.setDate(date); setPlannerView('day'); }} onEdit={openTaskEditor} />}
 
-      {p.planPreview && (
-        <section className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold text-blue-950">Vista previa de la agenda</p>
-              <p className="mt-1 text-xs text-blue-800">{p.planPreview.summary} Revisa los bloques antes de aplicarlos.</p>
-            </div>
-            <button onClick={p.applyPlan} disabled={p.busy === 'plan'} className="rounded-xl bg-blue-700 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-50">Aplicar plan</button>
-          </div>
-          <ul className="mt-3 space-y-1 text-xs text-blue-900">
-            {p.planPreview.blocks.map((block) => <li key={`${block.starts_at}-${block.title}`}>{fmtTime(block.starts_at, p.timeZone)} - {fmtTime(block.ends_at, p.timeZone)}: {block.title}</li>)}
-          </ul>
-        </section>
-      )}
-
       {plannerView === 'day' && <DayAgendaSummary blocks={p.blocks} tasks={p.tasks} clients={p.clients} timeZone={p.timeZone} onComplete={p.completeTask} />}
 
       {/* Briefing */}

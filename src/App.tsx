@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { linkGoogleIdentity, getAccessToken, saveGoogleLinkReturnTab, consumeGoogleLinkReturnTab } from './lib/supabase';
-import { backupAppDataToSheets, importSheetByUrl, syncExpenseDocumentsToSheets } from './lib/sheetsService';
+import { backupAppDataToSheets, fetchSpreadsheetData, findSpreadsheet, importSheetByUrl, syncExpenseDocumentsToSheets } from './lib/sheetsService';
 import * as financeService from './lib/financeService';
 import { useAuthAndAccess } from './hooks/useAuthAndAccess';
 import { getBusinessProfile, BusinessProfile } from './lib/businessProfileService';
@@ -277,9 +277,9 @@ function AppInner() {
     if (!(await askConfirm({ description: 'Esto buscará tu hoja "Ferova_OS_Financiero" en Google Drive y reemplazará tus datos actuales. ¿Continuar?', destructive: true, confirmText: 'Sí, continuar' }))) return;
     setSheetsLoading(true);
     try {
-      const sheet = await import('./lib/sheetsService').then((m) => m.findSpreadsheet(token));
+      const sheet = await findSpreadsheet(token);
       if (!sheet?.id) throw new Error('No encontré una hoja llamada Ferova_OS_Financiero en tu Google Drive. También puedes pegar el link exacto abajo.');
-      const data = await import('./lib/sheetsService').then((m) => m.fetchSpreadsheetData(sheet.id, token));
+      const data = await fetchSpreadsheetData(sheet.id, token);
       await persistImportedFinanceData(data);
       saveLastSheetBackupLink(sheet.webViewLink || `https://docs.google.com/spreadsheets/d/${sheet.id}`);
       toastOk('Hoja importada desde tu Google Drive.');

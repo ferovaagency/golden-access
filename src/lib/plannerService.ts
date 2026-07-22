@@ -156,6 +156,26 @@ function nextDate(date: string) {
   return value.toISOString().slice(0, 10);
 }
 
+function zonedParts(value: Date, timeZone: string) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+    .formatToParts(value).reduce<Record<string, string>>((result, part) => ({ ...result, [part.type]: part.value }), {});
+}
+
+function zonedDate(value: Date, timeZone: string) {
+  const p = zonedParts(value, timeZone);
+  return `${p.year}-${p.month}-${p.day}`;
+}
+
+function zonedMinute(value: Date, timeZone: string) {
+  const p = zonedParts(value, timeZone);
+  return Number(p.hour) * 60 + Number(p.minute);
+}
+
+function timeToMinute(value: string | null | undefined, fallback: number) {
+  const match = value?.match(/^(\d{1,2}):(\d{2})$/);
+  return match ? Math.max(0, Math.min(1439, Number(match[1]) * 60 + Number(match[2]))) : fallback;
+}
+
 export const plannerService = {
   async getTimeZone(): Promise<string> {
     const { data, error } = await anyDb().from('business_profile').select('zona_horaria').maybeSingle();
@@ -319,7 +339,46 @@ export const plannerService = {
     return data.blocks || [];
   },
   async planDay(date?: string, apply = false, busyBlocks: PlannerBusyBlock[] = []) {
-    return invokeAi<PlannerPlanResult>({ functionName: 'planner-plan-day', body: { date, apply, busy_blocks: busyBlocks } });
+    // Keep day scheduling available even when Lovable has an older deployed
+    // Edge Function. All writes remain protected by the user's existing RLS.
+    const timeZone = await this.getTimeZone();
+    const today = zonedDate(new Date(), timeZone);
+    const targetDate = !date || date < today ? today : date;
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) return { data: null, error: authError || new Error('Debes iniciar sesión.') };
+    const { data: profile, error: profileError } = await anyDb().from('business_profile').select('horario_inicio,horario_fin,dias_laborales').maybeSingle();
+    if (profileError) return { data: null, error: profileError };
+    const weekday = new Date(`${targetDate}T12:00:00`).getDay();
+    const workdays = Array.isArray(profile?.dias_laborales) && profile.dias_laborales.length ? profile.dias_laborales : [1, 2, 3, 4, 5];
+    if (!workdays.includes(weekday)) return { data: { ok: true, preview: !apply, blocks: [], summary: 'No es un día laboral según tu configuración.' }, error: null };
+    const start = timeToMinute(profile?.horario_inicio, 8 * 60);
+    const end = Math.max(start + 15, timeToMinute(profile?.horario_fin, 18 * 60));
+    const [{ data: tasks, error: tasksError }, blocks] = await Promise.all([
+      anyDb().from('planner_tasks').select('*').in('status', ['backlog', 'scheduled', 'postponed']).order('deadline', { ascending: true, nullsFirst: false }).limit(40),
+      this.listBlocks(targetDate),
+    ]);
+    if (tasksError) return { data: null, error: tasksError };
+    const nowStart = targetDate === today ? Math.ceil(zonedMinute(new Date(), timeZone) / 15) * 15 : start;
+    const busy = [...(blocks || []).filter((b: PlannerBlock) => b.protected || b.source === 'google' || b.source === 'external'), ...busyBlocks]
+      .map((b: any) => [zonedMinute(new Date(b.starts_at), timeZone), zonedMinute(new Date(b.ends_at), timeZone)] as [number, number]);
+    const overlaps = (a: number, b: number) => busy.some(([x, y]) => a < y && b > x);
+    const ordered = [...(tasks || [])].sort((a: PlannerTask, b: PlannerTask) => ({ urgent: 0, high: 1, medium: 2, low: 3 }[a.priority] - ({ urgent: 0, high: 1, medium: 2, low: 3 }[b.priority])));
+    const planned: any[] = [];
+    let cursor = Math.max(start, nowStart);
+    for (const task of ordered) {
+      const duration = Math.max(15, Math.min(120, Math.ceil(Number(task.estimated_minutes || 30) / 15) * 15));
+      while (cursor + duration <= end && overlaps(cursor, cursor + duration)) cursor += 15;
+      if (cursor + duration > end) break;
+      planned.push({ user_id: user.id, title: task.title, category: task.category, starts_at: localPlannerTimeToIso(`${targetDate}T${String(Math.floor(cursor / 60)).padStart(2, '0')}:${String(cursor % 60).padStart(2, '0')}:00`, timeZone), ends_at: localPlannerTimeToIso(`${targetDate}T${String(Math.floor((cursor + duration) / 60)).padStart(2, '0')}:${String((cursor + duration) % 60).padStart(2, '0')}:00`, timeZone), task_ids: [task.id], source: 'planner-rules', notes: 'Programado automáticamente según horario laboral y espacios libres.', protected: false });
+      busy.push([cursor, cursor + duration]); cursor += duration;
+    }
+    if (apply) {
+      const dayStart = localPlannerTimeToIso(`${targetDate}T00:00:00`, timeZone), dayEnd = localPlannerTimeToIso(`${nextDate(targetDate)}T00:00:00`, timeZone);
+      const { error: deleteError } = await anyDb().from('planner_blocks').delete().in('source', ['ai', 'planner-rules']).gte('starts_at', dayStart).lt('starts_at', dayEnd);
+      if (deleteError) return { data: null, error: deleteError };
+      if (planned.length) { const { error: insertError } = await anyDb().from('planner_blocks').insert(planned); if (insertError) return { data: null, error: insertError }; await anyDb().from('planner_tasks').update({ status: 'scheduled', scheduled_for: targetDate }).in('id', planned.flatMap((b) => b.task_ids)); }
+    }
+    return { data: { ok: true, preview: !apply, blocks: planned, summary: `${planned.length} bloque(s) dentro de tu horario laboral.` }, error: null };
   },
   async regenerateInsights() {
     return invokeAi<{ ok: boolean; insights: any[] }>({ functionName: 'planner-insights', body: { kind: 'insights' } });
