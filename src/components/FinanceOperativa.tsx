@@ -8,6 +8,7 @@ import { listReceivables, listReceivablePayments, createReceivable, deleteReceiv
 import { listPayables, createPayable, deletePayable, updatePayable, payableDifference, type Payable, type PayableStatus } from '../lib/payablesService';
 import { listBudget, upsertBudgetLine, deleteBudgetLine, seedBudget, type BudgetLine } from '../lib/budgetService';
 import { buildCashflow, type CashflowSnapshot } from '../lib/cashflowService';
+import { calculateWeightedReceivable } from '../lib/engine/financialEngine';
 import { Loader2, Plus, Trash2, AlertTriangle, RefreshCcw, Edit2, X, ExternalLink } from 'lucide-react';
 import ComprobanteUpload from './ComprobanteUpload';
 import { getAccessToken } from '../lib/supabase';
@@ -335,8 +336,21 @@ function ReceivablesTab({ userId, appData, formatCop }: { userId: string; appDat
     reload();
   };
   if (loading) return <Loader />;
+  const activeReceivables = items.filter((r) => r.estado !== 'cancelada' && r.estado !== 'pagada');
+  const totalSaldo = activeReceivables.reduce((sum, r) => sum + receivableBalance(r, payments), 0);
+  const totalCobroEsperado = activeReceivables.reduce((sum, r) => {
+    const bal = receivableBalance(r, payments);
+    return sum + calculateWeightedReceivable({ saldo: bal, vencimiento: r.vencimiento || null, cancelada: false }).cobroEsperado;
+  }, 0);
   return (
     <div className="space-y-4">
+      {activeReceivables.length > 0 && (
+        <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-3 flex flex-wrap items-center gap-x-6 gap-y-1 text-xs">
+          <span className="text-slate-600">Saldo total pendiente: <strong className="text-slate-900">{formatCop(totalSaldo)}</strong></span>
+          <span className="text-slate-600">Cobro esperado (ponderado por antigüedad): <strong className="text-blue-700">{formatCop(totalCobroEsperado)}</strong></span>
+          <span className="text-slate-400">Sección 4.7 del manual: pondera cada saldo por su probabilidad de cobro según qué tan vencido está — no es una promesa, es una estimación.</span>
+        </div>
+      )}
       <div className={cardClass}>
         <h3 className="font-semibold text-slate-900 mb-1">{editingId ? 'Editar cuenta por cobrar' : 'Nueva cuenta por cobrar'}</h3>
         <p className="text-xs text-slate-500 mb-3">Plata que un cliente te debe (factura emitida, aún sin pagar). Usa "Abonar" en la tabla cuando el cliente pague parcial o total — el saldo se recalcula solo.</p>
@@ -359,17 +373,22 @@ function ReceivablesTab({ userId, appData, formatCop }: { userId: string; appDat
       </div>
       <div className={cardClass}>
         <table className="w-full text-sm">
-          <thead><tr className="text-left text-xs text-slate-500 border-b border-slate-200"><th className="py-2">Cliente</th><th>Concepto</th><th className="text-right">Valor</th><th className="text-right">Saldo</th><th>Vence</th><th>Estado</th><th></th></tr></thead>
+          <thead><tr className="text-left text-xs text-slate-500 border-b border-slate-200"><th className="py-2">Cliente</th><th>Concepto</th><th className="text-right">Valor</th><th className="text-right">Saldo</th><th className="text-right">Cobro esperado</th><th>Vence</th><th>Estado</th><th></th></tr></thead>
           <tbody>
             {items.map((r) => {
               const bal = receivableBalance(r, payments);
               const cli = appData.clientes.find((c) => c.id === r.cliente_id)?.nombre || '—';
+              const isActive = r.estado !== 'cancelada' && r.estado !== 'pagada';
+              const weighted = isActive ? calculateWeightedReceivable({ saldo: bal, vencimiento: r.vencimiento || null, cancelada: false }) : null;
               return (
                 <tr key={r.id} className="border-b border-slate-100">
                   <td className="py-2">{cli}</td>
                   <td className="font-medium">{r.concepto}</td>
                   <td className="text-right">{formatCop(r.valor)}</td>
                   <td className="text-right font-semibold">{formatCop(bal)}</td>
+                  <td className="text-right text-blue-700" title={weighted ? `${(weighted.probabilidad * 100).toFixed(0)}% de probabilidad de cobro` : undefined}>
+                    {weighted ? formatCop(weighted.cobroEsperado) : '—'}
+                  </td>
                   <td className="text-slate-500">{r.vencimiento || '—'}</td>
                   <td className="text-slate-500">{r.estado}</td>
                   <td className="text-right space-x-2">
@@ -384,7 +403,7 @@ function ReceivablesTab({ userId, appData, formatCop }: { userId: string; appDat
                 </tr>
               );
             })}
-            {items.length === 0 && <tr><td colSpan={7} className="py-6 text-center text-slate-400 text-sm">Sin cuentas por cobrar.</td></tr>}
+            {items.length === 0 && <tr><td colSpan={8} className="py-6 text-center text-slate-400 text-sm">Sin cuentas por cobrar.</td></tr>}
           </tbody>
         </table>
       </div>

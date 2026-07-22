@@ -1,10 +1,29 @@
 import React, { useRef, useState } from 'react';
 import { Servicio, Venta, Hora, Config } from '../types';
 import { convertToCop } from '../lib/calculations';
+import { semaforoMargen } from '../lib/engine/financialEngine';
 import { Clock, Edit2, Download, Upload } from 'lucide-react';
 import { useToast, errMsg } from './ui/toast';
 import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
 import { downloadServiciosTemplate, parseServiciosCsv } from '../lib/csvImportExport';
+
+// Semáforo de 4 niveles del manual (Parte 4.5): <15% crítico, 15-29% bajo,
+// 30-49% saludable, >=50% alto. "sin_ventas" es el estado sin datos, no un
+// nivel de margen real.
+const SEMAFORO_COLOR: Record<string, string> = {
+  critico: '#c97a61',
+  bajo: '#c99a61',
+  saludable: '#c9a961',
+  alto: '#a8c98a',
+  sin_ventas: '#8a8377',
+};
+const SEMAFORO_LABEL: Record<string, string> = {
+  critico: 'Crítico',
+  bajo: 'Bajo',
+  saludable: 'Saludable',
+  alto: 'Alto',
+  sin_ventas: 'Sin ventas',
+};
 
 interface ServiciosAdminProps {
   servicios: Servicio[];
@@ -165,6 +184,9 @@ export default function ServiciosAdmin({
       srvCogsCop,
       srvMarginCop,
       marginPct,
+      // Motor centralizado (Parte 4.5): mismo semáforo de 4 niveles que
+      // HorasAdmin, en vez del corte ad-hoc >=50/>0 que había antes.
+      semaforo: srvRevenueCop > 0 ? semaforoMargen(marginPct / 100) : null,
       totalHrs,
       // A sale stores the direct cost agreed at the moment it was recorded.
       // Its weighted average is the actual unit cost and is never rewritten by
@@ -366,9 +388,13 @@ export default function ServiciosAdmin({
                             <span className="text-slate-400 italic">-</span>
                           )}
                         </td>
-                        <td className="px-5 py-4 text-right font-mono font-bold" style={{ color: stats.marginPct >= 50 ? '#a8c98a' : (stats.marginPct > 0 ? '#c9a961' : '#8a8377') }}>
+                        <td className="px-5 py-4 text-right font-mono font-bold" style={{ color: SEMAFORO_COLOR[stats.semaforo || 'sin_ventas'] }}>
                           {stats.srvRevenueCop > 0 ? `${stats.marginPct.toFixed(0)}%` : 'Sin ventas'}
-                          {stats.srvRevenueCop > 0 && <span className="block text-[9px] font-normal text-slate-400">{formatCop(stats.srvMarginCop)}</span>}
+                          {stats.srvRevenueCop > 0 && (
+                            <span className="block text-[9px] font-normal text-slate-400">
+                              {formatCop(stats.srvMarginCop)} · {SEMAFORO_LABEL[stats.semaforo || 'sin_ventas']}
+                            </span>
+                          )}
                         </td>
                         <td className="px-5 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">

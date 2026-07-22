@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Hora, Cliente, Servicio, Config, AppData } from '../types';
 import { FinancialMetrics, calcularProductividadClientes, calcularProductividadServicios } from '../lib/calculations';
-import { Settings } from 'lucide-react';
+import { calculateHourlyCost, calculateCapacity } from '../lib/engine/financialEngine';
+import { Settings, HelpCircle } from 'lucide-react';
 import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
 
 interface HorasAdminProps {
@@ -31,6 +32,7 @@ export default function HorasAdmin({
 }: HorasAdminProps) {
   // Config state
   const [horasObjetivoMes, setHorasObjetivoMes] = useState(config.horas_objetivo_mes || 160);
+  const [umbralPerdidaPct, setUmbralPerdidaPct] = useState(Math.round((config.umbral_perdida_horas ?? 0.75) * 100));
   const [isUpdatingConfig, setIsUpdatingConfig] = useState(false);
 
   // Form states
@@ -65,7 +67,28 @@ export default function HorasAdmin({
   // Metrics calculating
   const horaCobradaObj = totalHorasLoggeadas > 0 ? metrics.totalVentas / totalHorasLoggeadas : 0;
   const horaRealObj = totalHorasLoggeadas > 0 ? metrics.utilidadNeta / totalHorasLoggeadas : 0;
-  const horaObjetivoMinima = config.salario_propuesto / (horasObjetivoMes || 160);
+  // Motor centralizado (Fase 2/3 del manual, Parte 4.5) -- antes calculado
+  // inline, sin el mismo tratamiento explicable que pricingIdeal.ts.
+  const horaObjetivoMinima = calculateHourlyCost({ costoMensualPersona: config.salario_propuesto, horasProductivasMensuales: horasObjetivoMes || 160 }) ?? 0;
+  const umbralPerdida = umbralPerdidaPct / 100;
+
+  // Fase 5 del manual (Parte 4.6) -- capacidad y utilización del mes.
+  // capacidadComprometidaHoras queda en 0: hoy no hay una fuente confiable de
+  // "horas pendientes de proyectos activos" conectada a esta pantalla (eso
+  // vive en Proyectos/Planner, no en la bitácora de horas) -- se muestra
+  // explícito como limitación, no se inventa un número.
+  const capacidad = calculateCapacity({
+    capacidadMensualHoras: horasObjetivoMes || 160,
+    pctFacturableReal: 1,
+    capacidadComprometidaHoras: 0,
+    horasFacturablesTrabajadas: totalHorasLoggeadas,
+  });
+  const LECTURA_CAPACIDAD: Record<string, { label: string; color: string }> = {
+    ociosa: { label: 'Capacidad ociosa', color: '#8a8377' },
+    operativo: { label: 'Rango operativo razonable', color: '#a8c98a' },
+    saturacion: { label: 'Riesgo de saturación', color: '#c99a61' },
+    alto_riesgo: { label: 'Alto riesgo de agotamiento', color: '#c97a61' },
+  };
 
   // Render alerts / comparative colors
   const isHoraRealOptimal = horaRealObj >= horaObjetivoMinima;
@@ -75,7 +98,7 @@ export default function HorasAdmin({
     e.preventDefault();
     setIsUpdatingConfig(true);
     try {
-      await onSaveConfig({ horas_objetivo_mes: Number(horasObjetivoMes) });
+      await onSaveConfig({ horas_objetivo_mes: Number(horasObjetivoMes), umbral_perdida_horas: Math.min(Math.max(Number(umbralPerdidaPct) / 100, 0.01), 0.99) });
     } catch (err) {
       console.error(err);
     } finally {
@@ -170,12 +193,42 @@ export default function HorasAdmin({
           </span>
         </div>
 
-        <div className="bg-[#161412] border border-[#2a2620] border-l-3 border-l-[#c9a961] p-5 rounded-lg">
-          <span className="text-[10px] font-mono tracking-wider text-[#8a8377] uppercase block">Hora Mínima Objetivo</span>
+        <div className="bg-[#161412] border border-[#2a2620] border-l-3 border-l-[#c9a961] p-5 rounded-lg group relative">
+          <span className="text-[10px] font-mono tracking-wider text-[#8a8377] uppercase flex items-center gap-1">
+            Hora Mínima Objetivo <HelpCircle className="w-3 h-3 text-[#8a8377]" />
+          </span>
           <div className="text-2xl font-display font-semibold text-[#e8e3d8] mt-2">{formatCop(horaObjetivoMinima)}</div>
-          <span className="text-[10px] text-[#8a8377] font-mono block mt-1">Cálculo de cobertura básica</span>
+          <span className="text-[10px] text-[#8a8377] font-mono block mt-1">Sueldo deseado ÷ horas objetivo/mes</span>
+          <div className="hidden group-hover:block absolute z-10 top-full left-0 mt-1 w-64 bg-[#0f0e0c] border border-[#2a2620] rounded-lg p-3 text-[10px] text-[#a39d8e] leading-relaxed shadow-xl">
+            {formatCop(config.salario_propuesto)} sueldo deseado ÷ {horasObjetivoMes || 160}h objetivo/mes = {formatCop(horaObjetivoMinima)}/hora. Es lo mínimo que necesitas cobrar por hora para cubrir tu sueldo objetivo, sin contar gastos del negocio ni reserva de impuestos.
+          </div>
         </div>
 
+      </div>
+
+      {/* Fase 5 del manual: Capacidad y utilización del mes */}
+      <div className="bg-[#161412] border border-[#2a2620] rounded-lg p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase font-semibold">Capacidad y Utilización del Mes</h3>
+            <p className="text-[10px] text-[#8a8377] mt-1">Horas registradas ÷ horas facturables objetivo. No incluye horas comprometidas de proyectos activos (esa fuente aún no está conectada aquí).</p>
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="text-right">
+              <span className="text-[10px] font-mono text-[#8a8377] uppercase block">Disponibilidad</span>
+              <span className="text-lg font-display font-semibold text-[#e8e3d8]">{Math.max(0, capacidad.disponibilidad).toFixed(0)} hs</span>
+            </div>
+            <div className="text-right">
+              <span className="text-[10px] font-mono text-[#8a8377] uppercase block">Utilización</span>
+              <span className="text-lg font-display font-semibold" style={{ color: LECTURA_CAPACIDAD[capacidad.lectura || 'operativo'].color }}>
+                {capacidad.utilizacion != null ? `${(capacidad.utilizacion * 100).toFixed(0)}%` : '—'}
+              </span>
+              <span className="text-[9px] font-mono block" style={{ color: LECTURA_CAPACIDAD[capacidad.lectura || 'operativo'].color }}>
+                {capacidad.lectura ? LECTURA_CAPACIDAD[capacidad.lectura].label : 'Sin datos'}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -208,6 +261,26 @@ export default function HorasAdmin({
                   </button>
                 </div>
                 <p className="text-[10px] text-[#8a8377] mt-1.5">Usado para calcular el costo de tu hora objetivo.</p>
+              </div>
+              <div>
+                <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Umbral de "Pérdida" (% de la hora mínima)</label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min="1"
+                    max="99"
+                    value={umbralPerdidaPct}
+                    onChange={(e) => setUmbralPerdidaPct(Number(e.target.value))}
+                    className="bg-[#0f0e0c]/60 text-white font-mono text-xs border border-[#2a2620] px-3 py-2 rounded focus:outline-none w-full"
+                  />
+                  <button
+                    type="submit"
+                    className="bg-[#c9a961] hover:bg-[#b09252] text-black text-xs font-semibold font-display px-3 py-2 rounded transition cursor-pointer"
+                  >
+                    {isUpdatingConfig ? '...' : 'Fijar'}
+                  </button>
+                </div>
+                <p className="text-[10px] text-[#8a8377] mt-1.5">Un cliente se marca "PÉRDIDA" cuando su hora cobrada cae debajo de este % de la hora mínima objetivo. Default 75%.</p>
               </div>
             </form>
           </div>
@@ -342,7 +415,7 @@ export default function HorasAdmin({
                       let badge = { text: 'EQUILIBRIO', style: 'text-[#c9a961] bg-[#c9a961]/10 border border-[#c9a961]/25' };
                       if (computedHourly >= horaObjetivoMinima) {
                         badge = { text: 'GANANCIA', style: 'text-[#a8c98a] bg-[#a8c98a]/10 border border-[#a8c98a]/25' };
-                      } else if (computedHourly < (horaObjetivoMinima * 0.75)) {
+                      } else if (computedHourly < (horaObjetivoMinima * umbralPerdida)) {
                         badge = { text: 'PÉRDIDA', style: 'text-[#c97a61] bg-[#c97a61]/10 border border-[#c97a61]/25' };
                       }
 

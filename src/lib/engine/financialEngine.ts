@@ -208,6 +208,44 @@ export interface BreakEvenResult {
   notas: string[];
 }
 
+// ============================================================
+// 4.7 — Caja, cartera y cobro esperado ponderado
+// ============================================================
+/**
+ * Probabilidad de cobro por antigüedad (tabla exacta de la sección 4.7).
+ * "Confirmado con fecha" y "en disputa" no tienen equivalente directo en el
+ * modelo de datos actual (Receivable.estado no distingue esos casos), así
+ * que se acercan por fecha de vencimiento -- ver notas en el resultado.
+ */
+export function estimateCollectionProbability(diasVencido: number | null, cancelada: boolean): number {
+  if (cancelada) return 0;
+  if (diasVencido === null) return 0.95; // sin fecha de vencimiento: se asume confirmado
+  if (diasVencido <= 0) return 0.85; // aún dentro de plazo
+  if (diasVencido <= 15) return 0.70;
+  if (diasVencido <= 30) return 0.50;
+  return 0.25;
+}
+
+export interface WeightedReceivableInput {
+  saldo: number;
+  vencimiento: string | null;
+  cancelada: boolean;
+  hoy?: string; // ISO date opcional, para que las pruebas no dependan de la fecha real del reloj
+}
+
+export interface WeightedReceivableResult {
+  probabilidad: number;
+  cobroEsperado: number;
+  diasVencido: number | null;
+}
+
+export function calculateWeightedReceivable({ saldo, vencimiento, cancelada, hoy }: WeightedReceivableInput): WeightedReceivableResult {
+  const today = hoy ? new Date(hoy) : new Date();
+  const diasVencido = vencimiento ? Math.floor((today.getTime() - new Date(vencimiento).getTime()) / 86_400_000) : null;
+  const probabilidad = estimateCollectionProbability(diasVencido, cancelada);
+  return { probabilidad, cobroEsperado: saldo * probabilidad, diasVencido };
+}
+
 export function calculateBreakEven({ gastosFijos, margenContribucion, ingresosNetos }: BreakEvenInput): BreakEvenResult {
   const notas: string[] = [];
   const ratioContribucion = ingresosNetos > 0 ? margenContribucion / ingresosNetos : null;

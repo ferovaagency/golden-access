@@ -1,7 +1,7 @@
 // Aggregate hook for the Smart Planner UI. Loads inbox, tasks, today's blocks
 // and insights in one place, and exposes typed actions that map 1:1 to
 // plannerService. Components should not touch supabase for planner data.
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { plannerService, type CreatePlannerBlockInput, type PlannerBlock, type PlannerBriefing, type PlannerClient, type PlannerInbox, type PlannerInsight, type PlannerPlanResult, type PlannerTask, type UpdatePlannerTaskInput } from '../lib/plannerService';
 
 function today() { return new Date().toISOString().slice(0, 10); }
@@ -18,10 +18,17 @@ export function usePlanner() {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [date, setDate] = useState<string>(today());
+  const [rescheduledCount, setRescheduledCount] = useState(0);
+  const hasAutoRescheduled = useRef(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
+      if (!hasAutoRescheduled.current && date === today()) {
+        hasAutoRescheduled.current = true;
+        const rescheduled = await plannerService.rescheduleOverdueTasks(date);
+        if (rescheduled.length) setRescheduledCount(rescheduled.length);
+      }
       const [i, t, c, b, ins, br] = await Promise.all([
         plannerService.listInbox(),
         plannerService.listTasks(),
@@ -102,7 +109,7 @@ export function usePlanner() {
   const dismissInsight = useCallback(async (id: string) => { await plannerService.dismissInsight(id); setInsights((prev) => prev.filter((i) => i.id !== id)); }, []);
 
   return {
-    inbox, tasks, clients, blocks, insights, briefing, planPreview,
+    inbox, tasks, clients, blocks, insights, briefing, planPreview, rescheduledCount,
     loading, busy, error, date, setDate,
     refresh, classify, planDay, applyPlan, regenerateInsights, regenerateBriefing,
     completeTask, updateTask, postponeTask, deleteTask, createBlock, dismissInsight,

@@ -29,6 +29,7 @@ const config: Config = {
   horas_objetivo_mes: 160,
   meta_ventas_mensual: 30_000_000,
   margen_minimo: 0.30,
+  umbral_perdida_horas: 0.75,
 };
 
 const clientes: Cliente[] = [

@@ -17,6 +17,7 @@ import {
   TrendingUp,
   Clock
 } from 'lucide-react';
+import { MetricTooltip } from './ui/MetricTooltip';
 
 interface DashboardProps {
   data: AppData;
@@ -189,28 +190,28 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
           
           <div className="bg-white border border-slate-200 border-l-4 border-l-[#a39d8e] p-5 rounded-lg">
             <span className="text-[10px] font-mono tracking-wider text-slate-400 block uppercase">Nivel 0</span>
-            <span className="text-sm font-sans font-medium text-slate-500 block mt-1">Ventas Totales</span>
+            <span className="text-sm font-sans font-medium text-slate-500 block mt-1">Ventas Totales<MetricTooltip code="VENTAS_TOTALES" /></span>
             <div className="text-xl font-display font-semibold text-slate-900 mt-3">{formatCop(totalVentas)}</div>
             <div className="text-[10px] text-slate-400 font-mono mt-1">100% de ingresos</div>
           </div>
 
           <div className="bg-white border border-slate-200 border-l-4 border-l-[#c9a961] p-5 rounded-lg">
             <span className="text-[10px] font-mono tracking-wider text-slate-400 block uppercase">Nivel 1</span>
-            <span className="text-sm font-sans font-medium text-slate-500 block mt-1">Utilidad Bruta</span>
+            <span className="text-sm font-sans font-medium text-slate-500 block mt-1">Utilidad Bruta<MetricTooltip code="UTILIDAD_BRUTA" /></span>
             <div className="text-xl font-display font-semibold text-[#c9a961] mt-3">{formatCop(utilidadBruta)}</div>
             <div className="text-[10px] text-slate-400 font-mono mt-1">Menos costos directos</div>
           </div>
 
           <div className="bg-white border border-slate-200 border-l-4 border-l-[#a8c98a] p-5 rounded-lg">
             <span className="text-[10px] font-mono tracking-wider text-slate-400 block uppercase">Nivel 2</span>
-            <span className="text-sm font-sans font-medium text-slate-500 block mt-1">Utilidad Operacional</span>
+            <span className="text-sm font-sans font-medium text-slate-500 block mt-1">Utilidad Operacional<MetricTooltip code="UTILIDAD_OPERACIONAL" /></span>
             <div className="text-xl font-display font-semibold text-[#a8c98a] mt-3">{formatCop(utilidadOperacional)}</div>
             <div className="text-[10px] text-slate-400 font-mono mt-1">Menos herramientas y fijos</div>
           </div>
 
           <div className="bg-white border border-slate-200 border-l-4 border-l-[#c97a61] p-5 rounded-lg">
             <span className="text-[10px] font-mono tracking-wider text-slate-400 block uppercase">Nivel 3</span>
-            <span className="text-sm font-sans font-medium text-slate-500 block mt-1">Antes de Impuestos</span>
+            <span className="text-sm font-sans font-medium text-slate-500 block mt-1">Antes de Impuestos<MetricTooltip code="UTILIDAD_ANTES_IMPUESTOS" /></span>
             <div className="text-xl font-display font-semibold text-slate-900 mt-3">{formatCop(utilidadAntesImpuestos)}</div>
             <div className="text-[10px] text-slate-400 font-mono mt-1">Menos salario Mafe</div>
           </div>
@@ -218,7 +219,7 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
           <div className="bg-white border border-slate-200 border-l-4 border-l-[#c9a961] p-5 rounded-lg relative overflow-hidden">
             <div className="absolute top-0 right-0 w-16 h-16 bg-[#c9a961]/5 rounded-bl-full pointer-events-none" />
             <span className="text-[10px] font-mono tracking-wider text-[#c9a961] block uppercase">Nivel 4 · Neto</span>
-            <span className="text-sm font-sans font-medium text-slate-900 block mt-1 font-semibold">Utilidad Neta Real</span>
+            <span className="text-sm font-sans font-medium text-slate-900 block mt-1 font-semibold">Utilidad Neta Real<MetricTooltip code="UTILIDAD_NETA" /></span>
             <div className="text-xl font-display font-bold text-[#a8c98a] mt-3">{formatCop(utilidadNeta)}</div>
             <div className="text-[10px] text-slate-400 font-mono mt-1">Menos Renta DIAN Est.</div>
           </div>

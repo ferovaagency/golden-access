@@ -17,6 +17,8 @@ export interface Config {
   meta_ventas_mensual: number;
   /** Margen mínimo por defecto (0 a 1) para servicios sin margen_objetivo propio. */
   margen_minimo: number;
+  /** Fracción (0 a 1) de la hora mínima objetivo bajo la cual un cliente se clasifica como "PÉRDIDA" en HorasAdmin. Default 0.75. */
+  umbral_perdida_horas: number;
 }
 
 export interface Cliente {

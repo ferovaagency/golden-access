@@ -146,8 +146,49 @@ Se agregó `src/lib/engine/financialEngine.ts` con las funciones de A.2 que tien
 
 También se aplicaron, de la lista "candidatas cero riesgo" de este mismo catálogo: se eliminó `pagos_tc_estimados` (multiplicaba por `0` literal, nunca se mostraba en UI, sin datos reales para calcularlo de verdad -- ver hallazgo original arriba) y se centralizó la fórmula de proyección de ingresos anualizados duplicada en `ImpuestosIva.tsx`/`AlertasTributarias.tsx` hacia `calcularProyeccionAnualIngresos()` en `calculations.ts`.
 
+## Fase 3 — Servicios: Hora Mínima Objetivo centralizada (avance parcial)
+
+`HorasAdmin.tsx` calculaba "Hora Mínima Objetivo" inline (`salario_propuesto / horas_objetivo_mes`), sin el mismo tratamiento explicable que `pricingIdeal.ts`. Ahora usa `calculateHourlyCost()` del motor centralizado y muestra la fórmula humana en un tooltip al pasar el mouse (mismo principio de "3 niveles" de la sección 4 del manual: resultado, interpretación, detalle de cálculo).
+
+También se resolvió la constante `× 0.75` sin respaldo (candidata #3 de la lista de constantes): ahora es `Config.umbral_perdida_horas`, editable desde la propia pestaña de Horas ("Parámetro Mensual"), con default 0.75 idéntico al valor anterior -- cero cambio de comportamiento para quien no lo toque.
+
+## Tabla nueva: `tax_rules` (sección 4.10/17 -- ya no es solo un hallazgo, ahora existe)
+
+Creada en producción (izkh, no en la del otro agente -- este seguía sin acceso de escritura). Esquema literal de la sección 4.10: `country, jurisdiction, taxpayer_type, tax_type, effective_year, threshold, rate, base, source, valid_from, valid_to, version`. RLS: lectura abierta a cualquier usuario autenticado (es ley pública, no dato de tenant), escritura solo por service role. Sembrada con los 12 valores DIAN 2026 **idénticos** a `DEFAULT_CONFIG` -- cero cambio de comportamiento today.
+
+`src/lib/taxRulesService.ts` expone `listActiveTaxRules()`/`findTaxRule()`. Panel de solo lectura en Ajustes ("Reglas tributarias vigentes") para que sea visible y auditable. **Deliberadamente no conectado todavía a ningún cálculo real** (ImpuestosIva.tsx/AlertasTributarias.tsx siguen leyendo `Config` como siempre) -- migrar esos cálculos a leer de `tax_rules` es un paso aparte que toca el código que el catálogo ya marcó como sensible (hallazgo #2, la distinción live-vs-congelado), no algo para hacer de pasada.
+
+## Fase 3 (cont.) — Glosario contextual + semáforo centralizado en Servicios
+
+**Glosario contextual** (Parte 3.3, mejora crítica #1): `src/lib/metricsGlossary.ts` es la versión en código del catálogo -- `getMetricDefinition(code)` con definición simple, fórmula formal, estado (confirmado/estimado/proyectado) y por qué importa. `src/components/ui/MetricTooltip.tsx` lo consume como un ícono de ayuda reusable. Conectado a los 5 niveles de la escalera de utilidad en Dashboard (Ventas Totales → Utilidad Bruta → Operacional → Antes de Impuestos → Neta Real). Extensible: agregar una entrada nueva en el glosario nunca cambia ningún cálculo.
+
+**Semáforo de margen en ServiciosAdmin**: reemplazado el corte ad-hoc (`>=50% verde, >0% dorado, resto gris`) por el semáforo real de 4 niveles del manual (`semaforoMargen()` del motor -- mismo usado en HorasAdmin): crítico/bajo/saludable/alto, con el nombre del nivel visible, no solo el color.
+
+## Fase 4 — Liquidez: cobro esperado ponderado
+
+`calculateWeightedReceivable()` y `estimateCollectionProbability()` en el motor implementan la tabla exacta de la sección 4.7 (confirmado 95%, dentro de plazo 85%, vencido 1-15d 70%, 16-30d 50%, >30d 25%). Conectado en FinanceOperativa → Por cobrar: nueva columna "Cobro esperado" por factura + resumen de cartera total vs. cobro esperado ponderado, **sin alterar** el saldo real ni el flujo de caja existente (`cashflowService.ts` sigue igual, binario pagado/no pagado, como antes) -- es una vista adicional, no un reemplazo.
+
+**Simplificación deliberada**: el manual distingue "confirmado con fecha" y "en disputa" como categorías propias; el modelo de datos actual (`Receivable.estado`) no las distingue de "pendiente"/"vencida", así que se aproximan por fecha de vencimiento. Documentado, no fingido como más preciso de lo que es.
+
+## Fase 5 — Operación: capacidad y utilización del mes
+
+`calculateCapacity()` (ya existía en el motor desde Fase 2) conectado por primera vez a una pantalla real: `HorasAdmin.tsx` muestra un panel "Capacidad y Utilización del Mes" con disponibilidad (horas) y % de utilización, usando el semáforo de 4 niveles de la sección 4.6 (ociosa / rango operativo / riesgo de saturación / alto riesgo).
+
+**Limitación explícita, no oculta**: `capacidadComprometidaHoras` se pasa en `0` porque hoy no existe una fuente confiable de "horas pendientes de proyectos/tareas activas" conectada a la bitácora de horas (esa información vive en Proyectos/Planner, en pantallas separadas). El cálculo de utilización real (horas trabajadas ÷ capacidad facturable) es correcto tal cual; lo que falta es restar compromisos futuros de la disponibilidad — se documenta como límite conocido en vez de inventar un número.
+
+## Fase 7 — IA con evidencia, confianza y auditoría (infraestructura base)
+
+Se crearon dos tablas nuevas en producción (izkh), siguiendo el patrón de ownership ya establecido en todo el proyecto (`user_id` + RLS `auth.uid() = user_id`), en vez de intentar el modelo completo de tenants/users de A.3 (esta app es de un solo negocio por proyecto Supabase, no multi-tenant real — remodelar eso sería un cambio estructural grande, fuera de alcance sin decisión explícita):
+
+- **`calculation_runs`**: registro opcional de corridas de cálculo significativas (tipo, versión de fórmula, inputs, outputs, notas) para poder responder "¿por qué dio este número?" después de que cambiaron los datos de entrada. No se llama automáticamente en cada render — es para eventos de cálculo relevantes, no telemetría de UI.
+- **`audit_log`**: bitácora de sugerencias/acciones de IA o del sistema (`actor`: ai/user/system, `status`: sugerido/aplicado/descartado/revertido, `confidence`, valores previo/nuevo). Implementa la tabla de estados de información de A.4 ("Sugerido por IA": mostrar confirmación/deshacer).
+
+`src/lib/auditLogService.ts` expone `logSuggestion`, `resolveSuggestion`, `listPendingSuggestions`, `logCalculationRun`. **Primer consumidor real** (no solo infraestructura sin uso): el punto #4 pendiente del backlog original — "si no se hace una tarea asignada para el día, que se reprograme sola". `plannerService.rescheduleOverdueTasks()` detecta tareas con `status='scheduled'` cuya fecha ya pasó y las mueve automáticamente a hoy (incrementando `postponed_count`), registrando cada reprogramación en `audit_log` con `actor:'system'`. Se ejecuta una vez por sesión al abrir el Planner (`usePlanner.ts`), y se lo notifica al usuario con un banner ("N tareas se reprogramaron automáticamente para hoy"). Deliberadamente **no** convierte esas tareas en bloques de agenda automáticamente — eso sigue requiriendo el botón explícito "Reorganizar mi día", tal como ya funcionaba para el resto del planner.
+
 ## Qué sigue (no implementado en esta pasada, a propósito)
 
-Todo lo demás del manual — tabla `tax_rules` versionada, arquitectura de 4 capas (raw/canonical/metrics/insights), separación completa de ingresos contratados/causados/cobrados con probabilidad de cobro ponderada, motor de capacidad operativa, centralización del embudo de CRM, sistema de memoria/aprendizaje de la IA, motor de reconciliación, rediseño del onboarding con tarifa mínima sugerida — son cada uno un proyecto real de varios días, y la mayoría requieren tablas nuevas en la base de datos de producción (Lovable Cloud), a la que no tengo acceso de escritura directo en esta sesión (ver `docs/SEO_LANDING_BLOG.md` y memoria del proyecto para el mismo hallazgo en otro contexto).
+Arquitectura de 4 capas (raw/canonical/metrics/insights), separación completa de ingresos contratados/causados/cobrados con probabilidad de cobro ponderada aplicada al flujo de caja real (`cashflowService.ts` sigue binario), centralización completa del embudo de CRM, sistema de memoria/aprendizaje de la IA sobre `audit_log`/`user_corrections`, motor de reconciliación de transacciones, rediseño del onboarding con tarifa mínima sugerida, Priority Score del Planner (sección 4.13: `0.30 urgencia + 0.25 impacto financiero + 0.20 impacto cliente + 0.15 riesgo + 0.10 facilidad`) — son cada uno un proyecto real de varios días.
+
+**Fase 6 (Conectores) queda evaluada, no implementada**: de los conectores "Fase 1" que prioriza la sección 4.14 (Calendar, Sheets, Gmail, Meta Ads, Google Ads, Stripe, PayPal, Mercado Pago, Wompi), Calendar/Sheets/Gmail/PayPal ya existen en este código. Meta Ads, Google Ads, Stripe, Mercado Pago y Wompi requieren que tú registres apps de desarrollador y obtengas credenciales API en cada plataforma primero — no es código que se pueda escribir sin esas credenciales, es un bloqueo real, no una decisión de prioridad.
 
 **No se tocan sin que tú decidas prioridad**, exactamente como pide la sección 3 del manual ("qué no se debe cambiar") y como confirma este mismo catálogo: la lógica actual está más centralizada y mejor protegida contra `/0` de lo que el manual asumía como peor caso — el riesgo real no es que todo esté roto, es que hay **cuatro definiciones de "ingreso" que hay que reconciliar a propósito**, no por accidente, antes de construir nada nuevo encima.

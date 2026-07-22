@@ -251,6 +251,7 @@ export function mapValuesToAppData(valuesBySheet: Record<string, any[][]>): AppD
     horas_objetivo_mes: numberOrDefault(configMap.horas_objetivo_mes, 160),
     meta_ventas_mensual: numberOrDefault(configMap.meta_ventas_mensual, 12000000),
     margen_minimo: numberOrDefault(configMap.margen_minimo, 0.30),
+    umbral_perdida_horas: numberOrDefault(configMap.umbral_perdida_horas, 0.75),
   };
 
   // 2. Clientes mapping

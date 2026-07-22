@@ -65,6 +65,87 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_log: {
+        Row: {
+          action: string
+          actor: string
+          confidence: number | null
+          created_at: string
+          description: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          new_value: Json | null
+          previous_value: Json | null
+          resolved_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          actor?: string
+          confidence?: number | null
+          created_at?: string
+          description: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          new_value?: Json | null
+          previous_value?: Json | null
+          resolved_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          actor?: string
+          confidence?: number | null
+          created_at?: string
+          description?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          new_value?: Json | null
+          previous_value?: Json | null
+          resolved_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      calculation_runs: {
+        Row: {
+          calculation_type: string
+          created_at: string
+          formula_version: string
+          id: string
+          inputs: Json
+          notes: string[]
+          outputs: Json
+          user_id: string
+        }
+        Insert: {
+          calculation_type: string
+          created_at?: string
+          formula_version?: string
+          id?: string
+          inputs?: Json
+          notes?: string[]
+          outputs?: Json
+          user_id: string
+        }
+        Update: {
+          calculation_type?: string
+          created_at?: string
+          formula_version?: string
+          id?: string
+          inputs?: Json
+          notes?: string[]
+          outputs?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       biz_crm_contactos: {
         Row: {
           created_at: string
@@ -1074,6 +1155,7 @@ export type Database = {
           tope_no_paga_renta_uvt: number
           tope_responsable_iva_uvt: number
           trm: number
+          umbral_perdida_horas: number
           updated_at: string
           user_id: string
           uvt: number
@@ -1095,6 +1177,7 @@ export type Database = {
           tope_no_paga_renta_uvt?: number
           tope_responsable_iva_uvt?: number
           trm?: number
+          umbral_perdida_horas?: number
           updated_at?: string
           user_id: string
           uvt?: number
@@ -1116,6 +1199,7 @@ export type Database = {
           tope_no_paga_renta_uvt?: number
           tope_responsable_iva_uvt?: number
           trm?: number
+          umbral_perdida_horas?: number
           updated_at?: string
           user_id?: string
           uvt?: number

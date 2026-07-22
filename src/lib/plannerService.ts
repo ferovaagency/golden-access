@@ -5,6 +5,7 @@
 import { supabase } from '../integrations/supabase/client';
 import { invokeAi } from './ai/aiClient';
 import { logger } from './logger';
+import { logSuggestion } from './auditLogService';
 
 const log = logger.child('planner');
 
@@ -190,6 +191,45 @@ export const plannerService = {
     await anyDb().from('planner_tasks').update({ status: 'postponed', scheduled_for: tomorrow.toISOString().slice(0, 10), postponed_count: (data?.postponed_count ?? 0) + 1 }).eq('id', id);
   },
   async deleteTask(id: string) { await anyDb().from('planner_tasks').delete().eq('id', id); },
+  /**
+   * Punto #4 pendiente del backlog: si una tarea quedó asignada a un día que
+   * ya pasó y nunca se completó, se reprograma sola para hoy (no se pierde
+   * silenciosamente). Solo mueve la fecha -- convertirla en un bloque del
+   * horario sigue requiriendo "Reorganizar mi día" (acción explícita del
+   * usuario), tal como ya funciona para el resto del planner.
+   */
+  async rescheduleOverdueTasks(todayDate: string): Promise<string[]> {
+    const { data: overdue, error } = await anyDb()
+      .from('planner_tasks')
+      .select('id, title, postponed_count, scheduled_for')
+      .eq('status', 'scheduled')
+      .lt('scheduled_for', todayDate);
+    if (error) { log.error(error); return []; }
+    if (!overdue || !overdue.length) return [];
+
+    await Promise.all(overdue.map((t: any) =>
+      anyDb().from('planner_tasks').update({
+        scheduled_for: todayDate,
+        postponed_count: (t.postponed_count ?? 0) + 1,
+      }).eq('id', t.id)
+    ));
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await Promise.all(overdue.map((t: any) => logSuggestion(user.id, {
+        entityType: 'planner_task',
+        entityId: t.id,
+        actor: 'system',
+        action: 'reprogramado_automatico',
+        description: `"${t.title}" no se completó en su fecha (${t.scheduled_for}) y se reprogramó automáticamente para hoy.`,
+        previousValue: { scheduled_for: t.scheduled_for },
+        newValue: { scheduled_for: todayDate },
+        autoApplied: true,
+      })));
+    }
+
+    return overdue.map((t: any) => t.id as string);
+  },
   async deleteInboxEntry(id: string) { await anyDb().from('planner_inbox').delete().eq('id', id); },
 
   async classify(text: string) {

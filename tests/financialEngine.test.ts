@@ -6,6 +6,8 @@ import {
   calculateClientProfitability,
   calculateCapacity,
   calculateBreakEven,
+  calculateWeightedReceivable,
+  estimateCollectionProbability,
   semaforoMargen,
 } from '../src/lib/engine/financialEngine';
 
@@ -67,5 +69,18 @@ assert.ok(beImposible.notas.some((n) => n.includes('imposible')));
 const beNormal = calculateBreakEven({ gastosFijos: 1_000_000, margenContribucion: 400_000, ingresosNetos: 1_000_000 });
 assert.equal(beNormal.ratioContribucion, 0.4);
 assert.equal(beNormal.puntoEquilibrioVentas, 2_500_000);
+
+// 4.7 — cobro esperado ponderado, tabla exacta de probabilidades
+assert.equal(estimateCollectionProbability(null, false), 0.95);
+assert.equal(estimateCollectionProbability(-5, false), 0.85); // aún dentro de plazo
+assert.equal(estimateCollectionProbability(10, false), 0.70);
+assert.equal(estimateCollectionProbability(25, false), 0.50);
+assert.equal(estimateCollectionProbability(45, false), 0.25);
+assert.equal(estimateCollectionProbability(45, true), 0); // cancelada, sin importar antigüedad
+
+const weighted = calculateWeightedReceivable({ saldo: 1_000_000, vencimiento: '2026-06-01', cancelada: false, hoy: '2026-06-20' });
+assert.equal(weighted.diasVencido, 19);
+assert.equal(weighted.probabilidad, 0.50);
+assert.equal(weighted.cobroEsperado, 500_000);
 
 console.log('financialEngine: ok');

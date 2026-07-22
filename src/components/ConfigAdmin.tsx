@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Config, Venta, Cliente, Hora } from '../types';
 import { convertToCop } from '../lib/calculations';
 import { fetchOfficialTrm } from '../lib/financeService';
-import { Settings, Save, RefreshCw, FolderSync, Clipboard, Landmark, Route } from 'lucide-react';
+import { Settings, Save, RefreshCw, FolderSync, Clipboard, Landmark, Route, ShieldCheck } from 'lucide-react';
 import { copyText } from '../lib/clipboard';
 import FiscalProfileSection from './FiscalProfileSection';
 import BusinessProfileSettings from './BusinessProfileSettings';
 import type { BusinessProfile } from '../lib/businessProfileService';
 import { useToast, errMsg } from './ui/toast';
+import { listActiveTaxRules, type TaxRule } from '../lib/taxRulesService';
 
 interface ConfigAdminProps {
   userId: string;
@@ -51,6 +52,14 @@ export default function ConfigAdmin({
   const [isImportingUrl, setIsImportingUrl] = useState(false);
   const [fetchingTrm, setFetchingTrm] = useState(false);
   const [trmNotice, setTrmNotice] = useState<string | null>(null);
+  const [taxRules, setTaxRules] = useState<TaxRule[] | null>(null);
+
+  // Reglas tributarias versionadas (tax_rules, Manual maestro sección 17) --
+  // panel de solo lectura por ahora; ningún cálculo las consume todavía (ver
+  // docs/METRICS_CATALOG.md, Fase 3).
+  useEffect(() => {
+    listActiveTaxRules('CO', new Date().getFullYear()).then(setTaxRules).catch(() => setTaxRules([]));
+  }, []);
 
   // Form State
   const [trm, setTrm] = useState(config.trm);
@@ -100,6 +109,7 @@ export default function ConfigAdmin({
         meta_ventas_mensual: Number(metaVentasMensual),
         horas_objetivo_mes: Number(horasObjetivoMes),
         margen_minimo: Math.min(Math.max(Number(margenMinimoPct) / 100, 0), 0.99),
+        umbral_perdida_horas: config.umbral_perdida_horas ?? 0.75,
         tarifa_salud: config.tarifa_salud ?? 0.125,
         tarifa_pension: config.tarifa_pension ?? 0.16,
         ibc_porcentaje: config.ibc_porcentaje ?? 0.40,
@@ -195,9 +205,37 @@ export default function ConfigAdmin({
 
       <FiscalProfileSection />
 
+      {taxRules && taxRules.length > 0 && (
+        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+          <div className="bg-white/[0.02] border-b border-slate-200 px-5 py-4">
+            <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" /> Reglas tributarias vigentes {taxRules[0]?.effective_year}
+            </h3>
+            <p className="text-[11px] text-slate-500 mt-1">Fuente versionada y auditable (reemplaza el supuesto de "siempre los valores de hoy"). Todavía informativa: los cálculos de esta pantalla siguen usando los parámetros editables de abajo.</p>
+          </div>
+          <div className="overflow-x-auto text-xs">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 text-slate-500 font-mono uppercase text-[10px] border-b border-slate-200">
+                <tr><th className="px-5 py-2.5">Regla</th><th className="px-5 py-2.5">Contribuyente</th><th className="px-5 py-2.5 text-right">Valor</th><th className="px-5 py-2.5">Base</th><th className="px-5 py-2.5">Fuente</th></tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {taxRules.map((rule) => (
+                  <tr key={rule.id}>
+                    <td className="px-5 py-2 font-mono text-slate-700">{rule.tax_type}</td>
+                    <td className="px-5 py-2 text-slate-500">{rule.taxpayer_type}</td>
+                    <td className="px-5 py-2 text-right font-mono font-semibold text-slate-900">{rule.rate != null ? `${(rule.rate * 100).toFixed(1)}%` : rule.threshold?.toLocaleString('es-CO')}</td>
+                    <td className="px-5 py-2 text-slate-500">{rule.base}</td>
+                    <td className="px-5 py-2 text-slate-400">{rule.source}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
+
         {/* Main Parameters Panel */}
         <div className="lg:col-span-8 bg-white border border-slate-200 rounded-lg overflow-hidden pb-4">
           <div className="bg-white/[0.02] border-b border-slate-200 px-5 py-4 flex items-center justify-between">

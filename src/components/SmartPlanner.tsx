@@ -140,6 +140,15 @@ export default function SmartPlanner() {
         </div>
       </header>
 
+      {p.rescheduledCount > 0 && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 flex items-center gap-2">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+          {p.rescheduledCount === 1
+            ? '1 tarea de un día anterior no se completó y se reprogramó automáticamente para hoy.'
+            : `${p.rescheduledCount} tareas de días anteriores no se completaron y se reprogramaron automáticamente para hoy.`}
+        </div>
+      )}
+
       <section className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-1 rounded-xl bg-slate-100 p-1" aria-label="Vista del planner">
           {([
