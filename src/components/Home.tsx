@@ -6,7 +6,7 @@ import type { FinancialMetrics } from '../lib/calculations';
 import { isFerovaUiV2Enabled } from '../lib/featureFlags';
 import type { Signal, Tone } from './executive/types';
 import { ExecutiveHero } from './executive/ExecutiveHero';
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { KpiStrip, type KpiItem } from './executive/KpiStrip';
 import { ExecutiveBrief } from './executive/ExecutiveBrief';
 import { BusinessHealth } from './executive/BusinessHealth';
@@ -121,16 +121,14 @@ export default function Home({ data, metrics, selectedMonth, formatCop, onNaviga
 
     return (
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 pb-10">
-        <ExecutiveHero
-          eyebrow="Executive Control Center"
-          title="Tu negocio, en una mirada."
-          subtitle="Prioridades, salud y señales que requieren tu atención para el período seleccionado."
-          primaryAction={{ label: 'Revisar proyectos', onClick: () => onNavigate('proyectos') }}
-        />
         <KpiStrip items={kpiItems} periodKey={selectedMonth} />
-        <SalesTrendChart sales={periodSales} formatCop={formatCop} />
+        <QuickActionsGrid actions={quickActions} onNavigate={onNavigate} />
+        <div className="grid gap-6 xl:grid-cols-[1.45fr_1fr]">
+          <SalesTrendChart sales={periodSales} formatCop={formatCop} />
+          <OperationsChart income={metrics.totalVentas} operatingProfit={metrics.utilidadOperacional} totalHours={totalHours} activeClients={activeClients.length} formatCop={formatCop} />
+        </div>
         <ExecutiveBrief health={health} topPriority={priorities[0]} onNavigate={onNavigate} />
-        {sectionOrder.map((id) => (
+        {sectionOrder.filter((id) => id !== 'quick').map((id) => (
           <div key={id} className="space-y-1.5">
             <div className="flex justify-end"><OrderControls id={id} order={sectionOrder} onMove={moveSection} /></div>
             {reorderableSections[id]}
@@ -187,6 +185,14 @@ function SalesTrendChart({ sales, formatCop }: { sales: AppData['ventas']; forma
   const data = [...byMonth.entries()].sort(([a], [b]) => a.localeCompare(b)).slice(-6).map(([month, ingresos]) => ({ month: new Date(`${month}-15T12:00:00`).toLocaleDateString('es-CO', { month: 'short' }), ingresos }));
   return <section className="rounded-[var(--ferova-radius-card)] border border-[var(--ferova-line)] bg-[var(--ferova-surface)] p-5 shadow-[var(--ferova-shadow)]"><div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#a39a8a]">Pulso financiero</p><h2 className="mt-1 font-display text-lg font-semibold text-[#1f1b16]">Ingresos por mes</h2></div><span className="rounded-full bg-[var(--ferova-ai)] px-2.5 py-1 text-xs font-semibold text-[var(--ferova-navy)]">Últimos 6 meses</span></div>{data.length ? <div className="mt-4 h-52"><ResponsiveContainer width="100%" height="100%"><AreaChart data={data} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}><defs><linearGradient id="ferovaIncome" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#981737" stopOpacity={.38} /><stop offset="100%" stopColor="#981737" stopOpacity={0} /></linearGradient></defs><XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#8a8377' }} /><YAxis hide /><Tooltip formatter={(value: number) => formatCop(value)} contentStyle={{ borderRadius: 12, border: '1px solid #e6ded3', fontSize: 12 }} /><Area type="monotone" dataKey="ingresos" stroke="#981737" strokeWidth={3} fill="url(#ferovaIncome)" animationDuration={900} /></AreaChart></ResponsiveContainer></div> : <div className="mt-4 grid h-52 place-items-center rounded-xl bg-[var(--ferova-soft)] text-sm text-[#736d63]">Registra ventas para ver la tendencia de ingresos.</div>}</section>;
 }
+
+function OperationsChart({ income, operatingProfit, totalHours, activeClients, formatCop }: { income: number; operatingProfit: number; totalHours: number; activeClients: number; formatCop: (value: number) => string }) {
+  const chart = [{ name: 'Ingresos', value: Math.max(0, income) }, { name: 'Utilidad', value: Math.max(0, operatingProfit) }];
+  const margin = income > 0 ? (operatingProfit / income) * 100 : 0;
+  return <section className="rounded-[var(--ferova-radius-card)] border border-[var(--ferova-line)] bg-[var(--ferova-surface)] p-5 shadow-[var(--ferova-shadow)]"><div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#a39a8a]">Rendimiento operativo</p><h2 className="mt-1 font-display text-lg font-semibold text-[#1f1b16]">Ingresos vs. utilidad</h2></div><div className="mt-3 grid grid-cols-3 gap-2"><MetricMini label="Margen" value={`${margin.toFixed(0)}%`} /><MetricMini label="Horas" value={`${Math.round(totalHours)} h`} /><MetricMini label="Clientes" value={String(activeClients)} /></div><div className="mt-3 h-32"><ResponsiveContainer width="100%" height="100%"><BarChart data={chart} barSize={28}><CartesianGrid vertical={false} stroke="#eee7df" /><XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#736d63' }} /><YAxis hide /><Tooltip formatter={(value: number) => formatCop(value)} contentStyle={{ borderRadius: 12, border: '1px solid #e6ded3', fontSize: 12 }} /><Bar dataKey="value" fill="#981737" radius={[7, 7, 0, 0]} animationDuration={800} /></BarChart></ResponsiveContainer></div></section>;
+}
+
+function MetricMini({ label, value }: { label: string; value: string }) { return <div className="rounded-xl bg-[var(--ferova-soft)] px-2.5 py-2"><p className="text-[9px] font-semibold uppercase tracking-wide text-[#8a8377]">{label}</p><p className="mt-1 text-sm font-semibold text-[#1f1b16]">{value}</p></div>; }
 
 type HomeSectionId = 'quick' | 'priorities' | 'blind' | 'activity';
 const defaultSectionOrder: HomeSectionId[] = ['quick', 'priorities', 'blind', 'activity'];
