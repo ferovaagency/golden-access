@@ -4,7 +4,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { plannerService, type CreatePlannerBlockInput, type PlannerBlock, type PlannerBriefing, type PlannerClient, type PlannerInbox, type PlannerInsight, type PlannerTask, type UpdatePlannerTaskInput } from '../lib/plannerService';
 
-function today() { return new Date().toISOString().slice(0, 10); }
+function today() { return todayInTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Bogota'); }
+
+function todayInTimeZone(timeZone: string) {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' })
+    .formatToParts(new Date())
+    .reduce<Record<string, string>>((result, part) => ({ ...result, [part.type]: part.value }), {});
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
 
 export function usePlanner() {
   const [inbox, setInbox] = useState<PlannerInbox[]>([]);
@@ -24,19 +31,27 @@ export function usePlanner() {
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      if (!hasAutoRescheduled.current && date === today()) {
+      const zone = await plannerService.getTimeZone();
+      const currentDate = todayInTimeZone(zone);
+      if (!hasAutoRescheduled.current && date === currentDate) {
         hasAutoRescheduled.current = true;
-        const rescheduled = await plannerService.rescheduleOverdueTasks(date);
-        if (rescheduled.length) setRescheduledCount(rescheduled.length);
+        const rescheduled = await plannerService.rescheduleOverdueTasks(currentDate);
+        if (rescheduled.length) {
+          setRescheduledCount(rescheduled.length);
+          // This is the rolling-agenda behavior: unfinished work is not only
+          // moved to today, it immediately receives the next real free slot.
+          const busyBlocks = await plannerService.calendarBusyBlocks(currentDate);
+          const { error: planError } = await plannerService.planDay(undefined, true, busyBlocks);
+          if (planError) setError(planError.message);
+        }
       }
-      const [i, t, c, b, ins, br, zone] = await Promise.all([
+      const [i, t, c, b, ins, br] = await Promise.all([
         plannerService.listInbox(),
         plannerService.listTasks(),
         plannerService.listClients(),
         plannerService.listBlocks(date),
         plannerService.listInsights(),
         plannerService.loadBriefing('morning'),
-        plannerService.getTimeZone(),
       ]);
       setInbox(i); setTasks(t); setClients(c); setBlocks(b); setInsights(ins); setBriefing(br); setTimeZone(zone);
     } finally { setLoading(false); }
@@ -54,8 +69,7 @@ export function usePlanner() {
       // exist, propose the day immediately. Google events are supplied as busy
       // intervals when the user has authorized Calendar; no token is persisted.
       if (!err) {
-        const busyBlocks = await plannerService.calendarBusyBlocks(date);
-        const { error: planError } = await plannerService.planDay(date, true, busyBlocks);
+        const { error: planError } = await plannerService.planDay(undefined, true);
         if (planError) setError(planError.message);
       }
       await refresh();
@@ -64,15 +78,14 @@ export function usePlanner() {
     } finally {
       setBusy(null);
     }
-  }, [date, refresh]);
+  }, [refresh]);
 
   const planDay = useCallback(async () => {
     setBusy('plan'); setError(null);
     try {
-      const busyBlocks = await plannerService.calendarBusyBlocks(date);
       // Reorganizar is an operating command, not a draft: the planner applies
       // the best agenda immediately, preserving protected/Calendar blocks.
-      const { error: err } = await plannerService.planDay(date, true, busyBlocks);
+      const { error: err } = await plannerService.planDay(undefined, true);
       if (err) setError(err.message);
       await refresh();
     } catch (err: any) {
@@ -80,7 +93,7 @@ export function usePlanner() {
     } finally {
       setBusy(null);
     }
-  }, [date, refresh]);
+  }, [refresh]);
 
   const regenerateInsights = useCallback(async () => {
     setBusy('insights'); setError(null);

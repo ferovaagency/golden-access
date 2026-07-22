@@ -306,6 +306,24 @@ export const plannerService = {
     if (error) { log.error(error); return []; }
     if (!overdue || !overdue.length) return [];
 
+    // Generated blocks from the missed date are no longer commitments. Remove
+    // their task reference before the rolling plan places the task again, so a
+    // calendar week can never show both the old and the new occurrence.
+    const overdueIds = new Set(overdue.map((task: any) => task.id));
+    const { data: staleBlocks, error: staleBlocksError } = await anyDb()
+      .from('planner_blocks')
+      .select('id, task_ids, source')
+      .in('source', ['ai', 'planner-rules']);
+    if (staleBlocksError) { log.error(staleBlocksError); return []; }
+    await Promise.all((staleBlocks || []).flatMap((block: { id: string; task_ids: string[]; source: string }) => {
+      const taskIds = block.task_ids || [];
+      if (!taskIds.some((id) => overdueIds.has(id))) return [];
+      const remainingTaskIds = taskIds.filter((id) => !overdueIds.has(id));
+      return remainingTaskIds.length
+        ? [anyDb().from('planner_blocks').update({ task_ids: remainingTaskIds }).eq('id', block.id)]
+        : [anyDb().from('planner_blocks').delete().eq('id', block.id)];
+    }));
+
     await Promise.all(overdue.map((t: any) =>
       anyDb().from('planner_tasks').update({
         scheduled_for: todayDate,
@@ -347,7 +365,11 @@ export const plannerService = {
     // Edge Function. All writes remain protected by the user's existing RLS.
     const timeZone = await this.getTimeZone();
     const today = zonedDate(new Date(), timeZone);
-    const targetDate = !date || date < today ? today : date;
+    // Reorganize is an operating command, not a view command. Starting from a
+    // future date used to leave earlier automatic blocks intact and schedule
+    // the same task a second time. The selected date only changes the view;
+    // the rolling agenda always starts today.
+    const targetDate = today;
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return { data: null, error: authError || new Error('Debes iniciar sesión.') };
     const { data: profile, error: profileError } = await anyDb().from('business_profile').select('horario_inicio,horario_fin,dias_laborales').maybeSingle();
@@ -382,7 +404,9 @@ export const plannerService = {
     // placing tasks on the following workdays, never in elapsed hours.
     while (remaining.length && checkedDays < maxPlanningDays) {
       if (workdays.includes(dayOfWeek(planningDate))) {
-        const calendarBlocks = planningDate === targetDate ? busyBlocks : await this.calendarBusyBlocks(planningDate);
+        const calendarBlocks = planningDate === targetDate && busyBlocks.length
+          ? busyBlocks
+          : await this.calendarBusyBlocks(planningDate);
         const busy = [
           ...(existingBlocks || []).filter((block: PlannerBlock) =>
             zonedDate(new Date(block.starts_at), timeZone) === planningDate
