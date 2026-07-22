@@ -23,6 +23,13 @@ function clientTone(id?: string | null) { return clientTones[Math.abs(Array.from
 
 function fmtTime(iso: string, timeZone?: string) { return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', ...(timeZone ? { timeZone } : {}) }); }
 
+function isoDateInTimeZone(iso: string, timeZone: string) {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' })
+    .formatToParts(new Date(iso))
+    .reduce<Record<string, string>>((result, part) => ({ ...result, [part.type]: part.value }), {});
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
 function visiblePriorityScore(task: PlannerTask) {
   const days = task.deadline ? Math.ceil((new Date(task.deadline).getTime() - Date.now()) / 86_400_000) : Number.POSITIVE_INFINITY;
   const urgency = !task.deadline ? 1 : days <= 1 ? 5 : days <= 3 ? 4 : days <= 7 ? 3 : 2;
@@ -378,12 +385,15 @@ function PlannerCalendar({ view, date, tasks, clients, compact, timeZone, onSele
   const [detailDate, setDetailDate] = useState<string | null>(null);
   const rangeStart = toDateKey(days[0]);
   const rangeEnd = toDateKey(addDays(days[days.length - 1], 1));
-  useEffect(() => { void plannerService.listBlocksRange(rangeStart, rangeEnd).then(setRangeBlocks); }, [rangeStart, rangeEnd]);
+  // Tasks receive a new `scheduled_for` value after every automatic rebuild.
+  // Reload the matching blocks at the same time; otherwise the calendar keeps
+  // rendering the pre-rebuild range until the whole page is refreshed.
+  useEffect(() => { void plannerService.listBlocksRange(rangeStart, rangeEnd).then(setRangeBlocks); }, [rangeStart, rangeEnd, tasks]);
   const tasksFor = (key: string) => tasks.filter((task) => {
     if ((task.scheduled_for || task.deadline || '').slice(0, 10) === key) return true;
-    return rangeBlocks.some((block) => block.starts_at.slice(0, 10) === key && block.task_ids?.includes(task.id));
+    return rangeBlocks.some((block) => isoDateInTimeZone(block.starts_at, timeZone) === key && block.task_ids?.includes(task.id));
   });
-  const timeFor = (task: PlannerTask, key: string) => rangeBlocks.find((block) => block.starts_at.slice(0, 10) === key && block.task_ids?.includes(task.id))?.starts_at;
+  const timeFor = (task: PlannerTask, key: string) => rangeBlocks.find((block) => isoDateInTimeZone(block.starts_at, timeZone) === key && block.task_ids?.includes(task.id))?.starts_at;
   const detailTasks = detailDate ? tasksFor(detailDate) : [];
 
   return <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
