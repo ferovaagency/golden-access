@@ -18,7 +18,10 @@ export default function ImpuestosIva({ data, metrics, formatCop }: ImpuestosIvaP
   const avgMonthlySales = metrics.totalVentas / recordsMonthsCount;
   const proyeccionAnualIngresos = avgMonthlySales * 12;
 
-  const limite3500Uvt = 3500 * config.uvt; // $183.309.000 COP
+  // Antes era un literal `3500` -- ahora lee config.tope_responsable_iva_uvt,
+  // igual que AlertasTributarias.tsx, para que ambas pantallas queden en
+  // sincronía si el umbral se actualiza (mismo valor por defecto: 3500 UVT).
+  const limite3500Uvt = config.tope_responsable_iva_uvt * config.uvt;
 
   // Checklist state for DIAN Art. 437 criteria (simplificando obligaciones)
   const isIngresosTopeSuperado = proyeccionAnualIngresos >= limite3500Uvt;
