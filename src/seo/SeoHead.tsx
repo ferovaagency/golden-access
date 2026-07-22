@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Head } from 'vite-react-ssg';
 import { SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from './config';
 
 export interface SeoHeadProps {
@@ -36,23 +37,33 @@ function upsertLink(rel: string, href: string) {
 }
 
 /**
- * SEO client-side para una SPA sin prerender: no sustituye a un HTML servido
- * ya indexable (ver docs/SEO_LANDING_BLOG.md, gap de prerendering), pero deja
- * title/description/canonical/OG/robots/JSON-LD correctos y unicos por ruta
- * apenas React monta -- Googlebot renderiza JS antes de indexar.
+ * Doble mecanismo, a propósito:
+ *
+ * 1. `<Head>` (wrapper de vite-react-ssg sobre react-helmet-async) se
+ *    captura durante el render de SSG y queda escrito en el HTML estatico
+ *    de cada ruta (rama feat/ssg-prerender) -- esto es lo que ve un
+ *    crawler que pide la URL directamente, sin ejecutar JS.
+ * 2. El `useEffect` de abajo sincroniza el DOM a mano en cada navegacion
+ *    del lado del cliente. Es necesario porque react-helmet-async@1.3 no
+ *    actualiza el <head> de forma confiable en navegaciones SPA con esta
+ *    version de React (verificado: el title queda pegado en el de la
+ *    primera pagina cargada al navegar por rutas ya prerenderizadas) --
+ *    bug de la libreria, no de esta implementacion. Sin este efecto, un
+ *    usuario que navega sin recargar veria el title/meta de la pagina
+ *    anterior.
  */
 export function SeoHead({ title, description, path, ogImage, type = 'website', noindex = false, jsonLd }: SeoHeadProps) {
-  useEffect(() => {
-    const fullTitle = `${title} | ${SITE_NAME}`;
-    const canonicalUrl = `${SITE_URL}${path}`;
-    const image = ogImage || DEFAULT_OG_IMAGE;
+  const fullTitle = `${title} | ${SITE_NAME}`;
+  const canonicalUrl = `${SITE_URL}${path}`;
+  const image = ogImage || DEFAULT_OG_IMAGE;
+  const jsonLdItems = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 
+  useEffect(() => {
     document.documentElement.lang = 'es-CO';
     document.title = fullTitle;
     upsertMeta('name', 'description', description);
     upsertMeta('name', 'robots', noindex ? 'noindex, nofollow' : 'index, follow');
     upsertLink('canonical', canonicalUrl);
-
     upsertMeta('property', 'og:type', type);
     upsertMeta('property', 'og:site_name', SITE_NAME);
     upsertMeta('property', 'og:title', fullTitle);
@@ -66,14 +77,37 @@ export function SeoHead({ title, description, path, ogImage, type = 'website', n
 
     const scriptId = 'seo-jsonld';
     document.getElementById(scriptId)?.remove();
-    if (jsonLd) {
+    if (jsonLdItems.length) {
       const script = document.createElement('script');
       script.id = scriptId;
       script.type = 'application/ld+json';
-      script.textContent = JSON.stringify(jsonLd);
+      script.textContent = JSON.stringify(jsonLdItems.length === 1 ? jsonLdItems[0] : jsonLdItems);
       document.head.appendChild(script);
     }
-  }, [title, description, path, ogImage, type, noindex, jsonLd]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fullTitle, description, canonicalUrl, image, type, noindex]);
 
-  return null;
+  return (
+    <Head>
+      <html lang="es-CO" />
+      <title>{fullTitle}</title>
+      <meta name="description" content={description} />
+      <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow'} />
+      <link rel="canonical" href={canonicalUrl} />
+      <meta property="og:type" content={type} />
+      <meta property="og:site_name" content={SITE_NAME} />
+      <meta property="og:title" content={fullTitle} />
+      <meta property="og:description" content={description} />
+      <meta property="og:image" content={image} />
+      <meta property="og:url" content={canonicalUrl} />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={fullTitle} />
+      <meta name="twitter:description" content={description} />
+      <meta name="twitter:image" content={image} />
+      {jsonLdItems.map((item, index) => (
+        // eslint-disable-next-line react/no-array-index-key -- orden fijo por pagina, no reordena.
+        <script key={index} type="application/ld+json">{JSON.stringify(item)}</script>
+      ))}
+    </Head>
+  );
 }

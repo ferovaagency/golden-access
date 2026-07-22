@@ -6,26 +6,39 @@
 
 | Área | Estado | Dónde |
 |---|---|---|
-| SEO técnico client-side | ✅ | `src/seo/SeoHead.tsx`, `src/seo/StructuredData.tsx` |
+| SEO técnico (title/description/canonical/OG/robots/JSON-LD) | ✅ | `src/seo/SeoHead.tsx`, `src/seo/StructuredData.tsx` |
 | robots.txt | ✅ | `public/robots.txt` |
 | sitemap.xml | ✅ generado en build | `scripts/generate-sitemap.mjs` (corre como `prebuild`) |
 | Noindex en rutas privadas | ✅ | `/app`, `/admin`, `/maintenance` |
-| `/landing` → `/` | ✅ | `<Navigate replace>` en `router.tsx` (ver limitación de 301 abajo) |
+| `/landing` → `/` | ✅ | `<Navigate replace>` (ver limitación de 301 abajo) |
 | `/funciones` + 4 sub-páginas | ✅ | `src/marketing/pages/Feature*Page.tsx` |
 | `/precios` | ✅ | `src/marketing/pages/PricingPage.tsx` |
 | Blog (MDX, índice, categorías, artículo, autor) | ✅ | `src/blog/`, `src/content/blog/*.mdx` |
 | 12 primeros artículos | ✅ | ver tabla abajo |
-| **Prerender/SSG real** | ❌ no intentado | ver sección dedicada abajo |
+| Analítica (eventos con nombre del manual, sec. 10) | ✅ | `src/lib/analytics.ts`, ver commit `Instrumentar analitica` |
+| **Prerender/SSG real** | ✅ en rama `feat/ssg-prerender`, no mergeada a `main` todavía | ver sección dedicada abajo |
 
-## Gap deliberado: no hay prerendering/SSG real
+## Prerender/SSG real — implementado en `feat/ssg-prerender`
 
-El manual (sec. 6.1) pide HTML completo servido por el servidor para cada ruta pública — "Preferencia 1: Astro + React islands" o "Preferencia 2: SSG/prerender dentro de Vite". Ninguna de las dos se implementó en esta pasada, a propósito.
+El manual (sec. 6.1) pide HTML completo servido por el servidor para cada ruta pública. Se evaluó e implementó la **Preferencia 2** ("SSG/prerender dentro de Vite, para reducir cambios") usando [`vite-react-ssg`](https://vite-react-ssg.netlify.app/), en una rama separada — **no mergeada a `main`** — por la misma razón que la escena 3D del manual de diseño: es un cambio al pipeline de build completo, no un componente aislable, y merece que Mafe lo revise (o al menos confirme que el comando de build real de Lovable Cloud lo tolera) antes de tocar producción.
 
-**Por qué se dejó fuera:** este repo es una SPA pura (`ReactDOM.createRoot(...).render(...)` en `src/main.tsx`, sin SSR). Migrar a Astro o integrar algo como `vite-react-ssg` cambia el pipeline de build completo — no es un componente nuevo que se pueda aislar como el resto de este trabajo. `/app` usa Supabase, `localStorage` y otras APIs de navegador en varios puntos; renderizar esa parte del árbol de rutas en Node durante un build sin probar cuidadosamente cada acceso a `window` podría romper el build de producción en Lovable Cloud sin manera fácil de detectarlo antes del deploy. Es exactamente el tipo de cambio de alto riesgo que ya se manejó aparte una vez en este proyecto (la escena 3D de la Fase 7 del manual de diseño se hizo en rama separada por la misma razón).
+**Qué cambia técnicamente:**
+- `src/router.tsx` pasó de `<BrowserRouter><Routes>...</Routes></BrowserRouter>` (JSX) a un array `routes: RouteRecord[]` con un layout raíz sin path (`RootLayout`) que envuelve `ToastProvider`/`ErrorBoundary`/`Suspense`.
+- `src/main.tsx` exporta `createRoot = ViteReactSSG({ routes })` en vez de llamar `createRoot().render()` directamente.
+- `vite.config.ts` tiene `ssgOptions.includedRoutes` con la lista **explícita** de rutas a prerenderizar (reutiliza el mismo parser que `generate-sitemap.mjs` para leer los slugs publicados). `/app`, `/admin/*` y `/maintenance` **nunca aparecen en esa lista** — no se ejecutan en Node durante el build, punto.
+- `npm run dev` **sigue siendo `vite` normal (CSR)**, sin cambios de flujo de desarrollo — solo `npm run build` cambió (ahora es `vite-react-ssg build`; `npm run build:csr` queda como escape hatch si el build de Lovable Cloud necesita el comportamiento anterior).
 
-**Qué sí cubre lo implementado mientras tanto:** `SeoHead` actualiza `title`/`description`/`canonical`/`OG`/`robots`/JSON-LD apenas React monta cada página. Googlebot renderiza JavaScript antes de indexar (la fuente que el propio manual cita: "Google Search Central: JavaScript SEO Basics"), así que esto **no es SEO nulo** — pero el HTML inicial que ve cualquier bot que no ejecute JS (algunos crawlers de redes sociales, herramientas de auditoría rápidas) sigue siendo el `index.html` genérico hasta que React monta.
+**Bug real encontrado y arreglado en el camino:** `react-helmet-async@1.3` (la librería que usa `vite-react-ssg` por debajo para `<Head>`) no actualiza el `<head>` de forma confiable en navegaciones del lado del cliente con esta versión de React — se verificó navegando entre páginas ya prerenderizadas y viendo el `<title>` pegado en el de la página anterior. `SeoHead.tsx` ahora hace las dos cosas a propósito: usa `<Head>` para que el HTML estático de build quede correcto (lo que ve un crawler que pide la URL directamente), y además sincroniza el `<head>` a mano vía `useEffect` en cada navegación (para que un usuario que navega sin recargar también vea el title/meta correctos). Detalle completo en los comentarios de `SeoHead.tsx`.
 
-**Recomendación concreta para la siguiente sesión dedicada a esto:** evaluar `vite-react-ssg` (Preferencia 2 del manual — "reducir cambios") registrando *solo* las rutas públicas (`/`, `/funciones/*`, `/precios`, `/blog/*`) para prerender, dejando `/app` y `/admin` fuera del set de rutas que se renderizan en Node. Probar el build completo contra el pipeline real de despliegue antes de mergear a `main`.
+**Verificado en navegador, no solo por build** (sirviendo `dist/` real con `vite preview`, no el dev server):
+- Cada una de las 30 rutas prerenderizadas genera su propio `.html` con `<title>`, meta, canonical y JSON-LD **únicos y correctos**, sin duplicados (se probó primero sin limpiar `index.html` y aparecían dos `<title>` compitiendo — se corrigió quitando el SEO hardcodeado de `index.html`, que ahora solo tiene charset/viewport).
+- `/app` (excluido del prerender) sigue funcionando por completo vía fallback SPA + hidratación — probado con click real desde una página prerenderizada, termina en `/app` con `noindex, nofollow` correctamente aplicado.
+- La calculadora de punto de equilibrio recalcula en vivo después de hidratar una página que vino del HTML estático (no solo en CSR).
+- Sin errores ni warnings de hidratación en consola en ninguna ruta probada.
+
+**Antes de mergear a `main`, falta:**
+- Confirmar que el comando de build de Lovable Cloud realmente ejecuta `npm run build` (y por lo tanto recoge `vite-react-ssg build`) y no algo más específico que asuma un `dist/` puramente CSR.
+- Decidir si el `/app` SPA-fallback (servir `index.html` para cualquier ruta no prerenderizada) ya funciona igual en el hosting real, o si necesita una regla de reescritura explícita — hoy funciona porque el hosting actual ya sirve la app así (confirmado: `/app` y rutas dinámicas ya funcionaban antes de este cambio).
 
 ## Decisiones de alcance dentro del blog
 
@@ -36,19 +49,20 @@ El manual (sec. 6.1) pide HTML completo servido por el servidor para cada ruta p
 
 ## Pendientes antes de publicar (manual, sec. 14 — sin resolver todavía)
 
-- [ ] **Dominio final.** `src/seo/config.ts` usa `https://ferova.one` como placeholder — un solo lugar para cambiarlo, igual que `scripts/generate-sitemap.mjs`.
+- [ ] **Dominio final.** `src/seo/config.ts` usa `https://ferova.one` como placeholder — un solo lugar para cambiarlo (también hay que actualizar `scripts/generate-sitemap.mjs` y `public/robots.txt`).
 - [ ] **Precio, moneda y mercado definitivos.** `PricingPage.tsx` reusa USD 50/mes porque ya es el precio que corre en el resto del producto (Landing, LandingV2, paywall) — no es un número inventado, pero el manual pide reconfirmarlo antes de invertir en promocionar la página específicamente.
 - [ ] **Integraciones activas por plan** — validar cada claim de `FeaturesPage`/`Feature*Page` contra lo que realmente está disponible antes de mandar tráfico pago.
 - [ ] **Autores reales del blog.**
 - [ ] **Revisión contable** del artículo de Finanzas Colombia y de cualquier contenido tributario futuro.
 - [ ] **Datos legales del publisher** en `organizationSchema()` (`src/seo/StructuredData.tsx`).
+- [ ] **Proveedor de analítica real** — `trackEvent()` empuja a `window.dataLayer` pero no hay GA4/GTM conectado todavía; conectar uno es pegar su script, no tocar el código de instrumentación.
 
-## Limitaciones conocidas de la implementación actual
+## Limitaciones conocidas que quedan igual (independientes del SSG)
 
-- **`/landing` no hace un 301 HTTP real** — es un redirect del lado del cliente (`<Navigate replace>` de React Router). Una SPA sin servidor propio no puede emitir códigos de estado; esto requiere una regla a nivel de hosting/CDN cuando se defina dónde se despliega.
-- **404 real**: mismo problema — `NotFound.tsx` tiene `noindex` pero el servidor siempre responde `200` con `index.html` (comportamiento estándar de SPA). Se resuelve junto con el prerendering, o con una regla de hosting específica.
-- **Analítica y eventos** (`hero_primary_cta`, `signup_start`, etc. — manual sec. 10) no están instrumentados todavía.
+- **`/landing` no hace un 301 HTTP real** — es un redirect del lado del cliente. Una SPA (con o sin prerender) no puede emitir códigos de estado por sí sola para esto; requiere una regla a nivel de hosting/CDN cuando se defina dónde se despliega.
+- **404 real**: mismo problema de fondo — `NotFound.tsx` tiene `noindex`, pero sin una regla de hosting específica el servidor puede responder `200` en vez de `404` para URLs inexistentes.
 - **Search Console y QA de indexación** (Fase 6 del manual) no se puede hacer hasta que el sitio esté desplegado en el dominio final.
+- **Google OAuth y `signup_complete`**: el evento `signup_complete` solo se rastrea hoy para el flujo de registro por email. El flujo de Google redirige la página de inmediato, así que no hay forma de distinguir "es una cuenta nueva" en el momento del click — requeriría comparar `user.created_at` al volver del redirect.
 
 ## Los 12 primeros artículos
 
@@ -66,12 +80,3 @@ El manual (sec. 6.1) pide HTML completo servido por el servidor para cada ruta p
 | `conectar-proyectos-horas-ingresos` | Operación | — |
 | `flujo-de-caja-servicios` | Finanzas Colombia | ⚠ disclaimer contable |
 | `errores-multiples-hojas-calculo` | Operación | — |
-
-## Verificado en navegador (no solo build)
-
-- `robots.txt` y `sitemap.xml` sirven contenido correcto (29 URLs, incluye los 12 artículos con `lastmod` real).
-- Título/descripción/canonical/robots/JSON-LD cambian correctamente por ruta (`/precios`, `/app`, artículo de blog) — confirmado leyendo el DOM, no solo el código.
-- `/app` responde `noindex, nofollow`.
-- La calculadora de punto de equilibrio recalcula en vivo (probado cambiando un input real y verificando el resultado).
-- Breadcrumb, tabla de contenidos autogenerada, autor y artículos relacionados renderizan con datos reales en un artículo completo.
-- Sin errores de consola en ninguna ruta pública ni en `/app`.

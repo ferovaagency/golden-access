@@ -1,10 +1,12 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
+import type { RouteRecord } from 'vite-react-ssg';
 import { Loader2 } from 'lucide-react';
 import ErrorBoundary from './components/ErrorBoundary';
 import NotFound from './components/NotFound';
 import MaintenancePage from './components/MaintenancePage';
 import { usePageView } from './lib/usePageView';
+import { ToastProvider } from './components/ui/toast';
 
 // Lazy-loaded route entrypoints. `/app` hosts the full tab-based shell
 // (App.tsx: login screen when logged out, dashboard when logged in) — turn 5
@@ -28,7 +30,7 @@ const BlogCategoryPage = lazy(() => import('./blog/pages/BlogCategoryPage'));
 const BlogPostPage = lazy(() => import('./blog/pages/BlogPostPage'));
 const AuthorPage = lazy(() => import('./blog/pages/AuthorPage'));
 
-/** Dispara page_view en cada navegacion -- debe vivir dentro de BrowserRouter para usar useLocation. */
+/** Dispara page_view en cada navegacion -- debe vivir dentro del router para usar useLocation. */
 function PageViewTracker() {
   usePageView();
   return null;
@@ -47,40 +49,53 @@ function RouteFallback() {
   );
 }
 
-export default function Router() {
+// Layout raiz sin path propio (pathless): envuelve TODAS las rutas hijas
+// (que conservan sus paths absolutos tal cual) con los providers/boundary
+// que antes vivian directo en <BrowserRouter>. vite-react-ssg arma el router
+// a partir de `routes`, asi que ya no hay un componente <Router/> que
+// controle esto imperativamente -- ver src/main.tsx.
+function RootLayout() {
   if (import.meta.env.VITE_MAINTENANCE_MODE === 'true') {
     return <MaintenancePage />;
   }
-
   return (
-    <BrowserRouter>
+    <ToastProvider>
       <PageViewTracker />
       <ErrorBoundary>
         <Suspense fallback={<RouteFallback />}>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            {/* /landing -> / : el manual pide una sola URL canonica para la landing (sec. 6.4). */}
-            <Route path="/landing" element={<Navigate to="/" replace />} />
-            <Route path="/landing-v2" element={<LandingV2 />} />
-            <Route path="/funciones" element={<FeaturesPage />} />
-            <Route path="/funciones/finanzas" element={<FeatureFinancePage />} />
-            <Route path="/funciones/crm" element={<FeatureCRMPage />} />
-            <Route path="/funciones/planner" element={<FeaturePlannerPage />} />
-            <Route path="/funciones/asistente-ia" element={<FeatureAIPage />} />
-            <Route path="/precios" element={<PricingPage />} />
-            <Route path="/blog" element={<BlogIndexPage />} />
-            <Route path="/blog/categoria/:slug" element={<BlogCategoryPage />} />
-            <Route path="/blog/:slug" element={<BlogPostPage />} />
-            <Route path="/autores/:slug" element={<AuthorPage />} />
-            <Route path="/privacidad" element={<Privacidad />} />
-            <Route path="/terminos" element={<Terminos />} />
-            <Route path="/admin/*" element={<AdminCRMRoute />} />
-            <Route path="/maintenance" element={<MaintenancePage />} />
-            <Route path="/app" element={<App />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Outlet />
         </Suspense>
       </ErrorBoundary>
-    </BrowserRouter>
+    </ToastProvider>
   );
 }
+
+export const routes: RouteRecord[] = [
+  {
+    Component: RootLayout,
+    children: [
+      { path: '/', element: <Landing /> },
+      // /landing -> / : el manual pide una sola URL canonica para la landing (sec. 6.4).
+      { path: '/landing', element: <Navigate to="/" replace /> },
+      { path: '/landing-v2', element: <LandingV2 /> },
+      { path: '/funciones', element: <FeaturesPage /> },
+      { path: '/funciones/finanzas', element: <FeatureFinancePage /> },
+      { path: '/funciones/crm', element: <FeatureCRMPage /> },
+      { path: '/funciones/planner', element: <FeaturePlannerPage /> },
+      { path: '/funciones/asistente-ia', element: <FeatureAIPage /> },
+      { path: '/precios', element: <PricingPage /> },
+      { path: '/blog', element: <BlogIndexPage /> },
+      { path: '/blog/categoria/:slug', element: <BlogCategoryPage /> },
+      { path: '/blog/:slug', element: <BlogPostPage /> },
+      { path: '/autores/:slug', element: <AuthorPage /> },
+      { path: '/privacidad', element: <Privacidad /> },
+      { path: '/terminos', element: <Terminos /> },
+      // No indexables -- excluidas explicitamente del prerender via
+      // ssgOptions.includedRoutes en vite.config.ts, nunca se renderizan en Node.
+      { path: '/admin/*', element: <AdminCRMRoute /> },
+      { path: '/maintenance', element: <MaintenancePage /> },
+      { path: '/app', element: <App /> },
+      { path: '*', element: <NotFound /> },
+    ],
+  },
+];
