@@ -18,7 +18,7 @@ function overlaps(start: number, end: number, busy: Array<[number, number]>) {
 
 function zoneParts(value: Date, timeZone: string) {
   const values = new Intl.DateTimeFormat('en-CA', {
-    timeZone, hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit',
+    timeZone, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit',
   }).formatToParts(value).reduce<Record<string, string>>((result, part) => ({ ...result, [part.type]: part.value }), {});
   return values;
 }
@@ -150,7 +150,7 @@ Deno.serve(async (req) => {
     if (userError || !userData.user) return json({ ok: false, message: "Sesion invalida" }, 401);
 
     const body = await req.json().catch(() => ({}));
-    const date = typeof body?.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.date) ? body.date : new Date().toISOString().slice(0, 10);
+    const requestedDate = typeof body?.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.date) ? body.date : new Date().toISOString().slice(0, 10);
     const apply = body?.apply === true;
     const externalBusy = Array.isArray(body?.busy_blocks) ? body.busy_blocks
       .filter((block: any) => typeof block?.starts_at === 'string' && typeof block?.ends_at === 'string')
@@ -158,6 +158,10 @@ Deno.serve(async (req) => {
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { data: profile } = await admin.from("business_profile").select("dias_laborales,horario_inicio,horario_fin,zona_horaria").eq("user_id", userData.user.id).maybeSingle();
     const timeZone = profile?.zona_horaria || 'America/Bogota';
+    const todayInZone = zonedDateKey(new Date(), timeZone);
+    // A stale UI date or a delayed request must never create a new plan in a
+    // day that has already passed in the user's configured timezone.
+    const date = requestedDate < todayInZone ? todayInZone : requestedDate;
     const dayStart = isoAt(date, 0, timeZone);
     const dayEnd = isoAt(date, (24 * 60) - 1, timeZone);
     const [{ data: tasks }, { data: taskStates }, { data: existingBlocks }] = await Promise.all([

@@ -141,13 +141,19 @@ function localPlannerTimeToIso(localValue: string, timeZone: string) {
   const [hour, minute, second = 0] = timePart.split(':').map(Number);
   const wallClockAsUtc = Date.UTC(year, month - 1, day, hour, minute, second);
   const offsetAt = (instant: Date) => {
-    const parts = new Intl.DateTimeFormat('en-CA', { timeZone, hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
       .formatToParts(instant).reduce<Record<string, string>>((result, part) => ({ ...result, [part.type]: part.value }), {});
     return (Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day), Number(parts.hour), Number(parts.minute), Number(parts.second)) - instant.getTime()) / 60_000;
   };
   let instant = new Date(wallClockAsUtc - offsetAt(new Date(wallClockAsUtc)) * 60_000);
   instant = new Date(wallClockAsUtc - offsetAt(instant) * 60_000);
   return instant.toISOString();
+}
+
+function nextDate(date: string) {
+  const [year, month, day] = date.split('-').map(Number);
+  const value = new Date(Date.UTC(year, month - 1, day + 1));
+  return value.toISOString().slice(0, 10);
 }
 
 export const plannerService = {
@@ -167,15 +173,21 @@ export const plannerService = {
     return data || [];
   },
   async listBlocks(date: string): Promise<PlannerBlock[]> {
-    const start = `${date}T00:00:00`;
-    const end = `${date}T23:59:59`;
-    const { data, error } = await anyDb().from('planner_blocks').select('*').gte('starts_at', start).lte('starts_at', end).order('starts_at');
+    const timeZone = await this.getTimeZone();
+    // planner_blocks is stored in UTC. Convert the user's local calendar day
+    // to UTC boundaries so a Bogotá day never starts at 19:00 the day before.
+    const start = localPlannerTimeToIso(`${date}T00:00:00`, timeZone);
+    const end = localPlannerTimeToIso(`${nextDate(date)}T00:00:00`, timeZone);
+    const { data, error } = await anyDb().from('planner_blocks').select('*').gte('starts_at', start).lt('starts_at', end).order('starts_at');
     if (error) { log.error(error); return []; }
     return data || [];
   },
   async listBlocksRange(startDate: string, endDate: string): Promise<PlannerBlock[]> {
+    const timeZone = await this.getTimeZone();
+    const start = localPlannerTimeToIso(`${startDate}T00:00:00`, timeZone);
+    const end = localPlannerTimeToIso(`${endDate}T00:00:00`, timeZone);
     const { data, error } = await anyDb().from('planner_blocks').select('*')
-      .gte('starts_at', `${startDate}T00:00:00Z`).lt('starts_at', `${endDate}T00:00:00Z`).order('starts_at');
+      .gte('starts_at', start).lt('starts_at', end).order('starts_at');
     if (error) { log.error(error); return []; }
     return data || [];
   },

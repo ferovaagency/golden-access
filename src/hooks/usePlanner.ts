@@ -48,41 +48,56 @@ export function usePlanner() {
   const classify = useCallback(async (text: string) => {
     if (!text.trim()) return;
     setBusy('classify'); setError(null);
-    const { error: err } = await plannerService.classify(text);
-    if (err) setError(err.message);
-    // A brain dump is an instruction to free mental space: once its tasks
-    // exist, propose the day immediately. Google events are supplied as busy
-    // intervals when the user has authorized Calendar; no token is persisted.
-    if (!err) {
-      const busyBlocks = await plannerService.calendarBusyBlocks(date);
-      const { data: plan, error: planError } = await plannerService.planDay(date, true, busyBlocks);
-      if (planError) setError(planError.message);
-      else if (plan) setPlanPreview(null);
+    try {
+      const { error: err } = await plannerService.classify(text);
+      if (err) setError(err.message);
+      // A brain dump is an instruction to free mental space: once its tasks
+      // exist, propose the day immediately. Google events are supplied as busy
+      // intervals when the user has authorized Calendar; no token is persisted.
+      if (!err) {
+        const busyBlocks = await plannerService.calendarBusyBlocks(date);
+        const { data: plan, error: planError } = await plannerService.planDay(date, true, busyBlocks);
+        if (planError) setError(planError.message);
+        else if (plan) setPlanPreview(null);
+      }
+      await refresh();
+    } catch (err: any) {
+      setError(err?.message || 'No fue posible clasificar las tareas.');
+    } finally {
+      setBusy(null);
     }
-    await refresh();
-    setBusy(null);
   }, [date, refresh]);
 
   const planDay = useCallback(async () => {
     setBusy('plan'); setError(null);
-    const busyBlocks = await plannerService.calendarBusyBlocks(date);
-    // Reorganizar is an operating command, not a draft: the planner applies
-    // the best agenda immediately, preserving protected/Calendar blocks.
-    const { error: err } = await plannerService.planDay(date, true, busyBlocks);
-    if (err) setError(err.message);
-    else setPlanPreview(null);
-    await refresh();
-    setBusy(null);
+    try {
+      const busyBlocks = await plannerService.calendarBusyBlocks(date);
+      // Reorganizar is an operating command, not a draft: the planner applies
+      // the best agenda immediately, preserving protected/Calendar blocks.
+      const { error: err } = await plannerService.planDay(date, true, busyBlocks);
+      if (err) setError(err.message);
+      else setPlanPreview(null);
+      await refresh();
+    } catch (err: any) {
+      setError(err?.message || 'No fue posible organizar la agenda.');
+    } finally {
+      setBusy(null);
+    }
   }, [date, refresh]);
 
   const applyPlan = useCallback(async () => {
     setBusy('plan'); setError(null);
-    const busyBlocks = await plannerService.calendarBusyBlocks(date);
-    const { error: err } = await plannerService.planDay(date, true, busyBlocks);
-    if (err) setError(err.message);
-    else setPlanPreview(null);
-    await refresh();
-    setBusy(null);
+    try {
+      const busyBlocks = await plannerService.calendarBusyBlocks(date);
+      const { error: err } = await plannerService.planDay(date, true, busyBlocks);
+      if (err) setError(err.message);
+      else setPlanPreview(null);
+      await refresh();
+    } catch (err: any) {
+      setError(err?.message || 'No fue posible aplicar el plan.');
+    } finally {
+      setBusy(null);
+    }
   }, [date, refresh]);
 
   const regenerateInsights = useCallback(async () => {
