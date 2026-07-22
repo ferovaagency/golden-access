@@ -5,6 +5,17 @@
  */
 import type { Cliente, Servicio } from '../types';
 
+export interface CsvPagoImportado {
+  fila: number;
+  fecha: string;
+  monto: number;
+  moneda: 'COP' | 'USD';
+  cliente: string;
+  servicio?: string;
+  referencia?: string;
+  notas?: string;
+}
+
 function downloadCsv(filename: string, rows: string[][]) {
   const csv = rows.map((row) => row.map(csvEscape).join(',')).join('\r\n');
   const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' }); // BOM: tildes correctas en Excel
@@ -22,7 +33,7 @@ function csvEscape(value: string): string {
   return /[",\r\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
 }
 
-function parseCsv(text: string): string[][] {
+function parseCsv(text: string, separator = ','): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
   let field = '';
@@ -35,13 +46,85 @@ function parseCsv(text: string): string[][] {
       else if (char === '"') inQuotes = false;
       else field += char;
     } else if (char === '"') inQuotes = true;
-    else if (char === ',') { row.push(field); field = ''; }
+    else if (char === separator) { row.push(field); field = ''; }
     else if (char === '\r') { /* skip, \n handles the break */ }
     else if (char === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
     else field += char;
   }
   if (field.length || row.length) { row.push(field); rows.push(row); }
   return rows.filter((r) => r.some((c) => c.trim() !== ''));
+}
+
+function normalizedHeader(value: string) {
+  return value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+}
+
+function parseMonto(value: string): number | null {
+  const clean = value.trim().replace(/[^0-9,.-]/g, '');
+  if (!clean) return null;
+  const lastComma = clean.lastIndexOf(',');
+  const lastDot = clean.lastIndexOf('.');
+  let numeric = clean;
+  if (lastComma >= 0 && lastDot >= 0) {
+    numeric = lastComma > lastDot ? clean.replace(/\./g, '').replace(',', '.') : clean.replace(/,/g, '');
+  } else if (lastComma >= 0) {
+    numeric = /,\d{1,2}$/.test(clean) ? clean.replace(/\./g, '').replace(',', '.') : clean.replace(/,/g, '');
+  } else if ((clean.match(/\./g) || []).length > 1) {
+    numeric = clean.replace(/\./g, '');
+  }
+  const result = Number(numeric);
+  return Number.isFinite(result) && result > 0 ? result : null;
+}
+
+function parseFecha(value: string): string | null {
+  const raw = value.trim();
+  if (!raw) return null;
+  const iso = raw.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+  if (iso) return `${iso[1]}-${iso[2].padStart(2, '0')}-${iso[3].padStart(2, '0')}`;
+  const latin = raw.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})/);
+  if (!latin) return null;
+  const year = latin[3].length === 2 ? `20${latin[3]}` : latin[3];
+  return `${year}-${latin[2].padStart(2, '0')}-${latin[1].padStart(2, '0')}`;
+}
+
+/**
+ * Lee extractos de cobros de distintas fuentes. Reconoce encabezados habituales
+ * y deja que la pantalla decida qué filas se pueden asociar de forma segura.
+ */
+export function parsePagosCsv(text: string): { pagos: CsvPagoImportado[]; avisos: string[] } {
+  const firstLine = text.replace(/^\uFEFF/, '').split(/\r?\n/, 1)[0] || '';
+  const rows = parseCsv(text, (firstLine.match(/;/g) || []).length > (firstLine.match(/,/g) || []).length ? ';' : ',');
+  if (rows.length < 2) throw new Error('El archivo no tiene filas de datos para importar.');
+  const headers = rows[0].map(normalizedHeader);
+  const column = (...aliases: string[]) => headers.findIndex((header) => aliases.includes(header));
+  const fechaIdx = column('fecha', 'date', 'fechapago', 'paymentdate', 'createdat', 'fechaoperacion');
+  const montoIdx = column('monto', 'amount', 'valor', 'importe', 'total', 'paymentamount', 'neto', 'gross');
+  const clienteIdx = column('cliente', 'customer', 'client', 'nombrecliente', 'payer', 'pagador', 'emailcliente');
+  const servicioIdx = column('servicio', 'service', 'producto', 'product', 'concepto', 'description', 'descripcion');
+  const referenciaIdx = column('referencia', 'reference', 'transactionid', 'transaction', 'idtransaccion', 'paymentid', 'idpago', 'comprobante');
+  const monedaIdx = column('moneda', 'currency', 'divisa');
+  const notasIdx = column('notas', 'notes', 'detalle', 'memo', 'comentarios');
+  if (montoIdx < 0) throw new Error('No encontré una columna de monto. Prueba con: monto, valor, importe, amount o total.');
+
+  const avisos: string[] = [];
+  if (clienteIdx < 0) avisos.push('No se encontró columna de cliente; las filas necesitarán revisión antes de asociarse.');
+  const pagos: CsvPagoImportado[] = [];
+  rows.slice(1).forEach((row, index) => {
+    const monto = parseMonto(row[montoIdx] || '');
+    const fecha = fechaIdx >= 0 ? parseFecha(row[fechaIdx] || '') : null;
+    if (!monto) { avisos.push(`Fila ${index + 2}: monto inválido; se omitió.`); return; }
+    pagos.push({
+      fila: index + 2,
+      fecha: fecha || new Date().toISOString().slice(0, 10),
+      monto,
+      moneda: (monedaIdx >= 0 && (row[monedaIdx] || '').trim().toUpperCase() === 'USD') ? 'USD' : 'COP',
+      cliente: clienteIdx >= 0 ? (row[clienteIdx] || '').trim() : '',
+      servicio: servicioIdx >= 0 ? (row[servicioIdx] || '').trim() || undefined : undefined,
+      referencia: referenciaIdx >= 0 ? (row[referenciaIdx] || '').trim() || undefined : undefined,
+      notas: notasIdx >= 0 ? (row[notasIdx] || '').trim() || undefined : undefined,
+    });
+  });
+  return { pagos, avisos };
 }
 
 const CLIENTES_HEADERS = ['id', 'nombre', 'tipo', 'declarante', 'activo', 'notas'];

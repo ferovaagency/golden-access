@@ -17,10 +17,17 @@ const categoryMeta: Record<PlannerCategory, { label: string; tone: string }> = {
 
 const energyIcon: Record<PlannerEnergy, any> = { high: Zap, medium: Battery, low: BatteryLow };
 const priorityTone: Record<string, string> = { urgent: 'bg-red-100 text-red-700', high: 'bg-amber-100 text-amber-700', medium: 'bg-slate-100 text-slate-600', low: 'bg-slate-50 text-slate-500' };
+const scoreOptions = [[1, 'Muy bajo'], [2, 'Bajo'], [3, 'Medio'], [4, 'Alto'], [5, 'Muy alto']] as const;
 const clientTones = ['bg-violet-100 text-violet-700 border-violet-200', 'bg-sky-100 text-sky-700 border-sky-200', 'bg-emerald-100 text-emerald-700 border-emerald-200', 'bg-pink-100 text-pink-700 border-pink-200', 'bg-amber-100 text-amber-800 border-amber-200'];
 function clientTone(id?: string | null) { return clientTones[Math.abs(Array.from(id || '').reduce((sum, char) => sum + char.charCodeAt(0), 0)) % clientTones.length]; }
 
 function fmtTime(iso: string) { return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+
+function visiblePriorityScore(task: PlannerTask) {
+  const days = task.deadline ? Math.ceil((new Date(task.deadline).getTime() - Date.now()) / 86_400_000) : Number.POSITIVE_INFINITY;
+  const urgency = !task.deadline ? 1 : days <= 1 ? 5 : days <= 3 ? 4 : days <= 7 ? 3 : 2;
+  return (0.30 * urgency) + (0.25 * (task.financial_impact ?? 3)) + (0.20 * (task.client_impact ?? 3)) + (0.15 * (task.risk_score ?? 3)) + (0.10 * (task.execution_ease ?? 3));
+}
 
 export default function SmartPlanner() {
   const p = usePlanner();
@@ -40,6 +47,11 @@ export default function SmartPlanner() {
   const [taskProtected, setTaskProtected] = useState(false);
   const [taskDeadline, setTaskDeadline] = useState('');
   const [taskPriority, setTaskPriority] = useState<PlannerTask['priority']>('medium');
+  const [taskFinancialImpact, setTaskFinancialImpact] = useState(3);
+  const [taskClientImpact, setTaskClientImpact] = useState(3);
+  const [taskRiskScore, setTaskRiskScore] = useState(3);
+  const [taskExecutionEase, setTaskExecutionEase] = useState(3);
+  const [taskDependencies, setTaskDependencies] = useState<string[]>([]);
   const [taskCategory, setTaskCategory] = useState<PlannerCategory>('admin');
   const [taskClientId, setTaskClientId] = useState('');
   const [taskRepeatDays, setTaskRepeatDays] = useState<number[]>([]);
@@ -82,6 +94,11 @@ export default function SmartPlanner() {
     setTaskProtected(linkedBlock?.protected ?? false);
     setTaskDeadline(task.deadline?.slice(0, 10) || '');
     setTaskPriority(task.priority);
+    setTaskFinancialImpact(task.financial_impact ?? 3);
+    setTaskClientImpact(task.client_impact ?? 3);
+    setTaskRiskScore(task.risk_score ?? 3);
+    setTaskExecutionEase(task.execution_ease ?? 3);
+    setTaskDependencies(task.dependency_task_ids || []);
     setTaskCategory(task.category);
     setTaskClientId(task.client_ref || '');
     setTaskRepeatDays(task.recurrence_days || []);
@@ -96,6 +113,11 @@ export default function SmartPlanner() {
       title: taskTitle,
       category: taskCategory,
       priority: taskPriority,
+      financial_impact: taskFinancialImpact,
+      client_impact: taskClientImpact,
+      risk_score: taskRiskScore,
+      execution_ease: taskExecutionEase,
+      dependency_task_ids: taskDependencies,
       client_ref: taskClientId || null,
       deadline: taskDeadline || null,
       estimated_minutes: taskEstimatedMinutes,
@@ -291,6 +313,11 @@ export default function SmartPlanner() {
               <label className="text-xs text-slate-600">Hora<input type="time" value={taskTime} onChange={(event) => setTaskTime(event.target.value)} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" /></label>
               <label className="text-xs text-slate-600">Fecha de entrega<input type="date" value={taskDeadline} onChange={(event) => setTaskDeadline(event.target.value)} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" /></label>
               <label className="text-xs text-slate-600">Prioridad<select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as PlannerTask['priority'])} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm"><option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option><option value="urgent">Urgente</option></select></label>
+              <label className="text-xs text-slate-600">Impacto financiero<select value={taskFinancialImpact} onChange={(event) => setTaskFinancialImpact(Number(event.target.value))} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm">{scoreOptions.map(([value, label]) => <option key={value} value={value}>{value} · {label}</option>)}</select></label>
+              <label className="text-xs text-slate-600">Impacto cliente<select value={taskClientImpact} onChange={(event) => setTaskClientImpact(Number(event.target.value))} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm">{scoreOptions.map(([value, label]) => <option key={value} value={value}>{value} · {label}</option>)}</select></label>
+              <label className="text-xs text-slate-600">Riesgo al aplazar<select value={taskRiskScore} onChange={(event) => setTaskRiskScore(Number(event.target.value))} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm">{scoreOptions.map(([value, label]) => <option key={value} value={value}>{value} · {label}</option>)}</select></label>
+              <label className="text-xs text-slate-600">Facilidad de ejecución<select value={taskExecutionEase} onChange={(event) => setTaskExecutionEase(Number(event.target.value))} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm">{scoreOptions.map(([value, label]) => <option key={value} value={value}>{value} · {label}</option>)}</select></label>
+              <label className="sm:col-span-2 text-xs text-slate-600">Depende de (solo se agenda al completar estas tareas)<select multiple value={taskDependencies} onChange={(event) => setTaskDependencies(Array.from(event.target.selectedOptions, (option) => option.value))} className="mt-1 block min-h-20 w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm">{openTasks.filter((task) => task.id !== editingTask.id).map((task) => <option key={task.id} value={task.id}>{task.title}</option>)}</select><span className="mt-1 block text-[10px] text-slate-400">Usa Ctrl/Cmd para seleccionar varias.</span></label>
               <label className="text-xs text-slate-600">Categoría<select value={taskCategory} onChange={(event) => setTaskCategory(event.target.value as PlannerCategory)} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm">{Object.entries(categoryMeta).map(([value, meta]) => <option key={value} value={value}>{meta.label}</option>)}</select></label>
               <label className="text-xs text-slate-600">Cliente<select value={taskClientId} onChange={(event) => setTaskClientId(event.target.value)} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm"><option value="">Sin cliente</option>{p.clients.map((client) => <option key={client.id} value={client.id}>{client.nombre}</option>)}</select></label>
               <label className="text-xs text-slate-600">Duración estimada (min)<input type="number" min="5" step="5" value={taskEstimatedMinutes} onChange={(event) => setTaskEstimatedMinutes(Number(event.target.value))} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" /></label>
@@ -420,6 +447,7 @@ function TaskRow({ task, clientName, isProtected, onEdit, onComplete, onPostpone
         <Check className="h-3 w-3 text-transparent group-hover:text-emerald-400" />
       </button>
       <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${priorityTone[task.priority] || priorityTone.medium}`}>{task.priority}</span>
+      <span title={`Priority Score ${visiblePriorityScore(task).toFixed(2)}/5. Urgencia 30%, impacto financiero 25%, impacto cliente 20%, riesgo 15%, facilidad 10%.`} className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-700">Score {visiblePriorityScore(task).toFixed(1)}</span>
       <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] ${categoryMeta[task.category].tone}`}>{categoryMeta[task.category].label}</span>
       <span className="inline-flex items-center gap-1 text-[10px] text-slate-500"><EIcon className="h-3 w-3" aria-hidden /> {task.energy_required}</span>
       <span className="text-sm text-slate-800 flex-1 min-w-[8rem] truncate">{task.title}</span>

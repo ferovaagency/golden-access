@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Venta, Cliente, Servicio, Config } from '../types';
 import { convertToCop } from '../lib/calculations';
+import { CsvPagoImportado, parsePagosCsv } from '../lib/csvImportExport';
 import { useToast } from './ui/toast';
 import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
 import {
   Download,
+  Upload,
   Search,
   Edit2
 } from 'lucide-react';
@@ -28,7 +30,7 @@ export default function VentasAdmin({
   formatCop, 
   formatUsd 
 }: VentasAdminProps) {
-  const { error: toastErr } = useToast();
+  const { error: toastErr, success: toastSuccess } = useToast();
   // Form states
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
   const [clienteId, setClienteId] = useState('');
@@ -48,6 +50,9 @@ export default function VentasAdmin({
   const [newAbonoNotas, setNewAbonoNotas] = useState('');
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [pagosPreview, setPagosPreview] = useState<CsvPagoImportado[]>([]);
+  const [pagosAvisos, setPagosAvisos] = useState<string[]>([]);
+  const [importingPagos, setImportingPagos] = useState(false);
 
   // Set defaults
   useEffect(() => {
@@ -303,6 +308,77 @@ export default function VentasAdmin({
     document.body.removeChild(link);
   };
 
+  const normalizar = (value: string) => value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+
+  const encontrarVentaParaPago = (pago: CsvPagoImportado) => {
+    const cliente = normalizar(pago.cliente);
+    if (!cliente) return null;
+    let candidatas = ventas.filter((venta) => normalizar(venta.cliente_nombre) === cliente && venta.moneda === pago.moneda);
+    if (pago.servicio) {
+      const porServicio = candidatas.filter((venta) => normalizar(venta.servicio_nombre) === normalizar(pago.servicio || ''));
+      if (porServicio.length) candidatas = porServicio;
+    }
+    const pendientes = candidatas.filter((venta) => venta.estado_pago !== 'Pagado' && venta.adelanto < venta.precio_venta_unitario * venta.cantidad);
+    if (pendientes.length === 1) return pendientes[0];
+    return candidatas.length === 1 ? candidatas[0] : null;
+  };
+
+  const handlePagosFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    try {
+      const result = parsePagosCsv(await file.text());
+      if (!result.pagos.length) throw new Error('No encontré cobros válidos en el archivo.');
+      setPagosPreview(result.pagos);
+      setPagosAvisos(result.avisos);
+    } catch (err) {
+      toastErr(err instanceof Error ? err.message : 'No fue posible interpretar el archivo.');
+    }
+  };
+
+  const handleImportPagos = async () => {
+    const aplicables = pagosPreview.filter((pago) => encontrarVentaParaPago(pago));
+    if (!aplicables.length) {
+      toastErr('No hay cobros que se puedan asociar con seguridad. Revisa cliente, moneda y servicio en el archivo.');
+      return;
+    }
+    setImportingPagos(true);
+    try {
+      let agregados = 0;
+      const updated = ventas.map((venta) => {
+        const paraVenta = aplicables.filter((pago) => encontrarVentaParaPago(pago)?.id === venta.id);
+        if (!paraVenta.length) return venta;
+        const existentes = venta.abonos || [];
+        const nuevos = paraVenta.filter((pago) => {
+          const marker = pago.referencia ? `CSV:${pago.referencia}` : `CSV:fila-${pago.fila}`;
+          return !existentes.some((abono) => (abono.notas || '').includes(marker));
+        }).map((pago) => {
+          agregados++;
+          const marker = pago.referencia ? `CSV:${pago.referencia}` : `CSV:fila-${pago.fila}`;
+          return { fecha: pago.fecha, monto: pago.monto, notas: `Importado CSV · ${marker}${pago.notas ? ` · ${pago.notas}` : ''}` };
+        });
+        if (!nuevos.length) return venta;
+        const abonos = [...existentes, ...nuevos];
+        const adelantoImportado = abonos.reduce((total, abono) => total + abono.monto, 0);
+        const totalVenta = venta.precio_venta_unitario * venta.cantidad;
+        return { ...venta, abonos, adelanto: adelantoImportado, estado_pago: adelantoImportado >= totalVenta ? 'Pagado' as const : 'Adelanto' as const };
+      });
+      if (!agregados) {
+        toastErr('Esos cobros ya estaban importados; no se duplicó ningún dato.');
+        return;
+      }
+      await onSaveVentas(updated);
+      setPagosPreview([]);
+      setPagosAvisos([]);
+      toastSuccess(`${agregados} cobro${agregados === 1 ? '' : 's'} agregado${agregados === 1 ? '' : 's'} sin reemplazar ventas existentes.`);
+    } catch (err) {
+      toastErr(err instanceof Error ? err.message : 'No fue posible guardar los cobros.');
+    } finally {
+      setImportingPagos(false);
+    }
+  };
+
   // Feed filtration
   const filteredVentas = ventas.filter(v => 
     v.cliente_nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -319,13 +395,37 @@ export default function VentasAdmin({
           <h2 className="text-xl font-display font-medium text-blue-600">Registro de Ingresos (Ventas y Abonos)</h2>
           <p className="text-xs text-slate-500 font-mono mt-1">Libro de cobranza, cobros anticipados, abonos y saldos de clientes de Ferova Agency</p>
         </div>
-        <button 
-          onClick={handleExportCSV}
-          className="bg-white/[0.03] hover:bg-white/[0.08] transition px-4 py-2 text-xs font-mono tracking-wider font-semibold text-blue-600 border border-slate-200 rounded-lg flex items-center gap-2"
-        >
-          <Download className="w-3.5 h-3.5" /> Exportar CSV
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <label className="bg-white/[0.03] hover:bg-white/[0.08] transition px-4 py-2 text-xs font-mono tracking-wider font-semibold text-blue-600 border border-slate-200 rounded-lg flex items-center gap-2 cursor-pointer">
+            <Upload className="w-3.5 h-3.5" /> Importar cobros CSV
+            <input type="file" accept=".csv,text/csv" className="hidden" onChange={handlePagosFile} />
+          </label>
+          <button
+            onClick={handleExportCSV}
+            className="bg-white/[0.03] hover:bg-white/[0.08] transition px-4 py-2 text-xs font-mono tracking-wider font-semibold text-blue-600 border border-slate-200 rounded-lg flex items-center gap-2"
+          >
+            <Download className="w-3.5 h-3.5" /> Exportar CSV
+          </button>
+        </div>
       </div>
+
+      {pagosPreview.length > 0 && (() => {
+        const asociables = pagosPreview.filter((pago) => encontrarVentaParaPago(pago)).length;
+        return (
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-slate-700">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-semibold text-slate-900">Vista previa: {pagosPreview.length} cobros leídos; {asociables} se pueden agregar.</p>
+                <p className="mt-1 text-xs">Reconoce encabezados comunes (fecha, monto/valor, cliente, servicio, referencia). Solo agrega abonos a una venta identificada de forma única; no reemplaza nada ni duplica referencias.</p>
+              </div>
+              <button type="button" disabled={importingPagos || asociables === 0} onClick={handleImportPagos} className="shrink-0 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">
+                {importingPagos ? 'Guardando…' : `Agregar ${asociables} cobros`}
+              </button>
+            </div>
+            {(pagosAvisos.length > 0 || asociables < pagosPreview.length) && <p className="mt-3 text-xs text-amber-700">{pagosAvisos.slice(0, 2).join(' ')} {asociables < pagosPreview.length ? `${pagosPreview.length - asociables} fila(s) quedaron para revisión porque no coincidieron de forma única.` : ''}</p>}
+          </div>
+        );
+      })()}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         

@@ -2118,6 +2118,7 @@ export type Database = {
         Row: {
           created_at: string
           deadline: string | null
+          dependency_task_ids: string[]
           horizon: Database["public"]["Enums"]["planner_goal_horizon"]
           id: string
           metric: string | null
@@ -2132,6 +2133,7 @@ export type Database = {
         Insert: {
           created_at?: string
           deadline?: string | null
+          dependency_task_ids?: string[]
           horizon: Database["public"]["Enums"]["planner_goal_horizon"]
           id?: string
           metric?: string | null
@@ -2146,6 +2148,7 @@ export type Database = {
         Update: {
           created_at?: string
           deadline?: string | null
+          dependency_task_ids?: string[]
           horizon?: Database["public"]["Enums"]["planner_goal_horizon"]
           id?: string
           metric?: string | null
@@ -2348,11 +2351,15 @@ export type Database = {
           description: string | null
           energy_required: Database["public"]["Enums"]["planner_energy"]
           estimated_minutes: number
+          execution_ease: number
+          financial_impact: number
           goal_id: string | null
           google_calendar_event_id: string | null
           id: string
           postponed_count: number
           priority: Database["public"]["Enums"]["planner_priority"]
+          client_impact: number
+          risk_score: number
           project_ref: string | null
           recurrence_days: number[]
           recurrence_until: string | null
@@ -2375,11 +2382,15 @@ export type Database = {
           description?: string | null
           energy_required?: Database["public"]["Enums"]["planner_energy"]
           estimated_minutes?: number
+          execution_ease?: number
+          financial_impact?: number
           goal_id?: string | null
           google_calendar_event_id?: string | null
           id?: string
           postponed_count?: number
           priority?: Database["public"]["Enums"]["planner_priority"]
+          client_impact?: number
+          risk_score?: number
           project_ref?: string | null
           recurrence_days?: number[]
           recurrence_until?: string | null
@@ -2402,11 +2413,15 @@ export type Database = {
           description?: string | null
           energy_required?: Database["public"]["Enums"]["planner_energy"]
           estimated_minutes?: number
+          execution_ease?: number
+          financial_impact?: number
           goal_id?: string | null
           google_calendar_event_id?: string | null
           id?: string
           postponed_count?: number
           priority?: Database["public"]["Enums"]["planner_priority"]
+          client_impact?: number
+          risk_score?: number
           project_ref?: string | null
           recurrence_days?: number[]
           recurrence_until?: string | null

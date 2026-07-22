@@ -9,6 +9,11 @@ type Body = {
   title: string;
   category: string;
   priority: string;
+  financial_impact?: number;
+  client_impact?: number;
+  risk_score?: number;
+  execution_ease?: number;
+  dependency_task_ids?: string[];
   client_ref?: string | null;
   deadline?: string | null;
   estimated_minutes: number;
@@ -29,6 +34,11 @@ function startAt(date: string, time: string) {
   // Ferova's current product calendar is Colombia-first. Sending an explicit
   // offset prevents an Edge runtime in another region from shifting the task.
   return new Date(`${date}T${time}:00-05:00`);
+}
+
+function scoreInput(value: unknown) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(1, Math.min(5, Math.round(number))) : 3;
 }
 
 function occurrenceDates(start: string, days: number[], until?: string | null): string[] {
@@ -76,6 +86,9 @@ Deno.serve(async (req) => {
     const days = validDays(body.recurrence_days);
     const taskPatch = {
       title: body.title.trim(), category: body.category, priority: body.priority,
+      financial_impact: scoreInput(body.financial_impact), client_impact: scoreInput(body.client_impact),
+      risk_score: scoreInput(body.risk_score), execution_ease: scoreInput(body.execution_ease),
+      dependency_task_ids: Array.from(new Set((Array.isArray(body.dependency_task_ids) ? body.dependency_task_ids : []).filter((id): id is string => typeof id === 'string' && id !== body.id))),
       client_ref: body.client_ref || null, deadline: body.deadline || null,
       estimated_minutes: Math.round(body.estimated_minutes), actual_minutes: body.actual_minutes ?? null,
       scheduled_for: body.scheduled_for || null, recurrence_days: days,

@@ -39,6 +39,11 @@ export interface PlannerTask {
   category: PlannerCategory;
   priority: PlannerPriority;
   energy_required: PlannerEnergy;
+  financial_impact: number;
+  client_impact: number;
+  risk_score: number;
+  execution_ease: number;
+  dependency_task_ids: string[];
   estimated_minutes: number;
   actual_minutes: number | null;
   deadline: string | null;
@@ -111,6 +116,11 @@ export interface UpdatePlannerTaskInput {
   title: string;
   category: PlannerCategory;
   priority: PlannerPriority;
+  financial_impact: number;
+  client_impact: number;
+  risk_score: number;
+  execution_ease: number;
+  dependency_task_ids: string[];
   client_ref: string | null;
   deadline: string | null;
   estimated_minutes: number;

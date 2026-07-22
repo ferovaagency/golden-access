@@ -5,7 +5,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 type Category = "deep_work" | "meetings" | "admin" | "creative" | "calls" | "learning" | "personal" | "breaks";
-type Task = { id: string; title: string; category: Category; priority: "low" | "medium" | "high" | "urgent"; energy_required: string; estimated_minutes: number; deadline: string | null; postponed_count: number | null };
+type Task = { id: string; title: string; category: Category; priority: "low" | "medium" | "high" | "urgent"; energy_required: string; estimated_minutes: number; deadline: string | null; postponed_count: number | null; financial_impact: number; client_impact: number; risk_score: number; execution_ease: number; dependency_task_ids: string[] };
 type Block = { title: string; category: Category; starts_at: string; ends_at: string; task_ids: string[]; source: string; notes: string };
 
 const PRIORITY_WEIGHT = { urgent: 0, high: 1, medium: 2, low: 3 } as const;
@@ -25,10 +25,41 @@ function isoAt(date: string, minute: number) {
   return new Date(`${date}T${String(hour).padStart(2, "0")}:${String(min).padStart(2, "0")}:00-05:00`).toISOString();
 }
 
+/**
+ * All persisted calendar/block timestamps are UTC ISO strings. The configured
+ * workday, however, is expressed in Colombia local time. Using Date#getHours
+ * inside an Edge Function reads UTC and shifts every protected calendar event
+ * five hours later, allowing the planner to book over the actual meeting.
+ */
+function bogotaMinutes(iso: string) {
+  const value = new Date(iso);
+  const utcMinutes = value.getUTCHours() * 60 + value.getUTCMinutes();
+  return (utcMinutes - (5 * 60) + 1440) % 1440;
+}
+
 function deadlineWeight(deadline: string | null, date: string) {
   if (!deadline) return Number.MAX_SAFE_INTEGER;
   const diff = new Date(deadline).getTime() - new Date(`${date}T23:59:59`).getTime();
   return Math.max(0, Math.ceil(diff / 86_400_000));
+}
+
+function urgencyScore(deadline: string | null, date: string) {
+  if (!deadline) return 1;
+  const days = deadlineWeight(deadline, date);
+  if (days <= 1) return 5;
+  if (days <= 3) return 4;
+  if (days <= 7) return 3;
+  return 2;
+}
+
+function priorityScore(task: Task, date: string) {
+  // Manual 4.13: 30% urgency, 25% financial impact, 20% client impact,
+  // 15% risk, 10% ease of execution. Each input is an explicit 1..5 value.
+  return (0.30 * urgencyScore(task.deadline, date))
+    + (0.25 * Number(task.financial_impact || 3))
+    + (0.20 * Number(task.client_impact || 3))
+    + (0.15 * Number(task.risk_score || 3))
+    + (0.10 * Number(task.execution_ease || 3));
 }
 
 function parseHorario(value: string | null | undefined, fallbackMinutes: number): number {
@@ -41,11 +72,11 @@ function parseHorario(value: string | null | undefined, fallbackMinutes: number)
 
 function buildPlan(date: string, tasks: Task[], lockedBlocks: Array<{ starts_at: string; ends_at: string }>, workStart: number, workEnd: number): Block[] {
   const busy = lockedBlocks.map((block) => {
-    const start = new Date(block.starts_at);
-    const end = new Date(block.ends_at);
-    return [start.getHours() * 60 + start.getMinutes(), end.getHours() * 60 + end.getMinutes()] as [number, number];
+    return [bogotaMinutes(block.starts_at), bogotaMinutes(block.ends_at)] as [number, number];
   });
   const ordered = [...tasks].sort((a, b) => {
+    const score = priorityScore(b, date) - priorityScore(a, date);
+    if (score) return score;
     const priority = PRIORITY_WEIGHT[a.priority] - PRIORITY_WEIGHT[b.priority];
     if (priority) return priority;
     const due = deadlineWeight(a.deadline, date) - deadlineWeight(b.deadline, date);
@@ -80,7 +111,7 @@ function buildPlan(date: string, tasks: Task[], lockedBlocks: Array<{ starts_at:
       ends_at: isoAt(date, start + duration),
       task_ids: [task.id],
       source: "planner-rules",
-      notes: `Programado por prioridad ${task.priority}, fecha limite y espacios libres; respeta bloques protegidos.`,
+      notes: `Priority Score ${priorityScore(task, date).toFixed(2)}/5 (${task.priority}), fecha límite y espacios libres; respeta bloques protegidos.`,
     });
     busy.push([start, start + duration]);
     plannedMinutes += duration;
@@ -107,8 +138,9 @@ Deno.serve(async (req) => {
     const dayStart = new Date(`${date}T00:00:00-05:00`).toISOString();
     const dayEnd = new Date(`${date}T23:59:59-05:00`).toISOString();
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const [{ data: tasks }, { data: existingBlocks }, { data: profile }] = await Promise.all([
-      admin.from("planner_tasks").select("id,title,category,priority,energy_required,estimated_minutes,deadline,postponed_count").eq("user_id", userData.user.id).in("status", ["backlog", "scheduled", "postponed"]).limit(40),
+    const [{ data: tasks }, { data: taskStates }, { data: existingBlocks }, { data: profile }] = await Promise.all([
+      admin.from("planner_tasks").select("id,title,category,priority,energy_required,estimated_minutes,deadline,postponed_count,financial_impact,client_impact,risk_score,execution_ease,dependency_task_ids").eq("user_id", userData.user.id).in("status", ["backlog", "scheduled", "postponed"]).limit(40),
+      admin.from("planner_tasks").select("id,status").eq("user_id", userData.user.id).limit(240),
       admin.from("planner_blocks").select("starts_at,ends_at,protected,source").eq("user_id", userData.user.id).gte("starts_at", dayStart).lte("starts_at", dayEnd),
       admin.from("business_profile").select("dias_laborales,horario_inicio,horario_fin").eq("user_id", userData.user.id).maybeSingle(),
     ]);
@@ -127,9 +159,12 @@ Deno.serve(async (req) => {
       ...(existingBlocks || []).filter((block: any) => block.protected || block.source === "google" || block.source === "external"),
       ...externalBusy,
     ];
-    const blocks = buildPlan(date, (tasks || []) as Task[], locked, workStart, workEnd);
+    const completedIds = new Set((taskStates || []).filter((task: any) => task.status === 'done').map((task: any) => task.id));
+    const readyTasks = ((tasks || []) as Task[]).filter((task) => (task.dependency_task_ids || []).every((id) => completedIds.has(id)));
+    const blockedByDependencies = (tasks || []).length - readyTasks.length;
+    const blocks = buildPlan(date, readyTasks, locked, workStart, workEnd);
     const summary = blocks.length
-      ? `${blocks.length} bloques propuestos dentro de tu horario laboral (${profile?.horario_inicio || "08:00"}-${profile?.horario_fin || "18:00"}); los eventos protegidos se conservaran.`
+      ? `${blocks.length} bloques propuestos dentro de tu horario laboral (${profile?.horario_inicio || "08:00"}-${profile?.horario_fin || "18:00"}); los eventos protegidos se conservaran.${blockedByDependencies ? ` ${blockedByDependencies} tarea(s) esperan dependencias.` : ""}`
       : "No hay espacio suficiente en tu horario laboral o no hay tareas pendientes para programar.";
 
     if (!apply) return json({ ok: true, preview: true, summary, blocks });
