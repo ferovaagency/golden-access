@@ -9,6 +9,7 @@ import { organizationSchema, websiteSchema, softwareApplicationSchema } from '..
 import { trackEvent } from '../lib/analytics';
 import { useInViewOnce } from '../lib/useInViewOnce';
 import { HeroOrbit } from '../marketing/components/HeroOrbit';
+import { Reveal } from '../marketing/components/Reveal';
 
 /**
  * Public sales landing at /landing.
@@ -143,11 +144,18 @@ function SocialProof() {
   return (
     <section className="border-b border-slate-200 bg-slate-50">
       <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-4 py-10 md:grid-cols-4">
-        {items.map((i) => (
-          <div key={i.v} className="text-center">
+        {items.map((i, index) => (
+          <motion.div
+            key={i.v}
+            className="text-center"
+            initial={{ opacity: 0, y: 14 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.35, delay: index * 0.08 }}
+          >
             <div className="font-serif text-3xl text-slate-900">{i.k}</div>
             <div className="mt-1 text-xs uppercase tracking-widest text-slate-500">{i.v}</div>
-          </div>
+          </motion.div>
         ))}
       </div>
     </section>
@@ -170,14 +178,24 @@ function ModulesGrid() {
         <p className="mt-3 text-slate-600">Todos conectados. Toda tu operación en una sola pantalla.</p>
       </div>
       <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {modules.map((m) => (
-          <div key={m.title} className="rounded-2xl border border-slate-200 bg-white p-6 transition hover:border-slate-300 hover:shadow-sm">
+        {modules.map((m, index) => (
+          <motion.div
+            key={m.title}
+            className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-colors hover:border-[#981737]/35"
+            initial={{ opacity: 0, y: 24, scale: 0.98 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            whileHover={{ y: -7, rotateX: 2, rotateY: index % 2 ? -2 : 2 }}
+            viewport={{ once: true, margin: '-70px' }}
+            transition={{ duration: 0.35, delay: (index % 3) * 0.07, ease: 'easeOut' }}
+            style={{ transformPerspective: 900 }}
+          >
             <div className={`grid h-10 w-10 place-items-center rounded-lg ${m.color}`}>
               <m.icon className="h-5 w-5" />
             </div>
             <h3 className="mt-4 font-semibold">{m.title}</h3>
             <p className="mt-1 text-sm text-slate-600">{m.desc}</p>
-          </div>
+            <ArrowRight className="mt-5 h-4 w-4 text-[#981737] opacity-0 transition duration-300 group-hover:translate-x-1 group-hover:opacity-100" />
+          </motion.div>
         ))}
       </div>
     </section>
@@ -190,12 +208,20 @@ function DemoFrame({
   return (
     <section id={id} className="border-t border-slate-200 bg-slate-50">
       <div className={`mx-auto grid max-w-6xl items-center gap-10 px-4 py-20 md:grid-cols-2 ${reverse ? 'md:[&>div:first-child]:order-2' : ''}`}>
-        <div>
+        <Reveal>
           <span className="text-xs font-semibold uppercase tracking-widest text-amber-600">{eyebrow}</span>
           <h2 className="mt-2 font-serif text-3xl md:text-4xl">{title}</h2>
           <p className="mt-3 text-slate-600">{desc}</p>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">{children}</div>
+        </Reveal>
+        <motion.div
+          className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,.1)]"
+          initial={{ opacity: 0, y: 28, rotateX: 3 }}
+          whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+          whileHover={{ y: -4, rotateX: 1 }}
+          viewport={{ once: true, margin: '-70px' }}
+          transition={{ duration: 0.45, ease: 'easeOut' }}
+          style={{ transformPerspective: 1100 }}
+        >{children}</motion.div>
       </div>
     </section>
   );
@@ -216,12 +242,20 @@ function PlannerDemo() {
       desc="Escribís lo que tenés en la cabeza. La IA lo clasifica, lo prioriza y lo distribuye en tu agenda respetando cuándo pensás mejor."
     >
       <div className="space-y-2">
-        {blocks.map((b) => (
-          <div key={b.t} className={`flex items-center gap-3 rounded-xl border p-3 ${b.tone}`}>
+        {blocks.map((b, index) => (
+          <motion.div
+            key={b.t}
+            className={`flex items-center gap-3 rounded-xl border p-3 ${b.tone}`}
+            initial={{ opacity: 0, x: 16 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.28, delay: index * 0.08 }}
+            whileHover={{ x: 4, scale: 1.01 }}
+          >
             <span className="w-14 font-mono text-xs opacity-70">{b.t}</span>
             <span className="flex-1 text-sm font-medium">{b.label}</span>
             <span className="rounded-full bg-white/60 px-2 py-0.5 text-[10px] uppercase tracking-wide">{b.tag}</span>
-          </div>
+          </motion.div>
         ))}
         <div className="mt-4 rounded-xl bg-slate-900 p-3 text-xs text-slate-300">
           <span className="text-amber-300">IA:</span> Detecté 2 tareas pendientes de ayer. ¿Las corro a mañana temprano?
@@ -247,8 +281,16 @@ function FinanceDemo() {
       reverse
     >
       <div className="space-y-2">
-        {rows.map((r) => (
-          <div key={r.c} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3">
+        {rows.map((r, index) => (
+          <motion.div
+            key={r.c}
+            className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3"
+            initial={{ opacity: 0, x: 16 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.28, delay: index * 0.08 }}
+            whileHover={{ x: 4 }}
+          >
             <div>
               <div className="text-xs text-slate-500">{r.c}</div>
               <div className="font-serif text-lg">{r.v}</div>
@@ -256,7 +298,7 @@ function FinanceDemo() {
             <span className={`rounded-full px-2 py-0.5 text-xs ${r.up ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'}`}>
               {r.d}
             </span>
-          </div>
+          </motion.div>
         ))}
       </div>
     </DemoFrame>
@@ -277,14 +319,22 @@ function CrmDemo() {
       desc="Pega un dominio o una lista de correos. Apollo trae la info, la IA escribe el primer mensaje y vos aprobás."
     >
       <div className="space-y-2">
-        {leads.map((l) => (
-          <div key={l.n} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3">
+        {leads.map((l, index) => (
+          <motion.div
+            key={l.n}
+            className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3"
+            initial={{ opacity: 0, x: 16 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.28, delay: index * 0.08 }}
+            whileHover={{ x: 4 }}
+          >
             <div>
               <div className="font-medium">{l.n}</div>
               <div className="text-xs text-slate-500">{l.s}</div>
             </div>
             <span className={`rounded-full px-2 py-0.5 text-xs ${l.tone}`}>{l.temp}</span>
-          </div>
+          </motion.div>
         ))}
         <button
           type="button"
@@ -335,17 +385,31 @@ function Pricing() {
       <div className="mx-auto max-w-3xl px-4 py-20 text-center">
         <h2 className="font-serif text-3xl md:text-4xl">Un solo plan. Todo incluido.</h2>
         <p className="mt-3 text-slate-600">Sin trucos, sin escalar por usuarios, sin sorpresas.</p>
-        <div className="mx-auto mt-10 max-w-md rounded-3xl border border-slate-200 bg-slate-50 p-8 text-left shadow-sm">
+        <motion.div
+          className="mx-auto mt-10 max-w-md rounded-3xl border border-slate-200 bg-slate-50 p-8 text-left shadow-[0_22px_55px_rgba(15,23,42,.12)]"
+          initial={{ opacity: 0, y: 28, scale: 0.97 }}
+          whileInView={{ opacity: 1, y: 0, scale: 1 }}
+          whileHover={{ y: -6, scale: 1.015 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+        >
           <div className="flex items-baseline gap-1">
             <span className="font-serif text-5xl">USD 50</span>
             <span className="text-slate-500">/ mes</span>
           </div>
           <p className="mt-1 text-sm text-slate-500">Facturado mensualmente. Cancelás cuando quieras.</p>
           <ul className="mt-6 space-y-2">
-            {features.map((f) => (
-              <li key={f} className="flex items-start gap-2 text-sm">
+            {features.map((f, index) => (
+              <motion.li
+                key={f}
+                className="flex items-start gap-2 text-sm"
+                initial={{ opacity: 0, x: -10 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.25, delay: index * 0.06 }}
+              >
                 <Check className="mt-0.5 h-4 w-4 text-emerald-600" /> {f}
-              </li>
+              </motion.li>
             ))}
           </ul>
           <Link
@@ -355,7 +419,7 @@ function Pricing() {
           >
             Empezar ahora <ArrowRight className="h-4 w-4" />
           </Link>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
