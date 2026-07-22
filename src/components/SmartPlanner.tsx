@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Sparkles, Wand2, Loader2, Check, Clock, Zap, Battery, BatteryLow, Trash2, ChevronRight, Sunrise, AlertTriangle, Lightbulb, TrendingUp, Info, Lock, Edit2, X, CalendarDays, Columns3, List, SlidersHorizontal } from 'lucide-react';
+import { Sparkles, Wand2, Loader2, Check, Clock, Zap, Battery, BatteryLow, Trash2, ChevronLeft, ChevronRight, Sunrise, AlertTriangle, Lightbulb, TrendingUp, Info, Lock, Edit2, X, CalendarDays, Columns3, List, SlidersHorizontal } from 'lucide-react';
 import { usePlanner } from '../hooks/usePlanner';
 import { plannerService, type PlannerBlock, type PlannerCategory, type PlannerEnergy, type PlannerTask } from '../lib/plannerService';
 import { AiDisclosure } from './AiDisclosure';
@@ -204,7 +204,7 @@ export default function SmartPlanner() {
 
       {p.error && <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{p.error}</div>}
 
-      {plannerView !== 'day' && <PlannerCalendar view={plannerView} date={p.date} tasks={openTasks} clients={p.clients} compact={compactCalendar} timeZone={p.timeZone} onSelectDate={(date) => { p.setDate(date); setPlannerView('day'); }} onEdit={openTaskEditor} />}
+      {plannerView !== 'day' && <PlannerCalendar view={plannerView} date={p.date} tasks={openTasks} clients={p.clients} compact={compactCalendar} timeZone={p.timeZone} onChangeDate={p.setDate} onSelectDate={(date) => { p.setDate(date); setPlannerView('day'); }} onEdit={openTaskEditor} />}
 
       {plannerView === 'day' && <DayAgendaSummary blocks={p.blocks} tasks={p.tasks} clients={p.clients} timeZone={p.timeZone} onComplete={p.completeTask} />}
 
@@ -378,9 +378,9 @@ function DayAgendaSummary({ blocks, tasks, clients, timeZone, onComplete }: { bl
   </section>;
 }
 
-function PlannerCalendar({ view, date, tasks, clients, compact, timeZone, onSelectDate, onEdit }: {
+function PlannerCalendar({ view, date, tasks, clients, compact, timeZone, onChangeDate, onSelectDate, onEdit }: {
   view: 'week' | 'month'; date: string; tasks: PlannerTask[]; clients: Array<{ id: string; nombre: string }>;
-  compact: boolean; timeZone: string; onSelectDate: (date: string) => void; onEdit: (task: PlannerTask) => void;
+  compact: boolean; timeZone: string; onChangeDate: (date: string) => void; onSelectDate: (date: string) => void; onEdit: (task: PlannerTask) => void;
 }) {
   const selected = new Date(`${date}T00:00:00`);
   const mondayOffset = (selected.getDay() + 6) % 7;
@@ -402,9 +402,18 @@ function PlannerCalendar({ view, date, tasks, clients, compact, timeZone, onSele
   });
   const timeFor = (task: PlannerTask, key: string) => rangeBlocks.find((block) => isoDateInTimeZone(block.starts_at, timeZone) === key && block.task_ids?.includes(task.id))?.starts_at;
   const detailTasks = detailDate ? tasksFor(detailDate) : [];
+  const moveRange = (direction: -1 | 1) => {
+    const target = new Date(selected);
+    if (view === 'week') target.setDate(target.getDate() + (direction * 7));
+    else {
+      target.setDate(1);
+      target.setMonth(target.getMonth() + direction);
+    }
+    onChangeDate(toDateKey(target));
+  };
 
   return <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-    <div className="border-b border-slate-100 px-4 py-3"><h2 className="text-sm font-semibold text-slate-900">{view === 'week' ? 'Vista semanal' : selected.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })}</h2><p className="text-[11px] text-slate-500">Selecciona un día para abrir su agenda. Los colores identifican clientes.</p></div>
+    <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3"><div><h2 className="text-sm font-semibold text-slate-900">{view === 'week' ? 'Vista semanal' : selected.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })}</h2><p className="text-[11px] text-slate-500">Navega por semanas o meses y selecciona un día para abrir su agenda.</p></div><div className="flex items-center gap-1"><button type="button" onClick={() => moveRange(-1)} aria-label={view === 'week' ? 'Semana anterior' : 'Mes anterior'} className="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"><ChevronLeft className="h-4 w-4" /></button><button type="button" onClick={() => moveRange(1)} aria-label={view === 'week' ? 'Semana siguiente' : 'Mes siguiente'} className="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"><ChevronRight className="h-4 w-4" /></button></div></div>
     <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50">{['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((label) => <div key={label} className="px-1 py-2 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</div>)}</div>
     <div className="grid grid-cols-7">
       {days.map((day) => {
