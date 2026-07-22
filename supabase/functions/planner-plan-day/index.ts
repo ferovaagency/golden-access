@@ -19,7 +19,10 @@ function overlaps(start: number, end: number, busy: Array<[number, number]>) {
 function isoAt(date: string, minute: number) {
   const hour = Math.floor(minute / 60);
   const min = minute % 60;
-  return new Date(`${date}T${String(hour).padStart(2, "0")}:${String(min).padStart(2, "0")}:00`).toISOString();
+  // Planner schedules according to the business day configured in Colombia.
+  // Leaving the offset out makes Edge/Deno interpret the timestamp as UTC,
+  // then the browser renders it five hours earlier in America/Bogota.
+  return new Date(`${date}T${String(hour).padStart(2, "0")}:${String(min).padStart(2, "0")}:00-05:00`).toISOString();
 }
 
 function deadlineWeight(deadline: string | null, date: string) {
@@ -101,8 +104,8 @@ Deno.serve(async (req) => {
     const externalBusy = Array.isArray(body?.busy_blocks) ? body.busy_blocks
       .filter((block: any) => typeof block?.starts_at === 'string' && typeof block?.ends_at === 'string')
       .slice(0, 100) : [];
-    const dayStart = new Date(`${date}T00:00:00`).toISOString();
-    const dayEnd = new Date(`${date}T23:59:59`).toISOString();
+    const dayStart = new Date(`${date}T00:00:00-05:00`).toISOString();
+    const dayEnd = new Date(`${date}T23:59:59-05:00`).toISOString();
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const [{ data: tasks }, { data: existingBlocks }, { data: profile }] = await Promise.all([
       admin.from("planner_tasks").select("id,title,category,priority,energy_required,estimated_minutes,deadline,postponed_count").eq("user_id", userData.user.id).in("status", ["backlog", "scheduled", "postponed"]).limit(40),
