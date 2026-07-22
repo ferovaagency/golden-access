@@ -30,10 +30,22 @@ const validDays = (days: unknown): number[] => Array.from(new Set(
   (Array.isArray(days) ? days : []).map(Number).filter((day) => Number.isInteger(day) && day >= 0 && day <= 6),
 )).sort((a, b) => a - b);
 
-function startAt(date: string, time: string) {
-  // Ferova's current product calendar is Colombia-first. Sending an explicit
-  // offset prevents an Edge runtime in another region from shifting the task.
-  return new Date(`${date}T${time}:00-05:00`);
+function zoneParts(value: Date, timeZone: string) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone, hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    .formatToParts(value).reduce<Record<string, string>>((result, part) => ({ ...result, [part.type]: part.value }), {});
+}
+
+function startAt(date: string, time: string, timeZone: string) {
+  const [year, month, day] = date.split('-').map(Number);
+  const [hour, minute] = time.split(':').map(Number);
+  const wallClockAsUtc = Date.UTC(year, month - 1, day, hour, minute, 0);
+  const offsetAt = (instant: Date) => {
+    const parts = zoneParts(instant, timeZone);
+    return (Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day), Number(parts.hour), Number(parts.minute), Number(parts.second)) - instant.getTime()) / 60_000;
+  };
+  let instant = new Date(wallClockAsUtc - offsetAt(new Date(wallClockAsUtc)) * 60_000);
+  instant = new Date(wallClockAsUtc - offsetAt(instant) * 60_000);
+  return instant;
 }
 
 function scoreInput(value: unknown) {
@@ -79,6 +91,8 @@ Deno.serve(async (req) => {
     }
 
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const { data: businessProfile } = await admin.from('business_profile').select('zona_horaria').eq('user_id', user.id).maybeSingle();
+    const timeZone = businessProfile?.zona_horaria || 'America/Bogota';
     const { data: current, error: currentError } = await admin.from('planner_tasks').select('id, google_calendar_event_id').eq('id', body.id).eq('user_id', user.id).maybeSingle();
     if (currentError) throw currentError;
     if (!current) return new Response(JSON.stringify({ ok: false, message: 'No se encontró la tarea' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -105,7 +119,7 @@ Deno.serve(async (req) => {
     if (body.scheduled_for && body.schedule_time) {
       const dates = occurrenceDates(body.scheduled_for, days, body.recurrence_until);
       const blocks = dates.map((date) => {
-        const start = startAt(date, body.schedule_time!);
+        const start = startAt(date, body.schedule_time!, timeZone);
         return {
           user_id: user.id, title: body.title.trim(), category: body.category,
           starts_at: start.toISOString(), ends_at: new Date(start.getTime() + taskPatch.estimated_minutes * 60_000).toISOString(),
@@ -126,7 +140,7 @@ Deno.serve(async (req) => {
       const lovableKey = Deno.env.get('LOVABLE_API_KEY');
       const googleKey = Deno.env.get('GOOGLE_CALENDAR_API_KEY');
       if (lovableKey && googleKey) {
-        const start = startAt(body.scheduled_for, body.schedule_time);
+        const start = startAt(body.scheduled_for, body.schedule_time, timeZone);
         const event = {
           summary: body.title.trim(),
           description: `Creado desde Ferova OS.${body.client_ref ? ` Cliente: ${body.client_ref}.` : ''}`,

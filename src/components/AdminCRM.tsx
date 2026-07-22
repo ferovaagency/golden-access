@@ -77,6 +77,7 @@ import {
 } from '../lib/adminService';
 import type { PlanId } from '../lib/planService';
 import { useToast, errMsg } from './ui/toast';
+import { getBusinessProfile, upsertBusinessProfile } from '../lib/businessProfileService';
 
 export type CRMTab = 'pipeline' | 'citas' | 'contenido' | 'bot' | 'resenas' | 'clientes' | 'feedback' | 'analitica';
 
@@ -89,6 +90,12 @@ interface Props {
 
 export default function AdminCRM({ user, embedded = false, tab: controlledTab, onTabChange }: Props) {
   const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
+  const apolloError = (error: unknown) => {
+    const message = errMsg(error);
+    if (/invalid api key|401|403/i.test(message)) return 'La clave de Apollo no es válida. Un administrador debe actualizar APOLLO_API_KEY en los secretos del proyecto.';
+    if (/not enough credits|payment_required|402/i.test(message)) return 'Apollo no tiene créditos disponibles. Recarga créditos o mejora el plan de Apollo antes de enriquecer prospectos.';
+    return message;
+  };
   const [authorized, setAuthorized] = useState<boolean | null>(null);
   const [internalTab, setInternalTab] = useState<CRMTab>('pipeline');
   const tab: CRMTab = controlledTab ?? internalTab;
@@ -165,6 +172,8 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const [booking, setBooking] = useState(false);
   const [syncingBookings, setSyncingBookings] = useState(false);
   const [bookingCandidates, setBookingCandidates] = useState<BookingCandidate[] | null>(null);
+  const [bookingLink, setBookingLink] = useState('');
+  const [savingBookingLink, setSavingBookingLink] = useState(false);
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<string>>(new Set());
   const [importingCandidates, setImportingCandidates] = useState(false);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
@@ -275,13 +284,26 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   useEffect(() => {
     (async () => {
       const ok = await isTeamMember(user.email || '');
-      setAuthorized(ok);
-      if (ok) {
-        await refreshAll();
-        setTeamRole(await getMyTeamRole(user.email || ''));
-      }
+      // Cada cuenta con el módulo CRM trabaja sobre sus propias filas mediante
+      // RLS. La validación de equipo solo conserva las herramientas internas.
+      setAuthorized(true);
+      await refreshAll();
+      if (ok) setTeamRole(await getMyTeamRole(user.email || ''));
     })();
   }, [user.email]);
+
+  useEffect(() => { void getBusinessProfile(user.id).then((profile) => setBookingLink(profile?.booking_calendar_url || '')).catch(() => undefined); }, [user.id]);
+
+  const saveBookingLink = async () => {
+    const normalized = bookingLink.trim();
+    if (normalized && !/^https:\/\//i.test(normalized)) { toastErr('Pega una URL HTTPS de tu página de reservas.'); return; }
+    setSavingBookingLink(true);
+    try {
+      await upsertBusinessProfile(user.id, { booking_calendar_url: normalized || null });
+      toastOk(normalized ? 'Link de reservas guardado para esta cuenta.' : 'Link de reservas eliminado.');
+    } catch (err: any) { toastErr(`No se pudo guardar el link de reservas: ${errMsg(err)}`); }
+    finally { setSavingBookingLink(false); }
+  };
 
   const refreshClientesTab = async () => {
     setLoadingCustomers(true);
@@ -748,7 +770,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setOportunidades(oportunidades.map((x) => (x.id === o.id ? updated : x)));
       setExpandedPlaybookId(o.id);
     } catch (err: any) {
-      toastErr(`Error enriqueciendo con Apollo: ${errMsg(err)}`);
+      toastErr(`Apollo: ${apolloError(err)}`);
     } finally {
       setEnrichingId(null);
     }
@@ -776,7 +798,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setApolloImportResult(result);
       if (result.oportunidades.length) setOportunidades([...result.oportunidades, ...oportunidades]);
     } catch (err: any) {
-      toastErr(`Error importando de Apollo: ${errMsg(err)}`);
+      toastErr(`Apollo: ${apolloError(err)}`);
     } finally {
       setImportingApollo(false);
     }
@@ -1493,9 +1515,14 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 <p className="text-[9px] text-slate-500 font-mono leading-relaxed">
                   También reconoce reservas hechas desde tu link público y crea prospecto + oportunidad en pipeline.
                 </p>
-                <a href="https://calendar.app.google/NuikMY4L6FcUDMUP6" target="_blank" rel="noreferrer" className="block truncate text-[10px] font-mono text-blue-600 hover:underline">
-                  calendar.app.google/NuikMY4L6FcUDMUP6
-                </a>
+                <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-2.5">
+                  <label className="block text-[10px] font-mono text-slate-600">Tu link público de reservas
+                    <input value={bookingLink} onChange={(event) => setBookingLink(event.target.value)} placeholder="https://calendar.app.google/..." className="mt-1 w-full rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs text-slate-900" />
+                  </label>
+                  <div className="flex items-center justify-between gap-2"><p className="text-[9px] text-slate-500">Se guarda solo para tu cuenta; conecta Google para consultar sus reservas.</p><button type="button" onClick={() => void saveBookingLink()} disabled={savingBookingLink} className="shrink-0 rounded bg-blue-600 px-2 py-1.5 text-[10px] font-bold text-white disabled:opacity-50">{savingBookingLink ? 'Guardando…' : 'Guardar link'}</button></div>
+                  <button type="button" onClick={() => { if (embedded) saveGoogleLinkReturnTab(`crm-${tab}`); void linkGoogleIdentity(); }} className="w-full rounded border border-blue-200 bg-blue-50 px-2 py-2 text-[10px] font-bold text-blue-700 hover:bg-blue-100">{getAccessToken() ? 'Google Workspace conectado · Reautorizar' : 'Conectar Google Calendar y Drive'}</button>
+                  {bookingLink && <a href={bookingLink} target="_blank" rel="noreferrer" className="block truncate text-[10px] font-mono text-blue-600 hover:underline">Abrir mi página de reservas</a>}
+                </div>
                 <button
                   type="button"
                   onClick={handleSyncBookingLink}

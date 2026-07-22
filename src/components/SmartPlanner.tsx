@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Sparkles, Wand2, Loader2, Check, Clock, Zap, Battery, BatteryLow, Trash2, ChevronRight, Sunrise, AlertTriangle, Lightbulb, TrendingUp, Info, Lock, Edit2, X, CalendarDays, Columns3, List, SlidersHorizontal } from 'lucide-react';
 import { usePlanner } from '../hooks/usePlanner';
-import type { PlannerBlock, PlannerCategory, PlannerEnergy, PlannerTask } from '../lib/plannerService';
+import { plannerService, type PlannerBlock, type PlannerCategory, type PlannerEnergy, type PlannerTask } from '../lib/plannerService';
 import { AiDisclosure } from './AiDisclosure';
 
 const categoryMeta: Record<PlannerCategory, { label: string; tone: string }> = {
@@ -21,7 +21,7 @@ const scoreOptions = [[1, 'Muy bajo'], [2, 'Bajo'], [3, 'Medio'], [4, 'Alto'], [
 const clientTones = ['bg-violet-100 text-violet-700 border-violet-200', 'bg-sky-100 text-sky-700 border-sky-200', 'bg-emerald-100 text-emerald-700 border-emerald-200', 'bg-pink-100 text-pink-700 border-pink-200', 'bg-amber-100 text-amber-800 border-amber-200'];
 function clientTone(id?: string | null) { return clientTones[Math.abs(Array.from(id || '').reduce((sum, char) => sum + char.charCodeAt(0), 0)) % clientTones.length]; }
 
-function fmtTime(iso: string) { return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+function fmtTime(iso: string, timeZone?: string) { return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', ...(timeZone ? { timeZone } : {}) }); }
 
 function visiblePriorityScore(task: PlannerTask) {
   const days = task.deadline ? Math.ceil((new Date(task.deadline).getTime() - Date.now()) / 86_400_000) : Number.POSITIVE_INFINITY;
@@ -88,7 +88,7 @@ export default function SmartPlanner() {
     setEditingTask(task);
     setTaskTitle(task.title);
     setTaskDate((linkedBlock?.starts_at || task.scheduled_for || p.date).slice(0, 10));
-    setTaskTime(linkedBlock ? new Date(linkedBlock.starts_at).toTimeString().slice(0, 5) : '');
+    setTaskTime(linkedBlock ? new Date(linkedBlock.starts_at).toLocaleTimeString('en-GB', { timeZone: p.timeZone, hour: '2-digit', minute: '2-digit', hour12: false }) : '');
     setTaskEstimatedMinutes(task.estimated_minutes);
     setTaskActualMinutes(task.actual_minutes ?? '');
     setTaskProtected(linkedBlock?.protected ?? false);
@@ -186,7 +186,7 @@ export default function SmartPlanner() {
 
       {p.error && <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{p.error}</div>}
 
-      {plannerView !== 'day' && <PlannerCalendar view={plannerView} date={p.date} tasks={openTasks} clients={p.clients} compact={compactCalendar} onSelectDate={(date) => { p.setDate(date); setPlannerView('day'); }} onEdit={openTaskEditor} />}
+      {plannerView !== 'day' && <PlannerCalendar view={plannerView} date={p.date} tasks={openTasks} clients={p.clients} compact={compactCalendar} timeZone={p.timeZone} onSelectDate={(date) => { p.setDate(date); setPlannerView('day'); }} onEdit={openTaskEditor} />}
 
       {p.planPreview && (
         <section className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
@@ -198,10 +198,12 @@ export default function SmartPlanner() {
             <button onClick={p.applyPlan} disabled={p.busy === 'plan'} className="rounded-xl bg-blue-700 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-50">Aplicar plan</button>
           </div>
           <ul className="mt-3 space-y-1 text-xs text-blue-900">
-            {p.planPreview.blocks.map((block) => <li key={`${block.starts_at}-${block.title}`}>{fmtTime(block.starts_at)} - {fmtTime(block.ends_at)}: {block.title}</li>)}
+            {p.planPreview.blocks.map((block) => <li key={`${block.starts_at}-${block.title}`}>{fmtTime(block.starts_at, p.timeZone)} - {fmtTime(block.ends_at, p.timeZone)}: {block.title}</li>)}
           </ul>
         </section>
       )}
+
+      {plannerView === 'day' && <DayAgendaSummary blocks={p.blocks} tasks={p.tasks} clients={p.clients} timeZone={p.timeZone} onComplete={p.completeTask} />}
 
       {/* Briefing */}
       <section className="rounded-2xl border border-[var(--line)] bg-gradient-to-br from-blue-50/60 to-white p-5">
@@ -295,7 +297,7 @@ export default function SmartPlanner() {
           </div>
         ) : (
           <ul className="space-y-2">
-            {p.blocks.map((b) => <BlockRow key={b.id} block={b} tasks={p.tasks} clients={p.clients} onComplete={p.completeTask} />)}
+            {p.blocks.map((b) => <BlockRow key={b.id} block={b} tasks={p.tasks} clients={p.clients} timeZone={p.timeZone} onComplete={p.completeTask} />)}
           </ul>
         )}
       </section>}
@@ -366,9 +368,16 @@ function addDays(date: Date, days: number) {
   return next;
 }
 
-function PlannerCalendar({ view, date, tasks, clients, compact, onSelectDate, onEdit }: {
+function DayAgendaSummary({ blocks, tasks, clients, timeZone, onComplete }: { blocks: PlannerBlock[]; tasks: PlannerTask[]; clients: Array<{ id: string; nombre: string }>; timeZone: string; onComplete: (id: string) => void }) {
+  return <section className="rounded-2xl border border-blue-200 bg-blue-50/60 p-4">
+    <div className="flex items-center justify-between gap-3"><div><h2 className="text-sm font-semibold text-blue-950">Agenda de hoy</h2><p className="mt-0.5 text-[11px] text-blue-800">Tus tareas ya asignadas aparecen aquí en su hora; el detalle completo continúa más abajo.</p></div><span className="rounded-full bg-white px-2 py-1 text-xs font-semibold text-blue-700">{blocks.length} bloques</span></div>
+    {blocks.length ? <ul className="mt-3 space-y-2">{blocks.map((block) => <BlockRow key={block.id} block={block} tasks={tasks} clients={clients} timeZone={timeZone} onComplete={onComplete} />)}</ul> : <p className="mt-3 rounded-xl border border-dashed border-blue-200 bg-white px-3 py-3 text-xs text-slate-500">Aún no hay tareas con horario. Usa “Reorganizar mi día” para asignarlas.</p>}
+  </section>;
+}
+
+function PlannerCalendar({ view, date, tasks, clients, compact, timeZone, onSelectDate, onEdit }: {
   view: 'week' | 'month'; date: string; tasks: PlannerTask[]; clients: Array<{ id: string; nombre: string }>;
-  compact: boolean; onSelectDate: (date: string) => void; onEdit: (task: PlannerTask) => void;
+  compact: boolean; timeZone: string; onSelectDate: (date: string) => void; onEdit: (task: PlannerTask) => void;
 }) {
   const selected = new Date(`${date}T00:00:00`);
   const mondayOffset = (selected.getDay() + 6) % 7;
@@ -376,7 +385,17 @@ function PlannerCalendar({ view, date, tasks, clients, compact, onSelectDate, on
   const monthStart = new Date(selected.getFullYear(), selected.getMonth(), 1);
   const monthGridStart = addDays(monthStart, -((monthStart.getDay() + 6) % 7));
   const days = view === 'week' ? Array.from({ length: 7 }, (_, index) => addDays(weekStart, index)) : Array.from({ length: 42 }, (_, index) => addDays(monthGridStart, index));
-  const tasksFor = (key: string) => tasks.filter((task) => (task.scheduled_for || task.deadline || '').slice(0, 10) === key);
+  const [rangeBlocks, setRangeBlocks] = useState<PlannerBlock[]>([]);
+  const [detailDate, setDetailDate] = useState<string | null>(null);
+  const rangeStart = toDateKey(days[0]);
+  const rangeEnd = toDateKey(addDays(days[days.length - 1], 1));
+  useEffect(() => { void plannerService.listBlocksRange(rangeStart, rangeEnd).then(setRangeBlocks); }, [rangeStart, rangeEnd]);
+  const tasksFor = (key: string) => tasks.filter((task) => {
+    if ((task.scheduled_for || task.deadline || '').slice(0, 10) === key) return true;
+    return rangeBlocks.some((block) => block.starts_at.slice(0, 10) === key && block.task_ids?.includes(task.id));
+  });
+  const timeFor = (task: PlannerTask, key: string) => rangeBlocks.find((block) => block.starts_at.slice(0, 10) === key && block.task_ids?.includes(task.id))?.starts_at;
+  const detailTasks = detailDate ? tasksFor(detailDate) : [];
 
   return <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
     <div className="border-b border-slate-100 px-4 py-3"><h2 className="text-sm font-semibold text-slate-900">{view === 'week' ? 'Vista semanal' : selected.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })}</h2><p className="text-[11px] text-slate-500">Selecciona un día para abrir su agenda. Los colores identifican clientes.</p></div>
@@ -390,15 +409,22 @@ function PlannerCalendar({ view, date, tasks, clients, compact, onSelectDate, on
           <button type="button" onClick={() => onSelectDate(key)} className={`mb-1 grid h-7 w-7 place-items-center rounded-full text-xs font-semibold ${key === date ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-blue-50 hover:text-blue-700'}`} aria-label={`Abrir agenda del ${key}`}>{day.getDate()}</button>
           <div className="space-y-1">{dayTasks.slice(0, compact ? 2 : 4).map((task) => {
             const client = clients.find((item) => item.id === task.client_ref);
-            return <button key={task.id} type="button" onClick={() => onEdit(task)} title={`${task.title}${client ? ` · ${client.nombre}` : ''}`} className={`block w-full truncate rounded-md border px-1.5 py-1 text-left text-[10px] font-medium ${client ? clientTone(task.client_ref) : categoryMeta[task.category].tone}`}>{task.title}</button>;
-          })}{dayTasks.length > (compact ? 2 : 4) && <p className="text-[9px] font-semibold text-slate-400">+{dayTasks.length - (compact ? 2 : 4)} más</p>}</div>
+            const time = timeFor(task, key);
+            return <button key={task.id} type="button" onClick={() => onEdit(task)} title={`${task.title}${client ? ` · ${client.nombre}` : ''}`} className={`block w-full truncate rounded-md border px-1.5 py-1 text-left text-[10px] font-medium ${client ? clientTone(task.client_ref) : categoryMeta[task.category].tone}`}>{time ? <span className="mr-1 opacity-70">{fmtTime(time, timeZone)}</span> : null}{task.title}</button>;
+          })}{dayTasks.length > (compact ? 2 : 4) && <button type="button" onClick={() => setDetailDate(key)} className="w-full rounded-md bg-slate-100 px-1.5 py-1 text-left text-[9px] font-semibold text-blue-700 hover:bg-blue-50">Ver las {dayTasks.length} tareas</button>}</div>
         </div>;
       })}
     </div>
+    {detailDate && <div className="fixed inset-0 z-50 flex items-end bg-slate-950/35 p-3 sm:items-center sm:justify-center" role="dialog" aria-modal="true" aria-label="Tareas del día">
+      <div className="max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl">
+        <div className="flex items-start justify-between gap-3"><div><p className="text-sm font-semibold text-slate-900">Tareas programadas</p><p className="mt-0.5 text-xs text-slate-500">{new Date(`${detailDate}T12:00:00`).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })} · {detailTasks.length} tareas</p></div><button type="button" onClick={() => setDetailDate(null)} className="grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100" aria-label="Cerrar"><X className="h-4 w-4" /></button></div>
+        <ul className="mt-4 space-y-2">{detailTasks.map((task) => { const client = clients.find((item) => item.id === task.client_ref); const time = timeFor(task, detailDate); return <li key={task.id}><button type="button" onClick={() => { setDetailDate(null); onEdit(task); }} className="w-full rounded-xl border border-slate-200 p-3 text-left hover:border-blue-300 hover:bg-blue-50"><div className="flex items-start justify-between gap-3"><span className="text-sm font-medium text-slate-900">{task.title}</span>{time && <span className="shrink-0 text-xs font-semibold text-blue-700">{fmtTime(time, timeZone)}</span>}</div><p className="mt-1 text-xs text-slate-500">{client?.nombre || categoryMeta[task.category].label} · {task.estimated_minutes} min</p></button></li>; })}</ul>
+      </div>
+    </div>}
   </section>;
 }
 
-function BlockRow({ block, tasks, clients, onComplete }: { block: PlannerBlock; tasks: PlannerTask[]; clients: Array<{ id: string; nombre: string }>; onComplete: (id: string) => void }) {
+function BlockRow({ block, tasks, clients, timeZone, onComplete }: { block: PlannerBlock; tasks: PlannerTask[]; clients: Array<{ id: string; nombre: string }>; timeZone?: string; onComplete: (id: string) => void }) {
   const meta = categoryMeta[block.category];
   const linked = tasks.filter((t) => block.task_ids?.includes(t.id));
   return (
@@ -406,8 +432,8 @@ function BlockRow({ block, tasks, clients, onComplete }: { block: PlannerBlock; 
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <div className="flex flex-col items-center min-w-[56px] pt-0.5">
-            <span className="text-sm font-semibold text-slate-900">{fmtTime(block.starts_at)}</span>
-            <span className="text-[10px] text-slate-400">{fmtTime(block.ends_at)}</span>
+            <span className="text-sm font-semibold text-slate-900">{fmtTime(block.starts_at, timeZone)}</span>
+            <span className="text-[10px] text-slate-400">{fmtTime(block.ends_at, timeZone)}</span>
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2 flex-wrap">

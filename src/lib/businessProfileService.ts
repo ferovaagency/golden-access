@@ -14,6 +14,10 @@ export interface BusinessProfile {
   horario_inicio: string;
   /** "HH:MM" */
   horario_fin: string;
+  /** Zona IANA usada para convertir el horario laboral y los bloques de agenda. */
+  zona_horaria: string;
+  /** URL pública de reservas del calendario del usuario. */
+  booking_calendar_url: string | null;
   onboarding_completado: boolean;
   created_at: string;
   updated_at: string;

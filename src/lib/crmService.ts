@@ -185,9 +185,12 @@ export async function addInteraccion(i: Omit<Interaccion, 'id' | 'ocurrido_en'>)
 }
 
 export async function listCitas(): Promise<CitaDiagnostico[]> {
+  const now = new Date().toISOString();
   const { data, error } = await supabase
     .from('crm_citas_diagnostico')
     .select('*')
+    .eq('estado', 'agendada')
+    .gte('fecha_hora', now)
     .order('fecha_hora', { ascending: true });
   if (error) throw new Error(`[crmService] listCitas: ${error.message}`);
   return data as CitaDiagnostico[];

@@ -474,13 +474,12 @@ function AppInner() {
   const metrics = isReady ? calcularMétricasFinancieras(appData, selectedMonth, fiscalProfile) : null;
 
   // Módulo "CRM y Ventas" propio del cliente -- distinto del CRM interno de Ferova (abajo).
-  const CRM_GROWTH_TABS = isTeam ? [
+  const CRM_GROWTH_TABS = modules.crm_ventas ? [
     { id: 'crm-pipeline', label: 'Pipeline', hint: 'Prospectos y playbooks' },
     { id: 'crm-citas', label: 'Citas', hint: 'Diagnósticos y Calendar' },
     { id: 'crm-contenido', label: 'LinkedIn + Reddit', hint: 'Señales automáticas' },
     { id: 'crm-bot', label: 'Bot WhatsApp', hint: 'Conocimiento y estado' },
     { id: 'crm-resenas', label: 'Reseñas', hint: 'Gmail y fuentes' },
-    { id: 'crm-clientes', label: 'Administración', hint: 'Usuarios, planes y feedback' },
   ] : [];
 
   const handleNavigate = (tab: string) => {

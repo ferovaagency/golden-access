@@ -30,6 +30,7 @@ export default function Landing() {
       <Header />
       <Hero />
       <SocialProof />
+      <LiveWorkflow />
       <ModulesGrid />
       <PlannerDemo />
       <FinanceDemo />
@@ -55,9 +56,13 @@ function Header() {
         <nav className="hidden items-center gap-6 text-sm text-slate-600 md:flex">
           <a href="#modulos" className="hover:text-slate-900">Módulos</a>
           <a href="#planner" className="hover:text-slate-900">Planner</a>
+          <Link to="/blog" className="hover:text-slate-900">Blog</Link>
           <a href="#precios" className="hover:text-slate-900">Precios</a>
           <a href="#faq" className="hover:text-slate-900">FAQ</a>
         </nav>
+        <Link to="/blog" className="rounded-full px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 md:hidden">
+          Blog
+        </Link>
         <Link
           to="/app"
           onClick={() => trackEvent('login_click', { path: 'header-/' })}
@@ -157,6 +162,44 @@ function SocialProof() {
             <div className="mt-1 text-xs uppercase tracking-widest text-slate-500">{i.v}</div>
           </motion.div>
         ))}
+      </div>
+    </section>
+  );
+}
+
+/** Flujo continuo: comunica que los módulos trabajan juntos, no son pantallas aisladas. */
+function LiveWorkflow() {
+  const reduceMotion = useReducedMotion();
+  const updates = [
+    ['Agenda', 'Bloque protegido', 'bg-violet-100 text-violet-800'],
+    ['IA', 'Priorizó 3 tareas', 'bg-amber-100 text-amber-800'],
+    ['CRM', 'Follow-up listo', 'bg-blue-100 text-blue-800'],
+    ['Finanzas', 'Flujo actualizado', 'bg-emerald-100 text-emerald-800'],
+    ['Horas', 'Registro sincronizado', 'bg-rose-100 text-rose-800'],
+  ];
+  const flow = [...updates, ...updates];
+
+  return (
+    <section className="overflow-hidden border-b border-slate-200 bg-white py-5">
+      <div className="mx-auto flex max-w-6xl items-center gap-5 px-4">
+        <div className="hidden shrink-0 items-center gap-2 text-xs font-semibold uppercase tracking-[.16em] text-[#981737] sm:flex">
+          <span className="relative flex h-2.5 w-2.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#981737] opacity-50" /><span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#981737]" /></span>
+          Ferova en movimiento
+        </div>
+        <div className="relative min-w-0 flex-1 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
+          <motion.div
+            className="flex w-max gap-3 pr-3"
+            animate={reduceMotion ? undefined : { x: ['-50%', '0%'] }}
+            transition={{ duration: 28, repeat: Infinity, ease: 'linear' }}
+          >
+            {flow.map(([module, event, tone], index) => (
+              <div key={`${module}-${index}`} className="flex items-center gap-2 whitespace-nowrap rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs shadow-sm">
+                <span className={`rounded-full px-2 py-0.5 font-semibold ${tone}`}>{module}</span>
+                <span className="text-slate-600">{event}</span>
+              </div>
+            ))}
+          </motion.div>
+        </div>
       </div>
     </section>
   );

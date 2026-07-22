@@ -135,7 +135,27 @@ export interface UpdatePlannerTaskInput {
 
 const anyDb = () => supabase as any;
 
+function localPlannerTimeToIso(localValue: string, timeZone: string) {
+  const [datePart, timePart = '00:00:00'] = localValue.split('T');
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hour, minute, second = 0] = timePart.split(':').map(Number);
+  const wallClockAsUtc = Date.UTC(year, month - 1, day, hour, minute, second);
+  const offsetAt = (instant: Date) => {
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone, hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      .formatToParts(instant).reduce<Record<string, string>>((result, part) => ({ ...result, [part.type]: part.value }), {});
+    return (Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day), Number(parts.hour), Number(parts.minute), Number(parts.second)) - instant.getTime()) / 60_000;
+  };
+  let instant = new Date(wallClockAsUtc - offsetAt(new Date(wallClockAsUtc)) * 60_000);
+  instant = new Date(wallClockAsUtc - offsetAt(instant) * 60_000);
+  return instant.toISOString();
+}
+
 export const plannerService = {
+  async getTimeZone(): Promise<string> {
+    const { data, error } = await anyDb().from('business_profile').select('zona_horaria').maybeSingle();
+    if (error) { log.error(error); return Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Bogota'; }
+    return data?.zona_horaria || Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Bogota';
+  },
   async listInbox(): Promise<PlannerInbox[]> {
     const { data, error } = await anyDb().from('planner_inbox').select('*').order('created_at', { ascending: false }).limit(50);
     if (error) { log.error(error); return []; }
@@ -153,16 +173,23 @@ export const plannerService = {
     if (error) { log.error(error); return []; }
     return data || [];
   },
+  async listBlocksRange(startDate: string, endDate: string): Promise<PlannerBlock[]> {
+    const { data, error } = await anyDb().from('planner_blocks').select('*')
+      .gte('starts_at', `${startDate}T00:00:00Z`).lt('starts_at', `${endDate}T00:00:00Z`).order('starts_at');
+    if (error) { log.error(error); return []; }
+    return data || [];
+  },
   async createBlock(input: CreatePlannerBlockInput): Promise<void> {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError) throw authError;
     if (!user) throw new Error('Debes iniciar sesión para crear un bloque.');
 
+    const timeZone = await this.getTimeZone();
     const { error } = await anyDb().from('planner_blocks').insert({
       user_id: user.id,
       title: input.title.trim(),
-      starts_at: input.starts_at,
-      ends_at: input.ends_at,
+      starts_at: localPlannerTimeToIso(input.starts_at, timeZone),
+      ends_at: localPlannerTimeToIso(input.ends_at, timeZone),
       category: input.category ?? 'meetings',
       protected: input.protected ?? true,
       notes: input.notes?.trim() || null,

@@ -19,6 +19,7 @@ export function usePlanner() {
   const [error, setError] = useState<string | null>(null);
   const [date, setDate] = useState<string>(today());
   const [rescheduledCount, setRescheduledCount] = useState(0);
+  const [timeZone, setTimeZone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Bogota');
   const hasAutoRescheduled = useRef(false);
 
   const refresh = useCallback(async () => {
@@ -29,15 +30,16 @@ export function usePlanner() {
         const rescheduled = await plannerService.rescheduleOverdueTasks(date);
         if (rescheduled.length) setRescheduledCount(rescheduled.length);
       }
-      const [i, t, c, b, ins, br] = await Promise.all([
+      const [i, t, c, b, ins, br, zone] = await Promise.all([
         plannerService.listInbox(),
         plannerService.listTasks(),
         plannerService.listClients(),
         plannerService.listBlocks(date),
         plannerService.listInsights(),
         plannerService.loadBriefing('morning'),
+        plannerService.getTimeZone(),
       ]);
-      setInbox(i); setTasks(t); setClients(c); setBlocks(b); setInsights(ins); setBriefing(br);
+      setInbox(i); setTasks(t); setClients(c); setBlocks(b); setInsights(ins); setBriefing(br); setTimeZone(zone);
     } finally { setLoading(false); }
   }, [date]);
 
@@ -132,7 +134,7 @@ export function usePlanner() {
 
   return {
     inbox, tasks, clients, blocks, insights, briefing, planPreview, rescheduledCount,
-    loading, busy, error, date, setDate,
+    loading, busy, error, date, setDate, timeZone,
     refresh, classify, planDay, applyPlan, regenerateInsights, regenerateBriefing,
     completeTask, updateTask, postponeTask, deleteTask, createBlock, dismissInsight,
   };

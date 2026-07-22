@@ -6,6 +6,7 @@ import type { FinancialMetrics } from '../lib/calculations';
 import { isFerovaUiV2Enabled } from '../lib/featureFlags';
 import type { Signal, Tone } from './executive/types';
 import { ExecutiveHero } from './executive/ExecutiveHero';
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { KpiStrip, type KpiItem } from './executive/KpiStrip';
 import { ExecutiveBrief } from './executive/ExecutiveBrief';
 import { BusinessHealth } from './executive/BusinessHealth';
@@ -127,6 +128,7 @@ export default function Home({ data, metrics, selectedMonth, formatCop, onNaviga
           primaryAction={{ label: 'Revisar proyectos', onClick: () => onNavigate('proyectos') }}
         />
         <KpiStrip items={kpiItems} periodKey={selectedMonth} />
+        <SalesTrendChart sales={periodSales} formatCop={formatCop} />
         <ExecutiveBrief health={health} topPriority={priorities[0]} onNavigate={onNavigate} />
         {sectionOrder.map((id) => (
           <div key={id} className="space-y-1.5">
@@ -174,6 +176,16 @@ export default function Home({ data, metrics, selectedMonth, formatCop, onNaviga
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/30 sm:p-6" style={{ order: sectionOrder.indexOf('activity') }}><div className="flex items-center justify-between"><div><p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Últimos movimientos</p><h3 className="mt-1 text-lg font-semibold text-slate-950">Recent Activity</h3></div><OrderControls id="activity" order={sectionOrder} onMove={moveSection} /></div><div className="mt-4 divide-y divide-slate-100">{activity.length ? activity.map(({ id, date, title, detail, icon: Icon }) => <div key={id} className="flex items-center gap-3 py-3"><span className="grid h-8 w-8 place-items-center rounded-lg bg-slate-50 text-slate-500"><Icon className="h-4 w-4" /></span><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-slate-800">{title}</p><p className="truncate text-xs text-slate-500">{detail}</p></div><time className="text-[11px] font-medium text-slate-400">{date}</time></div>) : <p className="py-6 text-center text-sm text-slate-500">Aún no hay actividad registrada para este período.</p>}</div></section>
     </div>
   );
+}
+
+function SalesTrendChart({ sales, formatCop }: { sales: AppData['ventas']; formatCop: (value: number) => string }) {
+  const byMonth = new Map<string, number>();
+  sales.forEach((sale) => {
+    const key = sale.fecha.slice(0, 7);
+    byMonth.set(key, (byMonth.get(key) || 0) + (sale.precio_venta_unitario * sale.cantidad));
+  });
+  const data = [...byMonth.entries()].sort(([a], [b]) => a.localeCompare(b)).slice(-6).map(([month, ingresos]) => ({ month: new Date(`${month}-15T12:00:00`).toLocaleDateString('es-CO', { month: 'short' }), ingresos }));
+  return <section className="rounded-[var(--ferova-radius-card)] border border-[var(--ferova-line)] bg-[var(--ferova-surface)] p-5 shadow-[var(--ferova-shadow)]"><div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#a39a8a]">Pulso financiero</p><h2 className="mt-1 font-display text-lg font-semibold text-[#1f1b16]">Ingresos por mes</h2></div><span className="rounded-full bg-[var(--ferova-ai)] px-2.5 py-1 text-xs font-semibold text-[var(--ferova-navy)]">Últimos 6 meses</span></div>{data.length ? <div className="mt-4 h-52"><ResponsiveContainer width="100%" height="100%"><AreaChart data={data} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}><defs><linearGradient id="ferovaIncome" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#981737" stopOpacity={.38} /><stop offset="100%" stopColor="#981737" stopOpacity={0} /></linearGradient></defs><XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#8a8377' }} /><YAxis hide /><Tooltip formatter={(value: number) => formatCop(value)} contentStyle={{ borderRadius: 12, border: '1px solid #e6ded3', fontSize: 12 }} /><Area type="monotone" dataKey="ingresos" stroke="#981737" strokeWidth={3} fill="url(#ferovaIncome)" animationDuration={900} /></AreaChart></ResponsiveContainer></div> : <div className="mt-4 grid h-52 place-items-center rounded-xl bg-[var(--ferova-soft)] text-sm text-[#736d63]">Registra ventas para ver la tendencia de ingresos.</div>}</section>;
 }
 
 type HomeSectionId = 'quick' | 'priorities' | 'blind' | 'activity';

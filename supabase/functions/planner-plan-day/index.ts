@@ -16,25 +16,34 @@ function overlaps(start: number, end: number, busy: Array<[number, number]>) {
   return busy.some(([busyStart, busyEnd]) => start < busyEnd && end > busyStart);
 }
 
-function isoAt(date: string, minute: number) {
-  const hour = Math.floor(minute / 60);
-  const min = minute % 60;
-  // Planner schedules according to the business day configured in Colombia.
-  // Leaving the offset out makes Edge/Deno interpret the timestamp as UTC,
-  // then the browser renders it five hours earlier in America/Bogota.
-  return new Date(`${date}T${String(hour).padStart(2, "0")}:${String(min).padStart(2, "0")}:00-05:00`).toISOString();
+function zoneParts(value: Date, timeZone: string) {
+  const values = new Intl.DateTimeFormat('en-CA', {
+    timeZone, hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit',
+  }).formatToParts(value).reduce<Record<string, string>>((result, part) => ({ ...result, [part.type]: part.value }), {});
+  return values;
 }
 
-/**
- * All persisted calendar/block timestamps are UTC ISO strings. The configured
- * workday, however, is expressed in Colombia local time. Using Date#getHours
- * inside an Edge Function reads UTC and shifts every protected calendar event
- * five hours later, allowing the planner to book over the actual meeting.
- */
-function bogotaMinutes(iso: string) {
-  const value = new Date(iso);
-  const utcMinutes = value.getUTCHours() * 60 + value.getUTCMinutes();
-  return (utcMinutes - (5 * 60) + 1440) % 1440;
+function zoneOffsetMinutes(value: Date, timeZone: string) {
+  const parts = zoneParts(value, timeZone);
+  const localAsUtc = Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day), Number(parts.hour), Number(parts.minute), Number(parts.second));
+  return Math.round((localAsUtc - value.getTime()) / 60_000);
+}
+
+/** Converts local wall-clock planner time to a UTC ISO timestamp in any IANA zone. */
+function isoAt(date: string, minute: number, timeZone: string) {
+  const hour = Math.floor(minute / 60);
+  const min = minute % 60;
+  const [year, month, day] = date.split('-').map(Number);
+  const wallClockAsUtc = Date.UTC(year, month - 1, day, hour, min, 0);
+  // Calculate twice so DST transitions use the offset at the resulting instant.
+  let instant = new Date(wallClockAsUtc - zoneOffsetMinutes(new Date(wallClockAsUtc), timeZone) * 60_000);
+  instant = new Date(wallClockAsUtc - zoneOffsetMinutes(instant, timeZone) * 60_000);
+  return instant.toISOString();
+}
+
+function zonedMinutes(iso: string, timeZone: string) {
+  const parts = zoneParts(new Date(iso), timeZone);
+  return Number(parts.hour) * 60 + Number(parts.minute);
 }
 
 function deadlineWeight(deadline: string | null, date: string) {
@@ -70,9 +79,9 @@ function parseHorario(value: string | null | undefined, fallbackMinutes: number)
   return hours * 60 + minutes;
 }
 
-function buildPlan(date: string, tasks: Task[], lockedBlocks: Array<{ starts_at: string; ends_at: string }>, workStart: number, workEnd: number): Block[] {
+function buildPlan(date: string, tasks: Task[], lockedBlocks: Array<{ starts_at: string; ends_at: string }>, workStart: number, workEnd: number, timeZone: string): Block[] {
   const busy = lockedBlocks.map((block) => {
-    return [bogotaMinutes(block.starts_at), bogotaMinutes(block.ends_at)] as [number, number];
+    return [zonedMinutes(block.starts_at, timeZone), zonedMinutes(block.ends_at, timeZone)] as [number, number];
   });
   const ordered = [...tasks].sort((a, b) => {
     const score = priorityScore(b, date) - priorityScore(a, date);
@@ -107,8 +116,8 @@ function buildPlan(date: string, tasks: Task[], lockedBlocks: Array<{ starts_at:
     blocks.push({
       title: `${task.title}${suffix}`,
       category: task.category,
-      starts_at: isoAt(date, start),
-      ends_at: isoAt(date, start + duration),
+      starts_at: isoAt(date, start, timeZone),
+      ends_at: isoAt(date, start + duration, timeZone),
       task_ids: [task.id],
       source: "planner-rules",
       notes: `Priority Score ${priorityScore(task, date).toFixed(2)}/5 (${task.priority}), fecha límite y espacios libres; respeta bloques protegidos.`,
@@ -135,14 +144,15 @@ Deno.serve(async (req) => {
     const externalBusy = Array.isArray(body?.busy_blocks) ? body.busy_blocks
       .filter((block: any) => typeof block?.starts_at === 'string' && typeof block?.ends_at === 'string')
       .slice(0, 100) : [];
-    const dayStart = new Date(`${date}T00:00:00-05:00`).toISOString();
-    const dayEnd = new Date(`${date}T23:59:59-05:00`).toISOString();
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const [{ data: tasks }, { data: taskStates }, { data: existingBlocks }, { data: profile }] = await Promise.all([
+    const { data: profile } = await admin.from("business_profile").select("dias_laborales,horario_inicio,horario_fin,zona_horaria").eq("user_id", userData.user.id).maybeSingle();
+    const timeZone = profile?.zona_horaria || 'America/Bogota';
+    const dayStart = isoAt(date, 0, timeZone);
+    const dayEnd = isoAt(date, (24 * 60) - 1, timeZone);
+    const [{ data: tasks }, { data: taskStates }, { data: existingBlocks }] = await Promise.all([
       admin.from("planner_tasks").select("id,title,category,priority,energy_required,estimated_minutes,deadline,postponed_count,financial_impact,client_impact,risk_score,execution_ease,dependency_task_ids").eq("user_id", userData.user.id).in("status", ["backlog", "scheduled", "postponed"]).limit(40),
       admin.from("planner_tasks").select("id,status").eq("user_id", userData.user.id).limit(240),
       admin.from("planner_blocks").select("starts_at,ends_at,protected,source").eq("user_id", userData.user.id).gte("starts_at", dayStart).lte("starts_at", dayEnd),
-      admin.from("business_profile").select("dias_laborales,horario_inicio,horario_fin").eq("user_id", userData.user.id).maybeSingle(),
     ]);
 
     const diasLaborales: number[] = Array.isArray(profile?.dias_laborales) && profile.dias_laborales.length ? profile.dias_laborales : [1, 2, 3, 4, 5];
@@ -162,9 +172,9 @@ Deno.serve(async (req) => {
     const completedIds = new Set((taskStates || []).filter((task: any) => task.status === 'done').map((task: any) => task.id));
     const readyTasks = ((tasks || []) as Task[]).filter((task) => (task.dependency_task_ids || []).every((id) => completedIds.has(id)));
     const blockedByDependencies = (tasks || []).length - readyTasks.length;
-    const blocks = buildPlan(date, readyTasks, locked, workStart, workEnd);
+    const blocks = buildPlan(date, readyTasks, locked, workStart, workEnd, timeZone);
     const summary = blocks.length
-      ? `${blocks.length} bloques propuestos dentro de tu horario laboral (${profile?.horario_inicio || "08:00"}-${profile?.horario_fin || "18:00"}); los eventos protegidos se conservaran.${blockedByDependencies ? ` ${blockedByDependencies} tarea(s) esperan dependencias.` : ""}`
+      ? `${blocks.length} bloques propuestos dentro de tu horario laboral (${profile?.horario_inicio || "08:00"}-${profile?.horario_fin || "18:00"}, ${timeZone}); los eventos protegidos se conservaran.${blockedByDependencies ? ` ${blockedByDependencies} tarea(s) esperan dependencias.` : ""}`
       : "No hay espacio suficiente en tu horario laboral o no hay tareas pendientes para programar.";
 
     if (!apply) return json({ ok: true, preview: true, summary, blocks });

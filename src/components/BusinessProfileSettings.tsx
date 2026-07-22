@@ -13,9 +13,23 @@ const DIAS = [
   { value: 4, label: 'Jue' }, { value: 5, label: 'Vie' }, { value: 6, label: 'Sáb' }, { value: 0, label: 'Dom' },
 ];
 
+const ZONAS_HORARIAS = [
+  ['America/Bogota', 'Colombia · BogotÃ¡ (UTC−5)'],
+  ['America/Mexico_City', 'MÃ©xico · Ciudad de MÃ©xico'],
+  ['America/Lima', 'PerÃº · Lima (UTC−5)'],
+  ['America/Guayaquil', 'Ecuador · Quito / Guayaquil (UTC−5)'],
+  ['America/Caracas', 'Venezuela · Caracas (UTC−4)'],
+  ['America/Santiago', 'Chile · Santiago'],
+  ['America/Argentina/Buenos_Aires', 'Argentina · Buenos Aires (UTC−3)'],
+  ['America/Sao_Paulo', 'Brasil · SÃ£o Paulo (UTC−3)'],
+  ['Europe/Madrid', 'EspaÃ±a · Madrid'],
+  ['America/New_York', 'EE. UU. · Nueva York'],
+  ['America/Los_Angeles', 'EE. UU. · Los Ãngeles'],
+] as const;
+
 const emptyForm = {
   nombre_negocio: '', industria: '', tipo_negocio: '', tamano_equipo: '', ciudad: '', telefono_contacto: '',
-  dias_laborales: [1, 2, 3, 4, 5] as number[], horario_inicio: '08:00', horario_fin: '18:00',
+  dias_laborales: [1, 2, 3, 4, 5] as number[], horario_inicio: '08:00', horario_fin: '18:00', zona_horaria: 'America/Bogota',
 };
 
 export default function BusinessProfileSettings({ userId, profile, onUpdated }: Props) {
@@ -30,6 +44,7 @@ export default function BusinessProfileSettings({ userId, profile, onUpdated }: 
       ciudad: profile?.ciudad || '', telefono_contacto: profile?.telefono_contacto || '',
       dias_laborales: profile?.dias_laborales?.length ? profile.dias_laborales : [1, 2, 3, 4, 5],
       horario_inicio: profile?.horario_inicio || '08:00', horario_fin: profile?.horario_fin || '18:00',
+      zona_horaria: profile?.zona_horaria || 'America/Bogota',
     });
   }, [profile]);
 
@@ -97,6 +112,7 @@ export default function BusinessProfileSettings({ userId, profile, onUpdated }: 
         </div>
         <label className="text-xs font-medium text-slate-600">Horario de inicio<input type="time" value={form.horario_inicio} onChange={(e) => update('horario_inicio', e.target.value)} className={fieldClass} /></label>
         <label className="text-xs font-medium text-slate-600">Horario de fin<input type="time" value={form.horario_fin} onChange={(e) => update('horario_fin', e.target.value)} className={fieldClass} /></label>
+        <label className="text-xs font-medium text-slate-600 sm:col-span-2 lg:col-span-1">Zona horaria<select value={form.zona_horaria} onChange={(e) => update('zona_horaria', e.target.value)} className={fieldClass}>{!ZONAS_HORARIAS.some(([value]) => value === form.zona_horaria) && <option value={form.zona_horaria}>{form.zona_horaria}</option>}{ZONAS_HORARIAS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><div className="mt-1.5 flex items-center justify-between gap-2"><span className="text-[10px] text-slate-400">El Planner programa y muestra las horas en esta zona.</span><button type="button" onClick={() => update('zona_horaria', Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Bogota')} className="shrink-0 text-[10px] font-semibold text-blue-700 hover:text-blue-900">Usar mi zona automática</button></div></label>
         <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:col-span-2 sm:flex-row sm:items-center sm:justify-between lg:col-span-3">
           <div aria-live="polite" className="min-h-5 text-xs text-slate-600">{notice && <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-600" />{notice}</span>}</div>
           <button disabled={saving} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Guardar identidad</button>

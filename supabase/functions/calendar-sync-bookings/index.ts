@@ -5,7 +5,6 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const GATEWAY = "https://connector-gateway.lovable.dev/google_calendar/calendar/v3";
-const BOOKING_LINK = "https://calendar.app.google/NuikMY4L6FcUDMUP6";
 
 function phoneFromText(text: string): string | null {
   const match = text.match(/(?:\+?\d[\d\s().-]{7,}\d)/);
@@ -27,8 +26,9 @@ Deno.serve(async (req) => {
     const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: authHeader } } });
     const { data: { user }, error: userErr } = await userClient.auth.getUser();
     if (userErr || !user?.email) return new Response(JSON.stringify({ ok: false, message: "No autenticado" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    const { data: member } = await userClient.from("crm_team_members").select("email").eq("email", user.email).maybeSingle();
-    if (!member) return new Response(JSON.stringify({ ok: false, message: "No autorizado" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const { data: profile } = await userClient.from('business_profile').select('booking_calendar_url').eq('user_id', user.id).maybeSingle();
+    const bookingLink = String(profile?.booking_calendar_url || '').trim();
+    if (!bookingLink) return new Response(JSON.stringify({ ok: false, message: 'Guarda primero tu link público de reservas en CRM y Ventas → Citas.' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
     const lovableKey = Deno.env.get("LOVABLE_API_KEY");
     const gcalKey = Deno.env.get("GOOGLE_CALENDAR_API_KEY");
@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
     // cualquier reunión del calendario a la lista de Citas.
     let events = (json.items || []).filter((event: any) => {
       const haystack = `${event.summary || ""}\n${event.description || ""}\n${event.htmlLink || ""}`.toLowerCase();
-      return event.status !== "cancelled" && !event.recurringEventId && (haystack.includes("calendar.app.google") || haystack.includes("diagn"));
+      return event.status !== "cancelled" && !event.recurringEventId && (haystack.includes(bookingLink.toLowerCase()) || haystack.includes("calendar.app.google") || haystack.includes("diagn"));
     });
 
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
           telefono: phone,
           canal_origen: "web",
           estado: "nuevo",
-          fuente_url: BOOKING_LINK,
+          fuente_url: bookingLink,
           notas: `Reserva detectada en Google Calendar.\n${description}`.slice(0, 3000),
           siguiente_accion: "Revisar diagnóstico agendado, enriquecer datos y preparar conversación.",
         }).select("*").single();
@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
         await fetch(`${SUPABASE_URL}/functions/v1/apollo-enrich-playbook`, {
           method: "POST",
           headers: { Authorization: authHeader, "Content-Type": "application/json" },
-          body: JSON.stringify({ oportunidad_id: oportunidad.id, email, fuente_url: BOOKING_LINK, contexto_publicacion: description }),
+          body: JSON.stringify({ oportunidad_id: oportunidad.id, email, fuente_url: bookingLink, contexto_publicacion: description }),
         }).catch(() => null);
       }
     }
