@@ -482,16 +482,22 @@ export const plannerService = {
         const rebuildSet = new Set(rebuildTaskIds);
         const { data: generatedBlocks, error: generatedError } = await anyDb()
           .from('planner_blocks')
-          .select('id, task_ids')
-          .in('source', ['ai', 'planner-rules']);
+          .select('id, task_ids, source, protected, starts_at')
+          .in('source', ['ai', 'planner-rules', 'task']);
         if (generatedError) return { data: null, error: generatedError };
 
         // Filter client-side for compatibility with older Lovable schemas
         // where task_ids was exposed inconsistently and PostgREST `overlaps`
         // rejected an otherwise valid delete.
         const staleIds = (generatedBlocks || [])
-          .filter((block: { id: string; task_ids: string[] | null }) =>
-            (block.task_ids || []).some((taskId) => rebuildSet.has(taskId)))
+          .filter((block: { id: string; task_ids: string[] | null; source: string; protected: boolean; starts_at: string }) => {
+            const belongsToRebuild = (block.task_ids || []).some((taskId) => rebuildSet.has(taskId));
+            const generated = ['ai', 'planner-rules'].includes(block.source);
+            const missedManualSlot = block.source === 'task'
+              && !block.protected
+              && zonedDate(new Date(block.starts_at), timeZone) < targetDate;
+            return belongsToRebuild && (generated || missedManualSlot);
+          })
           .map((block: { id: string }) => block.id);
         if (staleIds.length) {
           const { error: deleteError } = await anyDb().from('planner_blocks').delete().in('id', staleIds);
