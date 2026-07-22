@@ -136,6 +136,16 @@ Ninguna se tocó. Lista para cuando se aborde la sección 17 del manual (tabla `
 
 ---
 
+## Fase 2 — Motor centralizado (avance parcial, sesión posterior)
+
+Se agregó `src/lib/engine/financialEngine.ts` con las funciones de A.2 que tienen fórmula exacta y sin ambigüedad en la Parte 4 del manual: `calculateHealthyHourlyRate` (4.3, validado contra el ejemplo literal del manual: 40h/semana, 60% facturable, 5.000.000/2.000.000 → ~81.000 COP/hora), `calculateHourlyCost`, `calculateServiceProfitability`/`calculateClientProfitability` (4.5, con semáforo de margen), `calculateCapacity` y `calculateBreakEven` (4.6). Pruebas en `tests/financialEngine.test.ts` (`npm test`).
+
+**Deliberadamente construido en paralelo, no integrado a ninguna pantalla todavía.** Integrarlo a Dashboard/EquilibrioGlobal/HorasAdmin requiere primero la decisión explícita que este catálogo ya identificó como bloqueante (hallazgo #1: reconciliar cuál de las 4 nociones de "ingreso" alimenta cada función) — hacerlo sin esa decisión duplicaría, no centralizaría, la lógica.
+
+**No incluido en esta pasada** (necesitan tablas nuevas en producción o decisiones de modelo de datos que no me corresponden a mí decidir): `calculateCashPosition`/`calculateCashForecast` (necesitan probabilidad de cobro ponderada por antigüedad, sección 4.7 — hoy `cashflowService.ts` es binario pagado/no pagado), `calculatePipelineForecast` (necesita etapas de pipeline con probabilidad, sección 4.8), `calculateTaxProvision` (necesita la tabla `tax_rules` versionada de la sección 4.10/17, que no existe), `reconcileTransactions` (necesita arquitectura de 4 capas raw/canonical/metrics/audit, sección 4.15).
+
+También se aplicaron, de la lista "candidatas cero riesgo" de este mismo catálogo: se eliminó `pagos_tc_estimados` (multiplicaba por `0` literal, nunca se mostraba en UI, sin datos reales para calcularlo de verdad -- ver hallazgo original arriba) y se centralizó la fórmula de proyección de ingresos anualizados duplicada en `ImpuestosIva.tsx`/`AlertasTributarias.tsx` hacia `calcularProyeccionAnualIngresos()` en `calculations.ts`.
+
 ## Qué sigue (no implementado en esta pasada, a propósito)
 
 Todo lo demás del manual — tabla `tax_rules` versionada, arquitectura de 4 capas (raw/canonical/metrics/insights), separación completa de ingresos contratados/causados/cobrados con probabilidad de cobro ponderada, motor de capacidad operativa, centralización del embudo de CRM, sistema de memoria/aprendizaje de la IA, motor de reconciliación, rediseño del onboarding con tarifa mínima sugerida — son cada uno un proyecto real de varios días, y la mayoría requieren tablas nuevas en la base de datos de producción (Lovable Cloud), a la que no tengo acceso de escritura directo en esta sesión (ver `docs/SEO_LANDING_BLOG.md` y memoria del proyecto para el mismo hallazgo en otro contexto).

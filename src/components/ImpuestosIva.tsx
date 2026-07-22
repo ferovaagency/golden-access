@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AppData } from '../types';
-import { FinancialMetrics } from '../lib/calculations';
+import { FinancialMetrics, calcularProyeccionAnualIngresos } from '../lib/calculations';
 import { ShieldCheck, ArrowRightLeft, AlertTriangle } from 'lucide-react';
 
 interface ImpuestosIvaProps {
@@ -13,10 +13,7 @@ export default function ImpuestosIva({ data, metrics, formatCop }: ImpuestosIvaP
   const { config, ventas } = data;
 
   // Calculamos ingresos anualizados proyectados para evaluar tope del Art 437 (3500 uvt)
-  const uniqueMonths = Array.from(new Set(ventas.map(v => v.fecha?.substring(0, 7)).filter(Boolean)));
-  const recordsMonthsCount = uniqueMonths.length || 1;
-  const avgMonthlySales = metrics.totalVentas / recordsMonthsCount;
-  const proyeccionAnualIngresos = avgMonthlySales * 12;
+  const { proyeccionAnual: proyeccionAnualIngresos } = calcularProyeccionAnualIngresos(ventas, metrics.totalVentas);
 
   // Antes era un literal `3500` -- ahora lee config.tope_responsable_iva_uvt,
   // igual que AlertasTributarias.tsx, para que ambas pantallas queden en

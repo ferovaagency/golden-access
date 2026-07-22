@@ -14,6 +14,20 @@ export function isColombiaFiscal(ctx: FiscalContext): boolean {
 }
 
 /**
+ * Proyecta ingresos anuales a partir del promedio mensual real acumulado.
+ * Antes vivía duplicada, literal, en ImpuestosIva.tsx y AlertasTributarias.tsx
+ * (misma fórmula exacta, sin ambigüedad de cuál era la "correcta" -- ver
+ * docs/METRICS_CATALOG.md). Centralizada aquí para que ambas pantallas usen
+ * la misma fuente si la fórmula cambia.
+ */
+export function calcularProyeccionAnualIngresos(ventas: Venta[], totalVentas: number): { avgMonthlySales: number; proyeccionAnual: number; recordsMonthsCount: number } {
+  const uniqueMonths = Array.from(new Set(ventas.map((v) => v.fecha?.substring(0, 7)).filter(Boolean)));
+  const recordsMonthsCount = uniqueMonths.length || 1;
+  const avgMonthlySales = totalVentas / recordsMonthsCount;
+  return { avgMonthlySales, proyeccionAnual: avgMonthlySales * 12, recordsMonthsCount };
+}
+
+/**
  * Calculates Independent Contractor (Persona Natural) Social Security obligations.
  * Solo aplica en Colombia; para otros países devuelve ceros y `applies=false`.
  */

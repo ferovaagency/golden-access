@@ -1,5 +1,5 @@
 import { Config, Venta } from '../types';
-import { FinancialMetrics } from '../lib/calculations';
+import { FinancialMetrics, calcularProyeccionAnualIngresos } from '../lib/calculations';
 import { BookOpen, AlertCircle, Milestone } from 'lucide-react';
 
 interface AlertasTributariasProps {
@@ -10,10 +10,7 @@ interface AlertasTributariasProps {
 }
 
 export default function AlertasTributarias({ metrics, config, ventas, formatCop }: AlertasTributariasProps) {
-  const uniqueMonths = Array.from(new Set(ventas.map(v => v.fecha?.substring(0, 7)).filter(Boolean)));
-  const recordsMonthsCount = uniqueMonths.length || 1;
-  const avgMonthlySales = metrics.totalVentas / recordsMonthsCount;
-  const projectedAnnualSales = avgMonthlySales * 12;
+  const { avgMonthlySales, proyeccionAnual: projectedAnnualSales, recordsMonthsCount } = calcularProyeccionAnualIngresos(ventas, metrics.totalVentas);
 
   // Limits
   const limiteRentaVentas = config.tope_no_declarante_uvt * config.uvt; // 1400 uvt

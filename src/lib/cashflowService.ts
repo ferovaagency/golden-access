@@ -12,7 +12,6 @@ export interface CashflowSnapshot {
   gastos_reales: number;
   obligaciones_proximas: number;
   deuda_total: number;
-  pagos_tc_estimados: number;
   saldo_actual: number;
   presupuesto_total: number;
   desviacion_pct: number;
@@ -89,9 +88,6 @@ export async function buildCashflow(userId: string, periodo: string, appData?: A
     .filter((p) => p.estado !== 'pagada' && p.estado !== 'cancelada')
     .reduce((s, p) => s + p.valor, 0);
   const deuda_total = debts.filter((d) => d.estado !== 'pagado').reduce((s, d) => s + debtBalance(d, debtPayments), 0);
-  const pagos_tc_estimados = accounts
-    .filter((a) => a.tipo === 'tarjeta_credito')
-    .reduce((s, a) => s + (a.cupo ? Math.max(0, (a.cupo - (a.saldo_inicial || 0))) * 0 : 0), 0); // placeholder — depende de movimientos reales
   const saldo_actual = accounts.reduce((s, a) => s + (a.saldo_inicial || 0), 0) + ingresos_reales - gastos_reales;
   const presupuesto_total = budget.reduce((s, b) => s + b.monto_presupuestado, 0);
   const desviacion_pct = presupuesto_total > 0 ? ((gastos_reales - presupuesto_total) / presupuesto_total) * 100 : 0;
@@ -110,5 +106,5 @@ export async function buildCashflow(userId: string, periodo: string, appData?: A
   if (saldo_actual < obligaciones_proximas) alertas.push({ tipo: 'caja_insuficiente', severidad: 'alta', mensaje: `Caja actual (${saldo_actual.toFixed(0)}) menor que obligaciones próximas (${obligaciones_proximas.toFixed(0)}).` });
   if (Math.abs(desviacion_pct) > 20 && presupuesto_total > 0) alertas.push({ tipo: 'presupuesto_desviado', severidad: 'media', mensaje: `Gastos ${desviacion_pct > 0 ? 'exceden' : 'están por debajo del'} presupuesto en ${Math.abs(desviacion_pct).toFixed(1)}%.` });
 
-  return { ingresos_reales, ingresos_pendientes, gastos_reales, obligaciones_proximas, deuda_total, pagos_tc_estimados, saldo_actual, presupuesto_total, desviacion_pct, alertas };
+  return { ingresos_reales, ingresos_pendientes, gastos_reales, obligaciones_proximas, deuda_total, saldo_actual, presupuesto_total, desviacion_pct, alertas };
 }
