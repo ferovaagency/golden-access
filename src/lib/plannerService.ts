@@ -6,7 +6,7 @@ import { supabase } from '../integrations/supabase/client';
 import { invokeAi } from './ai/aiClient';
 import { logger } from './logger';
 import { logSuggestion } from './auditLogService';
-import { isPlannerTaskEligible, plannerDateKey } from './plannerScheduling';
+import { plannerDateKey, plannerTaskAvailableDate } from './plannerScheduling';
 
 const log = logger.child('planner');
 
@@ -410,6 +410,12 @@ export const plannerService = {
       // with a manual time must never receive a second automatic block.
       .filter((task: PlannerTask) => !(task.recurrence_days || []).length && !fixedTaskIds.has(task.id))
       .sort((a: PlannerTask, b: PlannerTask) => ({ urgent: 0, high: 1, medium: 2, low: 3 }[a.priority] - ({ urgent: 0, high: 1, medium: 2, low: 3 }[b.priority])));
+    const availableFromByTask = new Map(ordered.map((task: PlannerTask) => [task.id, plannerTaskAvailableDate({
+      today: targetDate,
+      scheduledFor: task.scheduled_for,
+      deadline: task.deadline,
+      automaticallyScheduled: automaticallyScheduledTaskIds.has(task.id),
+    })]));
     const planned: any[] = [];
     const remaining = [...ordered];
     let planningDate = targetDate;
@@ -427,7 +433,7 @@ export const plannerService = {
           // must not become a permanent "not before" constraint on the next
           // reorganization, otherwise today's agenda stays empty while the
           // same tasks remain stranded in a future automatic block.
-          return isPlannerTaskEligible(task.id, task.scheduled_for, planningDate, automaticallyScheduledTaskIds);
+          return (availableFromByTask.get(task.id) || targetDate) <= planningDate;
         });
         if (!hasEligibleTask) {
           planningDate = nextDate(planningDate);
@@ -450,7 +456,7 @@ export const plannerService = {
           const task = remaining[index];
           // "Programar desde" is a promise to the user: a task can be due in
           // a month but intentionally held until, for example, two weeks out.
-          if (!isPlannerTaskEligible(task.id, task.scheduled_for, planningDate, automaticallyScheduledTaskIds)) {
+          if ((availableFromByTask.get(task.id) || targetDate) > planningDate) {
             index += 1;
             continue;
           }
