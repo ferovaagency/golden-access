@@ -239,8 +239,9 @@ export async function previewBookingLinkCitas(days = 30): Promise<{ scanned: num
   return { scanned: data.scanned, candidates: data.candidates as BookingCandidate[] };
 }
 
-export async function syncBookingLinkCitas(days = 30, eventIds?: string[]): Promise<{ scanned: number; inserted: number; skipped: number; citas: CitaDiagnostico[] }> {
-  const { data, error } = await supabase.functions.invoke('calendar-sync-bookings', { body: { days, ...(eventIds ? { event_ids: eventIds } : {}) } });
+export async function syncBookingLinkCitas(days = 30, eventIds: string[]): Promise<{ scanned: number; inserted: number; skipped: number; citas: CitaDiagnostico[] }> {
+  if (eventIds.length === 0) throw new Error('Selecciona al menos una reserva para importar.');
+  const { data, error } = await supabase.functions.invoke('calendar-sync-bookings', { body: { days, event_ids: eventIds } });
   if (error) throw await functionErrorMessage(error, 'No se pudieron sincronizar reservas.');
   if (!data?.ok) throw new Error(data?.message || 'No se pudieron sincronizar reservas.');
   return data;

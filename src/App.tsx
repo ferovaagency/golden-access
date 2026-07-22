@@ -24,6 +24,7 @@ import { AppShell } from './components/layout/AppShell';
 import type { NavigationSection } from './components/layout/navigationTypes';
 import { isFerovaUiV2Enabled } from './lib/featureFlags';
 import { SeoHead } from './seo/SeoHead';
+import { QuickHourLog } from './components/QuickHourLog';
 
 // Tab content: only one of these renders at a time (driven by activeTab), so
 // each is its own lazy chunk instead of bloating the main App bundle.
@@ -61,6 +62,7 @@ import {
   Calendar,
   Database,
   X,
+  Sparkles,
 } from 'lucide-react';
 
 // noindex garantizado sin importar en que estado (loading/auth/paywall/
@@ -579,6 +581,8 @@ function AppInner() {
         </div>
       )}
 
+      {isReady && appData && <QuickHourLog clientes={appData.clientes} servicios={appData.servicios} horas={appData.horas} onSave={handleSaveHoras} />}
+
       {isReady && appData && (
         <div className="hidden sm:flex items-center gap-2 bg-white px-3 py-2 rounded-2xl border border-slate-200 text-xs text-slate-600 shadow-sm">
           <div className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -608,7 +612,12 @@ function AppInner() {
 
   const periodBarNode = isReady && appData ? (
     <div className={`bg-white/90 border-b border-slate-200 py-3 text-xs ${isFerovaUiV2Enabled() ? 'ferova-v2-theme' : ''}`}>
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6">
+        <div className="mb-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900" role="status">
+          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden />
+          <p className="leading-5"><strong>Ferova aprende contigo.</strong> Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.</p>
+        </div>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4 text-blue-600" />
           <span className="font-mono text-slate-500 text-[10px] uppercase font-bold tracking-wider">Ventana Periodo DIAN:</span>
@@ -637,6 +646,7 @@ function AppInner() {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   ) : null;

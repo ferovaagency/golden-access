@@ -12,6 +12,10 @@ const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const PAYPAL_CLIENT_ID = Deno.env.get('PAYPAL_CLIENT_ID') || '';
 const PAYPAL_CLIENT_SECRET = Deno.env.get('PAYPAL_CLIENT_SECRET') || '';
 const PAYPAL_API_BASE = Deno.env.get('PAYPAL_API_BASE') || 'https://api-m.paypal.com';
+// This is an allow-list, not a value supplied by the browser. Keep the
+// fallback aligned with the public checkout until PAYPAL_PLAN_ID is set in
+// the function secrets.
+const PAYPAL_PLAN_ID = Deno.env.get('PAYPAL_PLAN_ID') || 'P-6ET66396M8263221VNJP2HCY';
 
 function json(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -62,10 +66,15 @@ Deno.serve(async (req) => {
     return json({ message: `La suscripcion todavia no esta activa en PayPal (status: ${subscription.status}).` }, 409);
   }
 
+  if (subscription.plan_id !== PAYPAL_PLAN_ID) {
+    console.error('[paypal-confirm-subscription] plan no permitido', { subscriptionId, planId: subscription.plan_id });
+    return json({ message: 'La suscripcion no corresponde al plan de Ferova One.' }, 403);
+  }
+
   // custom_id was set by the browser to the authenticated user's id when the
   // subscription was created -- cross-check it against the JWT user instead
   // of trusting either source alone.
-  if (subscription.custom_id && subscription.custom_id !== user.id) {
+  if (subscription.custom_id !== user.id) {
     console.error('[paypal-confirm-subscription] custom_id no coincide con el usuario autenticado', { subscriptionId, customId: subscription.custom_id, userId: user.id });
     return json({ message: 'La suscripcion no corresponde a este usuario.' }, 403);
   }

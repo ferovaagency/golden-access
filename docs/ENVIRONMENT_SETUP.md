@@ -13,6 +13,7 @@ Ferova OS needs two **public** build variables in the browser to create its Supa
 | `GOOGLE_CLIENT_ID` | Google OAuth setup | Google OAuth client identifier |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth setup | Google OAuth client secret; server only |
 | `GOOGLE_REDIRECT_URI` | Google OAuth setup | Registered OAuth callback URL |
+| `PAYPAL_PLAN_ID` | PayPal subscription validation | Server-side allow-list for the Billing Plan accepted by checkout and webhooks. Defaults to the current Ferova plan only for backward compatibility. |
 | `NOTION_CLIENT_ID` | Notion OAuth preparation | Notion OAuth client identifier |
 | `NOTION_CLIENT_SECRET` | Notion OAuth preparation | Notion OAuth client secret; server only |
 | `NOTION_REDIRECT_URI` | Notion OAuth preparation | Registered OAuth callback URL |

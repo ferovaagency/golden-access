@@ -1,6 +1,7 @@
 // Importa datos financieros desde un Google Sheet público (o compartido con "cualquiera con el link puede ver").
 // No requiere OAuth: usa el endpoint CSV de gviz. Devuelve values 2D por pestaña.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { createClient } from 'npm:@supabase/supabase-js@2';
 import { z } from 'npm:zod';
 
 const SHEET_TABS = ['Config', 'Clientes', 'Servicios', 'Herramientas', 'OtrosGastos', 'Ventas', 'Horas', 'Respaldos', 'PagosEgresos'];
@@ -79,6 +80,24 @@ async function fetchSheetsApi(spreadsheetId: string, accessToken: string): Promi
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+
+  // This endpoint can receive a short-lived Google access token. Do not make
+  // it an unauthenticated proxy, even when the target sheet itself is public.
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader) {
+    return new Response(JSON.stringify({ ok: false, message: 'Autenticacion requerida.' }), {
+      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+  const userClient = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const { data: { user }, error: userError } = await userClient.auth.getUser();
+  if (userError || !user) {
+    return new Response(JSON.stringify({ ok: false, message: 'Sesion no valida.' }), {
+      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
 
   try {
     const parsed = BodySchema.safeParse(await req.json());

@@ -48,13 +48,23 @@ export function usePlanner() {
     setBusy('classify'); setError(null);
     const { error: err } = await plannerService.classify(text);
     if (err) setError(err.message);
+    // A brain dump is an instruction to free mental space: once its tasks
+    // exist, propose the day immediately. Google events are supplied as busy
+    // intervals when the user has authorized Calendar; no token is persisted.
+    if (!err) {
+      const busyBlocks = await plannerService.calendarBusyBlocks(date);
+      const { data: plan, error: planError } = await plannerService.planDay(date, true, busyBlocks);
+      if (planError) setError(planError.message);
+      else if (plan) setPlanPreview(null);
+    }
     await refresh();
     setBusy(null);
-  }, [refresh]);
+  }, [date, refresh]);
 
   const planDay = useCallback(async () => {
     setBusy('plan'); setError(null);
-    const { data, error: err } = await plannerService.planDay(date);
+    const busyBlocks = await plannerService.calendarBusyBlocks(date);
+    const { data, error: err } = await plannerService.planDay(date, false, busyBlocks);
     if (err) setError(err.message);
     if (data) setPlanPreview(data);
     setBusy(null);
@@ -62,7 +72,8 @@ export function usePlanner() {
 
   const applyPlan = useCallback(async () => {
     setBusy('plan'); setError(null);
-    const { error: err } = await plannerService.planDay(date, true);
+    const busyBlocks = await plannerService.calendarBusyBlocks(date);
+    const { error: err } = await plannerService.planDay(date, true, busyBlocks);
     if (err) setError(err.message);
     else setPlanPreview(null);
     await refresh();
@@ -85,7 +96,18 @@ export function usePlanner() {
     setBusy(null);
   }, []);
 
-  const completeTask = useCallback(async (id: string) => { await plannerService.completeTask(id); await refresh(); }, [refresh]);
+  const completeTask = useCallback(async (id: string) => {
+    setBusy('task'); setError(null);
+    try {
+      await plannerService.completeTask(id);
+      await refresh();
+    } catch (err: any) {
+      setError(err.message || 'No fue posible completar la tarea.');
+      throw err;
+    } finally {
+      setBusy(null);
+    }
+  }, [refresh]);
   const updateTask = useCallback(async (id: string, input: UpdatePlannerTaskInput) => {
     setBusy('task'); setError(null);
     try { const result = await plannerService.updateTask(id, input); await refresh(); return result; }

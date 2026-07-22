@@ -60,6 +60,11 @@ Deno.serve(async (req) => {
     // existen, para no ofrecer de nuevo algo ya importado.
     const preview = body?.preview === true;
     const selectedIds: string[] | null = Array.isArray(body?.event_ids) ? body.event_ids.map(String) : null;
+    if (!preview && (!selectedIds || selectedIds.length === 0)) {
+      return new Response(JSON.stringify({ ok: false, message: 'Selecciona al menos una reserva de la vista previa antes de importarla.' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     if (selectedIds) events = events.filter((event: any) => selectedIds.includes(event.id));
 
     if (preview) {

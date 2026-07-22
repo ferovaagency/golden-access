@@ -20,36 +20,41 @@ export function useAuthAndAccess() {
   const [moduleOverrides, setModuleOverrides] = useState<ModuleOverrides>({});
   const modules = useMemo(() => getModules(plan, isTeam, moduleOverrides), [plan, isTeam, moduleOverrides]);
   const loadedUserId = useRef<string | null>(null);
+  const currentUser = useRef<User | null>(null);
 
   useEffect(() => {
+    const loadAccess = async (fUser: User, force = false) => {
+      // Supabase fires onAuthStateChange for TOKEN_REFRESHED too, which
+      // happens almost every time the tab regains focus. Avoid duplicate
+      // requests, except for an explicit visibility refresh.
+      if (!force && loadedUserId.current === fUser.id) return;
+      loadedUserId.current = fUser.id;
+      setCheckingPayment(true);
+      const [access, team] = await Promise.all([
+        resolveAccess(fUser.id, fUser.email || ''),
+        isTeamMember(fUser.email || '').catch(() => false),
+      ]);
+      const overrides = await listMyOverrides(fUser.id).catch((error) => {
+        console.error('[useAuthAndAccess] module overrides error:', error);
+        return [];
+      });
+      setHasPaid(access.hasPaid || team);
+      setPlan(access.plan);
+      setIsTeam(team);
+      setModuleOverrides(Object.fromEntries(overrides.map((override) => [override.module, override.enabled])) as ModuleOverrides);
+      setCheckingPayment(false);
+    };
+
     const unsubscribe = initAuth(
       async (fUser: User) => {
+        currentUser.current = fUser;
         setUser(fUser);
         setAuthLoading(false);
-        // Supabase fires onAuthStateChange for TOKEN_REFRESHED too, which
-        // happens almost every time the tab regains focus (background tabs
-        // pause the refresh timer). Re-running the full access/team/overrides
-        // fetch on every one of those made the whole app flash back to a
-        // loading state -- felt like a reload even though nothing changed.
-        if (loadedUserId.current === fUser.id) return;
-        loadedUserId.current = fUser.id;
-        setCheckingPayment(true);
-        const [access, team] = await Promise.all([
-          resolveAccess(fUser.id, fUser.email || ''),
-          isTeamMember(fUser.email || '').catch(() => false),
-        ]);
-        const overrides = await listMyOverrides(fUser.id).catch((error) => {
-          console.error('[useAuthAndAccess] module overrides error:', error);
-          return [];
-        });
-        setHasPaid(access.hasPaid || team);
-        setPlan(access.plan);
-        setIsTeam(team);
-        setModuleOverrides(Object.fromEntries(overrides.map((override) => [override.module, override.enabled])) as ModuleOverrides);
-        setCheckingPayment(false);
+        await loadAccess(fUser);
       },
       () => {
         loadedUserId.current = null;
+        currentUser.current = null;
         setUser(null);
         setHasPaid(false);
         setIsTeam(false);
@@ -58,7 +63,19 @@ export function useAuthAndAccess() {
         setAuthLoading(false);
       }
     );
-    return () => unsubscribe();
+    // Plan and per-module overrides can be changed from the admin portal
+    // while the customer still has a tab open. Refresh on return so a stale
+    // session does not keep hiding modules that were just granted.
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible' && currentUser.current) {
+        void loadAccess(currentUser.current, true);
+      }
+    };
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+      unsubscribe();
+    };
   }, []);
 
   const handleLogin = async (onError: (message: string) => void) => {

@@ -96,6 +96,8 @@ export interface PlannerPlanResult {
   blocks: PlannerBlock[];
 }
 
+export interface PlannerBusyBlock { starts_at: string; ends_at: string; title?: string; }
+
 export interface CreatePlannerBlockInput {
   title: string;
   starts_at: string;
@@ -172,7 +174,31 @@ export const plannerService = {
     await anyDb().from('planner_insights').update({ dismissed: true }).eq('id', id);
   },
   async completeTask(id: string, actualMinutes?: number) {
-    await anyDb().from('planner_tasks').update({ status: 'done', completed_at: new Date().toISOString(), actual_minutes: actualMinutes ?? null }).eq('id', id);
+    const { error: taskError } = await anyDb()
+      .from('planner_tasks')
+      .update({ status: 'done', completed_at: new Date().toISOString(), actual_minutes: actualMinutes ?? null })
+      .eq('id', id);
+    if (taskError) throw taskError;
+
+    // A task can remain referenced by an already-created agenda block. Without
+    // removing that reference, the check marks it done in the database but it
+    // continues to be rendered as pending in "Tu agenda" until a re-plan.
+    const { data: linkedBlocks, error: blocksError } = await anyDb()
+      .from('planner_blocks')
+      .select('id, task_ids, source')
+      .contains('task_ids', [id]);
+    if (blocksError) throw blocksError;
+
+    await Promise.all((linkedBlocks || []).map((block: { id: string; task_ids: string[]; source: string }) => {
+      const remainingTaskIds = (block.task_ids || []).filter((taskId) => taskId !== id);
+      // Automatically generated blocks only represent tasks, so an empty one
+      // should disappear. A manual/protected block is a real commitment and
+      // remains on the agenda even if its linked task is completed.
+      if (remainingTaskIds.length === 0 && ['ai', 'planner-rules', 'task', 'recurrence'].includes(block.source)) {
+        return anyDb().from('planner_blocks').delete().eq('id', block.id);
+      }
+      return anyDb().from('planner_blocks').update({ task_ids: remainingTaskIds }).eq('id', block.id);
+    }));
   },
   async listClients(): Promise<PlannerClient[]> {
     const { data, error } = await anyDb().from('finance_clientes').select('id, nombre').order('nombre');
@@ -235,8 +261,16 @@ export const plannerService = {
   async classify(text: string) {
     return invokeAi<{ ok: boolean; results: any[] }>({ functionName: 'planner-classify', body: { text } });
   },
-  async planDay(date?: string, apply = false) {
-    return invokeAi<PlannerPlanResult>({ functionName: 'planner-plan-day', body: { date, apply } });
+  async calendarBusyBlocks(date: string): Promise<PlannerBusyBlock[]> {
+    const { getAccessToken } = await import('./supabase');
+    const accessToken = getAccessToken();
+    if (!accessToken) return [];
+    const { data, error } = await supabase.functions.invoke('planner-calendar-busy', { body: { date, access_token: accessToken } });
+    if (error || !data?.ok) return [];
+    return data.blocks || [];
+  },
+  async planDay(date?: string, apply = false, busyBlocks: PlannerBusyBlock[] = []) {
+    return invokeAi<PlannerPlanResult>({ functionName: 'planner-plan-day', body: { date, apply, busy_blocks: busyBlocks } });
   },
   async regenerateInsights() {
     return invokeAi<{ ok: boolean; insights: any[] }>({ functionName: 'planner-insights', body: { kind: 'insights' } });

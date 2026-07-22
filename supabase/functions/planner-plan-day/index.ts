@@ -98,6 +98,9 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const date = typeof body?.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.date) ? body.date : new Date().toISOString().slice(0, 10);
     const apply = body?.apply === true;
+    const externalBusy = Array.isArray(body?.busy_blocks) ? body.busy_blocks
+      .filter((block: any) => typeof block?.starts_at === 'string' && typeof block?.ends_at === 'string')
+      .slice(0, 100) : [];
     const dayStart = new Date(`${date}T00:00:00`).toISOString();
     const dayEnd = new Date(`${date}T23:59:59`).toISOString();
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
@@ -117,7 +120,10 @@ Deno.serve(async (req) => {
     let workEnd = parseHorario(profile?.horario_fin, 18 * 60);
     if (workEnd <= workStart) workEnd = workStart + 8 * 60; // config inconsistente -- no dejar una jornada de 0 minutos
 
-    const locked = (existingBlocks || []).filter((block: any) => block.protected || block.source === "google" || block.source === "external");
+    const locked = [
+      ...(existingBlocks || []).filter((block: any) => block.protected || block.source === "google" || block.source === "external"),
+      ...externalBusy,
+    ];
     const blocks = buildPlan(date, (tasks || []) as Task[], locked, workStart, workEnd);
     const summary = blocks.length
       ? `${blocks.length} bloques propuestos dentro de tu horario laboral (${profile?.horario_inicio || "08:00"}-${profile?.horario_fin || "18:00"}); los eventos protegidos se conservaran.`
