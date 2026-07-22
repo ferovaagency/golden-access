@@ -1,6 +1,6 @@
 import { Fragment, type ReactNode } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { X } from 'lucide-react';
+import { HelpCircle, X } from 'lucide-react';
 import { WorkspaceHeader } from './WorkspaceHeader';
 import { PrimaryNavigation } from './PrimaryNavigation';
 import { ContextNavigation } from './ContextNavigation';
@@ -14,6 +14,7 @@ interface AppShellProps {
   user: User;
   onSignOut: () => void;
   headerExtras?: ReactNode;
+  topBar?: ReactNode;
   periodBar?: ReactNode;
   aiSidebar?: ReactNode;
   footer?: ReactNode;
@@ -32,20 +33,14 @@ interface AppShellProps {
  */
 export function AppShell({
   sections, activeSectionId, activeTab, onNavigateTab, user, onSignOut,
-  headerExtras, periodBar, aiSidebar, footer,
+  headerExtras, topBar, periodBar, aiSidebar, footer,
   mobileMenuOpen, onToggleMobileMenu, onCloseMobileMenu, children,
 }: AppShellProps) {
   const activeSection = sections.find((section) => section.id === activeSectionId);
 
   return (
-    <div className="ferova-v2-theme min-h-screen flex flex-col bg-[var(--ferova-canvas)] font-sans text-[#1f1b16]">
-      <WorkspaceHeader
-        user={user}
-        onSignOut={onSignOut}
-        mobileMenuOpen={mobileMenuOpen}
-        onToggleMobileMenu={onToggleMobileMenu}
-        extras={headerExtras}
-      />
+    <div className="ferova-v2-theme min-h-screen bg-[var(--ferova-canvas)] font-sans text-[#1f1b16]">
+      <div className="lg:hidden"><WorkspaceHeader user={user} onSignOut={onSignOut} mobileMenuOpen={mobileMenuOpen} onToggleMobileMenu={onToggleMobileMenu} extras={headerExtras} /></div>
 
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-[#1f1b16]/35 backdrop-blur-sm lg:hidden" onClick={onCloseMobileMenu}>
@@ -102,35 +97,38 @@ export function AppShell({
         </div>
       )}
 
-      {periodBar}
-
-      <div className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-6 px-4 py-6 sm:px-6 lg:flex-row">
-        <aside className="hidden shrink-0 lg:block lg:w-64">
-          <div className="sticky top-24 rounded-[var(--ferova-radius-card)] border border-[var(--ferova-line)] bg-[var(--ferova-surface)] p-3 shadow-[var(--ferova-shadow)]">
-            <PrimaryNavigation
-              sections={sections}
-              activeSectionId={activeSectionId}
-              onSelectSection={(section) => section.items[0] && onNavigateTab(section.items[0].id)}
-            />
-          </div>
-        </aside>
-
-        <main className="min-w-0 flex-1">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-[var(--ferova-line)] bg-[var(--ferova-surface)] lg:flex">
+        <div className="flex h-16 items-center gap-3 border-b border-[var(--ferova-line)] px-4">
+          <div className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--ferova-brand)] font-display text-sm font-bold text-white">F</div>
+          <div><p className="font-display text-sm font-semibold tracking-tight text-[var(--ferova-ink)]">Ferova One</p><p className="text-[9px] uppercase tracking-[.14em] text-[#9b968f]">Business OS</p></div>
+        </div>
+        <div className="flex-1 overflow-y-auto px-3 py-4">
+          <p className="mb-2 px-3 text-[9px] font-bold uppercase tracking-[.16em] text-[#aaa49c]">Navegación</p>
+          <PrimaryNavigation
+            sections={sections}
+            activeSectionId={activeSectionId}
+            onSelectSection={(section) => section.items[0] && onNavigateTab(section.items[0].id)}
+          />
           {activeSection && activeSection.items.length > 1 && (
-            <ContextNavigation
-              items={activeSection.items}
-              activeTab={activeTab}
-              onSelectItem={onNavigateTab}
-              className="mb-4"
-            />
+            <div className="mt-4 border-t border-[var(--ferova-line)] pt-3">
+              <ContextNavigation items={activeSection.items} activeTab={activeTab} onSelectItem={onNavigateTab} variant="vertical" />
+            </div>
           )}
-          {children}
-        </main>
+        </div>
+        <div className="border-t border-[var(--ferova-line)] p-3"><button type="button" className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium text-[#77716a] hover:bg-[var(--ferova-soft)]"><HelpCircle className="h-4 w-4" /> Ayuda</button></div>
+      </aside>
 
-        {aiSidebar}
+      <div className="min-h-screen lg:pl-60">
+        {topBar}
+        {periodBar}
+        <div className="flex w-full min-w-0 flex-1 gap-4 px-3 pb-5 sm:px-5">
+          <main className="min-w-0 flex-1">
+            {children}
+          </main>
+          {aiSidebar}
+        </div>
+        {footer}
       </div>
-
-      {footer}
     </div>
   );
 }

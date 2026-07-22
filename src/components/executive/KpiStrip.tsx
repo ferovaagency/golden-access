@@ -59,7 +59,7 @@ function KpiCard({ item, periodKey, reduce }: { item: KpiItem; periodKey: string
 export function KpiStrip({ items, periodKey }: KpiStripProps) {
   const reduce = Boolean(useReducedMotion());
   return (
-    <section aria-label="Indicadores clave" className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-5">
+    <section aria-label="Indicadores clave" className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {items.map((item) => (
         <KpiCard key={item.key} item={item} periodKey={periodKey} reduce={reduce} />
       ))}

@@ -187,22 +187,22 @@ pre {
   --ferova-brand-2: #6f1a21;
   --ferova-navy: #2F2D56;
   --ferova-gold: #C0930E;
-  --ferova-canvas: #FFFDF9;
+  --ferova-canvas: #F4F5F7;
   --ferova-surface: #FFFFFF;
-  --ferova-soft: #F7F1E9;
-  --ferova-line: #E9E0D7;
+  --ferova-soft: #F4F4F5;
+  --ferova-line: #E4E5E7;
   --ferova-ai: #ECE9FF;
   --ferova-positive: #E3F4EB;
   --ferova-warning: #F3EAD6;
   --ferova-danger: #F7E3E4;
 
   --ferova-radius-control: 12px;
-  --ferova-radius-card: 20px;
-  --ferova-radius-hero: 28px;
+  --ferova-radius-card: 14px;
+  --ferova-radius-hero: 18px;
   --ferova-radius-pill: 999px;
 
-  --ferova-shadow: 0 8px 24px rgba(60, 35, 20, 0.05);
-  --ferova-shadow-hover: 0 18px 48px rgba(60, 35, 20, 0.09);
+  --ferova-shadow: 0 1px 2px rgba(24, 24, 27, 0.04), 0 8px 24px rgba(24, 24, 27, 0.035);
+  --ferova-shadow-hover: 0 14px 36px rgba(24, 24, 27, 0.09);
 }
 
 /* Material Button GSI */

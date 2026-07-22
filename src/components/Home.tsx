@@ -104,7 +104,6 @@ export default function Home({ data, metrics, selectedMonth, formatCop, onNaviga
       { key: 'utilidadOp', label: 'Utilidad operativa', value: metrics.utilidadOperacional, format: formatCop, detail: 'Después de costos y gastos', icon: Wallet },
       { key: 'utilidadNeta', label: 'Utilidad neta', value: metrics.utilidadNeta, format: formatCop, detail: 'Estimación después de impuestos', icon: ShieldCheck },
       { key: 'clientes', label: 'Clientes activos', value: activeClients.length, format: (v) => String(Math.round(v)), detail: 'Cuentas en seguimiento', icon: Users },
-      { key: 'horas', label: 'Horas registradas', value: totalHours, format: (v) => `${Math.round(v)} h`, detail: 'Capacidad del período', icon: Clock3 },
     ];
 
     const reorderableSections: Record<HomeSectionId, ReactElement> = {
@@ -120,10 +119,9 @@ export default function Home({ data, metrics, selectedMonth, formatCop, onNaviga
     };
 
     return (
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 pb-10">
+      <div className="mx-auto flex w-full max-w-[1380px] flex-col gap-4 pb-8">
         <KpiStrip items={kpiItems} periodKey={selectedMonth} />
-        <QuickActionsGrid actions={quickActions} onNavigate={onNavigate} />
-        <div className="grid gap-6 xl:grid-cols-[1.45fr_1fr]">
+        <div className="grid gap-4 xl:grid-cols-[1.45fr_1fr]">
           <SalesTrendChart sales={periodSales} formatCop={formatCop} />
           <OperationsChart income={metrics.totalVentas} operatingProfit={metrics.utilidadOperacional} totalHours={totalHours} activeClients={activeClients.length} formatCop={formatCop} />
         </div>

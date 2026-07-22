@@ -662,13 +662,15 @@ function AppInner() {
     </footer>
   );
 
+  const topBarNode = <TopBar userId={user.id} onOpenPalette={() => setPaletteOpen(true)} onNavigate={handleNavigate} user={user} extras={headerExtrasNode} onSignOut={handleSignOut} />;
+
   // Contenido del modulo activo: identico switch/Suspense para ambos shells,
   // asi el rediseno de layout nunca puede tocar la logica de que se renderiza.
   // La clase ferova-v2-theme (Fase 4/5) reskinea por CSS los modulos que
   // todavia no se migraron componente a componente -- ver src/index.css.
   const mainContent = (
     <div className={isFerovaUiV2Enabled() ? 'ferova-v2-theme' : undefined}>
-      <TopBar userId={user.id} onOpenPalette={() => setPaletteOpen(true)} onNavigate={handleNavigate} />
+      {!isFerovaUiV2Enabled() && topBarNode}
       {sheetsLoading && (
         <div className="bg-blue-50 border-b border-blue-100 text-blue-700 py-2 text-center text-xs font-semibold flex items-center justify-center gap-2">
           <Loader2 className="w-3.5 h-3.5 animate-spin" /> Guardando cambios…
@@ -781,6 +783,7 @@ function AppInner() {
           user={user}
           onSignOut={handleSignOut}
           headerExtras={headerExtrasNode}
+          topBar={topBarNode}
           periodBar={periodBarNode}
           aiSidebar={aiSidebarNode}
           footer={footerNode}

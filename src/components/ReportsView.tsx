@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { FileText, Loader2, Sparkles, AlertTriangle, CheckCircle2, Target, Calculator } from 'lucide-react';
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { CeoReport, DecisionSimulation, ReportPeriod, generateReport, listReports, listSimulations, runSimulation } from '../lib/reportsService';
 import { AiDisclosure } from './AiDisclosure';
 
@@ -124,6 +125,8 @@ export default function ReportsView({ user }: { user: User }) {
             </button>
           </div>
 
+          {!loading && reports.length > 0 && <ReportsOverview reports={reports} />}
+
           {loading ? (
             <div className="rounded-2xl border border-slate-200 bg-white p-16 text-center">
               <Loader2 className="w-6 h-6 animate-spin text-blue-600 mx-auto" />
@@ -184,6 +187,34 @@ export default function ReportsView({ user }: { user: User }) {
       )}
     </div>
   );
+}
+
+function ReportsOverview({ reports }: { reports: CeoReport[] }) {
+  const latest = reports[0];
+  const metrics = latest.metrics || {};
+  const history = [...reports].reverse().slice(-8).map((report) => ({
+    period: report.period_end.slice(5),
+    ingresos: Number(report.metrics?.revenue_cop || 0),
+    utilidad: Number(report.metrics?.gross_margin_cop || report.metrics?.cash_cop || 0),
+    score: Number(report.health_score || 0),
+  }));
+  const health = Math.max(0, Math.min(100, Number(latest.health_score || 0)));
+  const margin = Number(metrics.gross_margin_pct || 0);
+  const cards = [
+    ['Ingresos', formatCop(metrics.revenue_cop), 'Facturación del período'],
+    ['Utilidad neta', formatCop(metrics.cash_cop), 'Caja después de movimientos'],
+    ['Margen bruto', `${Math.round(margin * (Math.abs(margin) <= 1 ? 100 : 1))}%`, 'Rentabilidad del período'],
+  ];
+  return <div className="space-y-4">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {cards.map(([label, value, detail]) => <article key={label} className="rounded-[var(--ferova-radius-card)] border border-[var(--ferova-line)] bg-white p-4 shadow-[var(--ferova-shadow)]"><p className="text-[9px] font-bold uppercase tracking-[.15em] text-slate-400">{label}</p><p className="mt-2 text-xl font-semibold tracking-tight text-slate-950">{value}</p><p className="mt-1 text-[11px] text-slate-500">{detail}</p></article>)}
+      <article className="flex items-center justify-between rounded-[var(--ferova-radius-card)] border border-[var(--ferova-line)] bg-white p-4 shadow-[var(--ferova-shadow)]"><div><p className="text-[9px] font-bold uppercase tracking-[.15em] text-slate-400">Health del negocio</p><p className="mt-2 text-xl font-semibold text-slate-950">{health}%</p><p className="mt-1 text-[11px] text-slate-500">Ecosistema de indicadores</p></div><div className="grid h-16 w-16 place-items-center rounded-full" style={{ background: `conic-gradient(#541014 ${health * 3.6}deg, #ececee 0)` }}><div className="grid h-11 w-11 place-items-center rounded-full bg-white text-xs font-bold text-[#541014]">{health}</div></div></article>
+    </div>
+    <div className="grid gap-4 xl:grid-cols-[1.35fr_.85fr]">
+      <article className="rounded-[var(--ferova-radius-card)] border border-[var(--ferova-line)] bg-white p-4 shadow-[var(--ferova-shadow)]"><div className="mb-3"><p className="text-[9px] font-bold uppercase tracking-[.15em] text-slate-400">Evolución</p><h2 className="mt-1 text-sm font-semibold text-slate-900">Reporte de decisiones</h2></div><div className="h-56"><ResponsiveContainer width="100%" height="100%"><AreaChart data={history}><defs><linearGradient id="reportRevenue" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#541014" stopOpacity={.28}/><stop offset="100%" stopColor="#541014" stopOpacity={0}/></linearGradient></defs><CartesianGrid vertical={false} stroke="#ececee"/><XAxis dataKey="period" axisLine={false} tickLine={false} tick={{fontSize:10,fill:'#8b8b91'}}/><YAxis hide/><Tooltip formatter={(value:number) => formatCop(value)} contentStyle={{borderRadius:10,border:'1px solid #e4e5e7',fontSize:11}}/><Area type="monotone" dataKey="ingresos" stroke="#541014" strokeWidth={2.5} fill="url(#reportRevenue)" animationDuration={900}/></AreaChart></ResponsiveContainer></div></article>
+      <article className="rounded-[var(--ferova-radius-card)] border border-[var(--ferova-line)] bg-white p-4 shadow-[var(--ferova-shadow)]"><div className="mb-3"><p className="text-[9px] font-bold uppercase tracking-[.15em] text-slate-400">Comparativo</p><h2 className="mt-1 text-sm font-semibold text-slate-900">Ingresos y utilidad</h2></div><div className="h-56"><ResponsiveContainer width="100%" height="100%"><BarChart data={history.slice(-5)} layout="vertical"><CartesianGrid horizontal={false} stroke="#ececee"/><XAxis type="number" hide/><YAxis dataKey="period" type="category" axisLine={false} tickLine={false} width={42} tick={{fontSize:10,fill:'#8b8b91'}}/><Tooltip formatter={(value:number) => formatCop(value)} contentStyle={{borderRadius:10,border:'1px solid #e4e5e7',fontSize:11}}/><Bar dataKey="ingresos" fill="#541014" radius={[0,6,6,0]} barSize={9}/><Bar dataKey="utilidad" fill="#58a97a" radius={[0,6,6,0]} barSize={9}/></BarChart></ResponsiveContainer></div></article>
+    </div>
+  </div>;
 }
 
 function ReportCard({ report }: { report: CeoReport }) {
