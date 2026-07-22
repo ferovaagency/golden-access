@@ -156,6 +156,18 @@ function nextDate(date: string) {
   return value.toISOString().slice(0, 10);
 }
 
+/**
+ * Supabase can return a planner date as either `YYYY-MM-DD` or as a timestamp,
+ * depending on the schema version deployed by Lovable. Planner comparisons
+ * must always use the calendar-date portion; comparing a timestamp directly
+ * with `YYYY-MM-DD` postpones a task by one day and can leave old blocks in
+ * the agenda.
+ */
+export function plannerDateKey(value: string | null | undefined): string | null {
+  const match = value?.match(/^(\d{4}-\d{2}-\d{2})/);
+  return match?.[1] ?? null;
+}
+
 function dayOfWeek(date: string) {
   return new Date(`${date}T12:00:00Z`).getUTCDay();
 }
@@ -408,6 +420,18 @@ export const plannerService = {
     // placing tasks on the following workdays, never in elapsed hours.
     while (remaining.length && checkedDays < maxPlanningDays) {
       if (workdays.includes(dayOfWeek(planningDate))) {
+        // Do not call Google Calendar once per day while merely advancing to
+        // a task's future "Programar desde" date. Besides being slow, that
+        // produced dozens of avoidable Edge Function errors for one click.
+        const hasEligibleTask = remaining.some((task: PlannerTask) => {
+          const availableFrom = plannerDateKey(task.scheduled_for);
+          return !availableFrom || availableFrom <= planningDate;
+        });
+        if (!hasEligibleTask) {
+          planningDate = nextDate(planningDate);
+          checkedDays += 1;
+          continue;
+        }
         const calendarBlocks = planningDate === targetDate && busyBlocks.length
           ? busyBlocks
           : await this.calendarBusyBlocks(planningDate);
@@ -424,7 +448,8 @@ export const plannerService = {
           const task = remaining[index];
           // "Programar desde" is a promise to the user: a task can be due in
           // a month but intentionally held until, for example, two weeks out.
-          if (task.scheduled_for && task.scheduled_for > planningDate) {
+          const availableFrom = plannerDateKey(task.scheduled_for);
+          if (availableFrom && availableFrom > planningDate) {
             index += 1;
             continue;
           }
@@ -444,16 +469,34 @@ export const plannerService = {
     }
     if (apply) {
       const rebuildTaskIds = (tasks || [])
-        .filter((task: PlannerTask) => !task.scheduled_for || task.scheduled_for <= rangeEnd)
+        .filter((task: PlannerTask) => {
+          const availableFrom = plannerDateKey(task.scheduled_for);
+          return !availableFrom || availableFrom <= rangeEnd;
+        })
         .map((task: PlannerTask) => task.id);
       // A rolling plan is rebuilt as a whole. Delete every old automatic
       // occurrence for the open tasks in its horizon, including stale blocks
       // in past days, before inserting the one authoritative occurrence.
-      const deleteQuery = anyDb().from('planner_blocks').delete().in('source', ['ai', 'planner-rules']);
-      const { error: deleteError } = rebuildTaskIds.length
-        ? await deleteQuery.overlaps('task_ids', rebuildTaskIds)
-        : { error: null };
-      if (deleteError) return { data: null, error: deleteError };
+      if (rebuildTaskIds.length) {
+        const rebuildSet = new Set(rebuildTaskIds);
+        const { data: generatedBlocks, error: generatedError } = await anyDb()
+          .from('planner_blocks')
+          .select('id, task_ids')
+          .in('source', ['ai', 'planner-rules']);
+        if (generatedError) return { data: null, error: generatedError };
+
+        // Filter client-side for compatibility with older Lovable schemas
+        // where task_ids was exposed inconsistently and PostgREST `overlaps`
+        // rejected an otherwise valid delete.
+        const staleIds = (generatedBlocks || [])
+          .filter((block: { id: string; task_ids: string[] | null }) =>
+            (block.task_ids || []).some((taskId) => rebuildSet.has(taskId)))
+          .map((block: { id: string }) => block.id);
+        if (staleIds.length) {
+          const { error: deleteError } = await anyDb().from('planner_blocks').delete().in('id', staleIds);
+          if (deleteError) return { data: null, error: deleteError };
+        }
+      }
       if (planned.length) {
         const { error: insertError } = await anyDb().from('planner_blocks').insert(planned);
         if (insertError) return { data: null, error: insertError };

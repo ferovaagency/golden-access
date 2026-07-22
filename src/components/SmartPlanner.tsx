@@ -469,7 +469,7 @@ function TaskRow({ task, clientName, isProtected, onEdit, onComplete, onPostpone
       {clientName && <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${clientTone(task.client_ref)}`}>● {clientName}</span>}
       <span className="text-[10px] text-slate-400 inline-flex items-center gap-1"><Clock className="h-3 w-3" aria-hidden /> {task.estimated_minutes}m</span>
       {isProtected && <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] text-amber-700"><Lock className="h-3 w-3" aria-hidden /> Protegido</span>}
-      {task.scheduled_for && <span className="text-[10px] text-blue-700 bg-blue-50 rounded-full px-2 py-0.5">Desde {new Date(`${task.scheduled_for}T12:00:00`).toLocaleDateString()}</span>}
+      {task.scheduled_for && <span className="text-[10px] text-blue-700 bg-blue-50 rounded-full px-2 py-0.5">Desde {new Date(`${task.scheduled_for.slice(0, 10)}T12:00:00`).toLocaleDateString()}</span>}
       {task.deadline && <span className="text-[10px] text-amber-700 bg-amber-50 rounded-full px-2 py-0.5">⏰ {new Date(task.deadline).toLocaleDateString()}</span>}
       {/* Actions: always visible on touch/mobile, subtle on desktop hover. */}
       <div className="flex items-center gap-1 sm:opacity-70 sm:group-hover:opacity-100 transition-opacity">
