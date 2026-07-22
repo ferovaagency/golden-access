@@ -301,7 +301,10 @@ export const plannerService = {
     const { data: overdue, error } = await anyDb()
       .from('planner_tasks')
       .select('id, title, postponed_count, scheduled_for')
-      .eq('status', 'scheduled')
+      // The server-side rolling job marks missed work as "postponed". Treat
+      // every unfinished scheduled state alike, otherwise those tasks never
+      // reach the automatic replanner after the first missed day.
+      .in('status', ['backlog', 'scheduled', 'postponed'])
       .lt('scheduled_for', todayDate);
     if (error) { log.error(error); return []; }
     if (!overdue || !overdue.length) return [];
@@ -314,7 +317,7 @@ export const plannerService = {
       .from('planner_blocks')
       .select('id, task_ids, source')
       .in('source', ['ai', 'planner-rules']);
-    if (staleBlocksError) { log.error(staleBlocksError); return []; }
+    if (staleBlocksError) log.error(staleBlocksError);
     await Promise.all((staleBlocks || []).flatMap((block: { id: string; task_ids: string[]; source: string }) => {
       const taskIds = block.task_ids || [];
       if (!taskIds.some((id) => overdueIds.has(id))) return [];
@@ -327,6 +330,7 @@ export const plannerService = {
     await Promise.all(overdue.map((t: any) =>
       anyDb().from('planner_tasks').update({
         scheduled_for: todayDate,
+        status: 'postponed',
         postponed_count: (t.postponed_count ?? 0) + 1,
       }).eq('id', t.id)
     ));
@@ -439,8 +443,16 @@ export const plannerService = {
       checkedDays += 1;
     }
     if (apply) {
-      const dayStart = localPlannerTimeToIso(`${targetDate}T00:00:00`, timeZone), dayEnd = localPlannerTimeToIso(`${rangeEnd}T00:00:00`, timeZone);
-      const { error: deleteError } = await anyDb().from('planner_blocks').delete().in('source', ['ai', 'planner-rules']).gte('starts_at', dayStart).lt('starts_at', dayEnd);
+      const rebuildTaskIds = (tasks || [])
+        .filter((task: PlannerTask) => !task.scheduled_for || task.scheduled_for <= rangeEnd)
+        .map((task: PlannerTask) => task.id);
+      // A rolling plan is rebuilt as a whole. Delete every old automatic
+      // occurrence for the open tasks in its horizon, including stale blocks
+      // in past days, before inserting the one authoritative occurrence.
+      const deleteQuery = anyDb().from('planner_blocks').delete().in('source', ['ai', 'planner-rules']);
+      const { error: deleteError } = rebuildTaskIds.length
+        ? await deleteQuery.overlaps('task_ids', rebuildTaskIds)
+        : { error: null };
       if (deleteError) return { data: null, error: deleteError };
       if (planned.length) {
         const { error: insertError } = await anyDb().from('planner_blocks').insert(planned);
