@@ -66,11 +66,14 @@ export function usePlanner() {
   const planDay = useCallback(async () => {
     setBusy('plan'); setError(null);
     const busyBlocks = await plannerService.calendarBusyBlocks(date);
-    const { data, error: err } = await plannerService.planDay(date, false, busyBlocks);
+    // Reorganizar is an operating command, not a draft: the planner applies
+    // the best agenda immediately, preserving protected/Calendar blocks.
+    const { error: err } = await plannerService.planDay(date, true, busyBlocks);
     if (err) setError(err.message);
-    if (data) setPlanPreview(data);
+    else setPlanPreview(null);
+    await refresh();
     setBusy(null);
-  }, [date]);
+  }, [date, refresh]);
 
   const applyPlan = useCallback(async () => {
     setBusy('plan'); setError(null);

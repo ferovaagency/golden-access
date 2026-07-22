@@ -46,6 +46,11 @@ function zonedMinutes(iso: string, timeZone: string) {
   return Number(parts.hour) * 60 + Number(parts.minute);
 }
 
+function zonedDateKey(value: Date, timeZone: string) {
+  const parts = zoneParts(value, timeZone);
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
 function deadlineWeight(deadline: string | null, date: string) {
   if (!deadline) return Number.MAX_SAFE_INTEGER;
   const diff = new Date(deadline).getTime() - new Date(`${date}T23:59:59`).getTime();
@@ -94,6 +99,12 @@ function buildPlan(date: string, tasks: Task[], lockedBlocks: Array<{ starts_at:
   });
   const blocks: Block[] = [];
   let plannedMinutes = 0;
+  const now = new Date();
+  // When organizing today, never backfill tasks into the past. Round to the
+  // next slot so the first proposed task is actionable at the current time.
+  const earliestStart = date === zonedDateKey(now, timeZone)
+    ? Math.max(workStart, Math.ceil(zonedMinutes(now.toISOString(), timeZone) / SLOT_MINUTES) * SLOT_MINUTES)
+    : workStart;
   // "Tarde" (para admin/calls) es el tercio final de la jornada laboral, no
   // siempre las 2pm -- con un horario 08:00-14:00 eso caería fuera de rango.
   const afternoonStart = workStart + Math.round(((workEnd - workStart) * 2) / 3);
@@ -104,10 +115,10 @@ function buildPlan(date: string, tasks: Task[], lockedBlocks: Array<{ starts_at:
     const maxBlock = Math.max(SLOT_MINUTES, workEnd - workStart);
     const duration = Math.max(SLOT_MINUTES, Math.min(120, maxBlock, Math.ceil(Number(task.estimated_minutes || 30) / SLOT_MINUTES) * SLOT_MINUTES));
     const preferredStart = task.category === "deep_work" || task.energy_required === "high" ? workStart : task.category === "admin" || task.category === "calls" ? afternoonStart : midMorningStart;
-    let start = preferredStart;
+    let start = Math.max(preferredStart, earliestStart);
     while (start + duration <= workEnd && overlaps(start, start + duration, busy)) start += SLOT_MINUTES;
     if (start + duration > workEnd) {
-      start = workStart;
+      start = earliestStart;
       while (start + duration <= workEnd && overlaps(start, start + duration, busy)) start += SLOT_MINUTES;
     }
     if (start + duration > workEnd) continue;

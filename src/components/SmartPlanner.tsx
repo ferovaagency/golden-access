@@ -157,7 +157,7 @@ export default function SmartPlanner() {
             className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
           >
             {p.busy === 'plan' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
-            Reorganizar mi día
+            Organizar agenda automáticamente
           </button>
         </div>
       </header>
@@ -410,8 +410,8 @@ function PlannerCalendar({ view, date, tasks, clients, compact, timeZone, onSele
           <div className="space-y-1">{dayTasks.slice(0, compact ? 2 : 4).map((task) => {
             const client = clients.find((item) => item.id === task.client_ref);
             const time = timeFor(task, key);
-            return <button key={task.id} type="button" onClick={() => onEdit(task)} title={`${task.title}${client ? ` · ${client.nombre}` : ''}`} className={`block w-full truncate rounded-md border px-1.5 py-1 text-left text-[10px] font-medium ${client ? clientTone(task.client_ref) : categoryMeta[task.category].tone}`}>{time ? <span className="mr-1 opacity-70">{fmtTime(time, timeZone)}</span> : null}{task.title}</button>;
-          })}{dayTasks.length > (compact ? 2 : 4) && <button type="button" onClick={() => setDetailDate(key)} className="w-full rounded-md bg-slate-100 px-1.5 py-1 text-left text-[9px] font-semibold text-blue-700 hover:bg-blue-50">Ver las {dayTasks.length} tareas</button>}</div>
+            return <button key={task.id} type="button" onClick={() => onEdit(task)} title={`${task.title}${client ? ` · ${client.nombre}` : ''}`} className={`block w-full break-words rounded-md border px-1.5 py-1 text-left text-[10px] font-medium leading-tight ${client ? clientTone(task.client_ref) : categoryMeta[task.category].tone}`}>{time ? <span className="mr-1 opacity-70">{fmtTime(time, timeZone)}</span> : null}<span className="line-clamp-2">{task.title}</span></button>;
+          })}{dayTasks.length > 0 && <button type="button" onClick={() => setDetailDate(key)} className="w-full rounded-md bg-slate-100 px-1.5 py-1 text-left text-[9px] font-semibold text-blue-700 hover:bg-blue-50">Ver agenda ({dayTasks.length})</button>}</div>
         </div>;
       })}
     </div>
