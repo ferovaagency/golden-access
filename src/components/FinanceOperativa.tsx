@@ -85,6 +85,9 @@ function FlujoTab({ userId, periodo, appData, formatCop }: { userId: string; per
   if (loading || !snap) return <Loader />;
   const kpis: Array<[string, string, string?]> = [
     ['Saldo actual estimado', formatCop(snap.saldo_actual)],
+    ['Caja disponible', formatCop(snap.caja_disponible)],
+    ['Caja proyectada', formatCop(snap.caja_proyectada)],
+    ['Cobros esperados', formatCop(snap.cobros_esperados)],
     ['Ingresos reales (cobros)', formatCop(snap.ingresos_reales)],
     ['Cuentas por cobrar', formatCop(snap.ingresos_pendientes)],
     ['Gastos reales', formatCop(snap.gastos_reales)],

@@ -142,7 +142,13 @@ Se agregó `src/lib/engine/financialEngine.ts` con las funciones de A.2 que tien
 
 **Deliberadamente construido en paralelo, no integrado a ninguna pantalla todavía.** Integrarlo a Dashboard/EquilibrioGlobal/HorasAdmin requiere primero la decisión explícita que este catálogo ya identificó como bloqueante (hallazgo #1: reconciliar cuál de las 4 nociones de "ingreso" alimenta cada función) — hacerlo sin esa decisión duplicaría, no centralizaría, la lógica.
 
-**No incluido en esta pasada** (necesitan tablas nuevas en producción o decisiones de modelo de datos que no me corresponden a mí decidir): `calculateCashPosition`/`calculateCashForecast` (necesitan probabilidad de cobro ponderada por antigüedad, sección 4.7 — hoy `cashflowService.ts` es binario pagado/no pagado), `calculatePipelineForecast` (necesita etapas de pipeline con probabilidad, sección 4.8), `calculateTaxProvision` (necesita la tabla `tax_rules` versionada de la sección 4.10/17, que no existe), `reconcileTransactions` (necesita arquitectura de 4 capas raw/canonical/metrics/audit, sección 4.15).
+**Alcance explícito de datos**: la arquitectura completa raw/canonical/metrics/audit sigue siendo una evolución de datos; no se afirma que exista cuando aún no hay almacenamiento raw de todas las fuentes. Sin embargo, las fórmulas de provisión y conciliación ya son determinísticas y no requieren que la IA altere registros.
+
+**Provisión y conciliación (4.10/4.16)**: `calculateTaxProvision()` solo calcula cuando recibe una regla tributaria versionada y vigente; si falta, devuelve “no calculable”. `reconcileTransactions()` compara facturas y pagos vinculados, identifica saldos, pagos sin factura y sobrepagos; nunca asigna automáticamente un pago sin referencia.
+
+**Pronóstico de pipeline (4.8)**: `calculatePipelineForecast()` centraliza pipeline ponderado, ventas necesarias, propuestas necesarias y leads calificados necesarios. Acepta probabilidades existentes del CRM en porcentaje o fracción, no convierte oportunidades sin probabilidad en ingresos y devuelve notas cuando faltan meta, ticket o tasas del embudo.
+
+**Caja disponible y proyectada (4.7)**: `calculateCashPosition()` y `calculateCashForecast()` centralizan las fórmulas del manual. Finanzas Operativas muestra ahora saldo actual, caja disponible después de obligaciones registradas, cobros esperados ponderados y caja proyectada. Los cobros pendientes se ponderan por antigüedad; las ventas antiguas sin fecha de vencimiento se identifican como una estimación de menor certeza, nunca como caja ya cobrada.
 
 También se aplicaron, de la lista "candidatas cero riesgo" de este mismo catálogo: se eliminó `pagos_tc_estimados` (multiplicaba por `0` literal, nunca se mostraba en UI, sin datos reales para calcularlo de verdad -- ver hallazgo original arriba) y se centralizó la fórmula de proyección de ingresos anualizados duplicada en `ImpuestosIva.tsx`/`AlertasTributarias.tsx` hacia `calcularProyeccionAnualIngresos()` en `calculations.ts`.
 
@@ -174,7 +180,7 @@ Creada en producción (izkh, no en la del otro agente -- este seguía sin acceso
 
 `calculateCapacity()` (ya existía en el motor desde Fase 2) conectado por primera vez a una pantalla real: `HorasAdmin.tsx` muestra un panel "Capacidad y Utilización del Mes" con disponibilidad (horas) y % de utilización, usando el semáforo de 4 niveles de la sección 4.6 (ociosa / rango operativo / riesgo de saturación / alto riesgo).
 
-**Limitación explícita, no oculta**: `capacidadComprometidaHoras` se pasa en `0` porque hoy no existe una fuente confiable de "horas pendientes de proyectos/tareas activas" conectada a la bitácora de horas (esa información vive en Proyectos/Planner, en pantallas separadas). El cálculo de utilización real (horas trabajadas ÷ capacidad facturable) es correcto tal cual; lo que falta es restar compromisos futuros de la disponibilidad — se documenta como límite conocido en vez de inventar un número.
+**Capacidad comprometida conectada al Planner**: Horas consulta tareas abiertas del Planner con fecha programada o entrega en el periodo seleccionado y suma su duración pendiente (`estimada - real`). Esa cifra alimenta disponibilidad y se muestra como “Comprometidas”. El backlog sin fecha se excluye deliberadamente: sin un periodo confiable no se atribuye capacidad futura de forma ficticia.
 
 ## Fase 7 — IA con evidencia, confianza y auditoría (infraestructura base)
 

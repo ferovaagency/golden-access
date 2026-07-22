@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Hora, Cliente, Servicio, Config, AppData } from '../types';
 import { FinancialMetrics, calcularProductividadClientes, calcularProductividadServicios } from '../lib/calculations';
 import { calculateHourlyCost, calculateCapacity } from '../lib/engine/financialEngine';
+import { plannerService } from '../lib/plannerService';
 import { Settings, HelpCircle } from 'lucide-react';
 import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
 
@@ -42,6 +43,7 @@ export default function HorasAdmin({
   const [horasDedicadas, setHorasDedicadas] = useState(1);
   const [descripcion, setDescripcion] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [capacidadComprometidaHoras, setCapacidadComprometidaHoras] = useState(0);
 
   useEffect(() => {
     if (clientes.length > 0 && !clienteId) {
@@ -55,6 +57,22 @@ export default function HorasAdmin({
       setServicioId(servicios[0].id);
     }
   }, [servicios]);
+
+  useEffect(() => {
+    let active = true;
+    void plannerService.listTasks().then((tasks) => {
+      if (!active) return;
+      const committed = tasks
+        .filter((task) => ['backlog', 'scheduled', 'in_progress', 'postponed'].includes(task.status))
+        .filter((task) => {
+          const periodDate = task.scheduled_for || task.deadline;
+          return Boolean(periodDate && (selectedMonth === 'Todos' || periodDate.startsWith(selectedMonth)));
+        })
+        .reduce((total, task) => total + Math.max(0, (task.estimated_minutes - (task.actual_minutes || 0)) / 60), 0);
+      setCapacidadComprometidaHoras(committed);
+    }).catch(() => { if (active) setCapacidadComprometidaHoras(0); });
+    return () => { active = false; };
+  }, [selectedMonth]);
 
   // 1. Calculations
   const currentHoras = selectedMonth === 'Todos' 
@@ -80,7 +98,7 @@ export default function HorasAdmin({
   const capacidad = calculateCapacity({
     capacidadMensualHoras: horasObjetivoMes || 160,
     pctFacturableReal: 1,
-    capacidadComprometidaHoras: 0,
+    capacidadComprometidaHoras,
     horasFacturablesTrabajadas: totalHorasLoggeadas,
   });
   const LECTURA_CAPACIDAD: Record<string, { label: string; color: string }> = {
@@ -211,9 +229,13 @@ export default function HorasAdmin({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase font-semibold">Capacidad y Utilización del Mes</h3>
-            <p className="text-[10px] text-[#8a8377] mt-1">Horas registradas ÷ horas facturables objetivo. No incluye horas comprometidas de proyectos activos (esa fuente aún no está conectada aquí).</p>
+            <p className="text-[10px] text-[#8a8377] mt-1">Horas registradas y horas pendientes del Planner con fecha o entrega en este período.</p>
           </div>
           <div className="flex items-center gap-6">
+            <div className="text-right">
+              <span className="text-[10px] font-mono text-[#8a8377] uppercase block">Comprometidas</span>
+              <span className="text-lg font-display font-semibold text-[#c9a961]">{capacidadComprometidaHoras.toFixed(0)} hs</span>
+            </div>
             <div className="text-right">
               <span className="text-[10px] font-mono text-[#8a8377] uppercase block">Disponibilidad</span>
               <span className="text-lg font-display font-semibold text-[#e8e3d8]">{Math.max(0, capacidad.disponibilidad).toFixed(0)} hs</span>

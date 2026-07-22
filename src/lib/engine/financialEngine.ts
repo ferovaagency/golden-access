@@ -246,6 +246,147 @@ export function calculateWeightedReceivable({ saldo, vencimiento, cancelada, hoy
   return { probabilidad, cobroEsperado: saldo * probabilidad, diasVencido };
 }
 
+export interface CashPositionInput {
+  saldoActual: number;
+  egresosComprometidos: number;
+}
+
+export interface CashPositionResult {
+  cajaDisponible: number;
+}
+
+/** Caja que permanece después de obligaciones ya registradas, no una proyección. */
+export function calculateCashPosition({ saldoActual, egresosComprometidos }: CashPositionInput): CashPositionResult {
+  return { cajaDisponible: saldoActual - Math.max(0, egresosComprometidos) };
+}
+
+export interface CashForecastInput {
+  saldoInicial: number;
+  cobrosEsperados: number;
+  pagosEsperados: number;
+}
+
+export interface CashForecastResult {
+  cajaProyectada: number;
+}
+
+/** Proyección explícita: saldo inicial + cobros ponderados - pagos esperados. */
+export function calculateCashForecast({ saldoInicial, cobrosEsperados, pagosEsperados }: CashForecastInput): CashForecastResult {
+  return { cajaProyectada: saldoInicial + Math.max(0, cobrosEsperados) - Math.max(0, pagosEsperados) };
+}
+
+// ============================================================
+// 4.8 — CRM y pronóstico comercial
+// ============================================================
+export interface PipelineForecastInput {
+  oportunidades: Array<{ valor: number | null | undefined; probabilidad: number | null | undefined }>;
+  metaIngresos?: number;
+  ticketPromedio?: number | null;
+  tasaCierre?: number | null;
+  tasaCalificacion?: number | null;
+}
+
+export interface PipelineForecastResult {
+  pipelinePonderado: number;
+  ventasNecesarias: number | null;
+  propuestasNecesarias: number | null;
+  leadsCalificadosNecesarios: number | null;
+  notas: string[];
+}
+
+/**
+ * Acepta probabilidad como fracción (0..1) o porcentaje (0..100), porque el
+ * CRM actual guarda porcentaje. Los faltantes no se transforman en cierres.
+ */
+export function calculatePipelineForecast(input: PipelineForecastInput): PipelineForecastResult {
+  const notas: string[] = [];
+  const pipelinePonderado = input.oportunidades.reduce((sum, opportunity) => {
+    const value = Number(opportunity.valor || 0);
+    const rawProbability = opportunity.probabilidad;
+    if (!Number.isFinite(value) || value <= 0 || rawProbability == null) return sum;
+    const probability = Math.max(0, Math.min(1, rawProbability > 1 ? rawProbability / 100 : rawProbability));
+    return sum + value * probability;
+  }, 0);
+
+  const meta = Number(input.metaIngresos || 0);
+  if (meta <= 0) return { pipelinePonderado, ventasNecesarias: null, propuestasNecesarias: null, leadsCalificadosNecesarios: null, notas: ['Sin meta de ingresos: el pipeline ponderado es calculable, pero no las necesidades comerciales.'] };
+  if (!input.ticketPromedio || input.ticketPromedio <= 0) {
+    return { pipelinePonderado, ventasNecesarias: null, propuestasNecesarias: null, leadsCalificadosNecesarios: null, notas: ['Falta ticket promedio para calcular ventas necesarias.'] };
+  }
+  const ventasNecesarias = Math.ceil(meta / input.ticketPromedio);
+  const tasaCierre = input.tasaCierre;
+  const propuestasNecesarias = tasaCierre && tasaCierre > 0 ? Math.ceil(ventasNecesarias / tasaCierre) : null;
+  const tasaCalificacion = input.tasaCalificacion;
+  const leadsCalificadosNecesarios = propuestasNecesarias !== null && tasaCalificacion && tasaCalificacion > 0
+    ? Math.ceil(propuestasNecesarias / tasaCalificacion) : null;
+  if (propuestasNecesarias === null) notas.push('Falta tasa de cierre para calcular propuestas necesarias.');
+  if (leadsCalificadosNecesarios === null) notas.push('Falta tasa de calificación para calcular leads necesarios.');
+  return { pipelinePonderado, ventasNecesarias, propuestasNecesarias, leadsCalificadosNecesarios, notas };
+}
+
+// ============================================================
+// 4.10 / 4.16 — provisión y conciliación explicables
+// ============================================================
+export interface TaxProvisionRule {
+  taxpayerType: string;
+  taxType: string;
+  rate: number | null;
+  validFrom?: string;
+  validTo?: string | null;
+  version?: number;
+}
+
+export interface TaxProvisionInput {
+  baseEstimada: number;
+  taxpayerType: string;
+  taxType: string;
+  rules: TaxProvisionRule[];
+  date?: string;
+}
+
+export interface TaxProvisionResult {
+  provision: number | null;
+  rate: number | null;
+  status: 'estimado' | 'no_calculable';
+  note: string;
+}
+
+/** Selects the latest active version supplied by tax_rules; it never falls back to a frontend rate. */
+export function calculateTaxProvision(input: TaxProvisionInput): TaxProvisionResult {
+  const date = input.date || new Date().toISOString().slice(0, 10);
+  const candidates = input.rules.filter((rule) => rule.taxType === input.taxType && (rule.taxpayerType === input.taxpayerType || rule.taxpayerType === 'todos'))
+    .filter((rule) => (!rule.validFrom || rule.validFrom <= date) && (!rule.validTo || rule.validTo >= date))
+    .sort((a, b) => (b.version || 1) - (a.version || 1));
+  const rule = candidates[0];
+  if (!rule || rule.rate == null || input.baseEstimada < 0) return { provision: null, rate: null, status: 'no_calculable', note: 'No hay una regla tributaria vigente con tasa para esta provisión.' };
+  return { provision: input.baseEstimada * rule.rate, rate: rule.rate, status: 'estimado', note: `Estimado con regla versionada ${rule.version || 1}; no reemplaza la validación contable.` };
+}
+
+export interface ReconciliationInput {
+  invoices: Array<{ id: string; total: number }>;
+  payments: Array<{ id: string; amount: number; invoiceId?: string | null }>;
+}
+
+export interface ReconciliationResult {
+  invoiceBalances: Array<{ invoiceId: string; balance: number }>;
+  unmatchedPaymentIds: string[];
+  overpaidInvoiceIds: string[];
+}
+
+/** Deterministic invoice-payment reconciliation; unlinked payments are never silently assigned. */
+export function reconcileTransactions(input: ReconciliationInput): ReconciliationResult {
+  const invoices = new Map(input.invoices.map((invoice) => [invoice.id, Math.max(0, invoice.total)]));
+  const paid = new Map<string, number>();
+  const unmatchedPaymentIds: string[] = [];
+  for (const payment of input.payments) {
+    if (!payment.invoiceId || !invoices.has(payment.invoiceId)) { unmatchedPaymentIds.push(payment.id); continue; }
+    paid.set(payment.invoiceId, (paid.get(payment.invoiceId) || 0) + Math.max(0, payment.amount));
+  }
+  const invoiceBalances = [...invoices].map(([invoiceId, total]) => ({ invoiceId, balance: Math.max(0, total - (paid.get(invoiceId) || 0)) }));
+  const overpaidInvoiceIds = [...invoices].filter(([invoiceId, total]) => (paid.get(invoiceId) || 0) > total).map(([invoiceId]) => invoiceId);
+  return { invoiceBalances, unmatchedPaymentIds, overpaidInvoiceIds };
+}
+
 export function calculateBreakEven({ gastosFijos, margenContribucion, ingresosNetos }: BreakEvenInput): BreakEvenResult {
   const notas: string[] = [];
   const ratioContribucion = ingresosNetos > 0 ? margenContribucion / ingresosNetos : null;
