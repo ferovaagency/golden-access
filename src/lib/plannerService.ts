@@ -355,15 +355,24 @@ export const plannerService = {
     const workdays = Array.isArray(profile?.dias_laborales) && profile.dias_laborales.length ? profile.dias_laborales : [1, 2, 3, 4, 5];
     const start = timeToMinute(profile?.horario_inicio, 8 * 60);
     const end = Math.max(start + 15, timeToMinute(profile?.horario_fin, 18 * 60));
-    const maxPlanningDays = 60;
+    // A planning horizon of a quarter keeps the upcoming weeks visible while
+    // preventing an accidental click from creating an unbounded agenda.
+    const maxPlanningDays = 90;
     let rangeEnd = targetDate;
     for (let index = 0; index < maxPlanningDays; index++) rangeEnd = nextDate(rangeEnd);
     const [{ data: tasks, error: tasksError }, existingBlocks] = await Promise.all([
-      anyDb().from('planner_tasks').select('*').in('status', ['backlog', 'scheduled', 'postponed']).order('deadline', { ascending: true, nullsFirst: false }).limit(40),
+      anyDb().from('planner_tasks').select('*').in('status', ['backlog', 'scheduled', 'postponed']).order('deadline', { ascending: true, nullsFirst: false }).limit(200),
       this.listBlocksRange(targetDate, rangeEnd),
     ]);
     if (tasksError) return { data: null, error: tasksError };
-    const ordered = [...(tasks || [])].sort((a: PlannerTask, b: PlannerTask) => ({ urgent: 0, high: 1, medium: 2, low: 3 }[a.priority] - ({ urgent: 0, high: 1, medium: 2, low: 3 }[b.priority])));
+    const fixedTaskIds = new Set((existingBlocks || [])
+      .filter((block: PlannerBlock) => ['task', 'recurrence'].includes(block.source))
+      .flatMap((block: PlannerBlock) => block.task_ids || []));
+    const ordered = [...(tasks || [])]
+      // A recurring task already materializes protected instances, and a task
+      // with a manual time must never receive a second automatic block.
+      .filter((task: PlannerTask) => !(task.recurrence_days || []).length && !fixedTaskIds.has(task.id))
+      .sort((a: PlannerTask, b: PlannerTask) => ({ urgent: 0, high: 1, medium: 2, low: 3 }[a.priority] - ({ urgent: 0, high: 1, medium: 2, low: 3 }[b.priority])));
     const planned: any[] = [];
     const remaining = [...ordered];
     let planningDate = targetDate;
@@ -385,6 +394,12 @@ export const plannerService = {
 
         for (let index = 0; index < remaining.length;) {
           const task = remaining[index];
+          // "Programar desde" is a promise to the user: a task can be due in
+          // a month but intentionally held until, for example, two weeks out.
+          if (task.scheduled_for && task.scheduled_for > planningDate) {
+            index += 1;
+            continue;
+          }
           const duration = Math.max(15, Math.min(120, Math.ceil(Number(task.estimated_minutes || 30) / 15) * 15));
           while (cursor + duration <= end && overlaps(cursor, cursor + duration)) cursor += 15;
           if (cursor + duration > end) break;
