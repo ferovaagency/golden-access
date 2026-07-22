@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
 import {
@@ -10,6 +11,7 @@ import { trackEvent } from '../lib/analytics';
 import { useInViewOnce } from '../lib/useInViewOnce';
 import { HeroOrbit } from '../marketing/components/HeroOrbit';
 import { Reveal } from '../marketing/components/Reveal';
+import { consumePostLoginReturn, supabase } from '../lib/supabase';
 
 /**
  * Public sales landing at /landing.
@@ -19,6 +21,17 @@ import { Reveal } from '../marketing/components/Reveal';
  * production Supabase reconnect is pending.
  */
 export default function Landing() {
+  useEffect(() => {
+    // If a provider ignored the requested OAuth redirect URI and returned to
+    // the public root, do not strand the newly authenticated user on the
+    // marketing page. We only redirect after Supabase confirms the session.
+    void supabase.auth.getSession().then(({ data }) => {
+      if (!data.session?.user) return;
+      const returnTo = consumePostLoginReturn();
+      if (returnTo === '/app') window.location.replace(returnTo);
+    });
+  }, []);
+
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans">
       <SeoHead

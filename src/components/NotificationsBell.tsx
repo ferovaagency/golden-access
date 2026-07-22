@@ -6,12 +6,13 @@ import { listMyNotifications, markNotificationRead } from '../lib/userEngagement
 interface BlindspotRow {
   id: string;
   title: string;
-  detail: string | null;
+  why: string;
+  impact: string;
   urgency: 'low' | 'medium' | 'high' | 'critical';
-  category: string | null;
-  advice: string | null;
-  created_at: string;
-  resolved: boolean;
+  category: string;
+  action: string;
+  action_route: string | null;
+  detected_at: string;
 }
 
 type Notif = {
@@ -46,21 +47,29 @@ export default function NotificationsBell({ userId, onNavigate }: Props) {
     if (!userId) return;
     let cancelled = false;
     (async () => {
-      const [{ data }, personal] = await Promise.all([db<BlindspotRow>('business_blindspots')
-        .select('id, title, detail, urgency, category, advice, created_at, resolved')
+      const [{ data, error: blindspotsError }, personal] = await Promise.all([db<BlindspotRow>('business_blindspots')
+        .select('id, title, why, impact, urgency, category, action, action_route, detected_at')
         .eq('user_id', userId)
-        .eq('resolved', false)
-        .order('created_at', { ascending: false })
+        .is('dismissed_at', null)
+        .is('resolved_at', null)
+        .order('detected_at', { ascending: false })
         .limit(20), listMyNotifications(userId).catch(() => [])]);
       if (cancelled) return;
+      if (blindspotsError) {
+        // Personal notifications remain usable even if BI findings are
+        // temporarily unavailable. Do not let a failed optional query empty
+        // or break the whole bell.
+        console.error('[NotificationsBell] business_blindspots:', blindspotsError);
+      }
       const blindspots: Notif[] = (data ?? []).map(r => ({
         id: r.id,
         title: r.title,
-        detail: r.detail ?? undefined,
+        detail: r.why || r.impact || undefined,
         urgency: r.urgency,
-        category: r.category ?? undefined,
-        advice: r.advice ?? undefined,
-        createdAt: r.created_at,
+        category: r.category,
+        advice: r.action,
+        actionTab: r.action_route,
+        createdAt: r.detected_at,
       }));
       const direct = personal.map((notification) => ({ id: notification.id, title: notification.title, detail: notification.message, urgency: 'low' as const, category: `De ${notification.sender_name}`, createdAt: notification.created_at, actionTab: notification.action_tab, personal: true }));
       setItems([...direct, ...blindspots].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));

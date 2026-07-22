@@ -28,6 +28,22 @@ const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/calendar.events',
 ];
 
+// Lovable/Auth should return directly to /app. This small marker is a
+// defensive fallback for an OAuth provider configuration that sends the
+// callback to the site root instead; the public landing consumes it only
+// after a real session has been restored.
+export const POST_LOGIN_RETURN_KEY = 'ferova.auth.post_login_return';
+
+export function consumePostLoginReturn(): string | null {
+  try {
+    const value = sessionStorage.getItem(POST_LOGIN_RETURN_KEY);
+    if (value) sessionStorage.removeItem(POST_LOGIN_RETURN_KEY);
+    return value;
+  } catch {
+    return null;
+  }
+}
+
 let cachedAccessToken: string | null = null;
 
 const setEphemeralGoogleToken = (token: string | null) => {
@@ -84,6 +100,7 @@ export const initAuth = (
 // desde ConnectGoogleScreen para no bloquear el sign-in inicial.
 // ============================================================
 export const googleSignIn = async () => {
+  try { sessionStorage.setItem(POST_LOGIN_RETURN_KEY, '/app'); } catch { /* storage no disponible */ }
   const result = await lovable.auth.signInWithOAuth('google', {
     // "/" is now the public landing page (no session check at all), not the
     // app shell -- redirecting there after Google OAuth stranded logged-in
