@@ -6,9 +6,9 @@ import { plannerService, type CreatePlannerBlockInput, type PlannerBlock, type P
 
 function today() { return todayInTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Bogota'); }
 
-function todayInTimeZone(timeZone: string) {
+function todayInTimeZone(timeZone: string, instant = new Date()) {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' })
-    .formatToParts(new Date())
+    .formatToParts(instant)
     .reduce<Record<string, string>>((result, part) => ({ ...result, [part.type]: part.value }), {});
   return `${parts.year}-${parts.month}-${parts.day}`;
 }
@@ -25,24 +25,33 @@ export function usePlanner() {
   const [error, setError] = useState<string | null>(null);
   const [date, setDate] = useState<string>(today());
   const [rescheduledCount, setRescheduledCount] = useState(0);
+  const [planNotice, setPlanNotice] = useState<string | null>(null);
   const [timeZone, setTimeZone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Bogota');
-  const hasAutoRescheduled = useRef(false);
+  const hasAutoPlanned = useRef(false);
+
+  const revealFirstPlannedDay = useCallback((plannedBlocks: Array<{ starts_at: string }> | undefined, zone: string) => {
+    const firstBlock = plannedBlocks?.[0];
+    if (!firstBlock) return;
+    setDate(todayInTimeZone(zone, new Date(firstBlock.starts_at)));
+  }, []);
 
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
       const zone = await plannerService.getTimeZone();
       const currentDate = todayInTimeZone(zone);
-      if (!hasAutoRescheduled.current && date === currentDate) {
-        hasAutoRescheduled.current = true;
+      if (!hasAutoPlanned.current && date === currentDate) {
+        hasAutoPlanned.current = true;
         const rescheduled = await plannerService.rescheduleOverdueTasks(currentDate);
-        if (rescheduled.length) {
-          setRescheduledCount(rescheduled.length);
-          // This is the rolling-agenda behavior: unfinished work is not only
-          // moved to today, it immediately receives the next real free slot.
-          const busyBlocks = await plannerService.calendarBusyBlocks(currentDate);
-          const { error: planError } = await plannerService.planDay(undefined, true, busyBlocks);
-          if (planError) setError(planError.message);
+        setRescheduledCount(rescheduled.length);
+        // Opening the Planner keeps the rolling agenda current. It no longer
+        // depends on an overdue transition or on pressing the button.
+        const busyBlocks = await plannerService.calendarBusyBlocks(currentDate);
+        const { data: plan, error: planError } = await plannerService.planDay(undefined, true, busyBlocks);
+        if (planError) setError(planError.message);
+        else if (plan) {
+          setPlanNotice(plan.summary);
+          revealFirstPlannedDay(plan.blocks, zone);
         }
       }
       const [i, t, c, b, ins, br] = await Promise.all([
@@ -55,7 +64,7 @@ export function usePlanner() {
       ]);
       setInbox(i); setTasks(t); setClients(c); setBlocks(b); setInsights(ins); setBriefing(br); setTimeZone(zone);
     } finally { setLoading(false); }
-  }, [date]);
+  }, [date, revealFirstPlannedDay]);
 
   useEffect(() => { void refresh(); }, [refresh]);
 
@@ -85,15 +94,19 @@ export function usePlanner() {
     try {
       // Reorganizar is an operating command, not a draft: the planner applies
       // the best agenda immediately, preserving protected/Calendar blocks.
-      const { error: err } = await plannerService.planDay(undefined, true);
+      const { data: plan, error: err } = await plannerService.planDay(undefined, true);
       if (err) setError(err.message);
+      else if (plan) {
+        setPlanNotice(plan.summary);
+        revealFirstPlannedDay(plan.blocks, timeZone);
+      }
       await refresh();
     } catch (err: any) {
       setError(err?.message || 'No fue posible organizar la agenda.');
     } finally {
       setBusy(null);
     }
-  }, [refresh]);
+  }, [refresh, revealFirstPlannedDay, timeZone]);
 
   const regenerateInsights = useCallback(async () => {
     setBusy('insights'); setError(null);
@@ -146,7 +159,7 @@ export function usePlanner() {
   const dismissInsight = useCallback(async (id: string) => { await plannerService.dismissInsight(id); setInsights((prev) => prev.filter((i) => i.id !== id)); }, []);
 
   return {
-    inbox, tasks, clients, blocks, insights, briefing, rescheduledCount,
+    inbox, tasks, clients, blocks, insights, briefing, rescheduledCount, planNotice,
     loading, busy, error, date, setDate, timeZone,
     refresh, classify, planDay, regenerateInsights, regenerateBriefing,
     completeTask, updateTask, postponeTask, deleteTask, createBlock, dismissInsight,

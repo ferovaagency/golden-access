@@ -177,8 +177,15 @@ export default function SmartPlanner() {
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 flex items-center gap-2">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
           {p.rescheduledCount === 1
-            ? '1 tarea de un día anterior no se completó y se reprogramó automáticamente para hoy.'
-            : `${p.rescheduledCount} tareas de días anteriores no se completaron y se reprogramaron automáticamente para hoy.`}
+            ? '1 tarea pendiente se incorporó automáticamente al siguiente espacio disponible.'
+            : `${p.rescheduledCount} tareas pendientes se incorporaron automáticamente a los siguientes espacios disponibles.`}
+        </div>
+      )}
+
+      {p.planNotice && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 flex items-center gap-2" role="status">
+          <Check className="h-3.5 w-3.5 shrink-0" />
+          {p.planNotice} La vista se movió al primer día con trabajo programado.
         </div>
       )}
 
