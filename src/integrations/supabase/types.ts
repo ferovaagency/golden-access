@@ -1745,6 +1745,11 @@ export type Database = {
           id: string
           moneda: string
           notas: string | null
+          pasarela_pago: string | null
+          comision_pasarela_porcentaje: number
+          comision_pasarela_fija: number
+          comision_retiro: number
+          trm_conversion: number | null
           precio_venta_unitario: number
           servicio_id: string
           tipo: string
@@ -1760,6 +1765,11 @@ export type Database = {
           id: string
           moneda?: string
           notas?: string | null
+          pasarela_pago?: string | null
+          comision_pasarela_porcentaje?: number
+          comision_pasarela_fija?: number
+          comision_retiro?: number
+          trm_conversion?: number | null
           precio_venta_unitario?: number
           servicio_id: string
           tipo?: string
@@ -1775,6 +1785,11 @@ export type Database = {
           id?: string
           moneda?: string
           notas?: string | null
+          pasarela_pago?: string | null
+          comision_pasarela_porcentaje?: number
+          comision_pasarela_fija?: number
+          comision_retiro?: number
+          trm_conversion?: number | null
           precio_venta_unitario?: number
           servicio_id?: string
           tipo?: string

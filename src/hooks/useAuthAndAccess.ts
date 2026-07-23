@@ -21,6 +21,7 @@ export function useAuthAndAccess() {
   const modules = useMemo(() => getModules(plan, isTeam, moduleOverrides), [plan, isTeam, moduleOverrides]);
   const loadedUserId = useRef<string | null>(null);
   const currentUser = useRef<User | null>(null);
+  const lastAccessRefreshAt = useRef(0);
 
   useEffect(() => {
     const loadAccess = async (fUser: User, force = false) => {
@@ -42,6 +43,7 @@ export function useAuthAndAccess() {
       setPlan(access.plan);
       setIsTeam(team);
       setModuleOverrides(Object.fromEntries(overrides.map((override) => [override.module, override.enabled])) as ModuleOverrides);
+      lastAccessRefreshAt.current = Date.now();
       setCheckingPayment(false);
     };
 
@@ -67,7 +69,9 @@ export function useAuthAndAccess() {
     // while the customer still has a tab open. Refresh on return so a stale
     // session does not keep hiding modules that were just granted.
     const refreshWhenVisible = () => {
-      if (document.visibilityState === 'visible' && currentUser.current) {
+      // Volver a la pestaña no debe sentirse como una recarga. Solo validamos
+      // permisos si la última lectura ya tiene más de cinco minutos.
+      if (document.visibilityState === 'visible' && currentUser.current && Date.now() - lastAccessRefreshAt.current > 300_000) {
         void loadAccess(currentUser.current, true);
       }
     };

@@ -110,6 +110,16 @@ export interface Venta {
   estado_pago: 'Pendiente' | 'Adelanto' | 'Pagado';
   notas?: string;
   abonos?: AbonoLog[];
+  /** Nombre libre: PayPal, Paddle, transferencia, efectivo, etc. */
+  pasarela_pago?: string;
+  /** Porcentaje cobrado por la pasarela, expresado como 5 para 5 %. */
+  comision_pasarela_porcentaje?: number;
+  /** Cargo fijo cobrado en la moneda original de la venta. */
+  comision_pasarela_fija?: number;
+  /** Costo de retirar o transferir el dinero, en la moneda original. */
+  comision_retiro?: number;
+  /** Tasa realmente aplicada al convertir una venta USD a COP. */
+  trm_conversion?: number;
 }
 
 export interface Hora {

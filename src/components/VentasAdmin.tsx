@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Venta, Cliente, Servicio, Config } from '../types';
 import { convertToCop } from '../lib/calculations';
+import { calculatePaymentFees } from '../lib/paymentFees';
 import { CsvPagoImportado, parsePagosCsv } from '../lib/csvImportExport';
 import { useToast } from './ui/toast';
 import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
@@ -41,6 +42,11 @@ export default function VentasAdmin({
   const [moneda, setMoneda] = useState<'COP' | 'USD'>('COP');
   const [adelanto, setAdelanto] = useState(0);
   const [notas, setNotas] = useState('');
+  const [pasarelaPago, setPasarelaPago] = useState('Transferencia');
+  const [comisionPasarelaPct, setComisionPasarelaPct] = useState(0);
+  const [comisionPasarelaFija, setComisionPasarelaFija] = useState(0);
+  const [comisionRetiro, setComisionRetiro] = useState(0);
+  const [trmConversion, setTrmConversion] = useState<number | ''>('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [editingVentaId, setEditingVentaId] = useState<string | null>(null);
 
@@ -109,6 +115,8 @@ export default function VentasAdmin({
   const retencionCop = totalPactadoCop * rateRentencion;
   const retencionOriginalMoneda = retencionCop / (moneda === 'USD' ? config.trm : 1);
   const netoQueEntra = totalPactadoOriginal - retencionOriginalMoneda;
+  const gatewayPreview = calculatePaymentFees({ cantidad, precio_venta_unitario: precioVentaUnitario, moneda, comision_pasarela_porcentaje: comisionPasarelaPct, comision_pasarela_fija: comisionPasarelaFija, comision_retiro: comisionRetiro, trm_conversion: trmConversion === '' ? undefined : trmConversion }, config.trm);
+  const netoFinalOrigen = Math.max(0, gatewayPreview.netoOrigen - retencionOriginalMoneda);
 
   const handleStartEdit = (v: Venta) => {
     setEditingVentaId(v.id);
@@ -121,6 +129,11 @@ export default function VentasAdmin({
     setMoneda(v.moneda);
     setAdelanto(v.adelanto);
     setNotas(v.notas || '');
+    setPasarelaPago(v.pasarela_pago || 'Transferencia');
+    setComisionPasarelaPct(v.comision_pasarela_porcentaje || 0);
+    setComisionPasarelaFija(v.comision_pasarela_fija || 0);
+    setComisionRetiro(v.comision_retiro || 0);
+    setTrmConversion(v.trm_conversion || '');
     setActiveAbonos(v.abonos || []);
     setNewAbonoMonto('');
     setNewAbonoNotas('');
@@ -144,6 +157,11 @@ export default function VentasAdmin({
     setPrecioVentaUnitario(0);
     setAdelanto(0);
     setNotas('');
+    setPasarelaPago('Transferencia');
+    setComisionPasarelaPct(0);
+    setComisionPasarelaFija(0);
+    setComisionRetiro(0);
+    setTrmConversion('');
     setActiveAbonos([]);
     setNewAbonoMonto('');
     setNewAbonoNotas('');
@@ -207,6 +225,11 @@ export default function VentasAdmin({
             estado_pago: Number(adelanto) >= totalOriginal ? 'Pagado' : (Number(adelanto) > 0 ? 'Adelanto' : 'Pendiente') as 'Pagado' | 'Adelanto' | 'Pendiente',
             notas,
             abonos: activeAbonos,
+            pasarela_pago: pasarelaPago.trim() || undefined,
+            comision_pasarela_porcentaje: Number(comisionPasarelaPct),
+            comision_pasarela_fija: Number(comisionPasarelaFija),
+            comision_retiro: Number(comisionRetiro),
+            trm_conversion: moneda === 'USD' && trmConversion !== '' ? Number(trmConversion) : undefined,
           };
         }
         return v;
@@ -230,7 +253,12 @@ export default function VentasAdmin({
         adelanto: Number(adelanto),
         estado_pago: Number(adelanto) >= totalPactadoOriginal ? 'Pagado' : (Number(adelanto) > 0 ? 'Adelanto' : 'Pendiente'),
         notas,
-        abonos: initialAbonos
+        abonos: initialAbonos,
+        pasarela_pago: pasarelaPago.trim() || undefined,
+        comision_pasarela_porcentaje: Number(comisionPasarelaPct),
+        comision_pasarela_fija: Number(comisionPasarelaFija),
+        comision_retiro: Number(comisionRetiro),
+        trm_conversion: moneda === 'USD' && trmConversion !== '' ? Number(trmConversion) : undefined,
       };
 
       const updated = [newVenta, ...ventas];
@@ -241,6 +269,10 @@ export default function VentasAdmin({
       setPrecioVentaUnitario(0);
       setAdelanto(0);
       setNotas('');
+      setComisionPasarelaPct(0);
+      setComisionPasarelaFija(0);
+      setComisionRetiro(0);
+      setTrmConversion('');
     }
   };
 
@@ -541,6 +573,24 @@ export default function VentasAdmin({
               </div>
             </div>
 
+            <div className="space-y-3 rounded-xl border border-[var(--ferova-line)] bg-[var(--ferova-soft)] p-4">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[.13em] text-[var(--ferova-brand)]">Costos reales de recaudo</p>
+                <p className="mt-1 text-[10px] leading-4 text-slate-500">Registra lo que descuenta la pasarela. Los cargos fijos y de retiro están en {moneda}; no se mezclan monedas.</p>
+              </div>
+              <label className="block"><span className="mb-1 block text-[9px] font-semibold uppercase text-slate-500">Pasarela o medio</span><input value={pasarelaPago} onChange={(e) => setPasarelaPago(e.target.value)} placeholder="PayPal, Paddle, banco…" className="w-full rounded-lg border border-slate-200 bg-white p-2 text-xs" /></label>
+              <div className="grid grid-cols-3 gap-2">
+                <label><span className="mb-1 block text-[9px] font-semibold uppercase text-slate-500">Comisión %</span><input type="number" min="0" max="100" step="0.01" value={comisionPasarelaPct} onChange={(e) => setComisionPasarelaPct(Number(e.target.value))} className="w-full rounded-lg border border-slate-200 bg-white p-2 text-xs" /></label>
+                <label><span className="mb-1 block text-[9px] font-semibold uppercase text-slate-500">Fijo ({moneda})</span><input type="number" min="0" step="0.01" value={comisionPasarelaFija} onChange={(e) => setComisionPasarelaFija(Number(e.target.value))} className="w-full rounded-lg border border-slate-200 bg-white p-2 text-xs" /></label>
+                <label><span className="mb-1 block text-[9px] font-semibold uppercase text-slate-500">Retiro ({moneda})</span><input type="number" min="0" step="0.01" value={comisionRetiro} onChange={(e) => setComisionRetiro(Number(e.target.value))} className="w-full rounded-lg border border-slate-200 bg-white p-2 text-xs" /></label>
+              </div>
+              {moneda === 'USD' && <label className="block"><span className="mb-1 block text-[9px] font-semibold uppercase text-slate-500">TRM real de conversión a COP</span><input type="number" min="1" value={trmConversion} onChange={(e) => setTrmConversion(e.target.value === '' ? '' : Number(e.target.value))} placeholder={`General: ${config.trm}`} className="w-full rounded-lg border border-slate-200 bg-white p-2 text-xs" /></label>}
+              <div className="grid grid-cols-2 gap-2 rounded-lg bg-white p-3 ring-1 ring-slate-200">
+                <div><p className="text-[9px] uppercase text-slate-400">Descuentos pasarela</p><p className="mt-1 font-mono text-sm font-bold text-amber-700">−{moneda === 'USD' ? formatUsd(gatewayPreview.totalDescuentos) : formatCop(gatewayPreview.totalDescuentos)}</p></div>
+                <div><p className="text-[9px] uppercase text-slate-400">Neto real tras pasarela</p><p className="mt-1 font-mono text-sm font-bold text-emerald-700">{moneda === 'USD' ? `${formatUsd(netoFinalOrigen)} · ${formatCop(netoFinalOrigen * gatewayPreview.tasaCop)}` : formatCop(netoFinalOrigen)}</p></div>
+              </div>
+            </div>
+
             {/* Adelanto / Abonos */}
             <div className="space-y-4 p-4 bg-[#0f0e0c]/30 border border-slate-200/60 rounded-lg">
               <div className="flex items-center justify-between border-b border-slate-200/40 pb-2">
@@ -721,7 +771,7 @@ export default function VentasAdmin({
                   </span>
                 </div>
                 <div className="border-t border-slate-200/50 pt-1 text-[#a8c98a]">
-                  <span className="text-slate-500">Neto al Banco (Estimado):</span>{' '}
+                  <span className="text-slate-500">Neto fiscal antes de pasarela:</span>{' '}
                   <span className="font-bold font-semibold">
                     {moneda === 'USD' ? formatUsd(netoQueEntra) : formatCop(netoQueEntra)}
                   </span>
@@ -796,7 +846,8 @@ export default function VentasAdmin({
                     filteredVentas.map((v, idx) => {
                       const totalOriginal = v.precio_venta_unitario * v.cantidad;
                       const reteOrig = calculateLoopRetention(v);
-                      const netOrig = totalOriginal - reteOrig;
+                      const gateway = calculatePaymentFees(v, config.trm);
+                      const netOrig = Math.max(0, totalOriginal - reteOrig - gateway.totalDescuentos);
 
                       const isEditing = editingVentaId === v.id;
                       const actualEstado = v.estado_pago || (v.adelanto >= totalOriginal ? 'Pagado' : (v.adelanto > 0 ? 'Adelanto' : 'Pendiente'));
@@ -826,6 +877,7 @@ export default function VentasAdmin({
                           </td>
                           <td className="px-5 py-4 font-mono font-bold text-[#a8c98a]">
                             {v.moneda === 'USD' ? formatUsd(netOrig) : formatCop(netOrig)}
+                            {gateway.totalDescuentos > 0 && <span className="mt-1 block text-[9px] font-normal text-amber-700">{v.pasarela_pago || 'Pasarela'} −{v.moneda === 'USD' ? formatUsd(gateway.totalDescuentos) : formatCop(gateway.totalDescuentos)}{v.moneda === 'USD' ? ` · neto ${formatCop(gateway.netoCop - reteOrig * gateway.tasaCop)} COP` : ''}</span>}
                           </td>
                           <td className="px-5 py-4">
                             <div className="font-mono text-slate-900">

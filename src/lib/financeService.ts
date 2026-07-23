@@ -184,6 +184,11 @@ export async function loadFinanceData(userId: string): Promise<AppData> {
     adelanto: Number(v.adelanto),
     estado_pago: v.estado_pago,
     notas: v.notas ?? undefined,
+    pasarela_pago: v.pasarela_pago ?? undefined,
+    comision_pasarela_porcentaje: v.comision_pasarela_porcentaje == null ? undefined : Number(v.comision_pasarela_porcentaje),
+    comision_pasarela_fija: v.comision_pasarela_fija == null ? undefined : Number(v.comision_pasarela_fija),
+    comision_retiro: v.comision_retiro == null ? undefined : Number(v.comision_retiro),
+    trm_conversion: v.trm_conversion == null ? undefined : Number(v.trm_conversion),
     abonos: abonosRaw
       .filter((a) => a.venta_id === v.id)
       .map((a) => ({
@@ -319,7 +324,7 @@ export async function savePagosEgresos(userId: string, list: PagoEgreso[]) {
 }
 
 export async function saveVentas(userId: string, list: Venta[]) {
-  await overwriteTable('finance_ventas', userId, list.map((v) => ({
+  const rows = list.map((v) => ({
     id: v.id,
     fecha: v.fecha,
     cliente_id: v.cliente_id,
@@ -332,7 +337,32 @@ export async function saveVentas(userId: string, list: Venta[]) {
     adelanto: v.adelanto,
     estado_pago: v.estado_pago,
     notas: v.notas || null,
-  })));
+    pasarela_pago: v.pasarela_pago || null,
+    comision_pasarela_porcentaje: v.comision_pasarela_porcentaje ?? 0,
+    comision_pasarela_fija: v.comision_pasarela_fija ?? 0,
+    comision_retiro: v.comision_retiro ?? 0,
+    trm_conversion: v.trm_conversion ?? null,
+  }));
+
+  // Upsert primero y elimina lo que sobra después. Así un despliegue donde la
+  // migración de pasarelas aún no terminó nunca borra el libro antes de fallar.
+  const financeClient = supabase as any;
+  if (rows.length > 0) {
+    let upsert = await financeClient.from('finance_ventas').upsert(rows.map((row) => ({ ...row, user_id: userId })), { onConflict: 'user_id,id' });
+    if (upsert.error && /pasarela_pago|comision_pasarela|comision_retiro|trm_conversion/i.test(upsert.error.message || '')) {
+      const legacyRows = rows.map(({ pasarela_pago: _gateway, comision_pasarela_porcentaje: _percentage, comision_pasarela_fija: _fixed, comision_retiro: _withdrawal, trm_conversion: _fx, ...row }) => ({ ...row, user_id: userId }));
+      upsert = await financeClient.from('finance_ventas').upsert(legacyRows, { onConflict: 'user_id,id' });
+    }
+    if (upsert.error) throw new Error(`[financeService] saveVentas: ${upsert.error.message}`);
+  }
+  const current = await financeClient.from('finance_ventas').select('id').eq('user_id', userId);
+  if (current.error) throw new Error(`[financeService] saveVentas list: ${current.error.message}`);
+  const desiredIds = new Set(list.map((sale) => sale.id));
+  const removedIds = (current.data || []).map((row: { id: string }) => row.id).filter((id: string) => !desiredIds.has(id));
+  if (removedIds.length > 0) {
+    const deleted = await financeClient.from('finance_ventas').delete().eq('user_id', userId).in('id', removedIds);
+    if (deleted.error) throw new Error(`[financeService] saveVentas delete: ${deleted.error.message}`);
+  }
 
   const abonoRows = list.flatMap((v) =>
     (v.abonos || []).map((a) => ({

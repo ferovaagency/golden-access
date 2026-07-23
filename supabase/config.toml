@@ -1,4 +1,7 @@
-project_id = "rrjyfyihdnbvbtdxygyp"
+# Backend de Lovable Cloud que usa el cliente publicado. Mantener este ref
+# alineado evita desplegar migraciones/funciones accidentalmente al proyecto
+# externo Ferova.com.co.
+project_id = "izkhdzzyqfopjveaagwk"
 
 [functions.paypal-webhook]
 verify_jwt = false

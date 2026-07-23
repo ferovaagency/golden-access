@@ -137,7 +137,7 @@ function Hero() {
               Ver demos
             </a>
           </div>
-          <p className="mt-4 text-xs text-slate-400">USD 50 / mes · Sin permanencia · Cancelás cuando quieras</p>
+          <p className="mt-4 text-xs text-slate-400">Founder Access USD 39 / mes · 20 cupos totales · Sin permanencia</p>
         </div>
         <motion.div
           initial={reduceMotion ? false : { opacity: 0, scale: 0.94 }}
@@ -439,8 +439,8 @@ function Pricing() {
   return (
     <section id="precios" ref={sectionRef} className="border-t border-slate-200 bg-white">
       <div className="mx-auto max-w-3xl px-4 py-20 text-center">
-        <h2 className="font-serif text-3xl md:text-4xl">Un solo plan. Todo incluido.</h2>
-        <p className="mt-3 text-slate-600">Sin trucos, sin escalar por usuarios, sin sorpresas.</p>
+        <h2 className="font-serif text-3xl md:text-4xl">Founder Access. Todo incluido.</h2>
+        <p className="mt-3 text-slate-600">Primera cohorte limitada a 20 usuarios. La disponibilidad real se confirma al pagar.</p>
         <motion.div
           className="mx-auto mt-10 max-w-md rounded-3xl border border-slate-200 bg-slate-50 p-8 text-left shadow-[0_22px_55px_rgba(15,23,42,.12)]"
           initial={{ opacity: 0, y: 28, scale: 0.97 }}
@@ -449,8 +449,9 @@ function Pricing() {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.4, ease: 'easeOut' }}
         >
+          <div className="mb-4 flex items-center justify-between rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900"><span>Founder Access</span><span>20 cupos totales</span></div>
           <div className="flex items-baseline gap-1">
-            <span className="font-serif text-5xl">USD 50</span>
+            <span className="font-serif text-5xl">USD 39</span>
             <span className="text-slate-500">/ mes</span>
           </div>
           <p className="mt-1 text-sm text-slate-500">Facturado mensualmente. Cancelás cuando quieras.</p>

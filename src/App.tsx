@@ -123,7 +123,7 @@ function AppInner() {
 
   // Filter and view state
   const [selectedMonth, setSelectedMonth] = useState<string>('Todos');
-  const [activeTab, setActiveTab] = useState<string>(() => consumeGoogleLinkReturnTab() || 'dashboard');
+  const [activeTab, setActiveTab] = useState<string>(() => consumeGoogleLinkReturnTab() || sessionStorage.getItem('ferova.activeTab') || 'dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [aiCollapsed, setAiCollapsed] = useState<boolean>(() => {
@@ -139,6 +139,7 @@ function AppInner() {
   });
   useEffect(() => { localStorage.setItem('ferova.ai.collapsed', aiCollapsed ? '1' : '0'); }, [aiCollapsed]);
   useEffect(() => { localStorage.setItem('ferova.ai.width', String(aiWidth)); }, [aiWidth]);
+  useEffect(() => { sessionStorage.setItem('ferova.activeTab', activeTab); }, [activeTab]);
   useEffect(() => {
     if (window.innerWidth < 1280) setAiCollapsed(true);
   }, []);
@@ -699,7 +700,7 @@ function AppInner() {
         {isReady && metrics && appData && (
           <Suspense fallback={<LoadingState label="Cargando módulo…" />}>
             {activeTab === 'planner' && <SmartPlanner />}
-            {activeTab === 'reports' && user && <ReportsView user={user} />}
+            {activeTab === 'reports' && user && <ReportsView user={user} appData={appData} formatCop={formatCop} />}
             {activeTab === 'finops' && <FinanceOperativa user={user} appData={appData} formatCop={formatCop} />}
             {activeTab === 'marketingRoi' && <MarketingROI user={user} formatCop={formatCop} />}
             {activeTab === 'dashboard' && (
