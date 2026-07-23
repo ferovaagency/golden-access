@@ -42,12 +42,14 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
   // Form add states
   const [newObjective, setNewObjective] = useState('');
   const [newObjectiveDate, setNewObjectiveDate] = useState('');
-  
+  const [newObjectiveCadencia, setNewObjectiveCadencia] = useState<ProjectCadence>('mensual');
+
   const [newKpiNombre, setNewKpiNombre] = useState('');
   const [newKpiMeta, setNewKpiMeta] = useState('');
   const [newKpiActual, setNewKpiActual] = useState('');
   const [newKpiTendencia, setNewKpiTendencia] = useState<'Subiendo' | 'Estable' | 'Bajando'>('Estable');
   const [newKpiObjectiveId, setNewKpiObjectiveId] = useState('');
+  const [newKpiCadencia, setNewKpiCadencia] = useState<ProjectCadence>('mensual');
 
   const [newDeliverableNombre, setNewDeliverableNombre] = useState('');
   const [newDeliverableEstado, setNewDeliverableEstado] = useState<'Pendiente' | 'En Progreso' | 'Cumplido'>('Pendiente');
@@ -115,16 +117,23 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
       id: `obj_${Date.now()}`,
       text: newObjective.trim(),
       completado: false,
-      metaFecha: newObjectiveDate || undefined
-      ,progreso: 0
+      metaFecha: newObjectiveDate || undefined,
+      progreso: 0,
+      cadencia: newObjectiveCadencia,
     };
     setObjectives([...objectives, item]);
     setNewObjective('');
     setNewObjectiveDate('');
+    setNewObjectiveCadencia('mensual');
   };
 
   const removeObjective = (id: string) => {
     setObjectives(objectives.filter(o => o.id !== id));
+  };
+
+  // Edición inline de un objetivo ya creado (texto, fecha meta y periodicidad).
+  const updateObjectiveField = (id: string, patch: Partial<ProjectObjective>) => {
+    setObjectives(objectives.map((o) => o.id === id ? { ...o, ...patch } : o));
   };
 
   const toggleObjective = (id: string) => {
@@ -152,6 +161,7 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
       tendencia: newKpiTendencia,
       objetivo_id: newKpiObjectiveId || undefined,
       historial: Number.isFinite(initialValue) ? [{ fecha: new Date().toISOString().slice(0, 10), valor: initialValue }] : [],
+      cadencia: newKpiCadencia,
     };
     setKpis([...kpis, item]);
     setNewKpiNombre('');
@@ -159,10 +169,16 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
     setNewKpiActual('');
     setNewKpiTendencia('Estable');
     setNewKpiObjectiveId('');
+    setNewKpiCadencia('mensual');
   };
 
   const removeKpi = (id: string) => {
     setKpis(kpis.filter(k => k.id !== id));
+  };
+
+  // Edición inline de un KPI ya creado (nombre, meta, objetivo y periodicidad).
+  const updateKpiField = (id: string, patch: Partial<ProjectKpi>) => {
+    setKpis(kpis.map((k) => k.id === id ? { ...k, ...patch } : k));
   };
 
   const updateKpiActual = (id: string, actual: string) => {

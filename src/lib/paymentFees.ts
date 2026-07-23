@@ -31,9 +31,33 @@ export function calculatePaymentFees(
   return { bruto, comisionPorcentaje, comisionFija, costoRetiro, totalDescuentos, netoOrigen, netoCop: netoOrigen * tasaCop, tasaCop };
 }
 
-export function totalGatewayFeesCop(ventas: Venta[], defaultTrm: number): number {
+/** Tarifas por defecto de la pasarela del usuario (personalizables). */
+export interface GatewayDefaults {
+  porcentaje: number;
+  fija: number;
+  retiro: number;
+}
+
+/** True si la venta ya trae tarifas de pasarela propias (no usar defaults). */
+function saleHasExplicitFees(sale: Pick<Venta, 'pasarela_pago' | 'comision_pasarela_porcentaje' | 'comision_pasarela_fija' | 'comision_retiro'>): boolean {
+  return Boolean(sale.pasarela_pago)
+    || Number(sale.comision_pasarela_porcentaje || 0) > 0
+    || Number(sale.comision_pasarela_fija || 0) > 0
+    || Number(sale.comision_retiro || 0) > 0;
+}
+
+/**
+ * Suma en COP lo que descuenta la pasarela en el período. Si se pasan tarifas
+ * por defecto, se aplican a las ventas que no tienen tarifas propias (en la
+ * misma moneda de cada venta), para estimar el neto real sin tener que cargar
+ * la comisión venta por venta.
+ */
+export function totalGatewayFeesCop(ventas: Venta[], defaultTrm: number, defaults?: GatewayDefaults): number {
   return ventas.reduce((total, sale) => {
-    const fees = calculatePaymentFees(sale, defaultTrm);
+    const effective = !defaults || saleHasExplicitFees(sale)
+      ? sale
+      : { ...sale, comision_pasarela_porcentaje: defaults.porcentaje, comision_pasarela_fija: defaults.fija, comision_retiro: defaults.retiro };
+    const fees = calculatePaymentFees(effective, defaultTrm);
     return total + fees.totalDescuentos * fees.tasaCop;
   }, 0);
 }
