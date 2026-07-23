@@ -3,6 +3,7 @@
 // plannerService. Components should not touch supabase for planner data.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { plannerService, type CreatePlannerBlockInput, type PlannerBlock, type PlannerBriefing, type PlannerClient, type PlannerInbox, type PlannerInsight, type PlannerTask, type UpdatePlannerTaskInput } from '../lib/plannerService';
+import { countTodayAutoActions } from '../lib/auditLogService';
 
 function today() { return todayInTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Bogota'); }
 
@@ -42,8 +43,11 @@ export function usePlanner() {
       const currentDate = todayInTimeZone(zone);
       if (!hasAutoPlanned.current && date === currentDate) {
         hasAutoPlanned.current = true;
-        const rescheduled = await plannerService.rescheduleOverdueTasks(currentDate);
-        setRescheduledCount(rescheduled.length);
+        await plannerService.rescheduleOverdueTasks(currentDate);
+        // El conteo sale de audit_log para cubrir AMBOS mecanismos: el cron
+        // diario del servidor (5:10) y este barrido al abrir el Planner.
+        const { data: { user } } = await (await import('../lib/supabase')).supabase.auth.getUser();
+        if (user) setRescheduledCount(await countTodayAutoActions(user.id, 'reprogramado_automatico'));
         // Opening the Planner keeps the rolling agenda current. It no longer
         // depends on an overdue transition or on pressing the button.
         const busyBlocks = await plannerService.calendarBusyBlocks(currentDate);

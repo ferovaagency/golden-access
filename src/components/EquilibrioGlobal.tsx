@@ -57,7 +57,7 @@ export default function EquilibrioGlobal({ metrics, formatCop }: EquilibrioGloba
 
         <div className={`border p-5 rounded-lg border-l-3 ${haSuperadoBreakeven ? 'border-l-[#a8c98a] bg-[#141812] border-[#2a2620]' : 'border-l-[#c97a61] bg-[#181312] border-[#2a2620]'}`}>
           <span className="text-[10px] font-mono tracking-wider text-[#8a8377] uppercase block">Diagnóstico Financiero</span>
-          <div className="text-xl font-display font-bold mt-2" style={{ color: haSuperadoBreakeven ? '#a8c98a' : '#c97a61' }}>
+          <div className="text-xl font-display font-bold mt-2" style={{ color: haSuperadoBreakeven ? 'var(--success)' : 'var(--danger)' }}>
             {haSuperadoBreakeven ? 'ZONA GANANCIA' : 'ZONA DÉFICIT'}
           </div>
           <span className="text-[10px] text-[#8a8377] font-mono block mt-1">

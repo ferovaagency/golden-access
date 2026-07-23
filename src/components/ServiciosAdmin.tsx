@@ -10,12 +10,14 @@ import { downloadServiciosTemplate, parseServiciosCsv } from '../lib/csvImportEx
 // Semáforo de 4 niveles del manual (Parte 4.5): <15% crítico, 15-29% bajo,
 // 30-49% saludable, >=50% alto. "sin_ventas" es el estado sin datos, no un
 // nivel de margen real.
+// Variables del tema unificado: los estilos inline no pasan por el remap CSS
+// de .ferova-light-theme, por eso se usan var(--...) y no hex directos.
 const SEMAFORO_COLOR: Record<string, string> = {
-  critico: '#c97a61',
-  bajo: '#c99a61',
-  saludable: '#c9a961',
-  alto: '#a8c98a',
-  sin_ventas: '#8a8377',
+  critico: 'var(--danger)',
+  bajo: 'var(--warning)',
+  saludable: 'var(--primary)',
+  alto: 'var(--success)',
+  sin_ventas: 'var(--muted)',
 };
 const SEMAFORO_LABEL: Record<string, string> = {
   critico: 'Crítico',

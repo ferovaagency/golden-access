@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
 import {
@@ -17,8 +17,8 @@ import { consumePostLoginReturn, supabase } from '../lib/supabase';
  * Public sales landing at /landing.
  * Nocturnal-adjacent but tuned to the app's current light theme:
  * dark hero with gold accents, then light module demos below.
- * No backend calls — pure presentation, safe to ship even while the
- * production Supabase reconnect is pending.
+ * Única llamada a backend: founder_slots_taken() (un entero, RPC pública)
+ * para el contador real de cupos Founder; todo lo demás es presentación.
  */
 export default function Landing() {
   useEffect(() => {
@@ -90,6 +90,7 @@ function Header() {
 
 function Hero() {
   const reduceMotion = useReducedMotion();
+  const remaining = useFounderSlots();
   return (
     <section className="relative isolate overflow-hidden bg-[#09122b] text-white">
       <motion.div
@@ -137,7 +138,7 @@ function Hero() {
               Ver demos
             </a>
           </div>
-          <p className="mt-4 text-xs text-slate-400">Founder Access USD 39 / mes · 20 cupos totales · Sin permanencia</p>
+          <p className="mt-4 text-xs text-slate-400">Founder Access USD 39 / mes · {remaining !== null ? <span className="font-semibold text-amber-300">{remaining} de 20 cupos disponibles</span> : '20 cupos totales'} · Sin permanencia</p>
         </div>
         <motion.div
           initial={reduceMotion ? false : { opacity: 0, scale: 0.94 }}
@@ -427,7 +428,26 @@ function AiDemo() {
   );
 }
 
+const FOUNDER_TOTAL_SLOTS = 20;
+
+/**
+ * Cupos Founder reales: cuenta suscripciones activas via RPC publica
+ * (founder_slots_taken, solo devuelve un entero). Nada inventado: si la
+ * consulta falla, no se muestra numero en vez de fingir uno.
+ */
+function useFounderSlots() {
+  const [taken, setTaken] = useState<number | null>(null);
+  useEffect(() => {
+    void supabase.rpc('founder_slots_taken').then(({ data, error }) => {
+      if (!error && typeof data === 'number') setTaken(data);
+    });
+  }, []);
+  if (taken === null) return null;
+  return Math.max(0, FOUNDER_TOTAL_SLOTS - Math.min(taken, FOUNDER_TOTAL_SLOTS));
+}
+
 function Pricing() {
+  const remaining = useFounderSlots();
   const features = [
     'Todos los módulos incluidos',
     'Asistente IA sin límite razonable',
@@ -449,7 +469,15 @@ function Pricing() {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.4, ease: 'easeOut' }}
         >
-          <div className="mb-4 flex items-center justify-between rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900"><span>Founder Access</span><span>20 cupos totales</span></div>
+          <div className="mb-4 flex items-center justify-between rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900"><span>Founder Access</span><span>{remaining !== null ? `${remaining} de ${FOUNDER_TOTAL_SLOTS} cupos disponibles` : '20 cupos totales'}</span></div>
+          {remaining !== null && (
+            <div className="mb-4">
+              <div className="h-1.5 overflow-hidden rounded-full bg-amber-100">
+                <div className="h-full rounded-full bg-amber-500 transition-all" style={{ width: `${((FOUNDER_TOTAL_SLOTS - remaining) / FOUNDER_TOTAL_SLOTS) * 100}%` }} />
+              </div>
+              <p className="mt-1 text-[11px] text-amber-800">{FOUNDER_TOTAL_SLOTS - remaining} cupos ya ocupados · el precio Founder se congela para siempre</p>
+            </div>
+          )}
           <div className="flex items-baseline gap-1">
             <span className="font-serif text-5xl">USD 39</span>
             <span className="text-slate-500">/ mes</span>

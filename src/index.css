@@ -171,6 +171,63 @@ pre {
 .ferova-light-theme .border-l-\[\#a8c98a\] { border-left-color: var(--success) !important; }
 .ferova-light-theme .border-l-\[\#c97a61\] { border-left-color: var(--danger) !important; }
 
+/* ============================================================
+   Unificación de gama (jul 2026): la paleta vieja del tema oscuro
+   (oliva #a8c98a, terracota #c97a61, ocre #c99a61, dorado #c9a961)
+   seguía apareciendo en badges, bordes y fondos dentro del tema claro.
+   Aquí se remapea TODO a la paleta semántica única del tema
+   (--success/--danger/--warning/--primary). Cubre cada clase arbitraria
+   realmente usada en src (incluidas variantes de opacidad y hover/focus).
+   ============================================================ */
+/* Éxito (verde) */
+.ferova-light-theme .text-\[\#a8c98a\] { color: var(--success) !important; }
+.ferova-light-theme .bg-\[\#a8c98a\] { background-color: var(--success) !important; }
+.ferova-light-theme .bg-\[\#a8c98a\]\/5,
+.ferova-light-theme .bg-\[\#a8c98a\]\/10,
+.ferova-light-theme .bg-\[\#a8c98a\]\/15,
+.ferova-light-theme .hover\:bg-\[\#a8c98a\]\/10:hover,
+.ferova-light-theme .hover\:bg-\[\#a8c98a\]\/20:hover { background-color: var(--success-soft) !important; }
+.ferova-light-theme .border-\[\#a8c98a\]\/10,
+.ferova-light-theme .border-\[\#a8c98a\]\/20,
+.ferova-light-theme .border-\[\#a8c98a\]\/25,
+.ferova-light-theme .border-\[\#a8c98a\]\/30,
+.ferova-light-theme .border-\[\#a8c98a\]\/40 { border-color: color-mix(in srgb, var(--success) 35%, transparent) !important; }
+.ferova-light-theme .focus\:border-\[\#a8c98a\]:focus { border-color: var(--success) !important; }
+/* Peligro (rojo) */
+.ferova-light-theme .text-\[\#c97a61\] { color: var(--danger) !important; }
+.ferova-light-theme .hover\:text-\[\#c97a61\]:hover,
+.ferova-light-theme .hover\:text-\[\#c97a61\]\/80:hover { color: var(--danger) !important; }
+.ferova-light-theme .bg-\[\#c97a61\]\/5,
+.ferova-light-theme .bg-\[\#c97a61\]\/10,
+.ferova-light-theme .bg-\[\#c97a61\]\/15,
+.ferova-light-theme .hover\:bg-\[\#c97a61\]\/5:hover,
+.ferova-light-theme .hover\:bg-\[\#c97a61\]\/10:hover { background-color: var(--danger-soft) !important; }
+.ferova-light-theme .border-\[\#c97a61\]\/20,
+.ferova-light-theme .border-\[\#c97a61\]\/25,
+.ferova-light-theme .border-\[\#c97a61\]\/30,
+.ferova-light-theme .border-\[\#c97a61\]\/35,
+.ferova-light-theme .border-\[\#c97a61\]\/40 { border-color: color-mix(in srgb, var(--danger) 35%, transparent) !important; }
+/* Advertencia (ámbar) */
+.ferova-light-theme .text-\[\#c99a61\] { color: var(--warning) !important; }
+.ferova-light-theme .bg-\[\#c99a61\]\/10 { background-color: var(--warning-soft) !important; }
+.ferova-light-theme .border-\[\#c99a61\]\/25 { border-color: color-mix(in srgb, var(--warning) 35%, transparent) !important; }
+/* Acento dorado -> primario */
+.ferova-light-theme .hover\:text-\[\#c9a961\]:hover { color: var(--primary) !important; }
+.ferova-light-theme .bg-\[\#c9a961\]\/5,
+.ferova-light-theme .bg-\[\#c9a961\]\/10,
+.ferova-light-theme .hover\:bg-\[\#c9a961\]\/5:hover,
+.ferova-light-theme .hover\:bg-\[\#c9a961\]\/20:hover { background-color: var(--primary-soft) !important; }
+.ferova-light-theme .border-\[\#c9a961\] { border-color: var(--primary) !important; }
+.ferova-light-theme .border-\[\#c9a961\]\/10,
+.ferova-light-theme .border-\[\#c9a961\]\/20,
+.ferova-light-theme .border-\[\#c9a961\]\/25,
+.ferova-light-theme .border-\[\#c9a961\]\/30,
+.ferova-light-theme .border-\[\#c9a961\]\/35,
+.ferova-light-theme .border-\[\#c9a961\]\/40 { border-color: color-mix(in srgb, var(--primary) 35%, transparent) !important; }
+.ferova-light-theme .hover\:border-\[\#c9a961\]:hover,
+.ferova-light-theme .focus\:border-\[\#c9a961\]:focus { border-color: var(--primary) !important; }
+.ferova-light-theme .hover\:bg-\[\#b09252\]:hover { background-color: #1d4ed8 !important; color: #ffffff !important; }
+
 /* Custom transitions */
 .transition-all-custom {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);

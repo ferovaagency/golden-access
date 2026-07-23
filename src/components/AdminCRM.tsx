@@ -1265,10 +1265,10 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 const tier = o.probabilidad == null
                   ? null
                   : o.probabilidad >= 70
-                    ? { label: 'Hot', color: '#c97a61' }
+                    ? { label: 'Hot', color: 'var(--danger)' }
                     : o.probabilidad >= 40
-                      ? { label: 'Warm', color: '#c9a961' }
-                      : { label: 'Cold', color: '#8a8377' };
+                      ? { label: 'Warm', color: 'var(--warning)' }
+                      : { label: 'Cold', color: 'var(--muted)' };
                 return (
                   <div key={o.id} className="bg-white border border-slate-200 rounded-lg p-4 space-y-3 text-xs">
                     <div className="flex flex-wrap items-center gap-3">
@@ -1942,9 +1942,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                     <span
                       className="text-[9px] font-mono uppercase px-2 py-0.5 rounded border"
                       style={{
-                        color: (c.score_potencial ?? 0) >= 70 ? '#a8c98a' : (c.score_potencial ?? 0) >= 40 ? '#c9a961' : '#8a8377',
-                        borderColor: (c.score_potencial ?? 0) >= 70 ? '#a8c98a66' : (c.score_potencial ?? 0) >= 40 ? '#c9a96166' : '#2a2620',
-                        backgroundColor: 'rgba(255,255,255,0.02)',
+                        color: (c.score_potencial ?? 0) >= 70 ? 'var(--success)' : (c.score_potencial ?? 0) >= 40 ? 'var(--warning)' : 'var(--muted)',
+                        borderColor: (c.score_potencial ?? 0) >= 70 ? 'var(--success)' : (c.score_potencial ?? 0) >= 40 ? 'var(--warning)' : 'var(--line)',
+                        backgroundColor: 'transparent',
                       }}
                     >
                       score {c.score_potencial ?? '-'}

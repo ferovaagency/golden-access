@@ -101,11 +101,13 @@ export default function HorasAdmin({
     capacidadComprometidaHoras,
     horasFacturablesTrabajadas: totalHorasLoggeadas,
   });
+  // Colores via variables del tema (los estilos inline no pasan por el remap
+  // CSS de .ferova-light-theme, así que se referencia la paleta unificada).
   const LECTURA_CAPACIDAD: Record<string, { label: string; color: string }> = {
-    ociosa: { label: 'Capacidad ociosa', color: '#8a8377' },
-    operativo: { label: 'Rango operativo razonable', color: '#a8c98a' },
-    saturacion: { label: 'Riesgo de saturación', color: '#c99a61' },
-    alto_riesgo: { label: 'Alto riesgo de agotamiento', color: '#c97a61' },
+    ociosa: { label: 'Capacidad ociosa', color: 'var(--muted)' },
+    operativo: { label: 'Rango operativo razonable', color: 'var(--success)' },
+    saturacion: { label: 'Riesgo de saturación', color: 'var(--warning)' },
+    alto_riesgo: { label: 'Alto riesgo de agotamiento', color: 'var(--danger)' },
   };
 
   // Render alerts / comparative colors
@@ -203,7 +205,7 @@ export default function HorasAdmin({
 
         <div className={`border border-[#2a2620] border-l-3 p-5 rounded-lg ${isHoraRealOptimal ? 'border-l-[#a8c98a] bg-[#141812]' : 'border-l-[#c97a61] bg-[#181312]'}`}>
           <span className="text-[10px] font-mono tracking-wider text-[#8a8377] uppercase block">Valor Hora Real</span>
-          <div className="text-2xl font-display font-semibold mt-2" style={{ color: isHoraRealOptimal ? '#a8c98a' : '#c97a61' }}>
+          <div className="text-2xl font-display font-semibold mt-2" style={{ color: isHoraRealOptimal ? 'var(--success)' : 'var(--danger)' }}>
             {formatCop(horaRealObj)}
           </div>
           <span className="text-[10px] text-[#8a8377] font-mono block mt-1">

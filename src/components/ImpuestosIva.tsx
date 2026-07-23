@@ -243,7 +243,7 @@ export default function ImpuestosIva({ data, metrics, formatCop }: ImpuestosIvaP
               
               <div className="flex justify-between items-center text-[#e8e3d8]">
                 <span>Saldo Bruto Netiado:</span>
-                <span className="font-mono font-bold text-lg" style={{ color: esSaldoAPagar ? '#c97a61' : (esSaldoAFavor ? '#a8c98a' : '#e8e3d8') }}>
+                <span className="font-mono font-bold text-lg" style={{ color: esSaldoAPagar ? 'var(--danger)' : (esSaldoAFavor ? 'var(--success)' : 'var(--text)') }}>
                   {formatCop(Math.abs(saldoIvaNettoValue))}
                 </span>
               </div>

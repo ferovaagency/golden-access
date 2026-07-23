@@ -110,7 +110,7 @@ export default function EquilibrioServicio({
 
                     <div className="bg-white/[0.01] border border-[#2a2620]/80 p-3 rounded">
                       <span className="font-mono text-[#8a8377] text-[10px] uppercase block">Unidades Vendidas</span>
-                      <span className="font-display font-bold text-white text-lg mt-1 block" style={{ color: metBreakeven ? '#a8c98a' : '#e8e3d8' }}>
+                      <span className="font-display font-bold text-white text-lg mt-1 block" style={{ color: metBreakeven ? 'var(--success)' : 'var(--text)' }}>
                         {totalQuantitySoldSrv} <span className="text-xs font-sans text-[#a39d8e]">uds</span>
                       </span>
                     </div>
