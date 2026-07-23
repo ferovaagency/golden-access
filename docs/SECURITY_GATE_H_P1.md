@@ -8,6 +8,7 @@ Estado al 2026-07-23: **NO VERIFICADO EN PRODUCCIÓN — BLOQUEA tráfico públi
 - `supabase/config.toml` apuntaba a `rrjyfyihdnbvbtdxygyp`; se corrigió para evitar que una migración o función termine en el proyecto externo equivocado.
 - Las migraciones de Finanzas, Planner, BI, auditoría y perfiles habilitan RLS y limitan filas con `auth.uid() = user_id`.
 - Algunas tablas históricas `crm_*` son deliberadamente compartidas entre miembros del equipo mediante `is_team_member()`. No deben reutilizarse como almacenamiento multi-tenant de clientes.
+- El escaneo básico de Lovable detectó `authenticated_security_definer_function_executable` y `function_search_path_mutable`. La migración `20260723103000_harden_team_members_and_functions.sql` revoca RPC sobre triggers, fija `search_path`, fuerza `is_team_member()` a `SECURITY INVOKER` y reemplaza la lectura global del allowlist por lectura de la propia fila.
 - El proyecto Lovable `izkh…` no aparece en la cuenta Supabase conectada a Codex, por lo que todavía no fue posible consultar `pg_policies`, `relrowsecurity` y los Security Advisors del backend exacto de producción.
 
 ## Condición para pasar a SÍ
