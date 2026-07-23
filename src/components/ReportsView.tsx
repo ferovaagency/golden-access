@@ -4,8 +4,6 @@ import { FileText, Loader2, Sparkles, AlertTriangle, CheckCircle2, Target, Calcu
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { CeoReport, DecisionSimulation, ReportPeriod, generateReport, listReports, listSimulations, runSimulation } from '../lib/reportsService';
 import { AiDisclosure } from './AiDisclosure';
-import type { AppData } from '../types';
-import OperatingKpiDashboard from './OperatingKpiDashboard';
 
 const periodLabel: Record<ReportPeriod, string> = { daily: 'Diario', weekly: 'Semanal', monthly: 'Mensual' };
 
@@ -39,12 +37,12 @@ function formatCop(n: number | undefined | null): string {
   return '$' + Math.round(Number(n)).toLocaleString('es-CO');
 }
 
-export default function ReportsView({ user, appData, formatCop: formatAppCop }: { user: User; appData: AppData; formatCop: (value: number) => string }) {
+export default function ReportsView({ user }: { user: User }) {
   const [period, setPeriod] = useState<ReportPeriod>('weekly');
   const [reports, setReports] = useState<CeoReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [tab, setTab] = useState<'tracking' | 'reports' | 'decisions'>('tracking');
+  const [tab, setTab] = useState<'reports' | 'decisions'>('reports');
   const [error, setError] = useState<string | null>(null);
 
   const [sims, setSims] = useState<DecisionSimulation[]>([]);
@@ -100,7 +98,6 @@ export default function ReportsView({ user, appData, formatCop: formatAppCop }: 
           <p className="text-sm text-slate-500">Síntesis ejecutiva del negocio y simulador de decisiones.</p>
         </div>
         <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
-          <button onClick={() => setTab('tracking')} className={`px-3 py-1.5 text-xs font-semibold rounded-lg ${tab==='tracking'?'bg-[var(--ferova-brand)] text-white':'text-slate-600'}`}>Seguimiento</button>
           <button onClick={() => setTab('reports')} className={`px-3 py-1.5 text-xs font-semibold rounded-lg ${tab==='reports'?'bg-blue-600 text-white':'text-slate-600'}`}>Reportes</button>
           <button onClick={() => setTab('decisions')} className={`px-3 py-1.5 text-xs font-semibold rounded-lg ${tab==='decisions'?'bg-blue-600 text-white':'text-slate-600'}`}>Simulador</button>
         </div>
@@ -113,8 +110,6 @@ export default function ReportsView({ user, appData, formatCop: formatAppCop }: 
           <AlertTriangle className="w-4 h-4 mt-0.5" /><span>{error}</span>
         </div>
       )}
-
-      {tab === 'tracking' && <OperatingKpiDashboard userId={user.id} data={appData} formatCop={formatAppCop} />}
 
       {tab === 'reports' && (
         <>

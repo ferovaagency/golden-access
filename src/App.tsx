@@ -45,6 +45,7 @@ const AdminCRM = lazy(() => import('./components/AdminCRM'));
 const CustomerCRM = lazy(() => import('./components/CustomerCRM'));
 const SmartPlanner = lazy(() => import('./components/SmartPlanner'));
 const ReportsView = lazy(() => import('./components/ReportsView'));
+const OperatingKpiDashboard = lazy(() => import('./components/OperatingKpiDashboard'));
 const FinanceOperativa = lazy(() => import('./components/FinanceOperativa'));
 const MarketingROI = lazy(() => import('./components/MarketingROI'));
 
@@ -498,7 +499,10 @@ function AppInner() {
       { id: 'servicios', label: 'Servicios', hint: 'Catálogo y costos' },
       { id: 'horas', label: 'Horas', hint: 'Capacidad y rentabilidad' },
     ] : [] },
-    { id: 'projects', label: 'Projects', icon: FolderKanban, items: modules.core_projects ? [{ id: 'proyectos', label: 'Proyectos', hint: 'KPIs y ejecución' }] : [] },
+    { id: 'projects', label: 'Projects', icon: FolderKanban, items: modules.core_projects ? [
+      { id: 'proyectos', label: 'Proyectos', hint: 'Objetivos, hitos y KPIs' },
+      { id: 'seguimiento', label: 'Seguimiento', hint: 'Diario → semanal → mensual → anual' },
+    ] : [] },
     { id: 'modules', label: 'Modules', icon: Grid2X2, items: [
       ...(modules.advanced_analytics ? [{ id: 'reports', label: 'Reportes CEO', hint: 'Seguimiento ejecutivo', group: 'Finanzas' as const }] : []),
       ...(modules.financiero ? [
@@ -700,7 +704,7 @@ function AppInner() {
         {isReady && metrics && appData && (
           <Suspense fallback={<LoadingState label="Cargando módulo…" />}>
             {activeTab === 'planner' && <SmartPlanner />}
-            {activeTab === 'reports' && user && <ReportsView user={user} appData={appData} formatCop={formatCop} />}
+            {activeTab === 'reports' && user && <ReportsView user={user} />}
             {activeTab === 'finops' && <FinanceOperativa user={user} appData={appData} formatCop={formatCop} />}
             {activeTab === 'marketingRoi' && <MarketingROI user={user} formatCop={formatCop} />}
             {activeTab === 'dashboard' && (
@@ -727,6 +731,9 @@ function AppInner() {
                 onSaveClientes={handleSaveClientes}
               />
             )}
+            {activeTab === 'seguimiento' && user && (
+              <OperatingKpiDashboard userId={user.id} data={appData} formatCop={formatCop} />
+            )}
             {activeTab === 'pagosEgresos' && (
               <PagosEgresosAdmin pagosEgresos={appData.pagosEgresos || []} config={appData.config} onSavePagosEgresos={handleSavePagosEgresos} />
             )}
@@ -746,7 +753,11 @@ function AppInner() {
               <ConfigAdmin userId={user.id} businessProfile={businessProfile} onBusinessProfileUpdated={setBusinessProfile} config={appData.config} ventas={appData.ventas} clientes={appData.clientes} horas={appData.horas} hasGoogleToken={!!getAccessToken()} lastSheetBackupLink={lastSheetBackupLink} isBackingUpToSheets={isBackingUpToSheets} onSaveConfig={handleSaveConfig} onBackupToSheets={handleBackupToSheets} onImportFromSheets={handleImportFromSheets} onImportFromSheetsUrl={handleImportFromSheetsUrl} formatCop={formatCop} />
             )}
             {activeTab === 'ventas-crm' && modules.crm_ventas && <CustomerCRM user={user} />}
-            {isTeam && activeTab.startsWith('crm-') && (
+            {modules.crm_ventas && activeTab.startsWith('crm-') && (
+              // Las pestañas de crecimiento (Pipeline, Citas, LinkedIn+Reddit,
+              // Bot WhatsApp, Reseñas) son del módulo del cliente: cada cuenta
+              // opera sobre sus propias filas vía RLS. Antes estaban atadas a
+              // isTeam y quedaban en blanco para clientes de pago con el módulo.
               <AdminCRM user={user} embedded tab={activeTab.replace('crm-', '') as CRMTab} onTabChange={(t) => setActiveTab(`crm-${t}`)} />
             )}
           </Suspense>

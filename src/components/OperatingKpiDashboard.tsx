@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { ArrowDown, CheckCircle2, CircleDollarSign, Save, Target } from 'lucide-react';
+import { ArrowDown, CheckCircle2, CircleDollarSign, Save, Target, FolderKanban } from 'lucide-react';
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { AppData } from '../types';
 import { totalGatewayFeesCop } from '../lib/paymentFees';
+import { useProjectPortfolio } from '../hooks/useProjectPortfolio';
 
 type DailyValues = Record<'contactos' | 'seguimientos' | 'calificadas' | 'respuestas', number>;
 type StoredDay = DailyValues & { date: string };
@@ -50,6 +51,27 @@ export default function OperatingKpiDashboard({ userId, data, formatCop }: { use
   const weekScore = rollupScore(week, 5);
   const monthScore = rollupScore(month, 22);
   const annualProgress = annualMrrTarget > 0 ? Math.min(100, netMrr / annualMrrTarget * 100) : 0;
+
+  // La meta anual (O10) no vive aislada: se alimenta de los objetivos y KPIs
+  // definidos por proyecto/cliente (pestaña Proyectos). Aquí se hace explícita
+  // esa relación -- cada objetivo con su meta y el avance de sus KPIs.
+  const projects = useProjectPortfolio(data);
+  const objetivosProyectos = useMemo(() => projects.flatMap((project) =>
+    project.objectives.map((obj) => ({
+      cliente: project.client.nombre,
+      texto: obj.text,
+      metaFecha: obj.metaFecha,
+      completado: obj.completado,
+      kpis: project.kpis.filter((kpi) => kpi.objetivo_id === obj.id),
+    }))
+  ), [projects]);
+  const totalObjetivos = objetivosProyectos.length;
+  const objetivosCumplidos = objetivosProyectos.filter((o) => o.completado).length;
+  const kpiEnMeta = (meta: string, actual: string) => {
+    const m = Number(String(meta).replace(/[^0-9.-]/g, ''));
+    const a = Number(String(actual).replace(/[^0-9.-]/g, ''));
+    return Number.isFinite(m) && Number.isFinite(a) && m > 0 ? a >= m : null;
+  };
   const trend = useMemo(() => history.slice().sort((a, b) => a.date.localeCompare(b.date)).slice(-14).map((day) => ({ date: day.date.slice(5), cumplimiento: rollupScore(day, 1) })), [history]);
 
   const saveToday = () => {
@@ -71,7 +93,7 @@ export default function OperatingKpiDashboard({ userId, data, formatCop }: { use
         <FeedArrow />
         <CadenceCard title="Mensual" subtitle="Salud del negocio" accent="amber" value={formatCop(netMrr)} items={[`${month.calificadas} conversaciones calificadas`, `${month.contactos} contactos`, `${monthSales.length} ventas`, `Comisiones: ${formatCop(feesMonthCop)}`]} />
         <FeedArrow />
-        <CadenceCard title="Anual" subtitle="Norte a 12 meses" accent="violet" value={annualMrrTarget ? `${annualProgress.toFixed(0)}%` : 'Por confirmar'} items={[`Meta MRR: ${annualMrrTarget ? formatCop(annualMrrTarget) : 'sin definir'}`, `${activeClients} clientes activos`, `${yearSales.length} ventas este año`, 'Margen neto y LTV/CAC: fuente pendiente']} />
+        <CadenceCard title="Anual" subtitle="Norte a 12 meses" accent="violet" value={annualMrrTarget ? `${annualProgress.toFixed(0)}%` : 'Por confirmar'} items={[`Meta MRR: ${annualMrrTarget ? formatCop(annualMrrTarget) : 'sin definir'}`, `${activeClients} clientes activos`, `Objetivos de proyectos: ${objetivosCumplidos}/${totalObjetivos} cumplidos`, `${yearSales.length} ventas este año`]} />
       </div>
 
       <div className="space-y-4">
@@ -84,7 +106,44 @@ export default function OperatingKpiDashboard({ userId, data, formatCop }: { use
 
         <article className="rounded-[var(--ferova-radius-card)] border border-[var(--ferova-line)] bg-[#101726] p-5 text-white shadow-[var(--ferova-shadow)]"><div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-amber-300">Comisiones por pasarela</p><p className="mt-1 text-xs text-slate-300">El MRR real es el neto, no el bruto.</p></div><CircleDollarSign className="h-5 w-5 text-amber-300" /></div><div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3"><Money label="Bruto mes" value={formatCop(grossMonthCop)} /><span className="text-amber-300">→</span><Money label="Neto mes" value={formatCop(netMrr)} /></div><p className="mt-3 text-[11px] text-slate-400">Descontado: {formatCop(feesMonthCop)} entre porcentaje, cargo fijo y retiro. La conversión usa la TRM efectiva de cada venta cuando existe.</p></article>
 
-        <article className="rounded-[var(--ferova-radius-card)] border border-[var(--ferova-line)] bg-white p-5"><div className="flex items-center gap-2"><Target className="h-4 w-4 text-[var(--ferova-brand)]" /><h3 className="text-sm font-semibold text-slate-900">Meta anual O10</h3></div><p className="mt-1 text-xs text-slate-500">La meta queda visible como “por confirmar” hasta que ingreses tu MRR objetivo real.</p><div className="mt-3 flex gap-2"><input type="number" min="0" value={annualMrrTarget || ''} onChange={(event) => saveAnnualTarget(Number(event.target.value))} placeholder="MRR objetivo a 12 meses (COP)" className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" /><span className="grid place-items-center rounded-xl bg-slate-50 px-3 text-xs font-semibold text-slate-500">COP</span></div></article>
+        <article className="rounded-[var(--ferova-radius-card)] border border-[var(--ferova-line)] bg-white p-5"><div className="flex items-center gap-2"><Target className="h-4 w-4 text-[var(--ferova-brand)]" /><h3 className="text-sm font-semibold text-slate-900">Meta anual O10</h3></div><p className="mt-1 text-xs text-slate-500">La meta queda visible como “por confirmar” hasta que ingreses tu MRR objetivo real. Se alimenta de los objetivos por proyecto definidos abajo.</p><div className="mt-3 flex gap-2"><input type="number" min="0" value={annualMrrTarget || ''} onChange={(event) => saveAnnualTarget(Number(event.target.value))} placeholder="MRR objetivo a 12 meses (COP)" className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" /><span className="grid place-items-center rounded-xl bg-slate-50 px-3 text-xs font-semibold text-slate-500">COP</span></div></article>
+
+        <article className="rounded-[var(--ferova-radius-card)] border border-[var(--ferova-line)] bg-white p-5 shadow-[var(--ferova-shadow)]">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2"><FolderKanban className="h-4 w-4 text-violet-600" /><h3 className="text-sm font-semibold text-slate-900">Objetivos por proyecto que alimentan la meta</h3></div>
+            <span className="rounded-full bg-violet-50 px-2.5 py-1 text-[10px] font-bold text-violet-700">{objetivosCumplidos}/{totalObjetivos} cumplidos</span>
+          </div>
+          <p className="mt-1 text-xs text-slate-500">Cada objetivo, hito y KPI se define en <span className="font-semibold text-slate-700">Projects → Proyectos</span>. Aquí se ve cómo su avance sostiene la meta anual.</p>
+          {objetivosProyectos.length === 0 ? (
+            <p className="mt-4 rounded-xl bg-slate-50 p-4 text-center text-xs text-slate-400">Aún no hay objetivos por proyecto. Definilos en Proyectos para relacionarlos con la meta anual.</p>
+          ) : (
+            <ul className="mt-4 space-y-2">
+              {objetivosProyectos.slice(0, 8).map((obj, index) => (
+                <li key={index} className="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-800">{obj.texto}</p>
+                      <p className="text-[10px] text-slate-400">{obj.cliente}{obj.metaFecha ? ` · meta ${obj.metaFecha}` : ''}</p>
+                    </div>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold ${obj.completado ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{obj.completado ? 'Cumplido' : 'En curso'}</span>
+                  </div>
+                  {obj.kpis.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {obj.kpis.map((kpi) => {
+                        const enMeta = kpiEnMeta(kpi.meta, kpi.actual);
+                        return (
+                          <span key={kpi.id} className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[9px] font-medium ${enMeta === true ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : enMeta === false ? 'border-red-200 bg-red-50 text-red-700' : 'border-slate-200 bg-white text-slate-500'}`}>
+                            {kpi.nombre}: {kpi.actual || '—'} / {kpi.meta}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </article>
       </div>
     </div>
   </section>;

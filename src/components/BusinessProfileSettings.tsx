@@ -14,17 +14,17 @@ const DIAS = [
 ];
 
 const ZONAS_HORARIAS = [
-  ['America/Bogota', 'Colombia · BogotÃ¡ (UTC−5)'],
-  ['America/Mexico_City', 'MÃ©xico · Ciudad de MÃ©xico'],
-  ['America/Lima', 'PerÃº · Lima (UTC−5)'],
+  ['America/Bogota', 'Colombia · Bogotá (UTC−5)'],
+  ['America/Mexico_City', 'México · Ciudad de México'],
+  ['America/Lima', 'Perú · Lima (UTC−5)'],
   ['America/Guayaquil', 'Ecuador · Quito / Guayaquil (UTC−5)'],
   ['America/Caracas', 'Venezuela · Caracas (UTC−4)'],
   ['America/Santiago', 'Chile · Santiago'],
   ['America/Argentina/Buenos_Aires', 'Argentina · Buenos Aires (UTC−3)'],
-  ['America/Sao_Paulo', 'Brasil · SÃ£o Paulo (UTC−3)'],
-  ['Europe/Madrid', 'EspaÃ±a · Madrid'],
+  ['America/Sao_Paulo', 'Brasil · São Paulo (UTC−3)'],
+  ['Europe/Madrid', 'España · Madrid'],
   ['America/New_York', 'EE. UU. · Nueva York'],
-  ['America/Los_Angeles', 'EE. UU. · Los Ãngeles'],
+  ['America/Los_Angeles', 'EE. UU. · Los Ángeles'],
 ] as const;
 
 const emptyForm = {
