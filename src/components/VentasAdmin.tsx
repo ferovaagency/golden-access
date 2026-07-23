@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Venta, Cliente, Servicio, Config } from '../types';
 import { convertToCop } from '../lib/calculations';
 import { calculatePaymentFees } from '../lib/paymentFees';
+import { listPaymentGateways, type PaymentGateway } from '../lib/paymentGatewaysService';
 import { CsvPagoImportado, parsePagosCsv } from '../lib/csvImportExport';
 import { useToast } from './ui/toast';
 import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
@@ -13,6 +14,7 @@ import {
 } from 'lucide-react';
 
 interface VentasAdminProps {
+  userId: string;
   ventas: Venta[];
   clientes: Cliente[];
   servicios: Servicio[];
@@ -22,14 +24,15 @@ interface VentasAdminProps {
   formatUsd: (val: number) => string;
 }
 
-export default function VentasAdmin({ 
-  ventas, 
-  clientes, 
-  servicios, 
-  config, 
-  onSaveVentas, 
-  formatCop, 
-  formatUsd 
+export default function VentasAdmin({
+  userId,
+  ventas,
+  clientes,
+  servicios,
+  config,
+  onSaveVentas,
+  formatCop,
+  formatUsd
 }: VentasAdminProps) {
   const { error: toastErr, success: toastSuccess } = useToast();
   // Form states
@@ -42,11 +45,25 @@ export default function VentasAdmin({
   const [moneda, setMoneda] = useState<'COP' | 'USD'>('COP');
   const [adelanto, setAdelanto] = useState(0);
   const [notas, setNotas] = useState('');
-  const [pasarelaPago, setPasarelaPago] = useState('Transferencia');
+  const [pasarelaPago, setPasarelaPago] = useState('');
   const [comisionPasarelaPct, setComisionPasarelaPct] = useState(0);
   const [comisionPasarelaFija, setComisionPasarelaFija] = useState(0);
   const [comisionRetiro, setComisionRetiro] = useState(0);
   const [trmConversion, setTrmConversion] = useState<number | ''>('');
+  // Catálogo de pasarelas del usuario: elegir una copia sus comisiones a esta
+  // venta y las deja editables (un cliente puede tener una tarifa distinta).
+  const [gateways, setGateways] = useState<PaymentGateway[]>([]);
+  const [manualGateway, setManualGateway] = useState(false);
+  useEffect(() => { void listPaymentGateways(userId).then(setGateways).catch(() => setGateways([])); }, [userId]);
+
+  const applyGateway = (nombre: string) => {
+    setPasarelaPago(nombre);
+    const found = gateways.find((g) => g.nombre === nombre);
+    if (!found) return;
+    setComisionPasarelaPct(found.comision_porcentaje);
+    setComisionPasarelaFija(found.comision_fija);
+    setComisionRetiro(found.comision_retiro);
+  };
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [editingVentaId, setEditingVentaId] = useState<string | null>(null);
 
@@ -129,7 +146,9 @@ export default function VentasAdmin({
     setMoneda(v.moneda);
     setAdelanto(v.adelanto);
     setNotas(v.notas || '');
-    setPasarelaPago(v.pasarela_pago || 'Transferencia');
+    setPasarelaPago(v.pasarela_pago || '');
+    // Si la venta tiene un medio que ya no está en el catálogo, se edita a mano.
+    setManualGateway(Boolean(v.pasarela_pago) && !gateways.some((g) => g.nombre === v.pasarela_pago));
     setComisionPasarelaPct(v.comision_pasarela_porcentaje || 0);
     setComisionPasarelaFija(v.comision_pasarela_fija || 0);
     setComisionRetiro(v.comision_retiro || 0);
@@ -157,7 +176,8 @@ export default function VentasAdmin({
     setPrecioVentaUnitario(0);
     setAdelanto(0);
     setNotas('');
-    setPasarelaPago('Transferencia');
+    setPasarelaPago('');
+    setManualGateway(false);
     setComisionPasarelaPct(0);
     setComisionPasarelaFija(0);
     setComisionRetiro(0);
@@ -576,9 +596,18 @@ export default function VentasAdmin({
             <div className="space-y-3 rounded-xl border border-[var(--ferova-line)] bg-[var(--ferova-soft)] p-4">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[.13em] text-[var(--ferova-brand)]">Costos reales de recaudo</p>
-                <p className="mt-1 text-[10px] leading-4 text-slate-500">Registra lo que descuenta la pasarela. Los cargos fijos y de retiro están en {moneda}; no se mezclan monedas.</p>
+                <p className="mt-1 text-[10px] leading-4 text-slate-500">¿Esta venta tuvo comisión de pasarela? Elegí cuál y se cargan sus tarifas; podés ajustarlas si este cliente tiene una distinta. Los cargos fijos y de retiro están en {moneda}; no se mezclan monedas.</p>
               </div>
-              <label className="block"><span className="mb-1 block text-[9px] font-semibold uppercase text-slate-500">Pasarela o medio</span><input value={pasarelaPago} onChange={(e) => setPasarelaPago(e.target.value)} placeholder="PayPal, Paddle, banco…" className="w-full rounded-lg border border-slate-200 bg-white p-2 text-xs" /></label>
+              <label className="block">
+                <span className="mb-1 block text-[9px] font-semibold uppercase text-slate-500">Pasarela o medio</span>
+                <select value={manualGateway ? '__otra' : pasarelaPago} onChange={(e) => { const value = e.target.value; if (value === '__otra') { setManualGateway(true); setPasarelaPago(''); return; } setManualGateway(false); if (value === '') { setPasarelaPago(''); setComisionPasarelaPct(0); setComisionPasarelaFija(0); setComisionRetiro(0); } else { applyGateway(value); } }} className="w-full rounded-lg border border-slate-200 bg-white p-2 text-xs">
+                  <option value="">Sin comisión de pasarela</option>
+                  {gateways.filter((g) => g.activo).map((g) => <option key={g.id} value={g.nombre}>{g.nombre} · {g.comision_porcentaje}%{g.comision_fija ? ` + ${g.comision_fija} ${g.moneda}` : ''}</option>)}
+                  <option value="__otra">Otra (cargar a mano)</option>
+                </select>
+                {gateways.length === 0 && <span className="mt-1 block text-[9px] text-slate-400">Definí tus pasarelas en Projects → Seguimiento para elegirlas acá.</span>}
+              </label>
+              {manualGateway && <label className="block"><span className="mb-1 block text-[9px] font-semibold uppercase text-slate-500">Nombre del medio</span><input value={pasarelaPago} onChange={(e) => setPasarelaPago(e.target.value)} placeholder="Banco, efectivo…" className="w-full rounded-lg border border-slate-200 bg-white p-2 text-xs" /></label>}
               <div className="grid grid-cols-3 gap-2">
                 <label><span className="mb-1 block text-[9px] font-semibold uppercase text-slate-500">Comisión %</span><input type="number" min="0" max="100" step="0.01" value={comisionPasarelaPct} onChange={(e) => setComisionPasarelaPct(Number(e.target.value))} className="w-full rounded-lg border border-slate-200 bg-white p-2 text-xs" /></label>
                 <label><span className="mb-1 block text-[9px] font-semibold uppercase text-slate-500">Fijo ({moneda})</span><input type="number" min="0" step="0.01" value={comisionPasarelaFija} onChange={(e) => setComisionPasarelaFija(Number(e.target.value))} className="w-full rounded-lg border border-slate-200 bg-white p-2 text-xs" /></label>

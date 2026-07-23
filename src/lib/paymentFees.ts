@@ -31,33 +31,28 @@ export function calculatePaymentFees(
   return { bruto, comisionPorcentaje, comisionFija, costoRetiro, totalDescuentos, netoOrigen, netoCop: netoOrigen * tasaCop, tasaCop };
 }
 
-/** Tarifas por defecto de la pasarela del usuario (personalizables). */
-export interface GatewayDefaults {
-  porcentaje: number;
-  fija: number;
-  retiro: number;
-}
-
-/** True si la venta ya trae tarifas de pasarela propias (no usar defaults). */
-function saleHasExplicitFees(sale: Pick<Venta, 'pasarela_pago' | 'comision_pasarela_porcentaje' | 'comision_pasarela_fija' | 'comision_retiro'>): boolean {
-  return Boolean(sale.pasarela_pago)
-    || Number(sale.comision_pasarela_porcentaje || 0) > 0
-    || Number(sale.comision_pasarela_fija || 0) > 0
-    || Number(sale.comision_retiro || 0) > 0;
-}
-
 /**
- * Suma en COP lo que descuenta la pasarela en el período. Si se pasan tarifas
- * por defecto, se aplican a las ventas que no tienen tarifas propias (en la
- * misma moneda de cada venta), para estimar el neto real sin tener que cargar
- * la comisión venta por venta.
+ * Suma en COP lo que descuenta la pasarela en el período, usando SOLO las
+ * tarifas guardadas en cada venta. Las comisiones varían por medio de pago,
+ * servicio y cliente, así que no se asume ninguna tarifa global: la pasarela
+ * se elige al registrar el ingreso y queda congelada en la venta.
  */
-export function totalGatewayFeesCop(ventas: Venta[], defaultTrm: number, defaults?: GatewayDefaults): number {
+export function totalGatewayFeesCop(ventas: Venta[], defaultTrm: number): number {
   return ventas.reduce((total, sale) => {
-    const effective = !defaults || saleHasExplicitFees(sale)
-      ? sale
-      : { ...sale, comision_pasarela_porcentaje: defaults.porcentaje, comision_pasarela_fija: defaults.fija, comision_retiro: defaults.retiro };
-    const fees = calculatePaymentFees(effective, defaultTrm);
+    const fees = calculatePaymentFees(sale, defaultTrm);
     return total + fees.totalDescuentos * fees.tasaCop;
   }, 0);
+}
+
+/** Cuántas ventas del período tienen (o no) una pasarela asignada. */
+export function gatewayCoverage(ventas: Venta[]): { conPasarela: number; sinPasarela: number } {
+  let conPasarela = 0;
+  for (const sale of ventas) {
+    const tiene = Boolean(sale.pasarela_pago)
+      || Number(sale.comision_pasarela_porcentaje || 0) > 0
+      || Number(sale.comision_pasarela_fija || 0) > 0
+      || Number(sale.comision_retiro || 0) > 0;
+    if (tiene) conPasarela += 1;
+  }
+  return { conPasarela, sinPasarela: ventas.length - conPasarela };
 }

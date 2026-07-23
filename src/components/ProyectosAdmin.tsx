@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AppData, Cliente } from '../types';
 import { updateProjectClient } from '../domains/projects/projectService';
-import type { ProjectDeliverable, ProjectKpi, ProjectObjective } from '../domains/projects/types';
+import type { ProjectCadence, ProjectDeliverable, ProjectKpi, ProjectObjective } from '../domains/projects/types';
 import { useProjectPortfolio } from '../hooks/useProjectPortfolio';
 import { useToast, errMsg } from './ui/toast';
 import {
@@ -17,6 +17,15 @@ import {
   Percent,
   FolderOpen
 } from 'lucide-react';
+
+/** Periodicidad seleccionable para objetivos y KPIs (manual: diario alimenta semanal, etc.). */
+const CADENCIAS: Array<{ value: ProjectCadence; label: string }> = [
+  { value: 'diario', label: 'Diario' },
+  { value: 'semanal', label: 'Semanal' },
+  { value: 'mensual', label: 'Mensual' },
+  { value: 'anual', label: 'Anual' },
+];
+const cadenciaLabel = (value?: ProjectCadence) => CADENCIAS.find((c) => c.value === value)?.label || 'Sin periodicidad';
 
 interface ProyectosAdminProps {
   projectData: Pick<AppData, 'clientes' | 'servicios' | 'ventas' | 'horas'>;
@@ -215,6 +224,11 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
     setDeliverables(deliverables.filter(d => d.id !== id));
   };
 
+  // Edición inline de un hito ya creado (nombre, fecha y estado).
+  const updateDeliverableField = (id: string, patch: Partial<ProjectDeliverable>) => {
+    setDeliverables(deliverables.map((d) => d.id === id ? { ...d, ...patch } : d));
+  };
+
   const toggleDeliverableState = (id: string) => {
     setDeliverables(deliverables.map(d => {
       if (d.id === id) {
@@ -404,10 +418,10 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
               <div className="p-4 space-y-4">
                 
                 {/* Add Objective form */}
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+                <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 items-end">
                   <div className="sm:col-span-2">
                     <label className="block text-[9px] font-mono uppercase tracking-wider text-[#a39d8e] mb-1">Nuevo Objetivo Estratégico</label>
-                    <input 
+                    <input
                       type="text"
                       placeholder="Ej. Reposicionar palabras clave transaccionales"
                       value={newObjective}
@@ -416,15 +430,25 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                     />
                   </div>
                   <div>
+                    <label className="block text-[9px] font-mono uppercase tracking-wider text-[#a39d8e] mb-1">Periodicidad</label>
+                    <select
+                      value={newObjectiveCadencia}
+                      onChange={(e) => setNewObjectiveCadencia(e.target.value as ProjectCadence)}
+                      className="w-full bg-[#0f0e0c]/50 text-[#e8e3d8] border border-[#2a2620] p-1.5 text-xs rounded focus:outline-none focus:border-[#c9a961]"
+                    >
+                      {CADENCIAS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                    </select>
+                  </div>
+                  <div>
                     <label className="block text-[9px] font-mono uppercase tracking-wider text-[#a39d8e] mb-1">Fecha Meta</label>
-                    <input 
+                    <input
                       type="date"
                       value={newObjectiveDate}
                       onChange={(e) => setNewObjectiveDate(e.target.value)}
                       className="w-full bg-[#0f0e0c]/50 text-[#a39d8e] border border-[#2a2620] p-1.5 text-xs rounded focus:outline-none"
                     />
                   </div>
-                  <button 
+                  <button
                     type="button"
                     onClick={addObjective}
                     className="bg-[#c9a961]/10 hover:bg-[#c9a961]/20 border border-[#c9a961]/35 text-[#c9a961] px-4 py-2 rounded text-xs transition font-semibold flex items-center justify-center gap-1 cursor-pointer"
@@ -449,25 +473,45 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                             : 'bg-[#0f0e0c]/35 border-[#2a2620] text-[#e8e3d8]'
                         }`}
                       >
-                        <div className="flex items-center gap-2.5">
-                          <button 
-                            type="button" 
+                        <div className="flex items-start gap-2.5 flex-1 min-w-0">
+                          <button
+                            type="button"
                             onClick={() => toggleObjective(obj.id)}
-                            className={`w-4 h-4 rounded flex items-center justify-center border transition ${
-                              obj.completado 
-                                ? 'bg-emerald-400 border-emerald-500 text-black' 
+                            className={`mt-0.5 w-4 h-4 shrink-0 rounded flex items-center justify-center border transition ${
+                              obj.completado
+                                ? 'bg-emerald-400 border-emerald-500 text-black'
                                 : 'border-[#8a8377] hover:border-[#c9a961]'
                             }`}
                           >
                             {obj.completado && <Check className="w-3 h-3 stroke-[3]" />}
                           </button>
-                          <div>
-                            <span className={obj.completado ? 'line-through text-[#8a8377]' : 'font-medium'}>
-                              {obj.text}
-                            </span>
-                            {obj.metaFecha && (
-                              <span className="block text-[9px] font-mono text-[#8a8377] mt-0.5">Meta: {obj.metaFecha}</span>
-                            )}
+                          <div className="flex-1 min-w-0">
+                            {/* Editable después de creado */}
+                            <input
+                              type="text"
+                              value={obj.text}
+                              onChange={(event) => updateObjectiveField(obj.id, { text: event.target.value })}
+                              aria-label="Editar objetivo"
+                              className={`w-full bg-transparent border border-transparent hover:border-[#2a2620] focus:border-[#c9a961] rounded px-1 py-0.5 text-xs focus:outline-none ${obj.completado ? 'line-through text-[#8a8377]' : 'font-medium text-[#e8e3d8]'}`}
+                            />
+                            <div className="mt-1 flex flex-wrap items-center gap-2">
+                              <select
+                                value={obj.cadencia || ''}
+                                onChange={(event) => updateObjectiveField(obj.id, { cadencia: (event.target.value || undefined) as ProjectCadence | undefined })}
+                                aria-label="Periodicidad del objetivo"
+                                className="bg-[#0f0e0c]/50 text-[#c9a961] border border-[#2a2620] rounded px-1.5 py-0.5 text-[9px] font-mono focus:outline-none focus:border-[#c9a961]"
+                              >
+                                <option value="">Sin periodicidad</option>
+                                {CADENCIAS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                              </select>
+                              <input
+                                type="date"
+                                value={obj.metaFecha || ''}
+                                onChange={(event) => updateObjectiveField(obj.id, { metaFecha: event.target.value || undefined })}
+                                aria-label="Fecha meta del objetivo"
+                                className="bg-[#0f0e0c]/50 text-[#8a8377] border border-[#2a2620] rounded px-1.5 py-0.5 text-[9px] font-mono focus:outline-none focus:border-[#c9a961]"
+                              />
+                            </div>
                             <div className="mt-2 flex items-center gap-2">
                               <input type="range" min="0" max="100" step="5" value={obj.progreso ?? (obj.completado ? 100 : 0)} onChange={(event) => updateObjectiveProgress(obj.id, Number(event.target.value))} className="h-1.5 w-28 accent-emerald-500" aria-label={`Progreso de ${obj.text}`} />
                               <span className="text-[9px] font-mono text-emerald-400">{obj.progreso ?? (obj.completado ? 100 : 0)}%</span>
@@ -560,13 +604,13 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                         key={item.id}
                         className="p-3 rounded border bg-[#0f0e0c]/25 border-[#2a2620] text-xs flex items-center justify-between gap-3 text-[#e8e3d8]"
                       >
-                        <div className="flex items-center gap-3">
-                          <button 
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <button
                             type="button"
                             onClick={() => toggleDeliverableState(item.id)}
-                            className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold leading-normal uppercase border transition cursor-pointer ${
-                              item.estado === 'Cumplido' 
-                                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' 
+                            className={`mt-0.5 shrink-0 px-2 py-0.5 rounded text-[9px] font-mono font-bold leading-normal uppercase border transition cursor-pointer ${
+                              item.estado === 'Cumplido'
+                                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
                                 : item.estado === 'En Progreso'
                                 ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
                                 : 'bg-red-500/10 text-red-400 border-red-500/20'
@@ -574,13 +618,22 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                           >
                             {item.estado}
                           </button>
-                          <div>
-                            <span className={item.estado === 'Cumplido' ? 'line-through text-[#8a8377]' : 'font-medium'}>
-                              {item.nombre}
-                            </span>
-                            {item.fecha && (
-                              <span className="block text-[9px] font-mono text-[#8a8377] mt-0.5">Vencimiento: {item.fecha}</span>
-                            )}
+                          <div className="flex-1 min-w-0">
+                            {/* Editable después de creado */}
+                            <input
+                              type="text"
+                              value={item.nombre}
+                              onChange={(event) => updateDeliverableField(item.id, { nombre: event.target.value })}
+                              aria-label="Editar hito"
+                              className={`w-full bg-transparent border border-transparent hover:border-[#2a2620] focus:border-[#c9a961] rounded px-1 py-0.5 text-xs focus:outline-none ${item.estado === 'Cumplido' ? 'line-through text-[#8a8377]' : 'font-medium text-[#e8e3d8]'}`}
+                            />
+                            <input
+                              type="date"
+                              value={item.fecha || ''}
+                              onChange={(event) => updateDeliverableField(item.id, { fecha: event.target.value || undefined })}
+                              aria-label="Fecha de vencimiento del hito"
+                              className="mt-1 bg-[#0f0e0c]/50 text-[#8a8377] border border-[#2a2620] rounded px-1.5 py-0.5 text-[9px] font-mono focus:outline-none focus:border-[#c9a961]"
+                            />
                           </div>
                         </div>
 
@@ -647,6 +700,12 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                       {objectives.map((objective) => <option key={objective.id} value={objective.id}>{objective.text}</option>)}
                     </select>
                   </div>
+                  <div className="sm:col-span-3">
+                    <label className="block text-[9px] font-mono uppercase tracking-wider text-[#a39d8e] mb-1">Periodicidad</label>
+                    <select value={newKpiCadencia} onChange={(event) => setNewKpiCadencia(event.target.value as ProjectCadence)} className="w-full bg-[#0f0e0c] text-white border border-[#2a2620] p-2 text-xs rounded focus:outline-none focus:border-[#c9a961]">
+                      {CADENCIAS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                    </select>
+                  </div>
                   <div className="sm:col-span-2">
                     <button 
                       type="button"
@@ -668,17 +727,43 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                     {kpis.map((k) => (
                       <div key={k.id} className="bg-[#0f0e0c]/40 border border-[#2a2620] p-3 rounded-lg flex flex-col justify-between">
                         <div className="flex justify-between items-start gap-2 mb-2">
-                          <span className="font-semibold text-xs text-[#e8e3d8] leading-tight block">{k.nombre}</span>
-                          <button 
+                          {/* Editable después de creado */}
+                          <input
+                            type="text"
+                            value={k.nombre}
+                            onChange={(event) => updateKpiField(k.id, { nombre: event.target.value })}
+                            aria-label="Editar nombre del KPI"
+                            className="flex-1 min-w-0 bg-transparent border border-transparent hover:border-[#2a2620] focus:border-[#c9a961] rounded px-1 py-0.5 font-semibold text-xs text-[#e8e3d8] leading-tight focus:outline-none"
+                          />
+                          <button
                             type="button"
                             onClick={() => removeKpi(k.id)}
-                            className="text-[#8a8377] hover:text-[#c97a61] transition"
+                            className="shrink-0 text-[#8a8377] hover:text-[#c97a61] transition"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
-                        
-                        <div className="mb-2 text-[10px] text-blue-300">Objetivo: {objectives.find((objective) => objective.id === k.objetivo_id)?.text || 'Sin relación (dato anterior)'}</div>
+
+                        <div className="mb-2 grid grid-cols-2 gap-2">
+                          <select
+                            value={k.objetivo_id || ''}
+                            onChange={(event) => updateKpiField(k.id, { objetivo_id: event.target.value || undefined })}
+                            aria-label="Objetivo relacionado"
+                            className="w-full bg-[#0f0e0c] text-blue-300 border border-[#2a2620] rounded px-1.5 py-1 text-[10px] focus:outline-none focus:border-[#c9a961]"
+                          >
+                            <option value="">Sin relación</option>
+                            {objectives.map((objective) => <option key={objective.id} value={objective.id}>{objective.text}</option>)}
+                          </select>
+                          <select
+                            value={k.cadencia || ''}
+                            onChange={(event) => updateKpiField(k.id, { cadencia: (event.target.value || undefined) as ProjectCadence | undefined })}
+                            aria-label="Periodicidad del KPI"
+                            className="w-full bg-[#0f0e0c] text-[#c9a961] border border-[#2a2620] rounded px-1.5 py-1 text-[10px] font-mono focus:outline-none focus:border-[#c9a961]"
+                          >
+                            <option value="">Sin periodicidad</option>
+                            {CADENCIAS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                          </select>
+                        </div>
                         <div className="grid grid-cols-2 gap-2 text-xs border-t border-[#2a2620]/40 pt-2">
                           <div>
                             <span className="text-[10px] text-[#8a8377] font-mono uppercase">Actual:</span>
@@ -686,7 +771,7 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                           </div>
                           <div>
                             <span className="text-[10px] text-[#8a8377] font-mono uppercase">Meta:</span>
-                            <span className="block font-bold text-white">{k.meta}</span>
+                            <input value={k.meta} onChange={(event) => updateKpiField(k.id, { meta: event.target.value })} className="mt-1 w-full rounded border border-[#2a2620] bg-black/20 px-2 py-1 font-bold text-white outline-none focus:border-[#c9a961]" aria-label={`Meta de ${k.nombre}`} />
                           </div>
                         </div>
                         <KpiProgress kpi={k} />

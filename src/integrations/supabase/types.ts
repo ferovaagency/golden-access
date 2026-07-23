@@ -2003,6 +2003,99 @@ export type Database = {
         }
         Relationships: []
       }
+      operating_kpi_days: {
+        Row: {
+          user_id: string
+          fecha: string
+          contactos: number
+          seguimientos: number
+          calificadas: number
+          respuestas: number
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          fecha: string
+          contactos?: number
+          seguimientos?: number
+          calificadas?: number
+          respuestas?: number
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          fecha?: string
+          contactos?: number
+          seguimientos?: number
+          calificadas?: number
+          respuestas?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      operating_kpi_settings: {
+        Row: {
+          user_id: string
+          metas: Json
+          meta_anual_mrr: number
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          metas?: Json
+          meta_anual_mrr?: number
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          metas?: Json
+          meta_anual_mrr?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      payment_gateways: {
+        Row: {
+          id: string
+          user_id: string
+          nombre: string
+          comision_porcentaje: number
+          comision_fija: number
+          comision_retiro: number
+          moneda: string
+          aplica_cambio_moneda: boolean
+          activo: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          nombre: string
+          comision_porcentaje?: number
+          comision_fija?: number
+          comision_retiro?: number
+          moneda?: string
+          aplica_cambio_moneda?: boolean
+          activo?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          nombre?: string
+          comision_porcentaje?: number
+          comision_fija?: number
+          comision_retiro?: number
+          moneda?: string
+          aplica_cambio_moneda?: boolean
+          activo?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       paddle_webhook_events: {
         Row: {
           event_id: string
