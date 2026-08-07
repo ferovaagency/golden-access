@@ -11,6 +11,8 @@ import { formatMinutes } from '../../lib/duration';
 export function TodayPlannerBlock({ onOpenPlanner }: { onOpenPlanner?: () => void }) {
   const [tasks, setTasks] = useState<PlannerTask[] | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  /** Resultado del último cierre: estimado vs. real y si el tiempo llegó a Horas. */
+  const [notice, setNotice] = useState<string | null>(null);
   const today = new Date().toISOString().slice(0, 10);
 
   const load = useCallback(async () => {
