@@ -11,6 +11,16 @@ import { plannerDateKey, plannerTaskAvailableDate } from './plannerScheduling';
 const log = logger.child('planner');
 
 export type PlannerCategory = 'deep_work' | 'meetings' | 'admin' | 'creative' | 'calls' | 'learning' | 'personal' | 'breaks';
+
+/** Resultado visible del cierre de una tarea: estimado vs. real y si el tiempo llegó a Horas. */
+export interface CompleteTaskResult {
+  estimatedMinutes: number | null;
+  actualMinutes: number | null;
+  hourLogged: boolean;
+  /** El tiempo se registró, pero sin servicio: hay que asignarlo en Horas. */
+  missingService: boolean;
+  hourDate: string | null;
+}
 export type PlannerPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type PlannerEnergy = 'low' | 'medium' | 'high';
 export type PlannerTaskStatus = 'backlog' | 'scheduled' | 'in_progress' | 'done' | 'postponed' | 'cancelled';
