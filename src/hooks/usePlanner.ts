@@ -212,7 +212,7 @@ export function usePlanner() {
   return {
     inbox, tasks, clients, services, blocks, insights, briefing, rescheduledCount, planNotice,
     loading, busy, error, date, setDate, timeZone,
-    refresh, classify, planDay, regenerateInsights, regenerateBriefing,
+    refresh, classify, previewCapture, commitCapture, planDay, regenerateInsights, regenerateBriefing,
     completeTask, startTask, updateTask, postponeTask, deleteTask, createBlock, dismissInsight,
   };
 }
