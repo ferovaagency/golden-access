@@ -242,13 +242,13 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
   const selectedClient = activeClientes.find((client) => client.id === selectedClientId);
 
   return (
-    <div className="space-y-8 animate-fade-in text-[#e8e3d8]">
+    <div className="space-y-8 animate-fade-in text-slate-900">
       
       {/* Tab Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#2a2620] pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
-          <h2 className="text-xl font-display font-medium text-[#c9a961]">Proyectos y seguimiento de clientes</h2>
-          <p className="text-xs text-[#a39d8e] font-mono mt-1">
+          <h2 className="text-xl font-display font-medium text-blue-700">Proyectos y seguimiento de clientes</h2>
+          <p className="text-xs text-slate-500 font-mono mt-1">
             Garantiza el cumplimiento de entrega, objetivos estratégicos, indicadores de rendimiento y branding de tus clientes.
           </p>
         </div>
@@ -259,7 +259,7 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
             type="button"
             onClick={handleSaveProjectData}
             disabled={saving}
-            className="bg-[#c9a961] hover:bg-[#b09252] disabled:bg-[#2a2620] text-black font-semibold font-mono tracking-wide px-4 py-2 text-xs rounded-lg flex items-center gap-2 transition cursor-pointer"
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 text-black font-semibold font-mono tracking-wide px-4 py-2 text-xs rounded-lg flex items-center gap-2 transition cursor-pointer"
           >
             {saving ? (
               <span className="flex items-center gap-1.5">Cargando...</span>
@@ -277,35 +277,35 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
         </div>
       )}
 
-      {selectedClient && <section className="rounded-lg border border-[#2a2620] bg-[#161412] p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-[10px] font-mono uppercase tracking-wider text-[#a39d8e]">Seguimiento operativo</p><p className="mt-1 text-sm font-semibold text-[#e8e3d8]">Indicadores de {selectedClient.nombre}</p></div><span className="rounded-full bg-[#c9a961]/10 px-2.5 py-1 text-[10px] font-semibold text-[#c9a961]">{kpis.length} KPI{kpis.length === 1 ? '' : 's'} configurado{kpis.length === 1 ? '' : 's'}</span></div>
-        {kpis.length ? <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{kpis.map((kpi) => { const meta = Number(kpi.meta.replace(/[^0-9.-]/g, '')); const actual = Number(kpi.actual.replace(/[^0-9.-]/g, '')); const pct = Number.isFinite(meta) && meta > 0 && Number.isFinite(actual) ? Math.max(0, Math.min(100, Math.round(actual / meta * 100))) : null; return <div key={kpi.id} className="rounded-lg border border-[#2a2620] bg-white/40 p-3"><div className="flex items-start justify-between gap-2"><p className="text-xs font-semibold text-[#e8e3d8]">{kpi.nombre}</p><span className="text-[10px] text-[#a39d8e]">{cadenciaLabel(kpi.cadencia)}</span></div><p className="mt-2 text-[11px] text-[#a39d8e]">Actual <b className="text-[#c9a961]">{kpi.actual}</b> · Meta {kpi.meta}</p>{pct != null && <><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/10"><div className="h-full rounded-full bg-[#c9a961]" style={{ width: `${pct}%` }} /></div><p className="mt-1 text-[10px] text-[#a39d8e]">{pct}% de la meta</p></>}</div>; })}</div> : <p className="mt-3 text-xs text-[#a39d8e]">Crea el primer KPI abajo. No hay metas fijas ni códigos como “010”: cada medición parte de los indicadores de este proyecto.</p>}
+      {selectedClient && <section className="rounded-lg border border-slate-200 bg-white p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-[10px] font-mono uppercase tracking-wider text-slate-500">Seguimiento operativo</p><p className="mt-1 text-sm font-semibold text-slate-900">Indicadores de {selectedClient.nombre}</p></div><span className="rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-semibold text-blue-700">{kpis.length} KPI{kpis.length === 1 ? '' : 's'} configurado{kpis.length === 1 ? '' : 's'}</span></div>
+        {kpis.length ? <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{kpis.map((kpi) => { const meta = Number(kpi.meta.replace(/[^0-9.-]/g, '')); const actual = Number(kpi.actual.replace(/[^0-9.-]/g, '')); const pct = Number.isFinite(meta) && meta > 0 && Number.isFinite(actual) ? Math.max(0, Math.min(100, Math.round(actual / meta * 100))) : null; return <div key={kpi.id} className="rounded-lg border border-slate-200 bg-white/40 p-3"><div className="flex items-start justify-between gap-2"><p className="text-xs font-semibold text-slate-900">{kpi.nombre}</p><span className="text-[10px] text-slate-500">{cadenciaLabel(kpi.cadencia)}</span></div><p className="mt-2 text-[11px] text-slate-500">Actual <b className="text-blue-700">{kpi.actual}</b> · Meta {kpi.meta}</p>{pct != null && <><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/10"><div className="h-full rounded-full bg-blue-600" style={{ width: `${pct}%` }} /></div><p className="mt-1 text-[10px] text-slate-500">{pct}% de la meta</p></>}</div>; })}</div> : <p className="mt-3 text-xs text-slate-500">Crea el primer KPI abajo. No hay metas fijas ni códigos como “010”: cada medición parte de los indicadores de este proyecto.</p>}
       </section>}
 
       {/* Select active client view */}
-      <div className="bg-[#161412] border border-[#2a2620] p-4 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white border border-slate-200 p-4 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#c9a961]/10 flex items-center justify-center text-[#c9a961]">
+          <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-700">
             <FolderOpen className="w-4 h-4" />
           </div>
           <div>
-            <label className="block text-[10px] font-mono uppercase tracking-wider text-[#a39d8e] mb-0.5 font-bold">Cliente Seleccionado:</label>
-            <span className="text-xs text-[#e8e3d8] font-sans font-semibold">Selecciona un cliente activo para revisar su estrategia</span>
+            <label className="block text-[10px] font-mono uppercase tracking-wider text-slate-500 mb-0.5 font-bold">Cliente Seleccionado:</label>
+            <span className="text-xs text-slate-900 font-sans font-semibold">Selecciona un cliente activo para revisar su estrategia</span>
           </div>
         </div>
 
         <div>
           {activeClientes.length === 0 ? (
-            <div className="text-xs font-mono text-[#c97a61] p-1">No hay clientes activos registrados.</div>
+            <div className="text-xs font-mono text-rose-600 p-1">No hay clientes activos registrados.</div>
           ) : (
             <select 
               value={selectedClientId}
               onChange={(e) => setSelectedClientId(e.target.value)}
-              className="bg-[#0f0e0c] text-white border border-[#2a2620] p-2 rounded text-xs focus:outline-none focus:border-[#c9a961] font-medium"
+              className="bg-slate-50 text-white border border-slate-200 p-2 rounded text-xs focus:outline-none focus:border-blue-500 font-medium"
             >
               <option value="" disabled>Seleccionar cliente...</option>
               {activeClientes.map(c => (
-                <option key={c.id} value={c.id} className="bg-[#0f0e0c]">{c.nombre} ({c.id})</option>
+                <option key={c.id} value={c.id} className="bg-slate-50">{c.nombre} ({c.id})</option>
               ))}
             </select>
           )}
@@ -319,57 +319,57 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
           <div className="lg:col-span-4 space-y-6">
             
             {/* 1. BRAND METADATA COMPONENT */}
-            <div className="bg-[#161412] border border-[#2a2620] rounded-lg overflow-hidden">
-              <div className="bg-white/[0.02] border-b border-[#2a2620] px-4 py-3.5 flex items-center gap-2">
-                <Palette className="w-4 h-4 text-[#c9a961]" />
-                <h3 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase font-semibold">Atributos de Marca & Proyecto</h3>
+            <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+              <div className="bg-white/[0.02] border-b border-slate-200 px-4 py-3.5 flex items-center gap-2">
+                <Palette className="w-4 h-4 text-blue-700" />
+                <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold">Atributos de Marca & Proyecto</h3>
               </div>
               
               <div className="p-4 space-y-4 text-xs">
                 {/* Client brief */}
                 <div>
-                  <label className="block text-[#a39d8e] font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Concepto Visual & Enlaces de Interés</label>
+                  <label className="block text-slate-500 font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Concepto Visual & Enlaces de Interés</label>
                   <textarea 
                     rows={4}
                     placeholder="Ej. Colores primarios: #1A1A1A, #E4B55F. Tipografía: Syne. Drive de activos de marca: https://drive.google.com/..."
                     value={marcaConcepto}
                     onChange={(e) => setMarcaConcepto(e.target.value)}
-                    className="w-full bg-[#0f0e0c]/50 text-[#e8e3d8] border border-[#2a2620] p-2.5 rounded focus:outline-none focus:border-[#c9a961] font-sans text-xs"
+                    className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none focus:border-blue-500 font-sans text-xs"
                   />
-                  <span className="text-[10px] text-[#8a8377] leading-tight block mt-1">Design system, drives, lineamientos de diseño, contraseñas seguras o notas de identidad.</span>
+                  <span className="text-[10px] text-slate-500 leading-tight block mt-1">Design system, drives, lineamientos de diseño, contraseñas seguras o notas de identidad.</span>
                 </div>
 
                 {/* Team Lead / Responsable */}
                 <div>
-                  <label className="block text-[#a39d8e] font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Responsable (Account Manager / Lead)</label>
+                  <label className="block text-slate-500 font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Responsable (Account Manager / Lead)</label>
                   <div className="relative">
                     <input 
                       type="text"
                       placeholder="Ej. Carolina G. (SEO Strategist)"
                       value={responsable}
                       onChange={(e) => setResponsable(e.target.value)}
-                      className="w-full bg-[#0f0e0c]/50 text-[#e8e3d8] border border-[#2a2620] pl-8.5 pr-3 py-2 rounded focus:outline-none focus:border-[#c9a961] font-sans text-xs"
+                      className="w-full bg-slate-50 text-slate-900 border border-slate-200 pl-8.5 pr-3 py-2 rounded focus:outline-none focus:border-blue-500 font-sans text-xs"
                     />
-                    <UserCheck className="absolute left-2.5 top-2.5 w-4 h-4 text-[#8a8377]" />
+                    <UserCheck className="absolute left-2.5 top-2.5 w-4 h-4 text-slate-500" />
                   </div>
                 </div>
               </div>
             </div>
 
             {/* 2. OVERALL SERVICES COMPLIANCE PROGRESS */}
-            <div className="bg-[#161412] border border-[#2a2620] rounded-lg overflow-hidden">
-              <div className="bg-white/[0.02] border-b border-[#2a2620] px-4 py-3.5 flex items-center justify-between">
+            <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+              <div className="bg-white/[0.02] border-b border-slate-200 px-4 py-3.5 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Percent className="w-4 h-4 text-[#c9a961]" />
-                  <h3 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase font-semibold">Progreso Contractual</h3>
+                  <Percent className="w-4 h-4 text-blue-700" />
+                  <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold">Progreso Contractual</h3>
                 </div>
-                <span className="text-xs font-mono font-bold text-white bg-[#c9a961]/10 border border-[#c9a961]/30 px-2 py-0.5 rounded">
+                <span className="text-xs font-mono font-bold text-white bg-blue-50 border border-blue-300 px-2 py-0.5 rounded">
                   {progreso}%
                 </span>
               </div>
               
               <div className="p-4 space-y-4 text-xs">
-                <span className="text-[10px] text-[#a39d8e] leading-snug block">
+                <span className="text-[10px] text-slate-500 leading-snug block">
                   Arrastra para indicar el grado de avance en el periodo de prestación del servicio con el cliente:
                 </span>
                 
@@ -381,17 +381,17 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                     step="5"
                     value={progreso}
                     onChange={(e) => setProgreso(Number(e.target.value))}
-                    className="w-full accent-[#c9a961] cursor-pointer h-2 bg-[#0f0e0c]/80 rounded"
+                    className="w-full accent-blue-600 cursor-pointer h-2 bg-slate-50 rounded"
                   />
                   
-                  <div className="flex justify-between font-mono text-[9px] text-[#8a8377]">
+                  <div className="flex justify-between font-mono text-[9px] text-slate-500">
                     <span>0% (Kick-off)</span>
                     <span>50% (Entrega parcial)</span>
                     <span>100% (Satisfecho)</span>
                   </div>
                 </div>
 
-                <div className="p-3 bg-[#0f0e0c]/30 border border-[#2a2620]/60 rounded text-[11px] leading-relaxed text-[#a39d8e]">
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded text-[11px] leading-relaxed text-slate-500">
                   {progreso === 100 ? (
                     <span className="text-emerald-400 font-semibold block">✓ Entregables Completados al 100%: Servicio prestado con total cumplimiento.</span>
                   ) : progreso >= 70 ? (
@@ -409,13 +409,13 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
           <div className="lg:col-span-8 space-y-6">
 
             {/* 1. STRATEGIC OBJECTIVES */}
-            <div className="bg-[#161412] border border-[#2a2620] rounded-lg overflow-hidden">
-              <div className="bg-white/[0.02] border-b border-[#2a2620] px-4 py-3.5 flex items-center justify-between">
+            <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+              <div className="bg-white/[0.02] border-b border-slate-200 px-4 py-3.5 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-[#c9a961]" />
-                  <h3 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase font-semibold">Objetivos del Cliente (Marca & SEO)</h3>
+                  <Target className="w-4 h-4 text-blue-700" />
+                  <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold">Objetivos del Cliente (Marca & SEO)</h3>
                 </div>
-                <span className="text-[10px] font-mono text-[#8a8377]">
+                <span className="text-[10px] font-mono text-slate-500">
                   {objectives.filter(o => o.completado).length}/{objectives.length} Logrados
                 </span>
               </div>
@@ -425,38 +425,38 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                 {/* Add Objective form */}
                 <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 items-end">
                   <div className="sm:col-span-2">
-                    <label className="block text-[9px] font-mono uppercase tracking-wider text-[#a39d8e] mb-1">Nuevo Objetivo Estratégico</label>
+                    <label className="block text-[9px] font-mono uppercase tracking-wider text-slate-500 mb-1">Nuevo Objetivo Estratégico</label>
                     <input
                       type="text"
                       placeholder="Ej. Reposicionar palabras clave transaccionales"
                       value={newObjective}
                       onChange={(e) => setNewObjective(e.target.value)}
-                      className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2 text-xs rounded focus:outline-none focus:border-[#c9a961]"
+                      className="w-full bg-slate-50 text-white border border-slate-200 p-2 text-xs rounded focus:outline-none focus:border-blue-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-wider text-[#a39d8e] mb-1">Periodicidad</label>
+                    <label className="block text-[9px] font-mono uppercase tracking-wider text-slate-500 mb-1">Periodicidad</label>
                     <select
                       value={newObjectiveCadencia}
                       onChange={(e) => setNewObjectiveCadencia(e.target.value as ProjectCadence)}
-                      className="w-full bg-[#0f0e0c]/50 text-[#e8e3d8] border border-[#2a2620] p-1.5 text-xs rounded focus:outline-none focus:border-[#c9a961]"
+                      className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-1.5 text-xs rounded focus:outline-none focus:border-blue-500"
                     >
                       {CADENCIAS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[9px] font-mono uppercase tracking-wider text-[#a39d8e] mb-1">Fecha Meta</label>
+                    <label className="block text-[9px] font-mono uppercase tracking-wider text-slate-500 mb-1">Fecha Meta</label>
                     <input
                       type="date"
                       value={newObjectiveDate}
                       onChange={(e) => setNewObjectiveDate(e.target.value)}
-                      className="w-full bg-[#0f0e0c]/50 text-[#a39d8e] border border-[#2a2620] p-1.5 text-xs rounded focus:outline-none"
+                      className="w-full bg-slate-50 text-slate-500 border border-slate-200 p-1.5 text-xs rounded focus:outline-none"
                     />
                   </div>
                   <button
                     type="button"
                     onClick={addObjective}
-                    className="bg-[#c9a961]/10 hover:bg-[#c9a961]/20 border border-[#c9a961]/35 text-[#c9a961] px-4 py-2 rounded text-xs transition font-semibold flex items-center justify-center gap-1 cursor-pointer"
+                    className="bg-blue-50 hover:bg-blue-100 border border-blue-300 text-blue-700 px-4 py-2 rounded text-xs transition font-semibold flex items-center justify-center gap-1 cursor-pointer"
                   >
                     <Plus className="w-4 h-4" /> Agregar
                   </button>
@@ -465,7 +465,7 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                 {/* Objectives list */}
                 <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
                   {objectives.length === 0 ? (
-                    <div className="text-center py-6 text-xs text-[#8a8377] font-mono italic">
+                    <div className="text-center py-6 text-xs text-slate-500 font-mono italic">
                       No hay objetivos estratégicos agregados aún para este cliente.
                     </div>
                   ) : (
@@ -474,8 +474,8 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                         key={obj.id}
                         className={`p-3 rounded border transition flex items-center justify-between gap-3 text-xs ${
                           obj.completado 
-                            ? 'bg-emerald-500/5 border-emerald-500/20 text-[#a39d8e]' 
-                            : 'bg-[#0f0e0c]/35 border-[#2a2620] text-[#e8e3d8]'
+                            ? 'bg-emerald-500/5 border-emerald-500/20 text-slate-500' 
+                            : 'bg-slate-50 border-slate-200 text-slate-900'
                         }`}
                       >
                         <div className="flex items-start gap-2.5 flex-1 min-w-0">
@@ -485,7 +485,7 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                             className={`mt-0.5 w-4 h-4 shrink-0 rounded flex items-center justify-center border transition ${
                               obj.completado
                                 ? 'bg-emerald-400 border-emerald-500 text-black'
-                                : 'border-[#8a8377] hover:border-[#c9a961]'
+                                : 'border-slate-300 hover:border-blue-500'
                             }`}
                           >
                             {obj.completado && <Check className="w-3 h-3 stroke-[3]" />}
@@ -497,14 +497,14 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                               value={obj.text}
                               onChange={(event) => updateObjectiveField(obj.id, { text: event.target.value })}
                               aria-label="Editar objetivo"
-                              className={`w-full bg-transparent border border-transparent hover:border-[#2a2620] focus:border-[#c9a961] rounded px-1 py-0.5 text-xs focus:outline-none ${obj.completado ? 'line-through text-[#8a8377]' : 'font-medium text-[#e8e3d8]'}`}
+                              className={`w-full bg-transparent border border-transparent hover:border-slate-300 focus:border-blue-500 rounded px-1 py-0.5 text-xs focus:outline-none ${obj.completado ? 'line-through text-slate-500' : 'font-medium text-slate-900'}`}
                             />
                             <div className="mt-1 flex flex-wrap items-center gap-2">
                               <select
                                 value={obj.cadencia || ''}
                                 onChange={(event) => updateObjectiveField(obj.id, { cadencia: (event.target.value || undefined) as ProjectCadence | undefined })}
                                 aria-label="Periodicidad del objetivo"
-                                className="bg-[#0f0e0c]/50 text-[#c9a961] border border-[#2a2620] rounded px-1.5 py-0.5 text-[9px] font-mono focus:outline-none focus:border-[#c9a961]"
+                                className="bg-slate-50 text-blue-700 border border-slate-200 rounded px-1.5 py-0.5 text-[9px] font-mono focus:outline-none focus:border-blue-500"
                               >
                                 <option value="">Sin periodicidad</option>
                                 {CADENCIAS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
@@ -514,7 +514,7 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                                 value={obj.metaFecha || ''}
                                 onChange={(event) => updateObjectiveField(obj.id, { metaFecha: event.target.value || undefined })}
                                 aria-label="Fecha meta del objetivo"
-                                className="bg-[#0f0e0c]/50 text-[#8a8377] border border-[#2a2620] rounded px-1.5 py-0.5 text-[9px] font-mono focus:outline-none focus:border-[#c9a961]"
+                                className="bg-slate-50 text-slate-500 border border-slate-200 rounded px-1.5 py-0.5 text-[9px] font-mono focus:outline-none focus:border-blue-500"
                               />
                             </div>
                             <div className="mt-2 flex items-center gap-2">
@@ -527,7 +527,7 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                         <button 
                           type="button"
                           onClick={() => removeObjective(obj.id)}
-                          className="text-[#8a8377] hover:text-[#c97a61] p-1 transition rounded-md hover:bg-[#c97a61]/5"
+                          className="text-slate-500 hover:text-rose-600 p-1 transition rounded-md hover:bg-rose-50"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -540,13 +540,13 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
             </div>
 
             {/* 2. SERVICES COMPLIANCE / DELIVERABLES CHECKLIST */}
-            <div className="bg-[#161412] border border-[#2a2620] rounded-lg overflow-hidden">
-              <div className="bg-white/[0.02] border-b border-[#2a2620] px-4 py-3.5 flex items-center justify-between">
+            <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+              <div className="bg-white/[0.02] border-b border-slate-200 px-4 py-3.5 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <ClipboardList className="w-4 h-4 text-[#c9a961]" />
-                  <h3 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase font-semibold">Prestación del Servicio (Entregables y Hitos Contractuales)</h3>
+                  <ClipboardList className="w-4 h-4 text-blue-700" />
+                  <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold">Prestación del Servicio (Entregables y Hitos Contractuales)</h3>
                 </div>
-                <span className="text-[10px] font-mono text-[#8a8377]">
+                <span className="text-[10px] font-mono text-slate-500">
                   {deliverables.filter(d => d.estado === 'Cumplido').length}/{deliverables.length} Completados
                 </span>
               </div>
@@ -556,21 +556,21 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                 {/* Add Deliverable Form */}
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
                   <div className="sm:col-span-5">
-                    <label className="block text-[9px] font-mono uppercase tracking-wider text-[#a39d8e] mb-1">Suscripción de Entregable / Hito</label>
+                    <label className="block text-[9px] font-mono uppercase tracking-wider text-slate-500 mb-1">Suscripción de Entregable / Hito</label>
                     <input 
                       type="text"
                       placeholder="Ej. Auditoría técnica SEO inicial"
                       value={newDeliverableNombre}
                       onChange={(e) => setNewDeliverableNombre(e.target.value)}
-                      className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2 text-xs rounded focus:outline-none focus:border-[#c9a961]"
+                      className="w-full bg-slate-50 text-white border border-slate-200 p-2 text-xs rounded focus:outline-none focus:border-blue-500"
                     />
                   </div>
                   <div className="sm:col-span-3">
-                    <label className="block text-[9px] font-mono uppercase tracking-wider text-[#a39d8e] mb-1">Estado</label>
+                    <label className="block text-[9px] font-mono uppercase tracking-wider text-slate-500 mb-1">Estado</label>
                     <select 
                       value={newDeliverableEstado}
                       onChange={(e) => setNewDeliverableEstado(e.target.value as any)}
-                      className="w-full bg-[#0f0e0c] text-white border border-[#2a2620] p-2 text-xs rounded focus:outline-none"
+                      className="w-full bg-slate-50 text-white border border-slate-200 p-2 text-xs rounded focus:outline-none"
                     >
                       <option value="Pendiente">Pendiente</option>
                       <option value="En Progreso">En Progreso</option>
@@ -578,19 +578,19 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                     </select>
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="block text-[9px] font-mono uppercase tracking-wider text-[#a39d8e] mb-1">Fecha</label>
+                    <label className="block text-[9px] font-mono uppercase tracking-wider text-slate-500 mb-1">Fecha</label>
                     <input 
                       type="date"
                       value={newDeliverableFecha}
                       onChange={(e) => setNewDeliverableFecha(e.target.value)}
-                      className="w-full bg-[#0f0e0c]/50 text-[#a39d8e] border border-[#2a2620] p-1.5 text-xs rounded focus:outline-none"
+                      className="w-full bg-slate-50 text-slate-500 border border-slate-200 p-1.5 text-xs rounded focus:outline-none"
                     />
                   </div>
                   <div className="sm:col-span-2">
                     <button 
                       type="button"
                       onClick={addDeliverable}
-                      className="w-full bg-[#c9a961]/10 hover:bg-[#c9a961]/20 border border-[#c9a961]/35 text-[#c9a961] py-2 rounded text-xs transition font-semibold flex items-center justify-center gap-1 cursor-pointer"
+                      className="w-full bg-blue-50 hover:bg-blue-100 border border-blue-300 text-blue-700 py-2 rounded text-xs transition font-semibold flex items-center justify-center gap-1 cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" /> Crear
                     </button>
@@ -600,14 +600,14 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                 {/* Deliverables List */}
                 <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
                   {deliverables.length === 0 ? (
-                    <div className="text-center py-6 text-xs text-[#8a8377] font-mono italic">
+                    <div className="text-center py-6 text-xs text-slate-500 font-mono italic">
                       No hay hitos de prestación del servicio agregados aún para este cliente.
                     </div>
                   ) : (
                     deliverables.map((item) => (
                       <div 
                         key={item.id}
-                        className="p-3 rounded border bg-[#0f0e0c]/25 border-[#2a2620] text-xs flex items-center justify-between gap-3 text-[#e8e3d8]"
+                        className="p-3 rounded border bg-slate-50 border-slate-200 text-xs flex items-center justify-between gap-3 text-slate-900"
                       >
                         <div className="flex items-start gap-3 flex-1 min-w-0">
                           <button
@@ -630,14 +630,14 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                               value={item.nombre}
                               onChange={(event) => updateDeliverableField(item.id, { nombre: event.target.value })}
                               aria-label="Editar hito"
-                              className={`w-full bg-transparent border border-transparent hover:border-[#2a2620] focus:border-[#c9a961] rounded px-1 py-0.5 text-xs focus:outline-none ${item.estado === 'Cumplido' ? 'line-through text-[#8a8377]' : 'font-medium text-[#e8e3d8]'}`}
+                              className={`w-full bg-transparent border border-transparent hover:border-slate-300 focus:border-blue-500 rounded px-1 py-0.5 text-xs focus:outline-none ${item.estado === 'Cumplido' ? 'line-through text-slate-500' : 'font-medium text-slate-900'}`}
                             />
                             <input
                               type="date"
                               value={item.fecha || ''}
                               onChange={(event) => updateDeliverableField(item.id, { fecha: event.target.value || undefined })}
                               aria-label="Fecha de vencimiento del hito"
-                              className="mt-1 bg-[#0f0e0c]/50 text-[#8a8377] border border-[#2a2620] rounded px-1.5 py-0.5 text-[9px] font-mono focus:outline-none focus:border-[#c9a961]"
+                              className="mt-1 bg-slate-50 text-slate-500 border border-slate-200 rounded px-1.5 py-0.5 text-[9px] font-mono focus:outline-none focus:border-blue-500"
                             />
                           </div>
                         </div>
@@ -645,7 +645,7 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                         <button 
                           type="button"
                           onClick={() => removeDeliverable(item.id)}
-                          className="text-[#8a8377] hover:text-[#c97a61] p-1 transition rounded-md hover:bg-[#c97a61]/5"
+                          className="text-slate-500 hover:text-rose-600 p-1 transition rounded-md hover:bg-rose-50"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -658,10 +658,10 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
             </div>
 
             {/* 3. PERFORMANCE KPIS TRACKER */}
-            <div className="bg-[#161412] border border-[#2a2620] rounded-lg overflow-hidden">
-              <div className="bg-white/[0.02] border-b border-[#2a2620] px-4 py-3.5 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-[#c9a961]" />
-                <h3 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase font-semibold">Indicadores Clave de Rendimiento (KPIs)</h3>
+            <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+              <div className="bg-white/[0.02] border-b border-slate-200 px-4 py-3.5 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-blue-700" />
+                <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold">Indicadores Clave de Rendimiento (KPIs)</h3>
               </div>
 
               <div className="p-4 space-y-4">
@@ -669,45 +669,45 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                 {/* Add KPI form */}
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end">
                   <div className="sm:col-span-4">
-                    <label className="block text-[9px] font-mono uppercase tracking-wider text-[#a39d8e] mb-1">Nombre del KPI</label>
+                    <label className="block text-[9px] font-mono uppercase tracking-wider text-slate-500 mb-1">Nombre del KPI</label>
                     <input 
                       type="text"
                       placeholder="Ej. Tráfico orgánico mensual"
                       value={newKpiNombre}
                       onChange={(e) => setNewKpiNombre(e.target.value)}
-                      className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2 text-xs rounded focus:outline-none focus:border-[#c9a961]"
+                      className="w-full bg-slate-50 text-white border border-slate-200 p-2 text-xs rounded focus:outline-none focus:border-blue-500"
                     />
                   </div>
                   <div className="sm:col-span-3">
-                    <label className="block text-[9px] font-mono uppercase tracking-wider text-[#a39d8e] mb-1">Meta</label>
+                    <label className="block text-[9px] font-mono uppercase tracking-wider text-slate-500 mb-1">Meta</label>
                     <input 
                       type="text"
                       placeholder="Ej. 15,000 visitas"
                       value={newKpiMeta}
                       onChange={(e) => setNewKpiMeta(e.target.value)}
-                      className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2 text-xs rounded focus:outline-none"
+                      className="w-full bg-slate-50 text-white border border-slate-200 p-2 text-xs rounded focus:outline-none"
                     />
                   </div>
                   <div className="sm:col-span-3">
-                    <label className="block text-[9px] font-mono uppercase tracking-wider text-[#a39d8e] mb-1">Valor Actual</label>
+                    <label className="block text-[9px] font-mono uppercase tracking-wider text-slate-500 mb-1">Valor Actual</label>
                     <input 
                       type="text"
                       placeholder="Ej. 11,200 visitas"
                       value={newKpiActual}
                       onChange={(e) => setNewKpiActual(e.target.value)}
-                      className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2 text-xs rounded focus:outline-none"
+                      className="w-full bg-slate-50 text-white border border-slate-200 p-2 text-xs rounded focus:outline-none"
                     />
                   </div>
                   <div className="sm:col-span-4">
-                    <label className="block text-[9px] font-mono uppercase tracking-wider text-[#a39d8e] mb-1">Objetivo relacionado</label>
-                    <select value={newKpiObjectiveId} onChange={(event) => setNewKpiObjectiveId(event.target.value)} className="w-full bg-[#0f0e0c] text-white border border-[#2a2620] p-2 text-xs rounded focus:outline-none" required={objectives.length > 0}>
+                    <label className="block text-[9px] font-mono uppercase tracking-wider text-slate-500 mb-1">Objetivo relacionado</label>
+                    <select value={newKpiObjectiveId} onChange={(event) => setNewKpiObjectiveId(event.target.value)} className="w-full bg-slate-50 text-white border border-slate-200 p-2 text-xs rounded focus:outline-none" required={objectives.length > 0}>
                       <option value="">{objectives.length ? 'Selecciona un objetivo' : 'Crea primero un objetivo'}</option>
                       {objectives.map((objective) => <option key={objective.id} value={objective.id}>{objective.text}</option>)}
                     </select>
                   </div>
                   <div className="sm:col-span-3">
-                    <label className="block text-[9px] font-mono uppercase tracking-wider text-[#a39d8e] mb-1">Periodicidad</label>
-                    <select value={newKpiCadencia} onChange={(event) => setNewKpiCadencia(event.target.value as ProjectCadence)} className="w-full bg-[#0f0e0c] text-white border border-[#2a2620] p-2 text-xs rounded focus:outline-none focus:border-[#c9a961]">
+                    <label className="block text-[9px] font-mono uppercase tracking-wider text-slate-500 mb-1">Periodicidad</label>
+                    <select value={newKpiCadencia} onChange={(event) => setNewKpiCadencia(event.target.value as ProjectCadence)} className="w-full bg-slate-50 text-white border border-slate-200 p-2 text-xs rounded focus:outline-none focus:border-blue-500">
                       {CADENCIAS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                     </select>
                   </div>
@@ -715,7 +715,7 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                     <button 
                       type="button"
                       onClick={addKpi}
-                      className="w-full bg-[#c9a961]/10 hover:bg-[#c9a961]/20 border border-[#c9a961]/35 text-[#c9a961] py-2 rounded text-xs transition font-semibold flex items-center justify-center gap-1 cursor-pointer"
+                      className="w-full bg-blue-50 hover:bg-blue-100 border border-blue-300 text-blue-700 py-2 rounded text-xs transition font-semibold flex items-center justify-center gap-1 cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" /> Agregar
                     </button>
@@ -724,13 +724,13 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
 
                 {/* KPIs grid/list */}
                 {kpis.length === 0 ? (
-                  <div className="text-center py-6 text-xs text-[#8a8377] font-mono italic border border-[#2a2620]/45 rounded">
+                  <div className="text-center py-6 text-xs text-slate-500 font-mono italic border border-slate-200 rounded">
                     No hay KPIs corporativos trackeados para este cliente.
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {kpis.map((k) => (
-                      <div key={k.id} className="bg-[#0f0e0c]/40 border border-[#2a2620] p-3 rounded-lg flex flex-col justify-between">
+                      <div key={k.id} className="bg-slate-50 border border-slate-200 p-3 rounded-lg flex flex-col justify-between">
                         <div className="flex justify-between items-start gap-2 mb-2">
                           {/* Editable después de creado */}
                           <input
@@ -738,12 +738,12 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                             value={k.nombre}
                             onChange={(event) => updateKpiField(k.id, { nombre: event.target.value })}
                             aria-label="Editar nombre del KPI"
-                            className="flex-1 min-w-0 bg-transparent border border-transparent hover:border-[#2a2620] focus:border-[#c9a961] rounded px-1 py-0.5 font-semibold text-xs text-[#e8e3d8] leading-tight focus:outline-none"
+                            className="flex-1 min-w-0 bg-transparent border border-transparent hover:border-slate-300 focus:border-blue-500 rounded px-1 py-0.5 font-semibold text-xs text-slate-900 leading-tight focus:outline-none"
                           />
                           <button
                             type="button"
                             onClick={() => removeKpi(k.id)}
-                            className="shrink-0 text-[#8a8377] hover:text-[#c97a61] transition"
+                            className="shrink-0 text-slate-500 hover:text-rose-600 transition"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -754,7 +754,7 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                             value={k.objetivo_id || ''}
                             onChange={(event) => updateKpiField(k.id, { objetivo_id: event.target.value || undefined })}
                             aria-label="Objetivo relacionado"
-                            className="w-full bg-[#0f0e0c] text-blue-300 border border-[#2a2620] rounded px-1.5 py-1 text-[10px] focus:outline-none focus:border-[#c9a961]"
+                            className="w-full bg-slate-50 text-blue-300 border border-slate-200 rounded px-1.5 py-1 text-[10px] focus:outline-none focus:border-blue-500"
                           >
                             <option value="">Sin relación</option>
                             {objectives.map((objective) => <option key={objective.id} value={objective.id}>{objective.text}</option>)}
@@ -763,20 +763,20 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
                             value={k.cadencia || ''}
                             onChange={(event) => updateKpiField(k.id, { cadencia: (event.target.value || undefined) as ProjectCadence | undefined })}
                             aria-label="Periodicidad del KPI"
-                            className="w-full bg-[#0f0e0c] text-[#c9a961] border border-[#2a2620] rounded px-1.5 py-1 text-[10px] font-mono focus:outline-none focus:border-[#c9a961]"
+                            className="w-full bg-slate-50 text-blue-700 border border-slate-200 rounded px-1.5 py-1 text-[10px] font-mono focus:outline-none focus:border-blue-500"
                           >
                             <option value="">Sin periodicidad</option>
                             {CADENCIAS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                           </select>
                         </div>
-                        <div className="grid grid-cols-2 gap-2 text-xs border-t border-[#2a2620]/40 pt-2">
+                        <div className="grid grid-cols-2 gap-2 text-xs border-t border-slate-200 pt-2">
                           <div>
-                            <span className="text-[10px] text-[#8a8377] font-mono uppercase">Actual:</span>
-                            <input value={k.actual} onChange={(event) => setKpis((current) => current.map((item) => item.id === k.id ? { ...item, actual: event.target.value } : item))} onBlur={(event) => updateKpiActual(k.id, event.target.value)} className="mt-1 w-full rounded border border-[#2a2620] bg-black/20 px-2 py-1 font-bold text-[#c9a961] outline-none focus:border-[#c9a961]" aria-label={`Valor actual de ${k.nombre}`} />
+                            <span className="text-[10px] text-slate-500 font-mono uppercase">Actual:</span>
+                            <input value={k.actual} onChange={(event) => setKpis((current) => current.map((item) => item.id === k.id ? { ...item, actual: event.target.value } : item))} onBlur={(event) => updateKpiActual(k.id, event.target.value)} className="mt-1 w-full rounded border border-slate-200 bg-black/20 px-2 py-1 font-bold text-blue-700 outline-none focus:border-blue-500" aria-label={`Valor actual de ${k.nombre}`} />
                           </div>
                           <div>
-                            <span className="text-[10px] text-[#8a8377] font-mono uppercase">Meta:</span>
-                            <input value={k.meta} onChange={(event) => updateKpiField(k.id, { meta: event.target.value })} className="mt-1 w-full rounded border border-[#2a2620] bg-black/20 px-2 py-1 font-bold text-white outline-none focus:border-[#c9a961]" aria-label={`Meta de ${k.nombre}`} />
+                            <span className="text-[10px] text-slate-500 font-mono uppercase">Meta:</span>
+                            <input value={k.meta} onChange={(event) => updateKpiField(k.id, { meta: event.target.value })} className="mt-1 w-full rounded border border-slate-200 bg-black/20 px-2 py-1 font-bold text-white outline-none focus:border-blue-500" aria-label={`Meta de ${k.nombre}`} />
                           </div>
                         </div>
                         <KpiProgress kpi={k} />
@@ -816,7 +816,7 @@ function KpiProgress({ kpi }: { kpi: ProjectKpi }) {
     return `${x},${y}`;
   }).join(' ') : '';
   return <div className="mt-3">
-    {progress != null && <><div className="mb-1 flex justify-between text-[9px] font-mono text-[#8a8377]"><span>Avance hacia la meta</span><span>{progress.toFixed(0)}%</span></div><div className="h-1.5 overflow-hidden rounded bg-[#2a2620]"><div className="h-full rounded bg-emerald-500 transition-all" style={{ width: `${progress}%` }} /></div></>}
-    {points && <div className="mt-3"><svg viewBox="0 0 100 38" className="h-12 w-full" role="img" aria-label={`Tendencia histórica de ${kpi.nombre}`}><polyline fill="none" stroke="#60a5fa" strokeWidth="2" points={points} vectorEffect="non-scaling-stroke" /></svg><p className="text-[9px] text-[#8a8377]">{history.length} actualizaciones · {kpi.tendencia}</p></div>}
+    {progress != null && <><div className="mb-1 flex justify-between text-[9px] font-mono text-slate-500"><span>Avance hacia la meta</span><span>{progress.toFixed(0)}%</span></div><div className="h-1.5 overflow-hidden rounded bg-slate-200"><div className="h-full rounded bg-emerald-500 transition-all" style={{ width: `${progress}%` }} /></div></>}
+    {points && <div className="mt-3"><svg viewBox="0 0 100 38" className="h-12 w-full" role="img" aria-label={`Tendencia histórica de ${kpi.nombre}`}><polyline fill="none" stroke="#60a5fa" strokeWidth="2" points={points} vectorEffect="non-scaling-stroke" /></svg><p className="text-[9px] text-slate-500">{history.length} actualizaciones · {kpi.tendencia}</p></div>}
   </div>;
 }
