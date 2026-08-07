@@ -653,7 +653,7 @@ function AppInner() {
 
   const aiSidebarNode = (
     <div className={isFerovaUiV2Enabled() ? 'ferova-v2-theme' : undefined}>
-      <AISidebar user={user} collapsed={aiCollapsed} onToggle={() => setAiCollapsed((v) => !v)} width={aiWidth} onResize={setAiWidth} currentArea={NAVIGATION_SECTIONS.find((section) => section.items.some((item) => item.id === activeTab))?.label} />
+      <AISidebar user={user} collapsed={aiCollapsed} onToggle={() => setAiCollapsed((v) => !v)} width={aiWidth} onResize={setAiWidth} metrics={metrics} currentArea={NAVIGATION_SECTIONS.find((section) => section.items.some((item) => item.id === activeTab))?.label} />
     </div>
   );
 

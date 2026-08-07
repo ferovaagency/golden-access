@@ -20,7 +20,7 @@ function latestAssistant(messages: UIMessage[]): UIMessage | null {
 // report the unhelpful "Failed to fetch" before the function receives POST.
 const assistantCorsHeaders = {
   ...corsHeaders,
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-vercel-ai-ui-message-stream, x-lovable-aig-run-id, x-ferova-context-area",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-vercel-ai-ui-message-stream, x-lovable-aig-run-id, x-ferova-context-area, x-ferova-metrics",
 };
 
 const MAX_MODEL_MESSAGES = 24;
@@ -106,6 +106,11 @@ Deno.serve(async (req) => {
     const userId = userData.user.id;
     const userEmail = userData.user.email || "";
     const currentArea = (req.headers.get("X-Ferova-Context-Area") || "").slice(0, 80);
+    // El frontend envía las MISMAS métricas ya calculadas del dashboard (estado
+    // de resultados del período), para que el asesor no dependa de una tabla
+    // incompleta. Son la fuente autoritativa de utilidad/margen/equilibrio.
+    let finanzasCalculadas: unknown = null;
+    try { const mh = req.headers.get("X-Ferova-Metrics"); if (mh) finanzasCalculadas = JSON.parse(mh); } catch { /* header inválido, se ignora */ }
     const [{ data: isTeam }, { data: businessProfile }, { data: overview }, { data: services }, { data: growth }, { data: reviews }, { data: opportunities }, { data: clients }, { data: hours }, { data: tasks }, { data: integrations }] = await Promise.all([
       admin.from("crm_team_members").select("email, rol").eq("email", userEmail).maybeSingle(),
       admin.from("business_profile").select("nombre_negocio, industria, tipo_negocio, tamano_equipo, ciudad").eq("user_id", userId).maybeSingle(),
@@ -173,6 +178,7 @@ Deno.serve(async (req) => {
       screen_context: currentArea || null,
       negocio: businessProfile || null,
       finance_overview: overview,
+      finanzas_calculadas: finanzasCalculadas,
       service_profitability: services || [],
       crm_growth: isTeam ? growth : null,
       recent_reviews: isTeam ? reviews : [],
@@ -190,8 +196,9 @@ Deno.serve(async (req) => {
       system: `Sos el asesor financiero y gerencial experto y el "segundo cerebro" de ${businessProfile?.nombre_negocio || "este negocio"} dentro de Ferova OS. Actuás como un consultor de confianza Y como la memoria viva del negocio: das recomendaciones concretas y accionables, no solo reportás números. Respondé en español claro, cercano y sin jerga técnica innecesaria (quien te lee puede no saber de finanzas ni de tecnología).
 
 ## TUS FUENTES DE VERDAD
-1. CONTEXTO DEL NEGOCIO (JSON abajo): el estado actual — finanzas, servicios, pipeline, clientes, tareas, reseñas, integraciones.
-2. MEMORIA DEL CEREBRO (campo "memoria_cerebro" dentro del JSON): datos, decisiones, preferencias, políticas y aprendizajes que el equipo guardó a propósito. Es memoria DURADERA y confiable: priorizala y tratala como conocimiento establecido del negocio. Si algo en memoria_cerebro es relevante para la pregunta, úsalo explícitamente.
+1. FINANZAS CALCULADAS (campo "finanzas_calculadas"): el estado de resultados YA CALCULADO del período que la persona ve en pantalla — ingresos, costos_directos, utilidad_bruta, utilidad_operacional, utilidad_neta, punto_equilibrio_ventas, egresos (todo en COP). Son las MISMAS cifras del dashboard. Para CUALQUIER pregunta de utilidad, margen, punto de equilibrio o rentabilidad, USA ESTOS NÚMEROS directamente y con seguridad; NUNCA digas que te faltan datos si están aquí. (Solo si finanzas_calculadas viene null di que faltan y dónde cargarlos.)
+2. CONTEXTO DEL NEGOCIO (JSON abajo): el estado actual — servicios, pipeline, clientes, tareas, reseñas, integraciones.
+3. MEMORIA DEL CEREBRO (campo "memoria_cerebro"): datos, decisiones, preferencias, políticas y aprendizajes que el equipo guardó a propósito. Es memoria DURADERA y confiable: priorizala y tratala como conocimiento establecido del negocio. Si algo en memoria_cerebro es relevante para la pregunta, úsalo explícitamente.
 
 REGLA INQUEBRANTABLE: Usá EXCLUSIVAMENTE el contexto JSON (incluida memoria_cerebro) y el historial del chat -- ninguna otra fuente. Si falta un dato, decí exactamente qué falta y dónde cargarlo (ej. "no tengo tus gastos de este mes, cárgalos en Costos"); nunca inventes cifras, clientes, reseñas, servicios ni estados, y nunca des cifras genéricas del mercado como si fueran datos reales de este negocio.
 

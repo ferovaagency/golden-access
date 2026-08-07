@@ -5,6 +5,7 @@ import { DefaultChatTransport, type UIMessage } from 'ai';
 import { Sparkles, PanelRightClose, PanelRightOpen, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { db } from '../lib/db';
+import type { FinancialMetrics } from '../lib/calculations';
 import { getSupabaseFunctionUrl, SUPABASE_PUBLISHABLE_KEY } from '../integrations/supabase/client';
 import { Conversation, ConversationContent } from './ai-elements/conversation';
 import { Message, MessageContent, MessageResponse } from './ai-elements/message';
@@ -19,6 +20,7 @@ interface Props {
   width: number;
   onResize: (w: number) => void;
   currentArea?: string;
+  metrics?: FinancialMetrics | null;
 }
 
 function getText(message: UIMessage): string {
@@ -33,12 +35,16 @@ interface AssistantMessageRow {
   created_at: string;
 }
 
-export default function AISidebar({ user, collapsed, onToggle, width, onResize, currentArea }: Props) {
+export default function AISidebar({ user, collapsed, onToggle, width, onResize, currentArea, metrics }: Props) {
   const [initialMessages, setInitialMessages] = useState<UIMessage[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [input, setInput] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const dragRef = useRef<{ startX: number; startW: number } | null>(null);
+  // El asistente recibe las MISMAS métricas que calcula el dashboard (no una
+  // tabla incompleta). Un ref para que el fetch siempre tome las más recientes.
+  const metricsRef = useRef(metrics);
+  metricsRef.current = metrics;
 
   useEffect(() => {
     let cancelled = false;
@@ -71,6 +77,20 @@ export default function AISidebar({ user, collapsed, onToggle, width, onResize, 
         headers.set('apikey', SUPABASE_PUBLISHABLE_KEY);
         if (data.session?.access_token) headers.set('Authorization', `Bearer ${data.session.access_token}`);
         if (currentArea) headers.set('X-Ferova-Context-Area', currentArea);
+        const m = metricsRef.current;
+        if (m) headers.set('X-Ferova-Metrics', JSON.stringify({
+          ingresos: Math.round(m.totalVentas),
+          costos_directos: Math.round(m.costosVariables),
+          utilidad_bruta: Math.round(m.utilidadBruta),
+          gastos_operativos: Math.round(m.gastosOperativos),
+          utilidad_operacional: Math.round(m.utilidadOperacional),
+          sueldo_propuesto: Math.round(m.salarioPropuesto),
+          utilidad_antes_impuestos: Math.round(m.utilidadAntesImpuestos),
+          impuesto_renta_estimado: Math.round(m.impuestoRentaEstimado),
+          utilidad_neta: Math.round(m.utilidadNeta),
+          punto_equilibrio_ventas: Math.round(m.puntoEquilibrioVentas),
+          egresos_reales_pagados: Math.round(m.totalEgresosReales),
+        }));
         return fetch(input, { ...init, headers });
       };
       let response: Response;
