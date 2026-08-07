@@ -264,25 +264,25 @@ export default function GastosAdmin({
       {/* E. Resumen final (4 horizontal cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
-        <div className="bg-white border border-slate-200 p-5 rounded-lg border-l-3 border-l-[#c9a961]">
+        <div className="bg-white border border-slate-200 p-5 rounded-lg border-l-3 border-l-blue-500">
           <span className="text-[10px] font-mono tracking-wider text-slate-400 uppercase block">Mi Salario Base</span>
           <div className="text-2xl font-display font-semibold text-slate-900 mt-2">{formatCop(config.salario_propuesto)}</div>
           <span className="text-[10px] text-slate-400 font-mono block mt-1">Carga mensual de nómina</span>
         </div>
 
-        <div className="bg-white border border-slate-200 p-5 rounded-lg border-l-3 border-l-[#a8c98a]">
+        <div className="bg-white border border-slate-200 p-5 rounded-lg border-l-3 border-l-emerald-500">
           <span className="text-[10px] font-mono tracking-wider text-slate-400 uppercase block">Carga Herramientas SaaS</span>
-          <div className="text-2xl font-display font-semibold text-[#a8c98a] mt-2">{formatCop(totalToolsCop)}</div>
+          <div className="text-2xl font-display font-semibold text-emerald-600 mt-2">{formatCop(totalToolsCop)}</div>
           <span className="text-[10px] text-slate-400 font-mono block mt-1">Herramientas globales y prorrateadas</span>
         </div>
 
-        <div className="bg-white border border-slate-200 p-5 rounded-lg border-l-3 border-l-[#c97a61]">
+        <div className="bg-white border border-slate-200 p-5 rounded-lg border-l-3 border-l-rose-500">
           <span className="text-[10px] font-mono tracking-wider text-slate-400 uppercase block">Otros Gastos Generales</span>
           <div className="text-2xl font-display font-semibold text-slate-900 mt-2">{formatCop(totalOtrosCop)}</div>
           <span className="text-[10px] text-slate-400 font-mono block mt-1">Overhead de oficina o administrativos</span>
         </div>
 
-        <div className="bg-[#181512] border border-slate-200 p-5 rounded-lg border-l-3 border-l-[#c9a961] relative overflow-hidden">
+        <div className="bg-slate-50 border border-slate-200 p-5 rounded-lg border-l-3 border-l-blue-500 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-16 h-16 bg-blue-600/5 rounded-bl-full pointer-events-none" />
           <span className="text-[10px] font-mono tracking-wider text-blue-600 uppercase block font-semibold">Total Costos Fijos</span>
           <div className="text-2xl font-display font-bold text-blue-600 mt-2">{formatCop(totalOverheadFijos)}</div>
@@ -311,13 +311,13 @@ export default function GastosAdmin({
                 min="0"
                 value={salarioInput}
                 onChange={(e) => setSalarioInput(Number(e.target.value))}
-                className="w-full bg-[#0f0e0c]/60 text-slate-900 font-mono text-xs border border-slate-200 pl-10 pr-4 py-2.5 rounded focus:outline-none focus:border-[#c9a961]"
+                className="w-full bg-white/60 text-slate-900 font-mono text-xs border border-slate-200 pl-10 pr-4 py-2.5 rounded focus:outline-none focus:border-blue-300"
               />
               <span className="absolute left-3.5 top-3 text-slate-400 font-mono text-xs">COP</span>
             </div>
             <button 
               type="submit"
-              className="bg-blue-600 hover:bg-[#b09252] text-black font-semibold font-display text-xs px-4 rounded transition cursor-pointer shrink-0"
+              className="bg-blue-600 hover:bg-blue-700 text-black font-semibold font-display text-xs px-4 rounded transition cursor-pointer shrink-0"
             >
               {isUpdatingSalario ? 'Guardando...' : 'Fijar Sueldo'}
             </button>
@@ -325,27 +325,27 @@ export default function GastosAdmin({
 
           {/* Prestaciones display box — sólo Colombia. */}
           {fiscalCO ? (
-          <div className="bg-[#13110f] border border-slate-200 p-4 rounded-lg space-y-3.5 text-xs text-slate-500 font-sans">
+          <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg space-y-3.5 text-xs text-slate-500 font-sans">
             <div className="flex justify-between items-center border-b border-slate-200/60 pb-2">
               <span>Ingreso Base de Cotización (IBC 40%):</span>
               <span className="font-mono text-slate-900 font-medium">{formatCop(prestaciones.ibc)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span>Salud mensual aportes (12.5%):</span>
-              <span className="font-mono text-[#c97a61]">{formatCop(prestaciones.salud)}</span>
+              <span className="font-mono text-rose-600">{formatCop(prestaciones.salud)}</span>
             </div>
             <div className="flex justify-between items-center border-b border-slate-200/40 pb-2">
               <span>Pensión pensión contribución (16%):</span>
-              <span className="font-mono text-[#c97a61]">{formatCop(prestaciones.pension)}</span>
+              <span className="font-mono text-rose-600">{formatCop(prestaciones.pension)}</span>
             </div>
             <div className="flex justify-between items-center text-slate-900 font-bold">
               <span>Liquidación Prestaciones Totales:</span>
-              <span className="font-mono text-[#c97a61]">{formatCop(prestaciones.totalPrestaciones)}</span>
+              <span className="font-mono text-rose-600">{formatCop(prestaciones.totalPrestaciones)}</span>
             </div>
-            <div className="bg-[#a8c98a]/5 border border-[#a8c98a]/10 p-3 rounded text-center text-[11px] leading-normal text-[#a8c98a]">
+            <div className="bg-emerald-600/5 border border-emerald-300/10 p-3 rounded text-center text-[11px] leading-normal text-emerald-600">
               <span>Salario Neto Retirable (Libre de prestaciones): <strong>{formatCop(prestaciones.salarioNeto)}</strong></span>
             </div>
-            <div className="bg-blue-600/5 border border-[#c9a961]/10 p-3.5 rounded text-left text-[11px] leading-relaxed text-blue-600 space-y-1.5">
+            <div className="bg-blue-600/5 border border-blue-300/10 p-3.5 rounded text-left text-[11px] leading-relaxed text-blue-600 space-y-1.5">
               <span className="font-semibold block font-mono uppercase tracking-wide text-[9px]">Diferencia de Concepto Salarial:</span>
               <p className="text-slate-500">
                 Este sueldo fijado arriba es de carácter <strong>propuesto / proyectado</strong> (usado para diseñar las cotizaciones de precios, punto de equilibrio y alertar topes tributarios).
@@ -404,8 +404,8 @@ export default function GastosAdmin({
                   onChange={(e) => setToolMoneda(e.target.value as 'COP' | 'USD')}
                   className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none"
                 >
-                  <option value="COP" className="bg-[#0f0e0c]">COP ($)</option>
-                  <option value="USD" className="bg-[#0f0e0c]">USD ($.)</option>
+                  <option value="COP" className="bg-white">COP ($)</option>
+                  <option value="USD" className="bg-white">USD ($.)</option>
                 </select>
               </div>
 
@@ -416,8 +416,8 @@ export default function GastosAdmin({
                   onChange={(e) => setToolTipoCobro(e.target.value as 'global' | 'porCliente')}
                   className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none"
                 >
-                  <option value="global" className="bg-[#0f0e0c]">Global (Tarifa única)</option>
-                  <option value="porCliente" className="bg-[#0f0e0c]">Por Cliente (monto x clientes activos)</option>
+                  <option value="global" className="bg-white">Global (Tarifa única)</option>
+                  <option value="porCliente" className="bg-white">Por Cliente (monto x clientes activos)</option>
                 </select>
               </div>
             </div>
@@ -425,14 +425,14 @@ export default function GastosAdmin({
             {/* Services multi-checkbox */}
             <div>
               <label className="block text-slate-500 text-[10px] uppercase font-mono mb-2">Prorratear entre Líneas de Servicio</label>
-              <div className="grid grid-cols-2 gap-2 bg-[#0f0e0c]/40 border border-slate-200/60 p-3 rounded max-h-32 overflow-y-auto">
+              <div className="grid grid-cols-2 gap-2 bg-white/40 border border-slate-200/60 p-3 rounded max-h-32 overflow-y-auto">
                 {servicios.map(s => (
                   <label key={s.id} className="flex items-center gap-2 text-[11px] text-slate-900 cursor-pointer selection:bg-transparent">
                     <input 
                       type="checkbox"
                       checked={selectedServices.includes(s.id)}
                       onChange={() => toggleServiceLabel(s.id)}
-                      className="accent-[#c9a961]"
+                      className="accent-blue-500"
                     />
                     <span>{s.nombre}</span>
                   </label>
@@ -444,7 +444,7 @@ export default function GastosAdmin({
             <div className="space-y-2">
               <button 
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-[#b09252] text-black font-semibold font-display py-2.5 rounded transition cursor-pointer"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-black font-semibold font-display py-2.5 rounded transition cursor-pointer"
               >
                 {editingToolId ? 'Guardar Cambios SaaS' : 'Registrar Herramientas SaaS'}
               </button>
@@ -483,7 +483,7 @@ export default function GastosAdmin({
                 <th className="px-5 py-3 text-right">Acción</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2a2620]/40">
+            <tbody className="divide-y divide-slate-200/40">
               {toolsComputed.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-5 py-8 text-center text-slate-400 font-mono">Sin herramientas registradas.</td>
@@ -496,7 +496,7 @@ export default function GastosAdmin({
                   const isToolEditing = editingToolId === h.id;
 
                   return (
-                    <tr key={h.id} className={`hover:bg-white/[0.01]/70 transition ${isToolEditing ? 'bg-blue-600/5 border-l-2 border-[#c9a961]' : ''}`}>
+                    <tr key={h.id} className={`hover:bg-white/[0.01]/70 transition ${isToolEditing ? 'bg-blue-600/5 border-l-2 border-blue-300' : ''}`}>
                       <td className="px-5 py-3.5 font-medium text-slate-900">{h.nombre}</td>
                       <td className="px-5 py-3.5 font-mono">
                         {baseMoneda === 'USD' ? formatUsd(baseMonto) : formatCop(baseMonto)}
@@ -510,13 +510,13 @@ export default function GastosAdmin({
                         {h.serviciosLinked.length > 0 ? (
                           h.serviciosLinked.map(sId => servicios.find(s => s.id === sId)?.nombre || sId).join(', ')
                         ) : (
-                          <span className="text-[#c97a61] font-semibold">Ninguno vinculado (No se deduce)</span>
+                          <span className="text-rose-600 font-semibold">Ninguno vinculado (No se deduce)</span>
                         )}
                       </td>
                       <td className="px-5 py-3.5 font-mono text-blue-600">
                         {formatCop(h.costoAsignadoPorServicio)}
                       </td>
-                      <td className="px-5 py-3.5 font-mono font-bold text-[#a8c98a]">
+                      <td className="px-5 py-3.5 font-mono font-bold text-emerald-600">
                         {formatCop(h.costoMensualTotal)}
                       </td>
                       <td className="px-5 py-3 text-right">
@@ -526,7 +526,7 @@ export default function GastosAdmin({
                               type="button"
                               onClick={() => handleStartEditTool(originalTool)}
                               title="Editar herramienta"
-                              className="bg-[#0f0e0c]/40 text-blue-600 hover:text-slate-900 p-1.5 transition rounded-lg hover:bg-blue-600/10 cursor-pointer"
+                              className="bg-white/40 text-blue-600 hover:text-slate-900 p-1.5 transition rounded-lg hover:bg-blue-600/10 cursor-pointer"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
@@ -592,8 +592,8 @@ export default function GastosAdmin({
                   onChange={(e) => setOtroMoneda(e.target.value as 'COP' | 'USD')}
                   className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none"
                 >
-                  <option value="COP" className="bg-[#0f0e0c]">COP ($)</option>
-                  <option value="USD" className="bg-[#0f0e0c]">USD ($/USD)</option>
+                  <option value="COP" className="bg-white">COP ($)</option>
+                  <option value="USD" className="bg-white">USD ($/USD)</option>
                 </select>
               </div>
 
@@ -604,9 +604,9 @@ export default function GastosAdmin({
                   onChange={(e) => setOtroCategoria(e.target.value as any)}
                   className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none"
                 >
-                  <option value="Operativo" className="bg-[#0f0e0c]">Gasto Operativo</option>
-                  <option value="Administrativo" className="bg-[#0f0e0c]">Gasto Administrativo</option>
-                  <option value="Otros" className="bg-[#0f0e0c]">Varios</option>
+                  <option value="Operativo" className="bg-white">Gasto Operativo</option>
+                  <option value="Administrativo" className="bg-white">Gasto Administrativo</option>
+                  <option value="Otros" className="bg-white">Varios</option>
                 </select>
               </div>
             </div>
@@ -624,7 +624,7 @@ export default function GastosAdmin({
             <div className="space-y-2">
               <button
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-[#b09252] text-black font-semibold font-display py-2.5 rounded transition cursor-pointer"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-black font-semibold font-display py-2.5 rounded transition cursor-pointer"
               >
                 {editingOtroId ? 'Guardar Cambios Gasto' : 'Registrar Gasto estructural'}
               </button>
@@ -652,7 +652,7 @@ export default function GastosAdmin({
                   <th className="px-4 py-2 text-right"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#2a2620]/30">
+              <tbody className="divide-y divide-slate-200/30">
                 {otrosGastos.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-4 py-5 text-center text-slate-400 font-mono">Sin otros gastos</td>
@@ -661,7 +661,7 @@ export default function GastosAdmin({
                   otrosGastos.map(g => {
                     const isOtroEditing = editingOtroId === g.id;
                     return (
-                      <tr key={g.id} className={`hover:bg-white/[0.01] ${isOtroEditing ? 'bg-blue-600/5 border-l-2 border-[#c9a961]' : ''}`}>
+                      <tr key={g.id} className={`hover:bg-white/[0.01] ${isOtroEditing ? 'bg-blue-600/5 border-l-2 border-blue-300' : ''}`}>
                         <td className="px-4 py-3 font-medium text-slate-900">
                           <span className="inline-flex items-center gap-1.5">
                             {g.nombre}
@@ -676,7 +676,7 @@ export default function GastosAdmin({
                         <td className="px-4 py-3 font-mono">
                           {g.moneda === 'USD' ? formatUsd(g.monto) : formatCop(g.monto)}
                         </td>
-                        <td className="px-4 py-3 text-right font-mono font-semibold text-[#c97a61]">
+                        <td className="px-4 py-3 text-right font-mono font-semibold text-rose-600">
                           {formatCop(convertToCop(g.monto, g.moneda, config.trm))}
                         </td>
                         <td className="px-4 py-2 text-right">
@@ -713,7 +713,7 @@ export default function GastosAdmin({
         <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-4">
           <div>
             <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase flex items-center gap-2 font-semibold">
-              <LayoutGrid className="w-4 h-4 text-[#a8c98a]" /> Distribuido Prorrateado por Línea de Servicio
+              <LayoutGrid className="w-4 h-4 text-emerald-600" /> Distribuido Prorrateado por Línea de Servicio
             </h3>
             <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
               Consolidación del costo de suscripciones asignadas de forma equitativa por unidad o por contrato a cada línea de producto o servicio en Ferova:
@@ -728,13 +728,13 @@ export default function GastosAdmin({
                   <th className="px-5 py-3 text-right">Sobrecarga Mensual Herramientas</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#2a2620]/40">
+              <tbody className="divide-y divide-slate-200/40">
                 {Array.from(distributedMap.entries()).map(([sId, weightCop]) => {
                   const srv = servicios.find(s => s.id === sId);
                   return (
                     <tr key={sId} className="hover:bg-white/[0.01]/70 transition">
                       <td className="px-5 py-3.5 font-medium text-slate-900">{srv?.nombre || sId}</td>
-                      <td className="px-5 py-3.5 text-right font-mono font-semibold text-[#a8c98a]">
+                      <td className="px-5 py-3.5 text-right font-mono font-semibold text-emerald-600">
                         {formatCop(weightCop)}
                       </td>
                     </tr>

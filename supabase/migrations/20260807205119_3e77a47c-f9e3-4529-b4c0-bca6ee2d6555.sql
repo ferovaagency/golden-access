@@ -1,0 +1,1 @@
+ALTER TABLE public.finance_horas ALTER COLUMN servicio_id DROP NOT NULL;

@@ -11,6 +11,8 @@ import { formatMinutes } from '../../lib/duration';
 export function TodayPlannerBlock({ onOpenPlanner }: { onOpenPlanner?: () => void }) {
   const [tasks, setTasks] = useState<PlannerTask[] | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  /** Resultado del último cierre: estimado vs. real y si el tiempo llegó a Horas. */
+  const [notice, setNotice] = useState<string | null>(null);
   const today = new Date().toISOString().slice(0, 10);
 
   const load = useCallback(async () => {
@@ -28,7 +30,15 @@ export function TodayPlannerBlock({ onOpenPlanner }: { onOpenPlanner?: () => voi
     setBusyId(id);
     try {
       if (action === 'start') await plannerService.startTask(id);
-      else await plannerService.completeTask(id);
+      else {
+        const result = await plannerService.completeTask(id);
+        const parts: string[] = [];
+        if (result.estimatedMinutes != null) parts.push(`estimado ${result.estimatedMinutes} min`);
+        if (result.actualMinutes != null) parts.push(`real ${result.actualMinutes} min`);
+        if (result.hourLogged) parts.push(result.missingService ? `en Horas (${result.hourDate}), falta asignar servicio` : `en Horas (${result.hourDate})`);
+        setNotice(parts.length ? parts.join(' · ') : 'Tarea completada.');
+        window.setTimeout(() => setNotice(null), 9000);
+      }
       await load();
     } finally {
       setBusyId(null);
@@ -51,6 +61,7 @@ export function TodayPlannerBlock({ onOpenPlanner }: { onOpenPlanner?: () => voi
           {onOpenPlanner && <button onClick={onOpenPlanner} className="text-xs font-semibold text-blue-600 hover:text-blue-800">Abrir Planner</button>}
         </div>
       </div>
+      {notice && <p role="status" className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800">{notice}</p>}
       <div className="mt-4 divide-y divide-slate-100">
         {tasks === null && <p className="py-6 text-center text-sm text-slate-400"><Loader2 className="mr-2 inline h-4 w-4 animate-spin" />Cargando…</p>}
         {tasks?.length === 0 && <p className="py-6 text-center text-sm text-slate-500">No hay tareas agendadas para hoy.</p>}

@@ -6,7 +6,7 @@ import { listMemoria, createMemoria, updateMemoria, deleteMemoria, type BrainIte
 // Pantalla de Memoria (cerebro del negocio), admin-only.
 // Global = conocimiento del equipo; Privado = solo de quien lo escribe.
 
-const inputCls = 'w-full bg-slate-50/50 border border-slate-200 p-2.5 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#c9a961]/40';
+const inputCls = 'w-full bg-slate-50/50 border border-slate-200 p-2.5 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400/40';
 const labelCls = 'font-mono uppercase text-[10px] tracking-wider text-slate-500';
 
 export default function MemoriaPanel() {
@@ -101,7 +101,7 @@ export default function MemoriaPanel() {
     <div className="max-w-4xl mx-auto">
       <header className="mb-6">
         <div className="flex items-center gap-2 text-slate-900">
-          <Brain size={22} className="text-[#c9a961]" />
+          <Brain size={22} className="text-blue-500" />
           <h1 className="text-xl font-semibold">Memoria del negocio</h1>
         </div>
         <p className="text-sm text-slate-500 mt-1">
@@ -112,7 +112,7 @@ export default function MemoriaPanel() {
       {/* Alta */}
       <div className="bg-white border border-slate-200 rounded-lg p-5 mb-6">
         <div className="flex items-center gap-2 mb-4">
-          <Plus size={16} className="text-[#c9a961]" />
+          <Plus size={16} className="text-blue-500" />
           <span className={labelCls}>Agregar a la memoria</span>
         </div>
         <div className="space-y-3">
@@ -132,7 +132,7 @@ export default function MemoriaPanel() {
                   <button
                     type="button"
                     onClick={() => setScope('global')}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-sm border transition-colors ${scope === 'global' ? 'bg-[#c9a961] border-[#c9a961] text-black' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-sm border transition-colors ${scope === 'global' ? 'bg-blue-500 border-blue-500 text-black' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}
                   >
                     <Globe size={14} /> Global (equipo)
                   </button>
@@ -140,7 +140,7 @@ export default function MemoriaPanel() {
                 <button
                   type="button"
                   onClick={() => setScope('privado')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-sm border transition-colors ${scope === 'privado' ? 'bg-[#c9a961] border-[#c9a961] text-black' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-sm border transition-colors ${scope === 'privado' ? 'bg-blue-500 border-blue-500 text-black' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}
                 >
                   <Lock size={14} /> Privado (solo yo)
                 </button>
@@ -150,7 +150,7 @@ export default function MemoriaPanel() {
               type="button"
               onClick={handleCreate}
               disabled={saving}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded bg-[#c9a961] hover:bg-[#b09252] text-black text-sm font-medium disabled:opacity-60"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium disabled:opacity-60"
             >
               {saving ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
               Guardar
@@ -195,7 +195,7 @@ export default function MemoriaPanel() {
                     <button onClick={cancelEdit} className="inline-flex items-center gap-1 px-3 py-1.5 rounded text-sm border border-slate-200 text-slate-600 hover:bg-slate-50">
                       <X size={14} /> Cancelar
                     </button>
-                    <button onClick={() => saveEdit(item.id)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded text-sm bg-[#c9a961] hover:bg-[#b09252] text-black">
+                    <button onClick={() => saveEdit(item.id)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded text-sm bg-blue-600 hover:bg-blue-700 text-white">
                       <Check size={14} /> Guardar
                     </button>
                   </div>

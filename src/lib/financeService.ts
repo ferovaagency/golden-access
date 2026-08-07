@@ -205,8 +205,8 @@ export async function loadFinanceData(userId: string): Promise<AppData> {
     fecha: h.fecha,
     cliente_id: h.cliente_id,
     cliente_nombre: clienteNombreMap.get(h.cliente_id) || 'Cliente',
-    servicio_id: h.servicio_id,
-    servicio_nombre: servicioNombreMap.get(h.servicio_id) || 'Servicio',
+    servicio_id: h.servicio_id ?? null,
+    servicio_nombre: h.servicio_id ? (servicioNombreMap.get(h.servicio_id) || 'Servicio') : 'Sin servicio',
     horas: Number(h.horas),
     descripcion: h.descripcion || '',
   }));
@@ -383,7 +383,7 @@ export async function saveHoras(userId: string, list: Hora[]) {
     id: h.id,
     fecha: h.fecha,
     cliente_id: h.cliente_id,
-    servicio_id: h.servicio_id,
+    servicio_id: h.servicio_id || null,
     horas: h.horas,
     descripcion: h.descripcion || null,
   })));

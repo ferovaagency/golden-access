@@ -41,7 +41,7 @@ export function PeriodPicker({ period, onChange }: { period: Period; onChange: (
           type="date"
           value={from}
           onChange={(e) => setRange(e.target.value, to)}
-          className="bg-slate-50 text-slate-900 border border-slate-200 text-xs p-1 rounded font-mono focus:outline-none focus:border-[#c9a961]"
+          className="bg-slate-50 text-slate-900 border border-slate-200 text-xs p-1 rounded font-mono focus:outline-none focus:border-blue-500"
           aria-label="Desde"
         />
         <span className="text-slate-400 text-xs">a</span>
@@ -49,7 +49,7 @@ export function PeriodPicker({ period, onChange }: { period: Period; onChange: (
           type="date"
           value={to}
           onChange={(e) => setRange(from, e.target.value)}
-          className="bg-slate-50 text-slate-900 border border-slate-200 text-xs p-1 rounded font-mono focus:outline-none focus:border-[#c9a961]"
+          className="bg-slate-50 text-slate-900 border border-slate-200 text-xs p-1 rounded font-mono focus:outline-none focus:border-blue-500"
           aria-label="Hasta"
         />
       </div>

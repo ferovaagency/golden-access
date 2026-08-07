@@ -64,12 +64,12 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
   return (
     <div className="min-h-screen bg-[#0f0e0c] flex flex-col justify-center items-center p-4 text-[#e8e3d8] font-sans">
       <div className="max-w-md w-full bg-[#161412] border border-[#2a2620] rounded-lg p-8 space-y-6 shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 inset-x-0 h-[3px] bg-[#c9a961]" />
+        <div className="absolute top-0 inset-x-0 h-[3px] bg-blue-500" />
         <div className="space-y-2 text-center">
-          <div className="w-12 h-12 rounded-full bg-[#c9a961]/10 border border-[#c9a961]/30 flex items-center justify-center mx-auto">
-            <ShieldCheck className="w-6 h-6 text-[#c9a961]" />
+          <div className="w-12 h-12 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center mx-auto">
+            <ShieldCheck className="w-6 h-6 text-blue-500" />
           </div>
-          <h1 className="text-2xl font-bold font-display tracking-tight text-[#c9a961]">Activa tu Licencia</h1>
+          <h1 className="text-2xl font-bold font-display tracking-tight text-blue-500">Activa tu Licencia</h1>
           <p className="text-xs text-[#a39d8e] font-mono uppercase tracking-wider">Acceso a Ferova One</p>
         </div>
 
@@ -86,7 +86,7 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
         <div className="space-y-3">
           {error && <p className="text-xs text-red-400 bg-red-950/30 border border-red-900/50 rounded p-2">{error}</p>}
           {confirming && (
-            <p className="text-xs text-[#c9a961] flex items-center justify-center gap-2">
+            <p className="text-xs text-blue-500 flex items-center justify-center gap-2">
               <Loader2 className="w-3.5 h-3.5 animate-spin" /> Confirmando suscripción con PayPal…
             </p>
           )}
@@ -95,7 +95,7 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
           ) : (
             <button
               disabled
-              className="w-full flex items-center justify-center gap-2 bg-[#c9a961] text-black font-semibold font-display py-2.5 rounded transition cursor-not-allowed opacity-50"
+              className="w-full flex items-center justify-center gap-2 bg-blue-500 text-black font-semibold font-display py-2.5 rounded transition cursor-not-allowed opacity-50"
             >
               PayPal pendiente de configuración
             </button>
@@ -106,7 +106,7 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
           <button
             onClick={handleCheckPayment}
             disabled={checking}
-            className="w-full flex items-center justify-center gap-2 bg-[#c9a961] hover:bg-[#b09252] text-black font-semibold font-display py-2.5 rounded transition cursor-pointer disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold font-display py-2.5 rounded transition cursor-pointer disabled:opacity-60"
           >
             {checking && <Loader2 className="w-4 h-4 animate-spin" />}
             Ya me suscribí, verificar acceso
@@ -115,7 +115,7 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
 
         <div className="flex items-center justify-between pt-2 border-t border-[#2a2620]">
           <span className="text-[10px] text-[#8a8377] font-mono truncate max-w-[60%]">{user.email}</span>
-          <button onClick={() => logout()} className="text-[10px] text-[#8a8377] hover:text-[#c97a61] font-mono flex items-center gap-1">
+          <button onClick={() => logout()} className="text-[10px] text-[#8a8377] hover:text-rose-500 font-mono flex items-center gap-1">
             <LogOut className="w-3 h-3" /> Cerrar sesión
           </button>
         </div>

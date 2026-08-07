@@ -183,7 +183,7 @@ export default function ClientesAdmin({
                 value={id}
                 onChange={(e) => setId(e.target.value)}
                 required
-                className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded font-mono focus:outline-none focus:border-[#c9a961]"
+                className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded font-mono focus:outline-none focus:border-blue-300"
               />
             </div>
 
@@ -196,7 +196,7 @@ export default function ClientesAdmin({
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 required
-                className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
+                className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none focus:border-blue-300"
               />
             </div>
 
@@ -206,10 +206,10 @@ export default function ClientesAdmin({
               <select 
                 value={pais}
                 onChange={(e) => handleCountryChange(e.target.value)}
-                className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
+                className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none focus:border-blue-300"
               >
                 {COUNTRIES.map(c => (
-                  <option key={c.code} value={c.code} className="bg-[#0f0e0c]">
+                  <option key={c.code} value={c.code} className="bg-white">
                     {c.flag} {c.name} ({c.currency})
                   </option>
                 ))}
@@ -254,13 +254,13 @@ export default function ClientesAdmin({
                 placeholder="Persona de contacto, observaciones clave..."
                 value={notas}
                 onChange={(e) => setNotas(e.target.value)}
-                className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
+                className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none focus:border-blue-300"
               />
             </div>
 
             <button 
               type="submit"
-              className="w-full bg-blue-600 hover:bg-[#b09252] text-black font-semibold font-display py-3 rounded transition cursor-pointer"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-black font-semibold font-display py-3 rounded transition cursor-pointer"
             >
               Registrar Perfil
             </button>
@@ -282,7 +282,7 @@ export default function ClientesAdmin({
                   placeholder="Buscar por nombre o ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-slate-50 text-slate-900 border border-slate-200 max-w-sm pl-8 pr-4 py-1.5 rounded focus:outline-none focus:border-[#c9a961] font-sans"
+                  className="bg-slate-50 text-slate-900 border border-slate-200 max-w-sm pl-8 pr-4 py-1.5 rounded focus:outline-none focus:border-blue-300 font-sans"
                 />
                 <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-400" />
               </div>
@@ -302,7 +302,7 @@ export default function ClientesAdmin({
                     <th className="px-5 py-3.5 text-right">Borrar</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#2a2620]/40">
+                <tbody className="divide-y divide-slate-200/40">
                   {filteredClientes.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="px-5 py-10 text-center text-slate-400 font-mono">
@@ -339,11 +339,11 @@ export default function ClientesAdmin({
                             {c.tipo === 'Internacional' ? (
                               <span className="text-slate-400 italic">Exportado / Rete 0%</span>
                             ) : c.declarante ? (
-                              <span className="text-[#a8c98a] bg-[#a8c98a]/10 border border-[#a8c98a]/20 px-2 py-0.5 rounded text-[10px] font-semibold">
+                              <span className="text-emerald-600 bg-emerald-600/10 border border-emerald-300/20 px-2 py-0.5 rounded text-[10px] font-semibold">
                                 CO Declarante (4%)
                               </span>
                             ) : (
-                              <span className="text-[#c99a61] bg-[#c99a61]/10 border border-[#c99a61]/25 px-2 py-0.5 rounded text-[10px] font-semibold">
+                              <span className="text-amber-600 bg-amber-600/10 border border-amber-300/25 px-2 py-0.5 rounded text-[10px] font-semibold">
                                 CO No Declarante (6%)
                               </span>
                             )}
@@ -363,7 +363,7 @@ export default function ClientesAdmin({
                               onClick={() => toggleClientActiveStatus(c.id)}
                               className={`px-2 py-0.5 rounded text-[10px] font-mono tracking-wider font-semibold cursor-pointer ${
                                 c.activo 
-                                  ? 'text-[#a8c98a] bg-[#a8c98a]/10 hover:bg-[#a8c98a]/20 border border-[#a8c98a]/30' 
+                                  ? 'text-emerald-600 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-300/30' 
                                   : 'text-slate-400 bg-white/[0.02] hover:bg-white/[0.04] border border-slate-200'
                               }`}
                             >

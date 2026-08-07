@@ -33,7 +33,7 @@ export default function AlertasTributarias({ metrics, config, ventas, formatCop 
       return { 
         bar: '#a8c98a', 
         bg: 'bg-[#141812]/40', 
-        border: 'border-[#a8c98a]/30 border-l-[#a8c98a]', 
+        border: 'border-emerald-500/30 border-l-emerald-500', 
         text: 'Nivel Seguro', 
         desc: 'Operas holgadamente por debajo de las obligaciones DIAN para este tope. Continúa parametrizando en calma.' 
       };
@@ -41,7 +41,7 @@ export default function AlertasTributarias({ metrics, config, ventas, formatCop 
       return { 
         bar: '#c9a961', 
         bg: 'bg-[#181611]/40', 
-        border: 'border-[#c9a961]/30 border-l-[#c9a961]', 
+        border: 'border-blue-500/30 border-l-blue-500', 
         text: 'Alerta Preventiva', 
         desc: 'Te aproximas a la banda de transición del tope legal. Consulta con tu contador de confianza para organizar tus extractos bancarios.' 
       };
@@ -49,7 +49,7 @@ export default function AlertasTributarias({ metrics, config, ventas, formatCop 
       return { 
         bar: '#c97a61', 
         bg: 'bg-[#181312]/40', 
-        border: 'border-[#c97a61]/30 border-l-[#c97a61]', 
+        border: 'border-rose-500/30 border-l-rose-500', 
         text: 'Obligación Superada', 
         desc: 'Tope legal superado según tu proyección anualizada de ventas en COP. Requieres tomar medidas fiscales inmediatas en tu RUT.' 
       };
@@ -82,13 +82,13 @@ export default function AlertasTributarias({ metrics, config, ventas, formatCop 
 
       {/* Header */}
       <div className="border-b border-[#2a2620] pb-5">
-        <h2 className="text-xl font-display font-medium text-[#c9a961]">Semáforo Ampliado de Alertas Tributarias</h2>
+        <h2 className="text-xl font-display font-medium text-blue-500">Semáforo Ampliado de Alertas Tributarias</h2>
         <p className="text-xs text-[#a39d8e] font-mono mt-1">Simulación preventiva anualizada para evitar requerimientos o multas con la DIAN</p>
       </div>
 
       {/* Intro info box */}
       <div className="bg-[#13110f] border border-[#2a2620] p-5 rounded-lg flex gap-4 leading-relaxed text-xs">
-        <AlertCircle className="w-5 h-5 text-[#c9a961] shrink-0 mt-0.5" />
+        <AlertCircle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
         <div className="space-y-1">
           <span className="font-semibold text-[#e8e3d8] block">Metodología de Proyección Anual</span>
           <p className="text-[#a39d8e]">
@@ -198,8 +198,8 @@ export default function AlertasTributarias({ metrics, config, ventas, formatCop 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
         
         <div className="bg-[#161412] border border-[#2a2620] p-6 rounded-lg space-y-4">
-          <h4 className="text-sm font-display font-semibold text-[#c9a961] flex items-center gap-1.5 border-b border-[#2a2620] pb-3">
-            <BookOpen className="w-4 h-4 text-[#c9a961]" /> Resumen Ejecutivo de Riesgos
+          <h4 className="text-sm font-display font-semibold text-blue-500 flex items-center gap-1.5 border-b border-[#2a2620] pb-3">
+            <BookOpen className="w-4 h-4 text-blue-500" /> Resumen Ejecutivo de Riesgos
           </h4>
           <p className="text-xs text-[#a39d8e] leading-relaxed">
             Como Persona Natural Comerciante en Colombia, el mayor riesgo fiscal proviene del <strong>artículo 364 del estatuto tributario</strong> que contempla sanciones por omisión de activos o ingresos.
@@ -210,8 +210,8 @@ export default function AlertasTributarias({ metrics, config, ventas, formatCop 
         </div>
 
         <div className="bg-[#161412] border border-[#2a2620] p-6 rounded-lg space-y-4">
-          <h4 className="text-sm font-display font-semibold text-[#a8c98a] flex items-center gap-1.5 border-b border-[#2a2620] pb-3">
-            <Milestone className="w-4 h-4 text-[#a8c98a]" /> Recomendaciones Prácticas DIAN
+          <h4 className="text-sm font-display font-semibold text-emerald-500 flex items-center gap-1.5 border-b border-[#2a2620] pb-3">
+            <Milestone className="w-4 h-4 text-emerald-500" /> Recomendaciones Prácticas DIAN
           </h4>
           <ul className="list-disc pl-4 text-xs text-[#a39d8e] space-y-3 leading-relaxed">
             <li>

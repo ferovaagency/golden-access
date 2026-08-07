@@ -243,7 +243,7 @@ export default function ServiciosAdmin({
                 onChange={(e) => setSrvId(e.target.value)}
                 required
                 disabled={!!editingServiceId}
-                className={`w-full font-mono border border-slate-200 p-2.5 rounded focus:outline-none focus:border-[#c9a961] ${
+                className={`w-full font-mono border border-slate-200 p-2.5 rounded focus:outline-none focus:border-blue-300 ${
                   editingServiceId 
                     ? 'bg-neutral-900 border-slate-200/50 text-neutral-500 cursor-not-allowed opacity-70' 
                     : 'bg-slate-50 text-slate-900'
@@ -259,7 +259,7 @@ export default function ServiciosAdmin({
                 value={srvNombre}
                 onChange={(e) => setSrvNombre(e.target.value)}
                 required
-                className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
+                className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none focus:border-blue-300"
               />
             </div>
 
@@ -272,7 +272,7 @@ export default function ServiciosAdmin({
                 value={srvCostoUnitario}
                 onChange={(e) => setSrvCostoUnitario(Number(e.target.value))}
                 required
-                className="w-full bg-slate-50 text-slate-900 font-mono border border-slate-200 p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
+                className="w-full bg-slate-50 text-slate-900 font-mono border border-slate-200 p-2.5 rounded focus:outline-none focus:border-blue-300"
               />
               <p className="text-[10px] text-slate-400 mt-1">Costo de entrega de un desarrollador externo o aprovisionamiento técnico.</p>
             </div>
@@ -286,7 +286,7 @@ export default function ServiciosAdmin({
                 placeholder="Ej: 40"
                 value={srvMargenPct}
                 onChange={(e) => setSrvMargenPct(e.target.value)}
-                className="w-full bg-slate-50 text-slate-900 font-mono border border-slate-200 p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
+                className="w-full bg-slate-50 text-slate-900 font-mono border border-slate-200 p-2.5 rounded focus:outline-none focus:border-blue-300"
               />
               <p className="text-[10px] text-slate-400 mt-1">Define el precio ideal sugerido en Equilibrio por Servicio. Cada servicio puede tener su propio %; si lo dejas vacío, se usa el margen mínimo de tu configuración.</p>
             </div>
@@ -300,12 +300,12 @@ export default function ServiciosAdmin({
                   placeholder="Ej: 950000"
                   value={srvPrecioHabitual}
                   onChange={(e) => setSrvPrecioHabitual(e.target.value)}
-                  className="flex-1 min-w-0 bg-slate-50 text-slate-900 font-mono border border-slate-200 p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
+                  className="flex-1 min-w-0 bg-slate-50 text-slate-900 font-mono border border-slate-200 p-2.5 rounded focus:outline-none focus:border-blue-300"
                 />
                 <select
                   value={srvPrecioHabitualMoneda}
                   onChange={(e) => setSrvPrecioHabitualMoneda(e.target.value as 'COP' | 'USD')}
-                  className="w-20 shrink-0 bg-slate-50 text-slate-900 font-mono border border-slate-200 p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
+                  className="w-20 shrink-0 bg-slate-50 text-slate-900 font-mono border border-slate-200 p-2.5 rounded focus:outline-none focus:border-blue-300"
                 >
                   <option value="COP">COP</option>
                   <option value="USD">USD</option>
@@ -321,7 +321,7 @@ export default function ServiciosAdmin({
 
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-[#b09252] text-black font-semibold font-display py-3 rounded transition cursor-pointer"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-black font-semibold font-display py-3 rounded transition cursor-pointer"
             >
               {editingServiceId ? 'Guardar Cambios' : 'Registrar Línea'}
             </button>
@@ -359,7 +359,7 @@ export default function ServiciosAdmin({
                   <th className="px-5 py-3 text-right"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#2a2620]/40">
+              <tbody className="divide-y divide-slate-200/40">
                 {servicios.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-5 py-10 text-center text-slate-400 font-mono">
@@ -371,7 +371,7 @@ export default function ServiciosAdmin({
                     const stats = getServiceStats(s);
                     const isServiceEditing = editingServiceId === s.id;
                     return (
-                      <tr key={s.id} className={`hover:bg-white/[0.01]/70 transition ${isServiceEditing ? 'bg-blue-600/5 border-l-2 border-[#c9a961]' : ''}`}>
+                      <tr key={s.id} className={`hover:bg-white/[0.01]/70 transition ${isServiceEditing ? 'bg-blue-600/5 border-l-2 border-blue-300' : ''}`}>
                         <td className="px-5 py-4 font-mono text-slate-500">{s.id}</td>
                         <td className="px-5 py-4 font-semibold text-slate-900">
                           {s.nombre}
@@ -381,6 +381,8 @@ export default function ServiciosAdmin({
                           {s.precio_habitual != null && (
                             <span className="block text-[9px] font-normal text-slate-400">
                               Vende a: {s.precio_habitual_moneda === 'USD' ? `US$${s.precio_habitual.toLocaleString('en-US')}` : formatCop(s.precio_habitual)}
+                              {/* Con IVA activo el precio de lista es antes de impuesto: mostramos también el total a facturar. */}
+                              {s.aplica_iva && s.precio_habitual_moneda !== 'USD' && ` · con IVA ${formatCop(Math.round(s.precio_habitual * (1 + (config.tarifa_iva ?? 0))))}`}
                             </span>
                           )}
                           <span className={`mt-1 inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${s.aplica_iva ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-500'}`}>{s.aplica_iva ? `IVA ${Math.round(config.tarifa_iva * 100)}%` : 'Sin IVA'}</span>
@@ -415,7 +417,7 @@ export default function ServiciosAdmin({
                             <button 
                               onClick={() => handleStartEdit(s)}
                               title="Editar servicio"
-                              className="bg-[#0f0e0c]/40 text-blue-600 hover:text-slate-900 p-1.5 transition rounded-lg hover:bg-blue-600/10 cursor-pointer"
+                              className="bg-white/40 text-blue-600 hover:text-slate-900 p-1.5 transition rounded-lg hover:bg-blue-600/10 cursor-pointer"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>

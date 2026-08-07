@@ -2,7 +2,7 @@
 // and insights in one place, and exposes typed actions that map 1:1 to
 // plannerService. Components should not touch supabase for planner data.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { plannerService, type CreatePlannerBlockInput, type PlannerBlock, type PlannerBriefing, type PlannerClient, type PlannerInbox, type PlannerInsight, type PlannerServiceOption, type PlannerTask, type UpdatePlannerTaskInput } from '../lib/plannerService';
+import { plannerService, type CompleteTaskResult, type CreatePlannerBlockInput, type PlannerBlock, type PlannerBriefing, type PlannerClient, type PlannerDraft, type PlannerInbox, type PlannerInsight, type PlannerServiceOption, type PlannerTask, type UpdatePlannerTaskInput } from '../lib/plannerService';
 import { countTodayAutoActions } from '../lib/auditLogService';
 
 function today() { return todayInTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Bogota'); }
@@ -74,6 +74,44 @@ export function usePlanner() {
 
   useEffect(() => { void refresh(); }, [refresh]);
 
+  /**
+   * Paso 1 de la captura natural: interpreta el texto sin crear nada, para que
+   * la persona confirme o corrija cliente, fecha y duración.
+   */
+  const previewCapture = useCallback(async (text: string): Promise<PlannerDraft[]> => {
+    if (!text.trim()) return [];
+    setBusy('classify'); setError(null);
+    try {
+      const { data, error: err } = await plannerService.previewClassify(text);
+      if (err) { setError(err.message); return []; }
+      return data?.drafts || [];
+    } catch (err: any) {
+      setError(err?.message || 'No fue posible interpretar el texto.');
+      return [];
+    } finally {
+      setBusy(null);
+    }
+  }, []);
+
+  /** Paso 2: crea las tareas ya confirmadas y reorganiza el día. */
+  const commitCapture = useCallback(async (drafts: PlannerDraft[]) => {
+    if (!drafts.length) return;
+    setBusy('classify'); setError(null);
+    try {
+      const { error: err } = await plannerService.commitDrafts(drafts);
+      if (err) setError(err.message);
+      else {
+        const { error: planError } = await plannerService.planDay(undefined, true);
+        if (planError) setError(planError.message);
+      }
+      await refresh();
+    } catch (err: any) {
+      setError(err?.message || 'No fue posible guardar las tareas.');
+    } finally {
+      setBusy(null);
+    }
+  }, [refresh]);
+
   const classify = useCallback(async (text: string) => {
     if (!text.trim()) return;
     setBusy('classify'); setError(null);
@@ -130,11 +168,12 @@ export function usePlanner() {
     setBusy(null);
   }, []);
 
-  const completeTask = useCallback(async (id: string) => {
+  const completeTask = useCallback(async (id: string): Promise<CompleteTaskResult | null> => {
     setBusy('task'); setError(null);
     try {
-      await plannerService.completeTask(id);
+      const result = await plannerService.completeTask(id);
       await refresh();
+      return result;
     } catch (err: any) {
       setError(err.message || 'No fue posible completar la tarea.');
       throw err;
@@ -173,7 +212,7 @@ export function usePlanner() {
   return {
     inbox, tasks, clients, services, blocks, insights, briefing, rescheduledCount, planNotice,
     loading, busy, error, date, setDate, timeZone,
-    refresh, classify, planDay, regenerateInsights, regenerateBriefing,
+    refresh, classify, previewCapture, commitCapture, planDay, regenerateInsights, regenerateBriefing,
     completeTask, startTask, updateTask, postponeTask, deleteTask, createBlock, dismissInsight,
   };
 }

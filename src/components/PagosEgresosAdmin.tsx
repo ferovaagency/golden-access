@@ -171,15 +171,15 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
   const totalEgresoConsolidadoCop = totalPagadoCop + (totalPagadoUsd * trmValue);
 
   return (
-    <div className="space-y-8 animate-fade-in text-[#e8e3d8]">
+    <div className="space-y-8 animate-fade-in text-slate-900">
       
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#2a2620] pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
-          <h2 className="text-xl font-display font-medium text-[#c9a961] flex items-center gap-2">
-            <TrendingDown className="w-5 h-5 text-[#c9a961]" /> Registro de Prácticas de Egreso (Pagos Efectuados)
+          <h2 className="text-xl font-display font-medium text-blue-700 flex items-center gap-2">
+            <TrendingDown className="w-5 h-5 text-blue-700" /> Registro de Prácticas de Egreso (Pagos Efectuados)
           </h2>
-          <p className="text-xs text-[#a39d8e] font-mono mt-1">
+          <p className="text-xs text-slate-500 font-mono mt-1">
             Lleva el control cronológico de los desembolsos reales de heramientas (SaaS), nómina/salarios de socios, pagos a contratistas externos y costos administrativos.
           </p>
         </div>
@@ -195,40 +195,40 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
       {/* Aggregate metrics bento widget cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         
-        <div className="bg-[#161412] border border-[#2a2620] p-4 rounded-lg">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-[#a39d8e]">Egresos en Pesos (COP)</span>
+        <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500">Egresos en Pesos (COP)</span>
           <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-xl font-mono text-[#c9a961] font-bold">
+            <span className="text-xl font-mono text-blue-700 font-bold">
               {formatCop(totalPagadoCop)}
             </span>
-            <span className="text-[10px] font-mono text-[#8a8377]">reales</span>
+            <span className="text-[10px] font-mono text-slate-500">reales</span>
           </div>
-          <span className="text-[10px] text-[#8a8377] font-mono mt-2 block">Suma de pagos efectuados en COP.</span>
+          <span className="text-[10px] text-slate-500 font-mono mt-2 block">Suma de pagos efectuados en COP.</span>
         </div>
 
-        <div className="bg-[#161412] border border-[#2a2620] p-4 rounded-lg">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-[#a39d8e]">Egresos en Dólares (USD)</span>
+        <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500">Egresos en Dólares (USD)</span>
           <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-xl font-mono text-[#c9a961] font-bold">
+            <span className="text-xl font-mono text-blue-700 font-bold">
               {formatUsd(totalPagadoUsd)}
             </span>
-            <span className="text-[10px] font-mono text-[#8a8377]">moneda extranjera</span>
+            <span className="text-[10px] font-mono text-slate-500">moneda extranjera</span>
           </div>
-          <span className="text-[10px] text-[#8a8377] font-mono mt-2 block">Suma de pagos de herramientas (SaaS) y proveedores.</span>
+          <span className="text-[10px] text-slate-500 font-mono mt-2 block">Suma de pagos de herramientas (SaaS) y proveedores.</span>
         </div>
 
-        <div className="bg-[#161412] border border-[#2a2620] p-4 rounded-lg">
+        <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-[#a39d8e]">Egreso Consolidado (COP)</span>
-            <span className="text-[9px] font-mono text-[#c9a961] bg-[#c9a961]/10 px-1.5 py-0.2 rounded">TRM: {formatCop(trmValue)}</span>
+            <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500">Egreso Consolidado (COP)</span>
+            <span className="text-[9px] font-mono text-blue-700 bg-blue-600/10 px-1.5 py-0.2 rounded">TRM: {formatCop(trmValue)}</span>
           </div>
           <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-xl font-mono text-[#c97a61] font-bold">
+            <span className="text-xl font-mono text-rose-600 font-bold">
               {formatCop(totalEgresoConsolidadoCop)}
             </span>
-            <span className="text-[10px] font-mono text-[#8a8377]">total</span>
+            <span className="text-[10px] font-mono text-slate-500">total</span>
           </div>
-          <span className="text-[10px] text-[#8a8377] font-mono mt-2 block">Egreso global unificado a tasa TRM del mes.</span>
+          <span className="text-[10px] text-slate-500 font-mono mt-2 block">Egreso global unificado a tasa TRM del mes.</span>
         </div>
 
       </div>
@@ -236,47 +236,47 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* Left Column: Form to Log payment */}
-        <div className="lg:col-span-4 bg-[#161412] border border-[#2a2620] p-5 rounded-lg space-y-4">
-          <div className="flex items-center gap-2 border-b border-[#2a2620] pb-3">
-            <ArrowDownCircle className="w-4h-4 text-[#c9a961]" />
-            <span className="text-xs font-mono uppercase tracking-widest text-[#a39d8e] font-bold">{editingId ? 'Editar Desembolso' : 'Registrar Desembolso'}</span>
+        <div className="lg:col-span-4 bg-slate-50 border border-slate-200 p-5 rounded-lg space-y-4">
+          <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
+            <ArrowDownCircle className="w-4h-4 text-blue-700" />
+            <span className="text-xs font-mono uppercase tracking-widest text-slate-500 font-bold">{editingId ? 'Editar Desembolso' : 'Registrar Desembolso'}</span>
           </div>
 
           <form onSubmit={handleAddPago} className="space-y-4 text-xs">
             
             {/* Concepto */}
             <div>
-              <label className="block text-[#a39d8e] font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Concepto / Detalle del Pago</label>
+              <label className="block text-slate-500 font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Concepto / Detalle del Pago</label>
               <input 
                 type="text"
                 required
                 placeholder="Ej. Liquidación Juan C. (SEO Copywriter)"
                 value={concepto}
                 onChange={(e) => setConcepto(e.target.value)}
-                className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
+                className="w-full bg-white/50 text-white border border-slate-200 p-2.5 rounded focus:outline-none focus:border-blue-300"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               {/* Fecha */}
               <div>
-                <label className="block text-[#a39d8e] font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Fecha de Pago</label>
+                <label className="block text-slate-500 font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Fecha de Pago</label>
                 <input 
                   type="date"
                   required
                   value={fecha}
                   onChange={(e) => setFecha(e.target.value)}
-                  className="w-full bg-[#0f0e0c]/50 text-[#e8e3d8] border border-[#2a2620] p-2 rounded focus:outline-none"
+                  className="w-full bg-white/50 text-slate-900 border border-slate-200 p-2 rounded focus:outline-none"
                 />
               </div>
 
               {/* Categoria */}
               <div>
-                <label className="block text-[#a39d8e] font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Tipo / Categoría</label>
+                <label className="block text-slate-500 font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Tipo / Categoría</label>
                 <select 
                   value={categoria}
                   onChange={(e) => setCategoria(e.target.value as any)}
-                  className="w-full bg-[#0f0e0c] text-white border border-[#2a2620] p-2 rounded focus:outline-none font-medium"
+                  className="w-full bg-white text-white border border-slate-200 p-2 rounded focus:outline-none font-medium"
                 >
                   <option value="Herramientas">SaaS / Herramientas</option>
                   <option value="Salarios">Salarios / Socios</option>
@@ -290,7 +290,7 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
             <div className="grid grid-cols-2 gap-3">
               {/* Monto */}
               <div>
-                <label className="block text-[#a39d8e] font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Monto Pagado</label>
+                <label className="block text-slate-500 font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Monto Pagado</label>
                 <input 
                   type="number"
                   required
@@ -299,25 +299,25 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
                   placeholder="0.00"
                   value={monto}
                   onChange={(e) => setMonto(e.target.value === '' ? '' : Number(e.target.value))}
-                  className="w-full bg-[#0f0e0c]/50 text-[#a8c98a] border border-[#2a2620] p-2 rounded font-mono focus:outline-none font-semibold text-xs"
+                  className="w-full bg-white/50 text-emerald-600 border border-slate-200 p-2 rounded font-mono focus:outline-none font-semibold text-xs"
                 />
               </div>
 
               {/* Moneda */}
               <div>
-                <label className="block text-[#a39d8e] font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Divisa</label>
-                <div className="grid grid-cols-2 gap-1 bg-[#0f0e0c]/40 p-1 rounded border border-[#2a2620]">
+                <label className="block text-slate-500 font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Divisa</label>
+                <div className="grid grid-cols-2 gap-1 bg-white/40 p-1 rounded border border-slate-200">
                   <button 
                     type="button" 
                     onClick={() => setMoneda('COP')}
-                    className={`p-1 text-[10px] font-mono rounded font-bold transition cursor-pointer ${moneda === 'COP' ? 'bg-[#c9a961] text-black' : 'text-[#a39d8e] hover:text-white'}`}
+                    className={`p-1 text-[10px] font-mono rounded font-bold transition cursor-pointer ${moneda === 'COP' ? 'bg-blue-600 text-black' : 'text-slate-500 hover:text-white'}`}
                   >
                     COP
                   </button>
                   <button 
                     type="button" 
                     onClick={() => setMoneda('USD')}
-                    className={`p-1 text-[10px] font-mono rounded font-bold transition cursor-pointer ${moneda === 'USD' ? 'bg-[#c9a961] text-black' : 'text-[#a39d8e] hover:text-white'}`}
+                    className={`p-1 text-[10px] font-mono rounded font-bold transition cursor-pointer ${moneda === 'USD' ? 'bg-blue-600 text-black' : 'text-slate-500 hover:text-white'}`}
                   >
                     USD
                   </button>
@@ -327,31 +327,31 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
 
             {/* Metodo de Pago */}
             <div>
-              <label className="block text-[#a39d8e] font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Método de Pago / Origen</label>
+              <label className="block text-slate-500 font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Método de Pago / Origen</label>
               <input 
                 type="text"
                 placeholder="Ej. Transferencia Bancolombia, Tarjeta de Crédito, Efectivo, Pyg"
                 value={metodoPago}
                 onChange={(e) => setMetodoPago(e.target.value)}
-                className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
+                className="w-full bg-white/50 text-white border border-slate-200 p-2.5 rounded focus:outline-none focus:border-blue-300"
               />
             </div>
 
             {/* Notas opcionales */}
             <div>
-              <label className="block text-[#a39d8e] font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Notas / Comprobante (Opcional)</label>
+              <label className="block text-slate-500 font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Notas / Comprobante (Opcional)</label>
               <textarea 
                 rows={2}
                 placeholder="Nro. Factura, cuenta de cobro, link a comprobante drive..."
                 value={notas}
                 onChange={(e) => setNotas(e.target.value)}
-                className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2 rounded focus:outline-none placeholder-[#c9a961]/20 font-sans text-xs"
+                className="w-full bg-white/50 text-white border border-slate-200 p-2 rounded focus:outline-none placeholder-blue-400/20 font-sans text-xs"
               />
             </div>
 
             {/* Comprobante del pago recibido, subido al Drive del propio usuario */}
             <div>
-              <label className="block text-[#a39d8e] font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Comprobante de pago (Opcional)</label>
+              <label className="block text-slate-500 font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Comprobante de pago (Opcional)</label>
               <ComprobanteUpload
                 currentUrl={comprobanteUrl}
                 currentNombre={comprobanteNombre}
@@ -363,11 +363,11 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
             <button
               type="submit"
               disabled={saving}
-              className="w-full bg-[#c9a961] hover:bg-[#b09252] disabled:bg-[#2a2620] text-black font-semibold font-mono tracking-wide py-2.5 rounded transition font-bold cursor-pointer"
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 text-black font-semibold font-mono tracking-wide py-2.5 rounded transition font-bold cursor-pointer"
             >
               {saving ? 'Guardando...' : editingId ? 'Guardar Cambios' : 'Registrar Pago de Egreso'}
             </button>
-            {editingId && <button type="button" onClick={resetForm} className="w-full border border-[#2a2620] text-[#a39d8e] hover:text-white font-mono py-2 rounded transition inline-flex items-center justify-center gap-2"><X className="w-3.5 h-3.5" /> Cancelar edición</button>}
+            {editingId && <button type="button" onClick={resetForm} className="w-full border border-slate-200 text-slate-500 hover:text-white font-mono py-2 rounded transition inline-flex items-center justify-center gap-2"><X className="w-3.5 h-3.5" /> Cancelar edición</button>}
 
           </form>
         </div>
@@ -376,7 +376,7 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
         <div className="lg:col-span-8 space-y-4">
           
           {/* Filters Bar */}
-          <div className="bg-[#161412] border border-[#2a2620] p-4 rounded-lg flex flex-col md:flex-row items-center justify-between gap-4 text-xs">
+          <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg flex flex-col md:flex-row items-center justify-between gap-4 text-xs">
             
             {/* Search input */}
             <div className="relative w-full md:w-60">
@@ -385,16 +385,16 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
                 placeholder="Buscar pagos por concepto..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-[#0f0e0c]/65 text-[#e8e3d8] border border-[#2a2620] pl-8.5 pr-3 py-1.5 rounded focus:outline-none focus:border-[#c9a961] text-xs"
+                className="w-full bg-white/65 text-slate-900 border border-slate-200 pl-8.5 pr-3 py-1.5 rounded focus:outline-none focus:border-blue-300 text-xs"
               />
-              <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-[#8a8377]" />
+              <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-500" />
             </div>
 
             <div className="flex flex-wrap items-center gap-3 w-full md:w-auto md:justify-end">
               
               {/* Category Filter */}
-              <div className="flex items-center gap-1.5 bg-[#0f0e0c]/50 px-2 py-1 rounded border border-[#2a2620]">
-                <Filter className="w-3 h-3 text-[#c9a961]" />
+              <div className="flex items-center gap-1.5 bg-white/50 px-2 py-1 rounded border border-slate-200">
+                <Filter className="w-3 h-3 text-blue-700" />
                 <select 
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
@@ -410,8 +410,8 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
               </div>
 
               {/* Currency Filter */}
-              <div className="flex items-center gap-1.5 bg-[#0f0e0c]/50 px-2 py-1 rounded border border-[#2a2620]">
-                <Coins className="w-3 h-3 text-[#c9a961]" />
+              <div className="flex items-center gap-1.5 bg-white/50 px-2 py-1 rounded border border-slate-200">
+                <Coins className="w-3 h-3 text-blue-700" />
                 <select 
                   value={currencyFilter}
                   onChange={(e) => setCurrencyFilter(e.target.value)}
@@ -428,21 +428,21 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
           </div>
 
           {/* Table list */}
-          <div className="bg-[#161412] border border-[#2a2620] rounded-lg overflow-hidden">
-            <div className="bg-white/[0.02] border-b border-[#2a2620] px-4 py-3 text-xs font-mono font-bold tracking-wider text-[#a39d8e] flex justify-between items-center">
+          <div className="bg-slate-50 border border-slate-200 rounded-lg overflow-hidden">
+            <div className="bg-white/[0.02] border-b border-slate-200 px-4 py-3 text-xs font-mono font-bold tracking-wider text-slate-500 flex justify-between items-center">
               <span>Registro Cronológico de Salidas</span>
-              <span className="text-[10px] text-[#8a8377] font-semibold">{filteredPagos.length} registros</span>
+              <span className="text-[10px] text-slate-500 font-semibold">{filteredPagos.length} registros</span>
             </div>
 
             <div className="overflow-x-auto">
               {filteredPagos.length === 0 ? (
-                <div className="p-8 text-center text-xs text-[#8a8377] font-mono italic">
+                <div className="p-8 text-center text-xs text-slate-500 font-mono italic">
                   No se encontraron registros de egresos con los parámetros de búsqueda indicados.
                 </div>
               ) : (
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
-                    <tr className="bg-white/[0.01] border-b border-[#2a2620] text-[#8a8377] font-mono text-[10px]">
+                    <tr className="bg-white/[0.01] border-b border-slate-200 text-slate-500 font-mono text-[10px]">
                       <th className="p-3 pl-4">Fecha</th>
                       <th className="p-3">Detalle & Concepto</th>
                       <th className="p-3">Categoría</th>
@@ -451,16 +451,16 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
                       <th className="p-3 text-right pr-4">Acción</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#2a2620]/45">
+                  <tbody className="divide-y divide-slate-200/45">
                     {filteredPagos.map((p) => {
                       const isHighGasto = p.moneda === 'COP' ? p.monto >= 2000000 : p.monto >= 500;
                       return (
                         <tr key={p.id} className="hover:bg-white/[0.01] transition-colors">
-                          <td className="p-3 pl-4 font-mono select-all text-[#a39d8e]">
+                          <td className="p-3 pl-4 font-mono select-all text-slate-500">
                             {p.fecha}
                           </td>
                           <td className="p-3 max-w-[200px]">
-                            <span className="font-semibold text-[#e8e3d8] leading-snug inline-flex items-center gap-1.5">
+                            <span className="font-semibold text-slate-900 leading-snug inline-flex items-center gap-1.5">
                               {p.concepto}
                               {p.comprobante_url && (
                                 <a href={p.comprobante_url} target="_blank" rel="noreferrer" aria-label={`Ver comprobante de ${p.concepto}`} title={p.comprobante_nombre || 'Ver comprobante'} className="text-blue-400 hover:text-blue-300">
@@ -469,7 +469,7 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
                               )}
                             </span>
                             {p.notas && (
-                              <span className="block text-[10px] text-[#8a8377] leading-tight pt-0.5">{p.notas}</span>
+                              <span className="block text-[10px] text-slate-500 leading-tight pt-0.5">{p.notas}</span>
                             )}
                           </td>
                           <td className="p-3 font-mono">
@@ -488,18 +488,18 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
                             </span>
                           </td>
                           <td className="p-3 font-semibold font-mono">
-                            <span className={isHighGasto ? 'text-[#c97a61]' : 'text-[#a8c98a]'}>
+                            <span className={isHighGasto ? 'text-rose-600' : 'text-emerald-600'}>
                               {p.moneda === 'USD' ? formatUsd(p.monto) : formatCop(p.monto)}
                             </span>
                           </td>
-                          <td className="p-3 font-mono text-[11px] text-[#a39d8e]">
+                          <td className="p-3 font-mono text-[11px] text-slate-500">
                             {p.metodo_pago}
                           </td>
                           <td className="p-3 text-right pr-4">
                             <button
                               type="button"
                               onClick={() => handleEditPago(p)}
-                              className="text-[#8a8377] hover:text-[#c9a961] p-1.5 transition rounded hover:bg-[#c9a961]/5 inline-flex cursor-pointer"
+                              className="text-slate-500 hover:text-blue-700 p-1.5 transition rounded hover:bg-blue-600/5 inline-flex cursor-pointer"
                               title="Editar este pago de egreso"
                             >
                               <Edit2 className="w-4 h-4" />
@@ -507,7 +507,7 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
                             <button 
                               type="button"
                               onClick={() => handleDeletePago(p.id)}
-                              className="text-[#8a8377] hover:text-[#c97a61] p-1.5 transition rounded hover:bg-[#c97a61]/5 inline-flex cursor-pointer"
+                              className="text-slate-500 hover:text-rose-600 p-1.5 transition rounded hover:bg-rose-600/5 inline-flex cursor-pointer"
                               title="Eliminar este pago de egreso"
                             >
                               <Trash2 className="w-4 h-4" />

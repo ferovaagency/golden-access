@@ -30,32 +30,32 @@ export default function EquilibrioGlobal({ metrics, formatCop }: EquilibrioGloba
 
       {/* Header */}
       <div className="border-b border-[#2a2620] pb-5">
-        <h2 className="text-xl font-display font-medium text-[#c9a961]">Estudio del Punto de Equilibrio Global</h2>
+        <h2 className="text-xl font-display font-medium text-blue-500">Estudio del Punto de Equilibrio Global</h2>
         <p className="text-xs text-[#a39d8e] font-mono mt-1">¿Cuánto necesita vender Ferova S.A.S para operar de forma segura?</p>
       </div>
 
       {/* 4 Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 
-        <div className="bg-[#161412] border border-[#2a2620] p-5 rounded-lg border-l-3 border-l-[#c97a61]">
+        <div className="bg-[#161412] border border-[#2a2620] p-5 rounded-lg border-l-3 border-l-rose-500">
           <span className="text-[10px] font-mono tracking-wider text-[#8a8377] uppercase block">Gastos Estructurales</span>
           <div className="text-xl font-display font-semibold text-[#e8e3d8] mt-2">{formatCop(gastosFijosTotales)}</div>
           <span className="text-[10px] text-[#8a8377] font-mono block mt-1">Gastos operativos + Salario Mafe</span>
         </div>
 
-        <div className="bg-[#161412] border border-[#2a2620] p-5 rounded-lg border-l-3 border-l-[#c9a961]">
+        <div className="bg-[#161412] border border-[#2a2620] p-5 rounded-lg border-l-3 border-l-blue-500">
           <span className="text-[10px] font-mono tracking-wider text-[#8a8377] uppercase block">Margen Contribución Prom.</span>
-          <div className="text-xl font-display font-semibold text-[#c9a961] mt-2">{(margenContribucion * 100).toFixed(1)}%</div>
+          <div className="text-xl font-display font-semibold text-blue-500 mt-2">{(margenContribucion * 100).toFixed(1)}%</div>
           <span className="text-[10px] text-[#8a8377] font-mono block mt-1">Ingresos promedio menos variables</span>
         </div>
 
-        <div className="bg-[#161412] border border-[#2a2620] p-5 rounded-lg border-l-3 border-l-[#c9a961]">
-          <span className="text-[10px] font-mono tracking-wider text-[#c9a961] uppercase block font-semibold">Punto de Equilibrio</span>
-          <div className="text-xl font-display font-bold text-[#c9a961] mt-2">{formatCop(puntoEquilibrioVentas)}</div>
+        <div className="bg-[#161412] border border-[#2a2620] p-5 rounded-lg border-l-3 border-l-blue-500">
+          <span className="text-[10px] font-mono tracking-wider text-blue-500 uppercase block font-semibold">Punto de Equilibrio</span>
+          <div className="text-xl font-display font-bold text-blue-500 mt-2">{formatCop(puntoEquilibrioVentas)}</div>
           <span className="text-[10px] text-[#8a8377] font-mono block mt-1">Ventas netas mínimas requeridas</span>
         </div>
 
-        <div className={`border p-5 rounded-lg border-l-3 ${haSuperadoBreakeven ? 'border-l-[#a8c98a] bg-[#141812] border-[#2a2620]' : 'border-l-[#c97a61] bg-[#181312] border-[#2a2620]'}`}>
+        <div className={`border p-5 rounded-lg border-l-3 ${haSuperadoBreakeven ? 'border-l-emerald-500 bg-[#141812] border-[#2a2620]' : 'border-l-rose-500 bg-[#181312] border-[#2a2620]'}`}>
           <span className="text-[10px] font-mono tracking-wider text-[#8a8377] uppercase block">Diagnóstico Financiero</span>
           <div className="text-xl font-display font-bold mt-2" style={{ color: haSuperadoBreakeven ? 'var(--success)' : 'var(--danger)' }}>
             {haSuperadoBreakeven ? 'ZONA GANANCIA' : 'ZONA DÉFICIT'}
@@ -72,7 +72,7 @@ export default function EquilibrioGlobal({ metrics, formatCop }: EquilibrioGloba
       {/* Visual meter bar vs point of equilibrium */}
       <div className="bg-[#161412] border border-[#2a2620] p-6 rounded-lg space-y-4">
         <h4 className="text-xs font-mono tracking-[0.2em] text-[#a39d8e] uppercase flex items-center gap-1.5">
-          <Scale className="w-4 h-4 text-[#c9a961]" /> Estado de Cumplimiento de Operaciones
+          <Scale className="w-4 h-4 text-blue-500" /> Estado de Cumplimiento de Operaciones
         </h4>
         
         <div className="space-y-2">
@@ -101,8 +101,8 @@ export default function EquilibrioGlobal({ metrics, formatCop }: EquilibrioGloba
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
         <div className="bg-[#13110f] border border-[#2a2620] p-6 rounded-lg space-y-3">
-          <h4 className="text-xs font-mono text-[#c9a961] uppercase tracking-wider flex items-center gap-1">
-            <Sparkles className="w-4 h-4 text-[#c9a961]" /> ¿Por Qué es Importante este Punto?
+          <h4 className="text-xs font-mono text-blue-500 uppercase tracking-wider flex items-center gap-1">
+            <Sparkles className="w-4 h-4 text-blue-500" /> ¿Por Qué es Importante este Punto?
           </h4>
           <p className="text-xs text-[#a39d8e] leading-relaxed">
             Como empresaria digital uniplersonal de <strong>Ferova Agency</strong>, no toda la facturación es ganancia pura.
@@ -113,8 +113,8 @@ export default function EquilibrioGlobal({ metrics, formatCop }: EquilibrioGloba
         </div>
 
         <div className="bg-[#13110f] border border-[#2a2620] p-6 rounded-lg space-y-3">
-          <h4 className="text-xs font-mono text-[#c97a61] uppercase tracking-wider flex items-center gap-1">
-            <Shield className="w-4 h-4 text-[#c97a61]" /> Planes de Contingencia Estricta
+          <h4 className="text-xs font-mono text-rose-500 uppercase tracking-wider flex items-center gap-1">
+            <Shield className="w-4 h-4 text-rose-500" /> Planes de Contingencia Estricta
           </h4>
           <p className="text-xs text-[#a39d8e] leading-relaxed">
             Si notas que tus ventas están recurrentemente por debajo de la meta de equilibrio del mes, evalúa:

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Sparkles, Wand2, Loader2, Check, Clock, Zap, Battery, BatteryLow, Trash2, ChevronLeft, ChevronRight, Sunrise, AlertTriangle, Lightbulb, TrendingUp, Info, Lock, Edit2, X, CalendarDays, Columns3, List, SlidersHorizontal } from 'lucide-react';
 import { usePlanner } from '../hooks/usePlanner';
-import { plannerService, type PlannerBlock, type PlannerCategory, type PlannerEnergy, type PlannerTask } from '../lib/plannerService';
+import { plannerService, type PlannerBlock, type PlannerCategory, type PlannerDraft, type PlannerEnergy, type PlannerTask } from '../lib/plannerService';
 import { DayClientProgress } from './planner/DayClientProgress';
 import { AiDisclosure } from './AiDisclosure';
 
@@ -67,6 +67,10 @@ export default function SmartPlanner() {
   const [taskRepeatUntil, setTaskRepeatUntil] = useState('');
   const [taskSyncGoogle, setTaskSyncGoogle] = useState(false);
   const [taskSaveNotice, setTaskSaveNotice] = useState<string | null>(null);
+  // Captura natural en dos pasos: primero se interpreta (sin escribir nada) y
+  // la persona confirma o corrige cliente, fecha y duración; después se crea.
+  const [drafts, setDrafts] = useState<PlannerDraft[] | null>(null);
+  const [completionNotice, setCompletionNotice] = useState<string | null>(null);
 
   useEffect(() => { localStorage.setItem('ferova.planner.view', plannerView); }, [plannerView]);
   useEffect(() => { localStorage.setItem('ferova.planner.compact', compactCalendar ? '1' : '0'); }, [compactCalendar]);
@@ -74,8 +78,37 @@ export default function SmartPlanner() {
   const submitDump = async () => {
     const text = dump.trim();
     if (!text) return;
+    const detected = await p.previewCapture(text);
+    if (detected.length) setDrafts(detected);
+  };
+
+  const patchDraft = (index: number, patch: Partial<PlannerDraft>) => {
+    setDrafts((prev) => prev?.map((draft, i) => (i === index ? { ...draft, ...patch } : draft)) ?? prev);
+  };
+
+  const confirmDrafts = async () => {
+    if (!drafts?.length) return;
+    await p.commitCapture(drafts);
+    setDrafts(null);
     setDump('');
-    await p.classify(text);
+  };
+
+  /** Cierra la tarea y deja visible el estimado vs. real y el registro de Horas. */
+  const handleComplete = async (id: string) => {
+    const result = await p.completeTask(id);
+    if (!result) return;
+    const parts: string[] = [];
+    if (result.estimatedMinutes != null) parts.push(`estimado ${result.estimatedMinutes} min`);
+    if (result.actualMinutes != null) parts.push(`real ${result.actualMinutes} min`);
+    if (result.hourLogged) {
+      parts.push(result.missingService
+        ? `registrado en Horas (${result.hourDate}) sin servicio: asignalo en Horas`
+        : `registrado en Horas (${result.hourDate})`);
+    } else if (result.actualMinutes != null) {
+      parts.push('sin cliente asociado: no se registró en Horas');
+    }
+    setCompletionNotice(parts.length ? `Tarea completada · ${parts.join(' · ')}` : 'Tarea completada.');
+    window.setTimeout(() => setCompletionNotice(null), 9000);
   };
 
   const createProtectedBlock = async (event: React.FormEvent) => {
@@ -212,7 +245,7 @@ export default function SmartPlanner() {
 
       {plannerView === 'day' && <DayClientProgress tasks={p.tasks} clients={p.clients} date={p.date} />}
 
-      {plannerView === 'day' && <DayAgendaSummary blocks={p.blocks} tasks={p.tasks} clients={p.clients} timeZone={p.timeZone} onComplete={p.completeTask} />}
+      {plannerView === 'day' && <DayAgendaSummary blocks={p.blocks} tasks={p.tasks} clients={p.clients} timeZone={p.timeZone} onComplete={handleComplete} />}
 
       {/* Briefing */}
       <section className="rounded-2xl border border-[var(--line)] bg-gradient-to-br from-blue-50/60 to-white p-5">
@@ -263,17 +296,88 @@ export default function SmartPlanner() {
           className="mt-3 block w-full resize-none rounded-xl border border-[var(--line)] bg-slate-50 px-3 py-3 text-sm outline-none focus:border-blue-300 focus:bg-white min-h-28"
         />
         <div className="mt-3 flex items-center justify-between gap-3">
-          <span className="text-[11px] text-slate-400">⌘/Ctrl + Enter para clasificar</span>
+          <span className="text-[11px] text-slate-400">⌘/Ctrl + Enter para interpretar</span>
           <button
             onClick={submitDump}
             disabled={!dump.trim() || p.busy === 'classify'}
             className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {p.busy === 'classify' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-            Clasificar tareas
+            Interpretar
           </button>
         </div>
+
+        {/* Confirmación previa: nada se guarda hasta que la persona acepta. */}
+        {drafts && drafts.length > 0 && (
+          <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50/60 p-3">
+            <p className="text-[11px] font-semibold text-blue-900">Revisá lo detectado antes de crear las tareas ({drafts.length})</p>
+            <ul className="mt-2 space-y-2">
+              {drafts.map((draft, index) => (
+                <li key={`${draft.line}-${index}`} className="rounded-lg border border-blue-100 bg-white p-2.5">
+                  <input
+                    value={draft.title}
+                    onChange={(event) => patchDraft(index, { title: event.target.value })}
+                    aria-label="Título de la tarea"
+                    className="block w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-blue-400"
+                  />
+                  <div className="mt-2 flex flex-wrap items-end gap-2">
+                    <label className="text-[10px] font-medium text-slate-500">Cliente
+                      <select
+                        value={draft.client_ref || ''}
+                        onChange={(event) => patchDraft(index, { client_ref: event.target.value || null })}
+                        className="mt-0.5 block rounded-md border border-slate-200 bg-white px-2 py-1 text-xs outline-none focus:border-blue-400"
+                      >
+                        <option value="">Sin cliente</option>
+                        {p.clients.map((client) => <option key={client.id} value={client.id}>{client.nombre}</option>)}
+                      </select>
+                    </label>
+                    <label className="text-[10px] font-medium text-slate-500">Fecha
+                      <input
+                        type="date"
+                        value={draft.scheduled_for?.slice(0, 10) || ''}
+                        onChange={(event) => patchDraft(index, { scheduled_for: event.target.value || null })}
+                        className="mt-0.5 block rounded-md border border-slate-200 bg-white px-2 py-1 text-xs outline-none focus:border-blue-400"
+                      />
+                    </label>
+                    <label className="text-[10px] font-medium text-slate-500">Duración (min)
+                      <input
+                        type="number"
+                        min={5}
+                        max={600}
+                        value={draft.detected_duration_min}
+                        onChange={(event) => patchDraft(index, { detected_duration_min: Number(event.target.value) })}
+                        className="mt-0.5 block w-24 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs outline-none focus:border-blue-400"
+                      />
+                    </label>
+                    <button
+                      onClick={() => setDrafts((prev) => (prev?.filter((_, i) => i !== index) ?? null))}
+                      className="ml-auto rounded-md px-2 py-1 text-[11px] font-medium text-slate-500 hover:bg-slate-100 hover:text-red-600"
+                    >
+                      Descartar
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-3 flex items-center justify-end gap-2">
+              <button onClick={() => setDrafts(null)} className="rounded-lg px-3 py-2 text-xs font-medium text-slate-600 hover:bg-white">Cancelar</button>
+              <button
+                onClick={confirmDrafts}
+                disabled={p.busy === 'classify'}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-blue-700 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
+              >
+                {p.busy === 'classify' && <Loader2 className="h-3.5 w-3.5 animate-spin" />} Confirmar y crear
+              </button>
+            </div>
+          </div>
+        )}
       </section>
+
+      {completionNotice && (
+        <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800">
+          {completionNotice}
+        </div>
+      )}
 
       {/* Timeline of blocks */}
       {plannerView === 'day' && <section>
@@ -306,7 +410,7 @@ export default function SmartPlanner() {
           </div>
         ) : (
           <ul className="space-y-2">
-            {p.blocks.map((b) => <BlockRow key={b.id} block={b} tasks={p.tasks} clients={p.clients} timeZone={p.timeZone} onComplete={p.completeTask} />)}
+            {p.blocks.map((b) => <BlockRow key={b.id} block={b} tasks={p.tasks} clients={p.clients} timeZone={p.timeZone} onComplete={handleComplete} />)}
           </ul>
         )}
       </section>}
@@ -344,7 +448,7 @@ export default function SmartPlanner() {
           <p className="text-xs text-slate-400 italic">Bandeja vacía.</p>
         ) : (
           <ul className="space-y-1.5">
-            {openTasks.map((t) => <TaskRow key={t.id} task={t} clientName={p.clients.find((client) => client.id === t.client_ref)?.nombre} isProtected={p.blocks.some((block) => block.task_ids?.includes(t.id) && block.protected)} onEdit={openTaskEditor} onStart={p.startTask} onComplete={p.completeTask} onPostpone={async (id) => { await p.postponeTask(id); setTaskSaveNotice('Tarea reprogramada para mañana.'); setTimeout(() => setTaskSaveNotice(null), 2500); }} onDelete={p.deleteTask} />)}
+            {openTasks.map((t) => <TaskRow key={t.id} task={t} clientName={p.clients.find((client) => client.id === t.client_ref)?.nombre} isProtected={p.blocks.some((block) => block.task_ids?.includes(t.id) && block.protected)} onEdit={openTaskEditor} onStart={p.startTask} onComplete={handleComplete} onPostpone={async (id) => { await p.postponeTask(id); setTaskSaveNotice('Tarea reprogramada para mañana.'); setTimeout(() => setTaskSaveNotice(null), 2500); }} onDelete={p.deleteTask} />)}
           </ul>
         )}
       </section>
@@ -487,6 +591,33 @@ function BlockRow({ block, tasks, clients, timeZone, onComplete }: { block: Plan
   );
 }
 
+/**
+ * Cronómetro real de la tarea en curso. Antes sólo se mostraba la hora de
+ * inicio, así que el tiempo transcurrido había que calcularlo mentalmente.
+ */
+function LiveTimer({ startedAt, estimatedMinutes }: { startedAt: string; estimatedMinutes: number }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const elapsedSeconds = Math.max(0, Math.floor((now - new Date(startedAt).getTime()) / 1000));
+  const hh = Math.floor(elapsedSeconds / 3600);
+  const mm = Math.floor((elapsedSeconds % 3600) / 60);
+  const ss = elapsedSeconds % 60;
+  const overrun = elapsedSeconds / 60 > estimatedMinutes;
+  return (
+    <span
+      title={`Estimado ${estimatedMinutes} min`}
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold tabular-nums ${overrun ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'}`}
+    >
+      <Clock className="h-3 w-3" aria-hidden />
+      {hh > 0 ? `${hh}:` : ''}{String(mm).padStart(2, '0')}:{String(ss).padStart(2, '0')}
+      <span className="font-sans font-normal opacity-70">/ est. {estimatedMinutes}m</span>
+    </span>
+  );
+}
+
 function TaskRow({ task, clientName, isProtected, onEdit, onStart, onComplete, onPostpone, onDelete }: { task: PlannerTask; clientName?: string; isProtected: boolean; onEdit: (task: PlannerTask) => void; onStart: (id: string) => void; onComplete: (id: string) => void; onPostpone: (id: string) => void | Promise<void>; onDelete: (id: string) => void }) {
   const EIcon = energyIcon[task.energy_required];
   return (
@@ -499,7 +630,9 @@ function TaskRow({ task, clientName, isProtected, onEdit, onStart, onComplete, o
       <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] ${categoryMeta[task.category].tone}`}>{categoryMeta[task.category].label}</span>
       <span className="inline-flex items-center gap-1 text-[10px] text-slate-500"><EIcon className="h-3 w-3" aria-hidden /> {task.energy_required}</span>
       <span className="text-sm text-slate-800 flex-1 min-w-[8rem] truncate">{task.title}</span>
-      {task.status === 'in_progress' ? <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">En curso desde {new Date(task.started_at || '').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span> : <button onClick={() => onStart(task.id)} className="rounded-lg border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-700 hover:bg-blue-100">Iniciar</button>}
+      {task.status === 'in_progress' && task.started_at
+        ? <LiveTimer startedAt={task.started_at} estimatedMinutes={task.estimated_minutes} />
+        : <button onClick={() => onStart(task.id)} className="rounded-lg border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-700 hover:bg-blue-100">Iniciar</button>}
       {clientName && <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${clientTone(task.client_ref)}`}>● {clientName}</span>}
       <span className="text-[10px] text-slate-400 inline-flex items-center gap-1"><Clock className="h-3 w-3" aria-hidden /> {task.estimated_minutes}m</span>
       {isProtected && <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] text-amber-700"><Lock className="h-3 w-3" aria-hidden /> Protegido</span>}

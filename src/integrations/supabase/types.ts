@@ -1374,7 +1374,7 @@ export type Database = {
           fecha: string
           horas: number
           id: string
-          servicio_id: string
+          servicio_id: string | null
           user_id: string
         }
         Insert: {
@@ -1383,7 +1383,7 @@ export type Database = {
           fecha: string
           horas?: number
           id: string
-          servicio_id: string
+          servicio_id?: string | null
           user_id: string
         }
         Update: {
@@ -1392,7 +1392,7 @@ export type Database = {
           fecha?: string
           horas?: number
           id?: string
-          servicio_id?: string
+          servicio_id?: string | null
           user_id?: string
         }
         Relationships: []

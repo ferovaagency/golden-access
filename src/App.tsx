@@ -183,7 +183,12 @@ function AppInner() {
   // Si el cliente no tiene el módulo Financiero (plan solo "CRM y Ventas"),
   // ninguna de estas pestañas existe para él -- redirige a su módulo real.
   // Cubre tanto el tab inicial por defecto como un cambio de plan en caliente.
-  const FINANCIERO_TAB_IDS = ['dashboard', 'ventas', 'pagosEgresos', 'gastos', 'equilibrioGlobal', 'equilibrioServicio', 'iva', 'alertas', 'ajustes', 'proyectos', 'horas', 'clientes', 'servicios'];
+  const FINANCIERO_TAB_IDS = ['dashboard', 'ventas', 'pagosEgresos', 'gastos', 'equilibrioGlobal', 'equilibrioServicio', 'iva', 'alertas', 'ajustes', 'proyectos', 'horas', 'clientes', 'servicios', 'kpisOperativos', 'seguimiento'];
+  // Alias compatible: enlaces y estados guardados con el id antiguo
+  // "seguimiento" ahora abren los KPIs operativos dentro de Finanzas.
+  useEffect(() => {
+    if (activeTab === 'seguimiento') setActiveTab('kpisOperativos');
+  }, [activeTab]);
   useEffect(() => {
     if (!appData) return;
     if (!modules.financiero && FINANCIERO_TAB_IDS.includes(activeTab)) {
@@ -502,8 +507,7 @@ function AppInner() {
       { id: 'servicios', label: 'Servicios', hint: 'Catálogo y costos' },
       { id: 'horas', label: 'Horas', hint: 'Capacidad y rentabilidad' },
       ...(modules.core_projects ? [
-        { id: 'proyectos', label: 'Proyectos', hint: 'Objetivos, hitos y KPIs' },
-        { id: 'seguimiento', label: 'Seguimiento', hint: 'Diario, semanal y mensual' },
+        { id: 'proyectos', label: 'Proyectos', hint: 'Plan y seguimiento por cliente' },
       ] : []),
       ...(modules.planner ? [{ id: 'planner', label: 'Planner', hint: 'Prioridades, agenda y bloques' }] : []),
     ] : [] },
@@ -518,6 +522,9 @@ function AppInner() {
       { id: 'equilibrioServicio', label: 'Por servicio', hint: 'Margen unitario', group: 'Finanzas' as const },
       { id: 'iva', label: 'IVA', hint: 'Control tributario', group: 'Finanzas' as const },
       { id: 'alertas', label: 'Alertas', hint: 'Riesgos y topes', group: 'Finanzas' as const },
+      // Los KPIs operativos son globales del negocio (no por cliente): viven en
+      // Finanzas. La pestaña histórica "seguimiento" redirige acá.
+      { id: 'kpisOperativos', label: 'KPIs operativos', hint: 'Diario, semanal y mensual', group: 'Finanzas' as const },
       ] : []),
     ] },
     { id: 'sales', label: 'Ventas', icon: Grid2X2, items: [
@@ -569,14 +576,14 @@ function AppInner() {
                 type="number"
                 value={headerTrm}
                 onChange={(e) => setHeaderTrm(e.target.value)}
-                className="w-16 bg-slate-50 text-slate-900 border border-slate-200 p-0.5 px-1 rounded text-xs font-mono focus:outline-none focus:border-[#c9a961]"
+                className="w-16 bg-slate-50 text-slate-900 border border-slate-200 p-0.5 px-1 rounded text-xs font-mono focus:outline-none focus:border-blue-500"
                 autoFocus
               />
               <button type="submit" className="text-emerald-600 hover:text-emerald-700 font-bold px-1 cursor-pointer" title="Guardar TRM">✓</button>
               <button
                 type="button"
                 onClick={() => { setHeaderTrm(String(appData.config.trm)); setIsEditingTrm(false); }}
-                className="text-[#c97a61] hover:text-[#c97a61]/80 font-bold px-1 cursor-pointer"
+                className="text-rose-500 hover:text-rose-500/80 font-bold px-1 cursor-pointer"
                 title="Cancelar"
               >
                 ✕
@@ -605,7 +612,7 @@ function AppInner() {
           href={lastSheetBackupLink}
           target="_blank"
           rel="noreferrer"
-          className="bg-slate-100 hover:bg-[#23201c] transition px-3 py-1.5 rounded border border-slate-200 text-xs font-mono text-slate-500 flex items-center gap-2"
+          className="bg-slate-100 hover:bg-slate-200 transition px-3 py-1.5 rounded border border-slate-200 text-xs font-mono text-slate-500 flex items-center gap-2"
         >
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <Database className="w-3.5 h-3.5 text-emerald-500" />
@@ -630,9 +637,9 @@ function AppInner() {
         {metrics && (
           <div className="hidden items-center gap-4 text-[10px] font-mono tracking-wider text-slate-500 lg:flex">
             <div><span>FACTURACIÓN:</span> <strong className="text-slate-900">{formatCop(metrics.totalVentas)}</strong></div>
-            <div className="w-px h-3 bg-[#2a2620]" />
+            <div className="w-px h-3 bg-slate-200" />
             <div><span>NÓMINA RETIROS:</span> <strong className="text-slate-900">{formatCop(metrics.salarioPropuesto)}</strong></div>
-            <div className="w-px h-3 bg-[#2a2620]" />
+            <div className="w-px h-3 bg-slate-200" />
             <div>
               <span>NETO DISPONIBLE:</span>{' '}
               <strong style={{ color: metrics.utilidadNeta >= 0 ? '#a8c98a' : '#c97a61' }}>{formatCop(metrics.utilidadNeta)}</strong>
@@ -720,7 +727,7 @@ function AppInner() {
                 onSaveClientes={handleSaveClientes}
               />
             )}
-            {activeTab === 'seguimiento' && user && (
+            {(activeTab === 'kpisOperativos' || activeTab === 'seguimiento') && user && (
               <OperatingKpiDashboard userId={user.id} data={appData} formatCop={formatCop} />
             )}
             {activeTab === 'pagosEgresos' && (
@@ -805,10 +812,10 @@ function AppInner() {
   }
 
   return (
-    <div className="ferova-light-theme min-h-screen bg-[#f7f8fb] flex flex-col text-[#1f2937] font-sans">
+    <div className="ferova-light-theme min-h-screen bg-slate-50 flex flex-col text-slate-800 font-sans">
 
       {/* 1. Header component */}
-      <header className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-[#dbe4ee] relative z-20">
+      <header className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-slate-200 relative z-20">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
 
           <div className="flex min-w-0 items-center gap-3">
@@ -842,7 +849,7 @@ function AppInner() {
 
               <button
                 onClick={handleSignOut}
-                className="bg-slate-50/60 p-1.5 rounded border border-slate-200 text-slate-400 hover:text-[#c97a61] cursor-pointer transition ml-1"
+                className="bg-slate-50/60 p-1.5 rounded border border-slate-200 text-slate-400 hover:text-rose-500 cursor-pointer transition ml-1"
                 title="Cerrar sesion Workspace"
               >
                 <LogOut className="w-3.5 h-3.5" />
