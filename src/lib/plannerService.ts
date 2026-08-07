@@ -47,6 +47,8 @@ export interface PlannerTask {
   dependency_task_ids: string[];
   estimated_minutes: number;
   actual_minutes: number | null;
+  started_at: string | null;
+  service_ref: string | null;
   deadline: string | null;
   scheduled_for: string | null;
   status: PlannerTaskStatus;
@@ -62,6 +64,7 @@ export interface PlannerTask {
 }
 
 export interface PlannerClient { id: string; nombre: string; }
+export interface PlannerServiceOption { id: string; nombre: string; }
 
 export interface PlannerBlock {
   id: string;
@@ -123,6 +126,7 @@ export interface UpdatePlannerTaskInput {
   execution_ease: number;
   dependency_task_ids: string[];
   client_ref: string | null;
+  service_ref?: string | null;
   deadline: string | null;
   estimated_minutes: number;
   actual_minutes: number | null;
@@ -255,11 +259,37 @@ export const plannerService = {
     await anyDb().from('planner_insights').update({ dismissed: true }).eq('id', id);
   },
   async completeTask(id: string, actualMinutes?: number) {
+    const { data: task, error: readError } = await anyDb().from('planner_tasks').select('*').eq('id', id).single();
+    if (readError) throw readError;
+    const elapsedMinutes = task?.started_at
+      ? Math.max(1, Math.round((Date.now() - new Date(task.started_at).getTime()) / 60_000))
+      : null;
+    const finalMinutes = actualMinutes ?? elapsedMinutes ?? task?.actual_minutes ?? null;
     const { error: taskError } = await anyDb()
       .from('planner_tasks')
-      .update({ status: 'done', completed_at: new Date().toISOString(), actual_minutes: actualMinutes ?? null })
+      .update({ status: 'done', completed_at: new Date().toISOString(), actual_minutes: finalMinutes })
       .eq('id', id);
     if (taskError) throw taskError;
+
+    // Un cronómetro sólo registra una hora cobrable cuando la tarea quedó
+    // explícitamente asociada a cliente y servicio. El upsert hace el cierre
+    // idempotente: completar dos veces jamás duplica el registro.
+    if (finalMinutes && task?.client_ref && task?.service_ref) {
+      const today = new Date().toISOString().slice(0, 10);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { error: hourError } = await anyDb().from('finance_horas').upsert({
+          id: `planner_${id}`,
+          user_id: user.id,
+          fecha: today,
+          cliente_id: task.client_ref,
+          servicio_id: task.service_ref,
+          horas: finalMinutes / 60,
+          descripcion: `Planner: ${task.title}`,
+        }, { onConflict: 'user_id,id' });
+        if (hourError) log.error(hourError);
+      }
+    }
 
     // A task can remain referenced by an already-created agenda block. Without
     // removing that reference, the check marks it done in the database but it
@@ -285,6 +315,15 @@ export const plannerService = {
     const { data, error } = await anyDb().from('finance_clientes').select('id, nombre').order('nombre');
     if (error) { log.error(error); return []; }
     return data || [];
+  },
+  async listServices(): Promise<PlannerServiceOption[]> {
+    const { data, error } = await anyDb().from('finance_servicios').select('id, nombre').order('nombre');
+    if (error) { log.error(error); return []; }
+    return data || [];
+  },
+  async startTask(id: string) {
+    const { error } = await anyDb().from('planner_tasks').update({ status: 'in_progress', started_at: new Date().toISOString() }).eq('id', id);
+    if (error) throw error;
   },
   async updateTask(id: string, input: UpdatePlannerTaskInput): Promise<{ synced: boolean; message: string }> {
     const { data, error } = await supabase.functions.invoke('planner-save-task', { body: { id, ...input } });

@@ -61,6 +61,7 @@ export default function SmartPlanner() {
   const [taskDependencies, setTaskDependencies] = useState<string[]>([]);
   const [taskCategory, setTaskCategory] = useState<PlannerCategory>('admin');
   const [taskClientId, setTaskClientId] = useState('');
+  const [taskServiceId, setTaskServiceId] = useState('');
   const [taskRepeatDays, setTaskRepeatDays] = useState<number[]>([]);
   const [taskRepeatUntil, setTaskRepeatUntil] = useState('');
   const [taskSyncGoogle, setTaskSyncGoogle] = useState(false);
@@ -108,6 +109,7 @@ export default function SmartPlanner() {
     setTaskDependencies(task.dependency_task_ids || []);
     setTaskCategory(task.category);
     setTaskClientId(task.client_ref || '');
+    setTaskServiceId(task.service_ref || '');
     setTaskRepeatDays(task.recurrence_days || []);
     setTaskRepeatUntil(task.recurrence_until || '');
     setTaskSyncGoogle(task.sync_to_google_calendar || false);
@@ -130,6 +132,7 @@ export default function SmartPlanner() {
       execution_ease: taskExecutionEase,
       dependency_task_ids: taskDependencies,
       client_ref: taskClientId || null,
+      service_ref: taskServiceId || null,
       deadline: taskDeadline || null,
       estimated_minutes: taskEstimatedMinutes,
       actual_minutes: taskActualMinutes === '' ? null : Number(taskActualMinutes),
@@ -325,6 +328,7 @@ export default function SmartPlanner() {
               <label className="sm:col-span-2 text-xs text-slate-600">Depende de (solo se agenda al completar estas tareas)<select multiple value={taskDependencies} onChange={(event) => setTaskDependencies(Array.from(event.target.selectedOptions, (option) => option.value))} className="mt-1 block min-h-20 w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm">{openTasks.filter((task) => task.id !== editingTask.id).map((task) => <option key={task.id} value={task.id}>{task.title}</option>)}</select><span className="mt-1 block text-[10px] text-slate-400">Usa Ctrl/Cmd para seleccionar varias.</span></label>
               <label className="text-xs text-slate-600">Categoría<select value={taskCategory} onChange={(event) => setTaskCategory(event.target.value as PlannerCategory)} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm">{Object.entries(categoryMeta).map(([value, meta]) => <option key={value} value={value}>{meta.label}</option>)}</select></label>
               <label className="text-xs text-slate-600">Cliente<select value={taskClientId} onChange={(event) => setTaskClientId(event.target.value)} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm"><option value="">Sin cliente</option>{p.clients.map((client) => <option key={client.id} value={client.id}>{client.nombre}</option>)}</select></label>
+              <label className="text-xs text-slate-600">Servicio para horas<select value={taskServiceId} onChange={(event) => setTaskServiceId(event.target.value)} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm"><option value="">No registrar al terminar</option>{p.services.map((service) => <option key={service.id} value={service.id}>{service.nombre}</option>)}</select><span className="mt-1 block text-[10px] text-slate-400">Con cliente y servicio, el cronómetro crea la hora automáticamente al completar.</span></label>
               <label className="text-xs text-slate-600">Duración estimada (min)<input type="number" min="5" step="5" value={taskEstimatedMinutes} onChange={(event) => setTaskEstimatedMinutes(Number(event.target.value))} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" /></label>
               <label className="text-xs text-slate-600">Tiempo dedicado (min)<input type="number" min="0" step="5" value={taskActualMinutes} onChange={(event) => setTaskActualMinutes(event.target.value === '' ? '' : Number(event.target.value))} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" /></label>
               <label className="flex items-end gap-2 pb-2 text-xs text-slate-700"><input type="checkbox" checked={taskProtected} disabled={!taskTime} onChange={(event) => setTaskProtected(event.target.checked)} className="h-4 w-4 rounded border-blue-300 text-blue-600" /><span>Bloque protegido</span></label>
@@ -337,7 +341,7 @@ export default function SmartPlanner() {
           <p className="text-xs text-slate-400 italic">Bandeja vacía.</p>
         ) : (
           <ul className="space-y-1.5">
-            {openTasks.map((t) => <TaskRow key={t.id} task={t} clientName={p.clients.find((client) => client.id === t.client_ref)?.nombre} isProtected={p.blocks.some((block) => block.task_ids?.includes(t.id) && block.protected)} onEdit={openTaskEditor} onComplete={p.completeTask} onPostpone={async (id) => { await p.postponeTask(id); setTaskSaveNotice('Tarea reprogramada para mañana.'); setTimeout(() => setTaskSaveNotice(null), 2500); }} onDelete={p.deleteTask} />)}
+            {openTasks.map((t) => <TaskRow key={t.id} task={t} clientName={p.clients.find((client) => client.id === t.client_ref)?.nombre} isProtected={p.blocks.some((block) => block.task_ids?.includes(t.id) && block.protected)} onEdit={openTaskEditor} onStart={p.startTask} onComplete={p.completeTask} onPostpone={async (id) => { await p.postponeTask(id); setTaskSaveNotice('Tarea reprogramada para mañana.'); setTimeout(() => setTaskSaveNotice(null), 2500); }} onDelete={p.deleteTask} />)}
           </ul>
         )}
       </section>
@@ -480,7 +484,7 @@ function BlockRow({ block, tasks, clients, timeZone, onComplete }: { block: Plan
   );
 }
 
-function TaskRow({ task, clientName, isProtected, onEdit, onComplete, onPostpone, onDelete }: { task: PlannerTask; clientName?: string; isProtected: boolean; onEdit: (task: PlannerTask) => void; onComplete: (id: string) => void; onPostpone: (id: string) => void | Promise<void>; onDelete: (id: string) => void }) {
+function TaskRow({ task, clientName, isProtected, onEdit, onStart, onComplete, onPostpone, onDelete }: { task: PlannerTask; clientName?: string; isProtected: boolean; onEdit: (task: PlannerTask) => void; onStart: (id: string) => void; onComplete: (id: string) => void; onPostpone: (id: string) => void | Promise<void>; onDelete: (id: string) => void }) {
   const EIcon = energyIcon[task.energy_required];
   return (
     <li className="group flex flex-wrap items-center gap-2 rounded-xl border border-[var(--line)] bg-white px-3 py-2">
@@ -492,6 +496,7 @@ function TaskRow({ task, clientName, isProtected, onEdit, onComplete, onPostpone
       <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] ${categoryMeta[task.category].tone}`}>{categoryMeta[task.category].label}</span>
       <span className="inline-flex items-center gap-1 text-[10px] text-slate-500"><EIcon className="h-3 w-3" aria-hidden /> {task.energy_required}</span>
       <span className="text-sm text-slate-800 flex-1 min-w-[8rem] truncate">{task.title}</span>
+      {task.status === 'in_progress' ? <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">En curso desde {new Date(task.started_at || '').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span> : <button onClick={() => onStart(task.id)} className="rounded-lg border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-700 hover:bg-blue-100">Iniciar</button>}
       {clientName && <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${clientTone(task.client_ref)}`}>● {clientName}</span>}
       <span className="text-[10px] text-slate-400 inline-flex items-center gap-1"><Clock className="h-3 w-3" aria-hidden /> {task.estimated_minutes}m</span>
       {isProtected && <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] text-amber-700"><Lock className="h-3 w-3" aria-hidden /> Protegido</span>}

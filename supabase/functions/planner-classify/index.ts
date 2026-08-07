@@ -161,6 +161,9 @@ Deno.serve(async (req) => {
           risk_score: c.risk_score,
           execution_ease: c.execution_ease,
           deadline: c.detected_deadline,
+          // Una fecha detectada es una intención de agenda, no sólo una fecha
+          // límite: así “el próximo viernes” queda programado de inmediato.
+          scheduled_for: c.detected_deadline ? c.detected_deadline.slice(0, 10) : null,
           project_ref: c.detected_project,
           client_ref: resolveClientRef(c.detected_client),
           source_inbox_id: inboxRow.id,

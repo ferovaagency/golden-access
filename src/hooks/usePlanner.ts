@@ -2,7 +2,7 @@
 // and insights in one place, and exposes typed actions that map 1:1 to
 // plannerService. Components should not touch supabase for planner data.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { plannerService, type CreatePlannerBlockInput, type PlannerBlock, type PlannerBriefing, type PlannerClient, type PlannerInbox, type PlannerInsight, type PlannerTask, type UpdatePlannerTaskInput } from '../lib/plannerService';
+import { plannerService, type CreatePlannerBlockInput, type PlannerBlock, type PlannerBriefing, type PlannerClient, type PlannerInbox, type PlannerInsight, type PlannerServiceOption, type PlannerTask, type UpdatePlannerTaskInput } from '../lib/plannerService';
 import { countTodayAutoActions } from '../lib/auditLogService';
 
 function today() { return todayInTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Bogota'); }
@@ -18,6 +18,7 @@ export function usePlanner() {
   const [inbox, setInbox] = useState<PlannerInbox[]>([]);
   const [tasks, setTasks] = useState<PlannerTask[]>([]);
   const [clients, setClients] = useState<PlannerClient[]>([]);
+  const [services, setServices] = useState<PlannerServiceOption[]>([]);
   const [blocks, setBlocks] = useState<PlannerBlock[]>([]);
   const [insights, setInsights] = useState<PlannerInsight[]>([]);
   const [briefing, setBriefing] = useState<PlannerBriefing | null>(null);
@@ -58,15 +59,16 @@ export function usePlanner() {
           revealFirstPlannedDay(plan.blocks, zone);
         }
       }
-      const [i, t, c, b, ins, br] = await Promise.all([
+      const [i, t, c, s, b, ins, br] = await Promise.all([
         plannerService.listInbox(),
         plannerService.listTasks(),
         plannerService.listClients(),
+        plannerService.listServices(),
         plannerService.listBlocks(date),
         plannerService.listInsights(),
         plannerService.loadBriefing('morning'),
       ]);
-      setInbox(i); setTasks(t); setClients(c); setBlocks(b); setInsights(ins); setBriefing(br); setTimeZone(zone);
+      setInbox(i); setTasks(t); setClients(c); setServices(s); setBlocks(b); setInsights(ins); setBriefing(br); setTimeZone(zone);
     } finally { setLoading(false); }
   }, [date, revealFirstPlannedDay]);
 
@@ -140,6 +142,12 @@ export function usePlanner() {
       setBusy(null);
     }
   }, [refresh]);
+  const startTask = useCallback(async (id: string) => {
+    setBusy('task'); setError(null);
+    try { await plannerService.startTask(id); await refresh(); }
+    catch (err: any) { setError(err.message || 'No fue posible iniciar la tarea.'); throw err; }
+    finally { setBusy(null); }
+  }, [refresh]);
   const updateTask = useCallback(async (id: string, input: UpdatePlannerTaskInput) => {
     setBusy('task'); setError(null);
     try { const result = await plannerService.updateTask(id, input); await refresh(); return result; }
@@ -163,9 +171,9 @@ export function usePlanner() {
   const dismissInsight = useCallback(async (id: string) => { await plannerService.dismissInsight(id); setInsights((prev) => prev.filter((i) => i.id !== id)); }, []);
 
   return {
-    inbox, tasks, clients, blocks, insights, briefing, rescheduledCount, planNotice,
+    inbox, tasks, clients, services, blocks, insights, briefing, rescheduledCount, planNotice,
     loading, busy, error, date, setDate, timeZone,
     refresh, classify, planDay, regenerateInsights, regenerateBriefing,
-    completeTask, updateTask, postponeTask, deleteTask, createBlock, dismissInsight,
+    completeTask, startTask, updateTask, postponeTask, deleteTask, createBlock, dismissInsight,
   };
 }

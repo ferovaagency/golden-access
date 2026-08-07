@@ -15,6 +15,7 @@ type Body = {
   execution_ease?: number;
   dependency_task_ids?: string[];
   client_ref?: string | null;
+  service_ref?: string | null;
   deadline?: string | null;
   estimated_minutes: number;
   actual_minutes?: number | null;
@@ -103,7 +104,7 @@ Deno.serve(async (req) => {
       financial_impact: scoreInput(body.financial_impact), client_impact: scoreInput(body.client_impact),
       risk_score: scoreInput(body.risk_score), execution_ease: scoreInput(body.execution_ease),
       dependency_task_ids: Array.from(new Set((Array.isArray(body.dependency_task_ids) ? body.dependency_task_ids : []).filter((id): id is string => typeof id === 'string' && id !== body.id))),
-      client_ref: body.client_ref || null, deadline: body.deadline || null,
+      client_ref: body.client_ref || null, service_ref: body.service_ref || null, deadline: body.deadline || null,
       estimated_minutes: Math.round(body.estimated_minutes), actual_minutes: body.actual_minutes ?? null,
       scheduled_for: body.scheduled_for || null, recurrence_days: days,
       recurrence_until: days.length ? (body.recurrence_until || null) : null,

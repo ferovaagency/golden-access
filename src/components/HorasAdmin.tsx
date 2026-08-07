@@ -42,6 +42,7 @@ export default function HorasAdmin({
   const [clienteId, setClienteId] = useState('');
   const [servicioId, setServicioId] = useState('');
   const [horasDedicadas, setHorasDedicadas] = useState(1);
+  const [duracionUnidad, setDuracionUnidad] = useState<'horas' | 'minutos'>('horas');
   const [descripcion, setDescripcion] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [capacidadComprometidaHoras, setCapacidadComprometidaHoras] = useState(0);
@@ -140,7 +141,9 @@ export default function HorasAdmin({
       cliente_nombre: chosenClient?.nombre || 'Cliente',
       servicio_id: servicioId,
       servicio_nombre: chosenService?.nombre || 'Servicio',
-      horas: Number(horasDedicadas),
+      // La persistencia mantiene horas decimales, pero la persona puede pensar
+      // y registrar en minutos sin hacer conversiones mentales.
+      horas: duracionUnidad === 'minutos' ? Number(horasDedicadas) / 60 : Number(horasDedicadas),
       descripcion
     };
 
@@ -148,7 +151,7 @@ export default function HorasAdmin({
     await onSaveHoras(updated);
 
     // Reset simple values
-    setHorasDedicadas(1);
+    setHorasDedicadas(duracionUnidad === 'minutos' ? 60 : 1);
     setDescripcion('');
   };
 
@@ -368,16 +371,26 @@ export default function HorasAdmin({
               </div>
 
               <div>
-                <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Horas Dedicadas (Pasos de 0.25)</label>
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <label className="block text-[#a39d8e] text-[10px] uppercase font-mono">Tiempo dedicado</label>
+                  <div className="flex rounded-md border border-[#2a2620] p-0.5 text-[10px]">
+                    {(['horas', 'minutos'] as const).map((unidad) => (
+                      <button key={unidad} type="button" onClick={() => { setDuracionUnidad(unidad); setHorasDedicadas(unidad === 'minutos' ? Math.round(horasDedicadas * 60) : horasDedicadas / 60); }} className={`rounded px-2 py-1 ${duracionUnidad === unidad ? 'bg-[#c9a961] text-black' : 'text-[#a39d8e]'}`}>
+                        {unidad === 'horas' ? 'Horas' : 'Minutos'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <input 
                   type="number"
-                  step="0.25"
-                  min="0.25"
+                  step={duracionUnidad === 'horas' ? '0.25' : '1'}
+                  min={duracionUnidad === 'horas' ? '0.25' : '1'}
                   value={horasDedicadas}
                   onChange={(e) => setHorasDedicadas(Number(e.target.value))}
                   className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2 rounded font-mono focus:outline-none"
                   required
                 />
+                <p className="mt-1 text-[10px] text-[#8a8377]">Se guardará como {duracionUnidad === 'minutos' ? `${horasDedicadas || 0} min (${((horasDedicadas || 0) / 60).toFixed(2)} h)` : `${horasDedicadas || 0} h (${Math.round((horasDedicadas || 0) * 60)} min)`}.</p>
               </div>
 
               <div>

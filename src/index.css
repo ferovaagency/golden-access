@@ -426,6 +426,22 @@ pre {
 
 .ferova-v2-theme .overflow-x-auto table { min-width: 680px; }
 
+/* Módulos históricos (Horas y Proyectos) aún usan la paleta anterior.
+   Este puente los lleva al sistema claro sin borrar formularios ni lógica. */
+.ferova-v2-theme .bg-\[\#161412\],
+.ferova-v2-theme .bg-\[\#0f0e0c\],
+.ferova-v2-theme .bg-\[\#1c1916\],
+.ferova-v2-theme .bg-\[\#141812\],
+.ferova-v2-theme .bg-\[\#181312\] { background-color: var(--ferova-surface) !important; }
+.ferova-v2-theme .border-\[\#2a2620\] { border-color: var(--ferova-line) !important; }
+.ferova-v2-theme .text-\[\#e8e3d8\],
+.ferova-v2-theme .text-white { color: var(--ferova-ink) !important; }
+.ferova-v2-theme .text-\[\#a39d8e\],
+.ferova-v2-theme .text-\[\#8a8377\] { color: var(--ferova-muted) !important; }
+.ferova-v2-theme .text-\[\#c9a961\] { color: var(--ferova-brand) !important; }
+.ferova-v2-theme .bg-\[\#c9a961\] { background-color: var(--ferova-brand) !important; }
+.ferova-v2-theme .hover\:bg-\[\#b09252\]:hover { background-color: var(--ferova-brand-2) !important; }
+
 @media (max-width: 640px) {
   .ferova-v2-theme :is(th, td) { padding: .625rem .75rem; }
   .ferova-v2-theme .overflow-x-auto table { min-width: 600px; }

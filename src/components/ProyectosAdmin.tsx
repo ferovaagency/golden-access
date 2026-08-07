@@ -247,7 +247,7 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
       {/* Tab Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#2a2620] pb-5">
         <div>
-          <h2 className="text-xl font-display font-medium text-[#c9a961]">Seguimiento de Proyectos, Objetivos y KPIs</h2>
+          <h2 className="text-xl font-display font-medium text-[#c9a961]">Proyectos y seguimiento de clientes</h2>
           <p className="text-xs text-[#a39d8e] font-mono mt-1">
             Garantiza el cumplimiento de entrega, objetivos estratégicos, indicadores de rendimiento y branding de tus clientes.
           </p>
@@ -276,6 +276,11 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
           <span>{successMsg}</span>
         </div>
       )}
+
+      {selectedClient && <section className="rounded-lg border border-[#2a2620] bg-[#161412] p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-[10px] font-mono uppercase tracking-wider text-[#a39d8e]">Seguimiento operativo</p><p className="mt-1 text-sm font-semibold text-[#e8e3d8]">Indicadores de {selectedClient.nombre}</p></div><span className="rounded-full bg-[#c9a961]/10 px-2.5 py-1 text-[10px] font-semibold text-[#c9a961]">{kpis.length} KPI{kpis.length === 1 ? '' : 's'} configurado{kpis.length === 1 ? '' : 's'}</span></div>
+        {kpis.length ? <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{kpis.map((kpi) => { const meta = Number(kpi.meta.replace(/[^0-9.-]/g, '')); const actual = Number(kpi.actual.replace(/[^0-9.-]/g, '')); const pct = Number.isFinite(meta) && meta > 0 && Number.isFinite(actual) ? Math.max(0, Math.min(100, Math.round(actual / meta * 100))) : null; return <div key={kpi.id} className="rounded-lg border border-[#2a2620] bg-white/40 p-3"><div className="flex items-start justify-between gap-2"><p className="text-xs font-semibold text-[#e8e3d8]">{kpi.nombre}</p><span className="text-[10px] text-[#a39d8e]">{cadenciaLabel(kpi.cadencia)}</span></div><p className="mt-2 text-[11px] text-[#a39d8e]">Actual <b className="text-[#c9a961]">{kpi.actual}</b> · Meta {kpi.meta}</p>{pct != null && <><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/10"><div className="h-full rounded-full bg-[#c9a961]" style={{ width: `${pct}%` }} /></div><p className="mt-1 text-[10px] text-[#a39d8e]">{pct}% de la meta</p></>}</div>; })}</div> : <p className="mt-3 text-xs text-[#a39d8e]">Crea el primer KPI abajo. No hay metas fijas ni códigos como “010”: cada medición parte de los indicadores de este proyecto.</p>}
+      </section>}
 
       {/* Select active client view */}
       <div className="bg-[#161412] border border-[#2a2620] p-4 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
