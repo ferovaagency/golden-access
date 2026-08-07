@@ -6,6 +6,7 @@ import { type Period, inPeriod } from '../lib/period';
 import { plannerService } from '../lib/plannerService';
 import { Settings, HelpCircle } from 'lucide-react';
 import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
+import { describeDuration, formatHours } from '../lib/duration';
 
 interface HorasAdminProps {
   horas: Hora[];
@@ -390,7 +391,7 @@ export default function HorasAdmin({
                   className="w-full bg-white text-slate-900 border border-slate-200 p-2 rounded font-mono focus:outline-none"
                   required
                 />
-                <p className="mt-1 text-[10px] text-slate-500">Se guardará como {duracionUnidad === 'minutos' ? `${horasDedicadas || 0} min (${((horasDedicadas || 0) / 60).toFixed(2)} h)` : `${horasDedicadas || 0} h (${Math.round((horasDedicadas || 0) * 60)} min)`}.</p>
+                <p className="mt-1 text-[10px] text-slate-500">Se guardará como {describeDuration(horasDedicadas, duracionUnidad)}.</p>
               </div>
 
               <div>
@@ -458,7 +459,7 @@ export default function HorasAdmin({
                       return (
                         <tr key={`${item.clienteId || 'cli'}-${idx}`} className="hover:bg-slate-50 transition">
                           <td className="px-5 py-3.5 font-medium text-slate-900">{item.clienteNombre}</td>
-                          <td className="px-5 py-3.5 font-mono text-slate-500">{item.horasRegistradas.toFixed(1)} hs</td>
+                          <td className="px-5 py-3.5 font-mono text-slate-500">{formatHours(item.horasRegistradas)}</td>
                           <td className="px-5 py-3.5 font-mono">{formatCop(item.ingresosCop)}</td>
                           <td className="px-5 py-3.5 font-mono text-blue-700 font-semibold">{formatCop(computedHourly)}</td>
                           <td className="px-5 py-3.5 text-right">
@@ -504,7 +505,7 @@ export default function HorasAdmin({
                       return (
                         <tr key={`${item.servicioId || 'srv'}-${idx}`} className="hover:bg-slate-50 transition">
                           <td className="px-5 py-3.5 font-medium text-slate-900">{item.servicioNombre}</td>
-                          <td className="px-5 py-3.5 font-mono text-slate-500">{item.horasRegistradas.toFixed(1)} hs</td>
+                          <td className="px-5 py-3.5 font-mono text-slate-500">{formatHours(item.horasRegistradas)}</td>
                           <td className="px-5 py-3.5 font-mono">{item.unidadesVendidas} uds</td>
                           <td className="px-5 py-3.5 font-mono font-medium text-blue-700">
                             {item.promedioHorasPorUnidad.toFixed(1)} hs/ud
@@ -552,7 +553,7 @@ export default function HorasAdmin({
                           {h.cliente_nombre}
                           <span className="text-[10px] font-mono text-slate-500 block mt-0.5">{h.servicio_nombre}</span>
                         </td>
-                        <td className="px-5 py-3 font-mono text-blue-700 font-semibold">{h.horas.toFixed(2)} hs</td>
+                        <td className="px-5 py-3 font-mono text-blue-700 font-semibold">{formatHours(h.horas)}</td>
                         <td className="px-5 py-3 text-slate-500 max-w-xs truncate">{h.descripcion}</td>
                         <td className="px-5 py-3 text-right">
                           <InlineDeleteConfirm
