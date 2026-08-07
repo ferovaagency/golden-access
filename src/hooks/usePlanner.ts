@@ -74,6 +74,44 @@ export function usePlanner() {
 
   useEffect(() => { void refresh(); }, [refresh]);
 
+  /**
+   * Paso 1 de la captura natural: interpreta el texto sin crear nada, para que
+   * la persona confirme o corrija cliente, fecha y duración.
+   */
+  const previewCapture = useCallback(async (text: string): Promise<PlannerDraft[]> => {
+    if (!text.trim()) return [];
+    setBusy('classify'); setError(null);
+    try {
+      const { data, error: err } = await plannerService.previewClassify(text);
+      if (err) { setError(err.message); return []; }
+      return data?.drafts || [];
+    } catch (err: any) {
+      setError(err?.message || 'No fue posible interpretar el texto.');
+      return [];
+    } finally {
+      setBusy(null);
+    }
+  }, []);
+
+  /** Paso 2: crea las tareas ya confirmadas y reorganiza el día. */
+  const commitCapture = useCallback(async (drafts: PlannerDraft[]) => {
+    if (!drafts.length) return;
+    setBusy('classify'); setError(null);
+    try {
+      const { error: err } = await plannerService.commitDrafts(drafts);
+      if (err) setError(err.message);
+      else {
+        const { error: planError } = await plannerService.planDay(undefined, true);
+        if (planError) setError(planError.message);
+      }
+      await refresh();
+    } catch (err: any) {
+      setError(err?.message || 'No fue posible guardar las tareas.');
+    } finally {
+      setBusy(null);
+    }
+  }, [refresh]);
+
   const classify = useCallback(async (text: string) => {
     if (!text.trim()) return;
     setBusy('classify'); setError(null);
