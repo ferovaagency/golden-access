@@ -433,6 +433,17 @@ export const plannerService = {
   async classify(text: string) {
     return invokeAi<{ ok: boolean; results: any[] }>({ functionName: 'planner-classify', body: { text } });
   },
+  /** Interpreta el texto sin escribir nada: la UI confirma o corrige antes de persistir. */
+  async previewClassify(text: string) {
+    return invokeAi<{ ok: boolean; drafts: PlannerDraft[]; clients: PlannerClient[] }>({
+      functionName: 'planner-classify',
+      body: { text, preview: true },
+    });
+  },
+  /** Materializa los drafts ya confirmados/corregidos por la persona. */
+  async commitDrafts(drafts: PlannerDraft[]) {
+    return invokeAi<{ ok: boolean; results: any[] }>({ functionName: 'planner-classify', body: { drafts } });
+  },
   async calendarBusyBlocks(date: string): Promise<PlannerBusyBlock[]> {
     const { getAccessToken } = await import('./supabase');
     const accessToken = getAccessToken();
