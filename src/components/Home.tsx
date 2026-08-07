@@ -105,7 +105,8 @@ export default function Home({ data, metrics, period, formatCop, onNavigate }: H
   if (isFerovaUiV2Enabled()) {
     const kpiItems: KpiItem[] = [
       { key: 'ingresos', label: 'Ingresos', value: metrics.totalVentas, format: formatCop, detail: 'Ventas del período', icon: CircleDollarSign, tooltipCode: 'VENTAS_TOTALES' },
-      { key: 'utilidadOp', label: 'Utilidad operativa', value: metrics.utilidadOperacional, format: formatCop, detail: 'Después de costos y gastos', icon: Wallet, tooltipCode: 'UTILIDAD_OPERACIONAL' },
+      { key: 'utilidadReal', label: 'Utilidad real', value: metrics.utilidadOperacionalReal, format: formatCop, detail: 'Según lo que pagaste de verdad', icon: Wallet },
+      { key: 'utilidadOp', label: 'Utilidad proyectada', value: metrics.utilidadOperacional, format: formatCop, detail: 'Con costos planeados', icon: Wallet, tooltipCode: 'UTILIDAD_OPERACIONAL' },
       { key: 'utilidadNeta', label: 'Utilidad neta', value: metrics.utilidadNeta, format: formatCop, detail: 'Estimación después de impuestos', icon: ShieldCheck, tooltipCode: 'UTILIDAD_NETA' },
       { key: 'clientes', label: 'Clientes activos', value: activeClients.length, format: (v) => String(Math.round(v)), detail: 'Cuentas en seguimiento', icon: Users },
     ];

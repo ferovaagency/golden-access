@@ -4,6 +4,7 @@ import { Search, Download, Upload } from 'lucide-react';
 import { useToast, errMsg } from './ui/toast';
 import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
 import { downloadClientesTemplate, parseClientesCsv } from '../lib/csvImportExport';
+import { convertToCop } from '../lib/calculations';
 
 interface ClientesAdminProps {
   clientes: Cliente[];
@@ -118,13 +119,11 @@ export default function ClientesAdmin({
 
   // Calculations for tables
   const getClientTotals = (cliId: string) => {
-    // Total revenues
-    const totalRevenuesOriginal = ventas
+    // Ingresos del cliente convertidos a COP (antes se sumaban COP y USD sin
+    // convertir → montos mezclados y mal). COP es la moneda canónica del sistema.
+    const totalRevenueCop = ventas
       .filter(v => v.cliente_id === cliId)
-      .reduce((sum, v) => sum + (v.precio_venta_unitario * v.cantidad), 0);
-
-    const clientVentas = ventas.filter(v => v.cliente_id === cliId);
-    const usesUsd = clientVentas.some(v => v.moneda === 'USD') || clientes.find(c => c.id === cliId)?.tipo === 'Internacional';
+      .reduce((sum, v) => sum + convertToCop(v.precio_venta_unitario * v.cantidad, v.moneda, config.trm), 0);
 
     // Total hours logged
     const totalHrs = horas
@@ -132,7 +131,7 @@ export default function ClientesAdmin({
       .reduce((sum, h) => sum + h.horas, 0);
 
     return {
-      revenueStr: usesUsd ? formatUsd(totalRevenuesOriginal) : formatCop(totalRevenuesOriginal),
+      revenueStr: formatCop(totalRevenueCop),
       hours: totalHrs
     };
   };

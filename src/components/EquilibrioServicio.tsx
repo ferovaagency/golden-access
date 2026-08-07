@@ -67,10 +67,15 @@ export default function EquilibrioServicio({
               return sum + convertToCop(v.precio_venta_unitario * v.cantidad, v.moneda, config.trm);
             }, 0);
 
-            // Average price per unit, if none sold, use a conservative default (e.g. 10 UVT or basic value)
-            const averagePriceCop = totalQuantitySoldSrv > 0 
-              ? totalRevenueCopSrv / totalQuantitySoldSrv 
-              : 3500000; // default COP helper value
+            // Precio promedio por unidad. Si aún no hay ventas, usa el precio de
+            // REFERENCIA del propio servicio (no un número mágico): precio habitual
+            // configurado, o el ofrecido, o un estimado sobre el costo directo.
+            const precioReferenciaCop = srv.precio_habitual != null
+              ? convertToCop(srv.precio_habitual, srv.precio_habitual_moneda || 'COP', config.trm)
+              : (srv.precio_ofrecido ?? (srv.costo_unitario > 0 ? srv.costo_unitario * 2 : 0));
+            const averagePriceCop = totalQuantitySoldSrv > 0
+              ? totalRevenueCopSrv / totalQuantitySoldSrv
+              : precioReferenciaCop;
 
             // Margin of contribution per unit = Average Price - Direct Cost
             const directCostCop = srv.costo_unitario; // in COP

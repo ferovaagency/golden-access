@@ -130,6 +130,8 @@ export interface FinancialMetrics {
   utilidadBruta: number;
   gastosOperativos: number;
   utilidadOperacional: number;
+  /** Resultado REAL (caja): utilidadBruta − pagosEgresos realmente pagados. */
+  utilidadOperacionalReal: number;
   salarioPropuesto: number;
   utilidadAntesImpuestos: number;
   impuestoRentaEstimado: number;
@@ -228,6 +230,10 @@ export function calcularMétricasFinancieras(
   // 3. Four levels of utility
   const utilidadBruta = totalVentas - costosVariables;
   const utilidadOperacional = utilidadBruta - gastosOperativos;
+  // Resultado REAL (caja): ingresos − costo directo − lo que de VERDAD pagaste
+  // (pagosEgresos). Frente a utilidadOperacional, que es la PROYECCIÓN con
+  // costos planeados. Se muestran los dos para comparar plan vs realidad.
+  const utilidadOperacionalReal = utilidadBruta - totalEgresosReales;
   const utilidadAntesImpuestos = utilidadOperacional - salarioPropuesto;
 
   // Renta estimation — SOLO en Colombia. En otros países no se estima impuesto
@@ -263,6 +269,7 @@ export function calcularMétricasFinancieras(
     utilidadBruta,
     gastosOperativos,
     utilidadOperacional,
+    utilidadOperacionalReal,
     salarioPropuesto,
     utilidadAntesImpuestos,
     impuestoRentaEstimado,

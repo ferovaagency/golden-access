@@ -196,7 +196,7 @@ Deno.serve(async (req) => {
       system: `Sos el asesor financiero y gerencial experto y el "segundo cerebro" de ${businessProfile?.nombre_negocio || "este negocio"} dentro de Ferova OS. Actuás como un consultor de confianza Y como la memoria viva del negocio: das recomendaciones concretas y accionables, no solo reportás números. Respondé en español claro, cercano y sin jerga técnica innecesaria (quien te lee puede no saber de finanzas ni de tecnología).
 
 ## TUS FUENTES DE VERDAD
-1. FINANZAS CALCULADAS (campo "finanzas_calculadas"): el estado de resultados YA CALCULADO del período que la persona ve en pantalla — ingresos, costos_directos, utilidad_bruta, utilidad_operacional, utilidad_neta, punto_equilibrio_ventas, egresos (todo en COP). Son las MISMAS cifras del dashboard. Para CUALQUIER pregunta de utilidad, margen, punto de equilibrio o rentabilidad, USA ESTOS NÚMEROS directamente y con seguridad; NUNCA digas que te faltan datos si están aquí. (Solo si finanzas_calculadas viene null di que faltan y dónde cargarlos.)
+1. FINANZAS CALCULADAS (campo "finanzas_calculadas"): el estado de resultados YA CALCULADO del período que la persona ve en pantalla (todo en COP). Son las MISMAS cifras del dashboard. Para CUALQUIER pregunta de utilidad, margen, punto de equilibrio o rentabilidad, USA ESTOS NÚMEROS directamente y con seguridad; NUNCA digas que te faltan datos si están aquí. (Solo si finanzas_calculadas viene null di que faltan y dónde cargarlos.) IMPORTANTE: "utilidad_operacional_real" es lo que de VERDAD quedó según los pagos reales; "utilidad_operacional" es la PROYECCIÓN con costos planeados. Cuando hables de utilidad, prioriza la REAL y usa la proyectada solo para comparar plan vs. realidad.
 2. CONTEXTO DEL NEGOCIO (JSON abajo): el estado actual — servicios, pipeline, clientes, tareas, reseñas, integraciones.
 3. MEMORIA DEL CEREBRO (campo "memoria_cerebro"): datos, decisiones, preferencias, políticas y aprendizajes que el equipo guardó a propósito. Es memoria DURADERA y confiable: priorizala y tratala como conocimiento establecido del negocio. Si algo en memoria_cerebro es relevante para la pregunta, úsalo explícitamente.
 
@@ -209,13 +209,16 @@ Sos responsable de mantener vivo el cerebro del negocio. Llamá a guardar_en_mem
 - Surja un aprendizaje o un hecho duradero que servirá más adelante.
 Reglas al guardar: ${memoriaScopeNote} Cuando puedas elegir, usá "global" si le sirve a todo el equipo y "privado" si es personal de quien te habla. Escribí el contenido claro y autocontenido (que se entienda sin este chat). Tras guardar, confirmá en UNA línea qué recordaste. NO guardes preguntas, cálculos ni charla pasajera, y no guardes dos veces lo mismo.
 
+## CREAR DATOS REALES (herramientas de escritura)
+Además de recordar, PODÉS registrar cosas por la persona: usá crear_tarea para pendientes accionables del Planner, y registrar_gasto para pagos/egresos reales del negocio (solo si es admin). Antes de registrar un gasto, confirmá monto, concepto y categoría en tu respuesta; no inventes cifras ni categorías — si falta un dato clave, preguntalo. Tras crear algo, confirmá en UNA línea qué registraste.
+
 ## CÓMO ASESORÁS
 Das asesoría sobre rentabilidad por servicio, salud del flujo de caja, pipeline de ventas, reseñas pendientes, cartera de clientes, gastos vs. ingresos y próximos pasos priorizados. Cuando algo se ve mal (margen negativo, cliente inactivo con saldo pendiente), decílo directo y proponé UNA acción concreta, no solo el diagnóstico. Priorizá: mejor 1-3 acciones claras que una lista larga. No prometas ejecutar acciones (fuera de guardar en memoria, no ejecutás nada; solo asesorás y recordás).
 
 CONTEXTO ACTUAL DEL NEGOCIO:
 ${context}`,
       messages: await convertToModelMessages(messages),
-      stopWhen: stepCountIs(3),
+      stopWhen: stepCountIs(4),
       tools: {
         guardar_en_memoria: tool({
           description: "Guarda en la memoria permanente del negocio (el 'segundo cerebro') un dato, decisión, preferencia, política, precio, proceso, hecho o aprendizaje que deba recordarse en el futuro. Úsala cuando la persona pida recordar algo ('recuerda que...', 'anota que...', 'no se te olvide...') o comparta información duradera importante. NO la uses para preguntas, cálculos ni charla pasajera.",
@@ -234,6 +237,56 @@ ${context}`,
             const finalScope = isAdmin ? scope : "privado";
             const id = await rememberKnowledge(admin, { title, content, scope: finalScope, userId }, apiKey);
             return id ? { ok: true, alcance: finalScope } : { ok: false, message: "No se pudo guardar en la memoria." };
+          },
+        }),
+        crear_tarea: tool({
+          description: "Crea una tarea en el Planner del negocio. Úsala cuando la persona pida agendar, anotar un pendiente o recordar HACER algo accionable ('agenda...', 'tengo que...', 'ponme una tarea...'). NO la uses para datos financieros ni para simple memoria.",
+          inputSchema: jsonSchema<{ title: string; priority?: "low" | "medium" | "high" | "urgent"; estimated_minutes?: number }>({
+            type: "object",
+            additionalProperties: false,
+            required: ["title"],
+            properties: {
+              title: { type: "string", description: "Qué hay que hacer, claro y accionable." },
+              priority: { type: "string", enum: ["low", "medium", "high", "urgent"], description: "Prioridad; si no se sabe, omitir (default media)." },
+              estimated_minutes: { type: "number", description: "Minutos estimados; si no se sabe, omitir (default 30)." },
+            },
+          }),
+          execute: async ({ title, priority, estimated_minutes }) => {
+            const row: Record<string, unknown> = { user_id: userId, title };
+            if (priority) row.priority = priority;
+            if (typeof estimated_minutes === "number" && estimated_minutes > 0) row.estimated_minutes = Math.round(estimated_minutes);
+            const { error } = await admin.from("planner_tasks").insert(row);
+            return error ? { ok: false, message: error.message } : { ok: true, creado: "tarea" };
+          },
+        }),
+        registrar_gasto: tool({
+          description: "Registra un pago o egreso REAL del negocio en Finanzas (Pagos & Egresos). Úsala cuando la persona diga que pagó o gastó algo ('pagué...', 'registra un gasto de...', 'gasté...'). Solo egresos reales, no proyecciones. Requiere ser administrador.",
+          inputSchema: jsonSchema<{ concepto: string; monto: number; categoria: "Herramientas" | "Salarios" | "Contratistas" | "Administrativo" | "Otros"; moneda?: "COP" | "USD"; fecha?: string }>({
+            type: "object",
+            additionalProperties: false,
+            required: ["concepto", "monto", "categoria"],
+            properties: {
+              concepto: { type: "string", description: "Qué se pagó (ej. 'Licencia Figma mayo')." },
+              monto: { type: "number", description: "Monto pagado (número, sin símbolos)." },
+              categoria: { type: "string", enum: ["Herramientas", "Salarios", "Contratistas", "Administrativo", "Otros"], description: "Categoría del egreso." },
+              moneda: { type: "string", enum: ["COP", "USD"], description: "Moneda; default COP." },
+              fecha: { type: "string", description: "Fecha YYYY-MM-DD; si no se dice, hoy." },
+            },
+          }),
+          execute: async ({ concepto, monto, categoria, moneda, fecha }) => {
+            if (!isAdmin) return { ok: false, message: "Solo un administrador puede registrar egresos del negocio." };
+            if (!(monto > 0)) return { ok: false, message: "El monto debe ser mayor a cero." };
+            const hoy = new Date().toISOString().slice(0, 10);
+            const { error } = await admin.from("finance_pagos_egresos").insert({
+              id: `eg_asis_${Date.now().toString().slice(-9)}`,
+              user_id: userId,
+              fecha: fecha && /^\d{4}-\d{2}-\d{2}$/.test(fecha) ? fecha : hoy,
+              concepto,
+              categoria,
+              monto,
+              moneda: moneda === "USD" ? "USD" : "COP",
+            });
+            return error ? { ok: false, message: error.message } : { ok: true, creado: "egreso" };
           },
         }),
       },
