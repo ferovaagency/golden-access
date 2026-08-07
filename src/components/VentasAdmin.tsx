@@ -501,7 +501,7 @@ export default function VentasAdmin({
 
           <div className="px-5 space-y-4 text-xs font-sans">
             {clientes.length === 0 ? (
-              <div className="bg-[#c97a61]/10 border border-[#c97a61]/30 p-4 rounded text-[#c97a61] leading-relaxed">
+              <div className="bg-rose-600/10 border border-rose-300/30 p-4 rounded text-rose-600 leading-relaxed">
                 No hay clientes registrados en este momento. Registra clientes en la pestaña de Clientes antes de iniciar la facturación.
               </div>
             ) : null}
@@ -514,7 +514,7 @@ export default function VentasAdmin({
                 value={fecha}
                 onChange={(e) => setFecha(e.target.value)}
                 required
-                className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded font-mono focus:outline-none focus:border-[#c9a961]"
+                className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded font-mono focus:outline-none focus:border-blue-300"
               />
             </div>
 
@@ -525,11 +525,11 @@ export default function VentasAdmin({
                 value={clienteId}
                 onChange={(e) => handleClientChange(e.target.value)}
                 required
-                className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
+                className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none focus:border-blue-300"
               >
                 <option value="" disabled>Selecciona cliente...</option>
                 {clientes.map((c, idx) => (
-                  <option key={`${c.id || 'cli'}-${idx}`} value={c.id} className="bg-[#0f0e0c]">
+                  <option key={`${c.id || 'cli'}-${idx}`} value={c.id} className="bg-white">
                     {c.nombre} ({c.tipo}){!c.activo ? ' - [De Baja/Inactivo]' : ''}
                   </option>
                 ))}
@@ -543,11 +543,11 @@ export default function VentasAdmin({
                 value={servicioId}
                 onChange={(e) => handleServiceChange(e.target.value)}
                 required
-                className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none focus:border-[#c9a961]"
+                className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none focus:border-blue-300"
               >
                 <option value="" disabled>Selecciona servicio...</option>
                 {servicios.map((s, idx) => (
-                  <option key={`${s.id || 'srv'}-${idx}`} value={s.id} className="bg-[#0f0e0c]">{s.nombre}</option>
+                  <option key={`${s.id || 'srv'}-${idx}`} value={s.id} className="bg-white">{s.nombre}</option>
                 ))}
               </select>
             </div>
@@ -598,7 +598,7 @@ export default function VentasAdmin({
                   type="text"
                   readOnly
                   value={moneda}
-                  className="w-full bg-[#0f0e0c]/30 text-slate-400 border border-slate-200/70 p-2.5 rounded font-mono cursor-not-allowed text-center"
+                  className="w-full bg-white/30 text-slate-400 border border-slate-200/70 p-2.5 rounded font-mono cursor-not-allowed text-center"
                 />
               </div>
             </div>
@@ -631,7 +631,7 @@ export default function VentasAdmin({
             </div>
 
             {/* Adelanto / Abonos */}
-            <div className="space-y-4 p-4 bg-[#0f0e0c]/30 border border-slate-200/60 rounded-lg">
+            <div className="space-y-4 p-4 bg-white/30 border border-slate-200/60 rounded-lg">
               <div className="flex items-center justify-between border-b border-slate-200/40 pb-2">
                 <label className="block text-slate-500 font-bold uppercase tracking-wider font-mono text-[10px]">
                   Abonado / Pagado ({moneda})
@@ -645,18 +645,18 @@ export default function VentasAdmin({
                 // EDITING MODE: SHOW CHRONOLOGICAL ABONOS MANAGER
                 <div className="space-y-4 text-xs">
                   <div>
-                    <span className="block text-[#868074] font-mono text-[9px] uppercase tracking-wider mb-2 font-bold">
+                    <span className="block text-slate-500 font-mono text-[9px] uppercase tracking-wider mb-2 font-bold">
                       Historial de Abonos Recibidos:
                     </span>
                     
                     {activeAbonos.length === 0 ? (
-                      <div className="text-center py-4 bg-[#0f0e0c]/10 rounded border border-dashed border-slate-200 text-slate-400 font-mono italic">
+                      <div className="text-center py-4 bg-white/10 rounded border border-dashed border-slate-200 text-slate-400 font-mono italic">
                         Sin abonos registrados en diferentes fechas.
                       </div>
                     ) : (
                       <div className="space-y-2 max-h-[140px] overflow-y-auto pr-1">
                         {activeAbonos.map((ab, index) => (
-                          <div key={index} className="flex justify-between items-center p-2 bg-[#0f0e0c]/60 rounded border border-slate-200/50 text-[11px] font-mono">
+                          <div key={index} className="flex justify-between items-center p-2 bg-white/60 rounded border border-slate-200/50 text-[11px] font-mono">
                             <div>
                               <div className="flex items-center gap-1.5">
                                 <span className="text-slate-500">{ab.fecha}:</span>
@@ -669,7 +669,7 @@ export default function VentasAdmin({
                             <button 
                               type="button" 
                               onClick={() => handleRemoveAbono(index)}
-                              className="text-[#c97a61] hover:text-[#e08970] font-bold px-1 rounded transition text-sm cursor-pointer"
+                              className="text-rose-600 hover:text-rose-700 font-bold px-1 rounded transition text-sm cursor-pointer"
                               title="Eliminar abono"
                             >
                               &times;
@@ -695,7 +695,7 @@ export default function VentasAdmin({
                           placeholder="Monto..."
                           value={newAbonoMonto}
                           onChange={(e) => setNewAbonoMonto(e.target.value === '' ? '' : Number(e.target.value))}
-                          className="w-full bg-[#0f0e0c]/60 text-emerald-400 border border-slate-200/80 p-1.5 rounded font-mono focus:outline-none text-xs"
+                          className="w-full bg-white/60 text-emerald-400 border border-slate-200/80 p-1.5 rounded font-mono focus:outline-none text-xs"
                         />
                       </div>
                       
@@ -705,7 +705,7 @@ export default function VentasAdmin({
                           type="date"
                           value={newAbonoFecha}
                           onChange={(e) => setNewAbonoFecha(e.target.value)}
-                          className="w-full bg-[#0f0e0c]/60 text-slate-500 border border-slate-200/80 p-1.5 rounded font-mono text-[10px] focus:outline-none"
+                          className="w-full bg-white/60 text-slate-500 border border-slate-200/80 p-1.5 rounded font-mono text-[10px] focus:outline-none"
                         />
                       </div>
                     </div>
@@ -717,14 +717,14 @@ export default function VentasAdmin({
                         placeholder="Ej. Transferencia Bancolombia #5541"
                         value={newAbonoNotas}
                         onChange={(e) => setNewAbonoNotas(e.target.value)}
-                        className="w-full bg-[#0f0e0c]/60 text-slate-900 border border-slate-200/80 p-1.5 rounded focus:outline-none placeholder-[#8a8377]/50 text-xs"
+                        className="w-full bg-white/60 text-slate-900 border border-slate-200/80 p-1.5 rounded focus:outline-none placeholder-slate-400/50 text-xs"
                       />
                     </div>
 
                     <button
                       type="button"
                       onClick={handleAddAbonoItem}
-                      className="w-full py-1.5 bg-blue-600/10 hover:bg-blue-600/25 border border-[#c9a961]/40 text-blue-600 text-[10px] font-mono font-bold rounded transition cursor-pointer"
+                      className="w-full py-1.5 bg-blue-600/10 hover:bg-blue-600/25 border border-blue-300/40 text-blue-600 text-[10px] font-mono font-bold rounded transition cursor-pointer"
                     >
                       + Sumar Abono a Cuenta
                     </button>
@@ -738,7 +738,7 @@ export default function VentasAdmin({
                     min="0"
                     value={adelanto}
                     onChange={(e) => setAdelanto(Number(e.target.value))}
-                    className="w-full bg-slate-50 text-emerald-400 border border-slate-200 p-2 rounded font-mono focus:outline-none focus:border-[#a8c98a]"
+                    className="w-full bg-slate-50 text-emerald-400 border border-slate-200 p-2 rounded font-mono focus:outline-none focus:border-emerald-300"
                     placeholder="Monto pagado / anticipo..."
                   />
                   {totalPactadoOriginal > 0 && (
@@ -760,7 +760,7 @@ export default function VentasAdmin({
                 <div className="pt-2 border-t border-slate-200/30 space-y-1 text-[11px] font-mono">
                   <div className="flex justify-between items-center text-slate-900">
                     <span>Saldo Pendiente:</span>
-                    <span className={`font-bold ${totalPactadoOriginal - adelanto > 0 ? 'text-[#c97a61]' : 'text-emerald-400'}`}>
+                    <span className={`font-bold ${totalPactadoOriginal - adelanto > 0 ? 'text-rose-600' : 'text-emerald-400'}`}>
                       {moneda === 'USD' 
                         ? formatUsd(Math.max(0, totalPactadoOriginal - adelanto)) 
                         : formatCop(Math.max(0, totalPactadoOriginal - adelanto))}
@@ -805,11 +805,11 @@ export default function VentasAdmin({
                 </div>
                 <div>
                   <span className="text-slate-500">Retención ({Math.round(rateRentencion * 100)}%):</span>{' '}
-                  <span className="text-[#c97a61] font-bold">
+                  <span className="text-rose-600 font-bold">
                     -{moneda === 'USD' ? formatUsd(retencionOriginalMoneda) : formatCop(retencionOriginalMoneda)}
                   </span>
                 </div>
-                <div className="border-t border-slate-200/50 pt-1 text-[#a8c98a]">
+                <div className="border-t border-slate-200/50 pt-1 text-emerald-600">
                   <span className="text-slate-500">Neto fiscal antes de pasarela:</span>{' '}
                   <span className="font-bold font-semibold">
                     {moneda === 'USD' ? formatUsd(netoQueEntra) : formatCop(netoQueEntra)}
@@ -822,7 +822,7 @@ export default function VentasAdmin({
               <button 
                 type="submit"
                 disabled={clientes.length === 0}
-                className="w-full bg-blue-600 hover:bg-[#b09252] disabled:bg-[#2a2620] disabled:text-slate-400 text-black font-semibold font-display tracking-wide py-3 rounded transition cursor-pointer"
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 text-black font-semibold font-display tracking-wide py-3 rounded transition cursor-pointer"
               >
                 {editingVentaId ? 'Guardar Cambios Venta' : 'Registrar Venta'}
               </button>
@@ -854,7 +854,7 @@ export default function VentasAdmin({
                   placeholder="Buscar por cliente o servicio..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-slate-50 text-slate-900 border border-slate-200 max-w-sm pl-8 pr-4 py-1.5 rounded focus:outline-none focus:border-[#c9a961] font-sans"
+                  className="bg-slate-50 text-slate-900 border border-slate-200 max-w-sm pl-8 pr-4 py-1.5 rounded focus:outline-none focus:border-blue-300 font-sans"
                 />
                 <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-400" />
               </div>
@@ -874,7 +874,7 @@ export default function VentasAdmin({
                     <th className="px-5 py-3.5 text-right">Acción</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#2a2620]/50">
+                <tbody className="divide-y divide-slate-200/50">
                   {filteredVentas.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="px-5 py-12 text-center text-slate-400 font-mono">
@@ -892,7 +892,7 @@ export default function VentasAdmin({
                       const actualEstado = v.estado_pago || (v.adelanto >= totalOriginal ? 'Pagado' : (v.adelanto > 0 ? 'Adelanto' : 'Pendiente'));
 
                       return (
-                        <tr key={`${v.id}-${idx}`} className={`hover:bg-white/[0.01]/70 transition ${isEditing ? 'bg-blue-600/5 border-l-2 border-[#c9a961]' : ''}`}>
+                        <tr key={`${v.id}-${idx}`} className={`hover:bg-white/[0.01]/70 transition ${isEditing ? 'bg-blue-600/5 border-l-2 border-blue-300' : ''}`}>
                           <td className="px-5 py-4 font-mono text-slate-500">{v.fecha}</td>
                           <td className="px-5 py-4">
                             <span className="font-medium text-slate-900 block">{v.cliente_nombre}</span>
@@ -909,12 +909,12 @@ export default function VentasAdmin({
                           <td className="px-5 py-4 font-mono font-semibold">
                             {v.moneda === 'USD' ? formatUsd(totalOriginal) : formatCop(totalOriginal)}
                           </td>
-                          <td className="px-5 py-4 font-mono text-[#c97a61]">
+                          <td className="px-5 py-4 font-mono text-rose-600">
                             {reteOrig > 0 
                               ? `-${v.moneda === 'USD' ? formatUsd(reteOrig) : formatCop(reteOrig)}` 
                               : <span className="text-slate-400 italic">No ret.</span>}
                           </td>
-                          <td className="px-5 py-4 font-mono font-bold text-[#a8c98a]">
+                          <td className="px-5 py-4 font-mono font-bold text-emerald-600">
                             {v.moneda === 'USD' ? formatUsd(netOrig) : formatCop(netOrig)}
                             {gateway.totalDescuentos > 0 && <span className="mt-1 block text-[9px] font-normal text-amber-700">{v.pasarela_pago || 'Pasarela'} −{v.moneda === 'USD' ? formatUsd(gateway.totalDescuentos) : formatCop(gateway.totalDescuentos)}{v.moneda === 'USD' ? ` · neto ${formatCop(gateway.netoCop - reteOrig * gateway.tasaCop)} COP` : ''}</span>}
                           </td>
@@ -946,7 +946,7 @@ export default function VentasAdmin({
                             <div className="flex items-center justify-end gap-2 text-right">
                               <button 
                                 onClick={() => handleStartEdit(v)}
-                                className="bg-[#0f0e0c]/40 text-blue-600 hover:text-slate-900 p-1.5 transition rounded-lg hover:bg-blue-600/10 cursor-pointer"
+                                className="bg-white/40 text-blue-600 hover:text-slate-900 p-1.5 transition rounded-lg hover:bg-blue-600/10 cursor-pointer"
                                 title="Editar venta / Registrar abonos"
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
