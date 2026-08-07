@@ -129,7 +129,12 @@ export interface Hora {
   fecha: string;
   cliente_id: string;
   cliente_nombre: string;
-  servicio_id: string;
+  /**
+   * Nulo cuando el tiempo se registró desde el Planner sobre una tarea con
+   * cliente pero sin servicio asignado: preferimos conservar el tiempo real
+   * y pedir el servicio después, antes que descartar el registro.
+   */
+  servicio_id: string | null;
   servicio_nombre: string;
   horas: number;
   descripcion: string;
