@@ -612,7 +612,7 @@ function AppInner() {
           href={lastSheetBackupLink}
           target="_blank"
           rel="noreferrer"
-          className="bg-slate-100 hover:bg-[#23201c] transition px-3 py-1.5 rounded border border-slate-200 text-xs font-mono text-slate-500 flex items-center gap-2"
+          className="bg-slate-100 hover:bg-slate-800 transition px-3 py-1.5 rounded border border-slate-200 text-xs font-mono text-slate-500 flex items-center gap-2"
         >
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <Database className="w-3.5 h-3.5 text-emerald-500" />
@@ -637,9 +637,9 @@ function AppInner() {
         {metrics && (
           <div className="hidden items-center gap-4 text-[10px] font-mono tracking-wider text-slate-500 lg:flex">
             <div><span>FACTURACIÓN:</span> <strong className="text-slate-900">{formatCop(metrics.totalVentas)}</strong></div>
-            <div className="w-px h-3 bg-[#2a2620]" />
+            <div className="w-px h-3 bg-slate-200" />
             <div><span>NÓMINA RETIROS:</span> <strong className="text-slate-900">{formatCop(metrics.salarioPropuesto)}</strong></div>
-            <div className="w-px h-3 bg-[#2a2620]" />
+            <div className="w-px h-3 bg-slate-200" />
             <div>
               <span>NETO DISPONIBLE:</span>{' '}
               <strong style={{ color: metrics.utilidadNeta >= 0 ? '#a8c98a' : '#c97a61' }}>{formatCop(metrics.utilidadNeta)}</strong>
@@ -812,10 +812,10 @@ function AppInner() {
   }
 
   return (
-    <div className="ferova-light-theme min-h-screen bg-[#f7f8fb] flex flex-col text-[#1f2937] font-sans">
+    <div className="ferova-light-theme min-h-screen bg-slate-50 flex flex-col text-slate-800 font-sans">
 
       {/* 1. Header component */}
-      <header className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-[#dbe4ee] relative z-20">
+      <header className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-slate-200 relative z-20">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
 
           <div className="flex min-w-0 items-center gap-3">
