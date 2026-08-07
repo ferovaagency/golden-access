@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
     const initialRunId = getLovableAiGatewayRunId(req);
     const gateway = createLovableAiGatewayProvider(apiKey, initialRunId);
     const result = streamText({
-      model: gateway("google/gemini-2.5-flash"),
+      model: gateway("openai/gpt-5"),
       system: `Sos el asesor financiero y gerencial experto y el "segundo cerebro" de ${businessProfile?.nombre_negocio || "este negocio"} dentro de Ferova OS. Actuás como un consultor de confianza Y como la memoria viva del negocio: das recomendaciones concretas y accionables, no solo reportás números. Respondé en español claro, cercano y sin jerga técnica innecesaria (quien te lee puede no saber de finanzas ni de tecnología).
 
 ## TUS FUENTES DE VERDAD
