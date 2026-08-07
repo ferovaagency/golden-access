@@ -96,43 +96,115 @@ Deno.serve(async (req) => {
     const clientDurationContext = Object.keys(avgByClient).length
       ? `Historical duration by client: ${Object.entries(avgByClient).map(([client, min]) => `${client}=${min}min`).join(', ')}. Use it as the primary estimate when the task names that client.`
       : 'No client-specific duration history yet.';
-    const results = [] as any[];
-    for (const line of entries.slice(0, 20)) {
-      let extracted: z.infer<typeof ClassifySchema> | null = null;
-      try {
-        if (!gateway) throw new Error("AI gateway is not configured");
-        const { output } = await generateText({
-          model: gateway("google/gemini-3.5-flash"),
-          output: Output.object({ schema: ClassifySchema }),
-          system: `You are an executive assistant that classifies brain-dump lines from a business owner. Respond in the same language as the input. Estimate a realistic duration (5-240 min). Set priority=urgent only for explicit deadlines <48h or 'urgent/asap'. Detect deadline as ISO if the text mentions a date/time. Extract client/project names if mentioned. Category deep_work=focus/writing/design, admin=paperwork/taxes/emails, calls=phone/whatsapp/meet, creative=ideas/content, learning=read/study, personal=life. Confidence 0-1. Score financial_impact, client_impact, risk_score and execution_ease from 1 (low) to 5 (high) only from explicit evidence in the text; use 3 when evidence is missing. These are editable suggestions, not facts.\n${clientsContext}\n${durationContext}\n${clientDurationContext}`,
-          prompt: `Line: """${line}"""\nToday: ${new Date().toISOString()}`,
-        });
-        extracted = output as any;
-      } catch (e) {
-        console.error("[planner-classify] model error", e);
-      }
-      const fallback = {
-        detected_type: "task" as const,
-        detected_priority: "medium" as const,
-        detected_energy: "medium" as const,
-        detected_category: "admin" as const,
-        detected_duration_min: 30,
-        financial_impact: 3,
-        client_impact: 3,
-        risk_score: 3,
-        execution_ease: 3,
-        detected_deadline: null,
-        detected_client: null,
-        detected_project: null,
-        title: line,
-        reasoning: key ? "Fallback classification after AI response failure." : "Clasificación básica: la IA aún no está configurada en este despliegue.",
-        confidence: 0.3,
-      };
-      const c = extracted ?? fallback;
+    // Draft = clasificación ya resuelta pero todavía NO persistida. Permite
+    // que la UI muestre cliente, fecha y duración detectados para confirmar o
+    // corregir antes de crear nada (modo `preview`), y que después devuelva
+    // esos mismos drafts corregidos para materializarlos (modo commit).
+    type Draft = {
+      line: string;
+      title: string;
+      detected_type: string;
+      detected_priority: string;
+      detected_energy: string;
+      detected_category: string;
+      detected_duration_min: number;
+      financial_impact: number;
+      client_impact: number;
+      risk_score: number;
+      execution_ease: number;
+      detected_deadline: string | null;
+      detected_client: string | null;
+      detected_project: string | null;
+      client_ref: string | null;
+      scheduled_for: string | null;
+      reasoning: string;
+      confidence: number;
+    };
 
+    const incomingDrafts: Draft[] | null = Array.isArray(body?.drafts) && body.drafts.length ? body.drafts as Draft[] : null;
+    const drafts: Draft[] = [];
+
+    if (incomingDrafts) {
+      // Confirmación del usuario: se respeta lo que él corrigió y sólo se
+      // sanean los campos que la base necesita bien tipados.
+      for (const d of incomingDrafts.slice(0, 20)) {
+        drafts.push({
+          ...d,
+          title: String(d.title || d.line || "").slice(0, 300),
+          detected_duration_min: Math.min(600, Math.max(5, Number(d.detected_duration_min) || 30)),
+          client_ref: d.client_ref || null,
+          scheduled_for: d.scheduled_for || null,
+        });
+      }
+    } else {
+      for (const line of entries.slice(0, 20)) {
+        let extracted: z.infer<typeof ClassifySchema> | null = null;
+        try {
+          if (!gateway) throw new Error("AI gateway is not configured");
+          const { output } = await generateText({
+            model: gateway("google/gemini-3.5-flash"),
+            output: Output.object({ schema: ClassifySchema }),
+            system: `You are an executive assistant that classifies brain-dump lines from a business owner. Respond in the same language as the input. Estimate a realistic duration (5-240 min). Set priority=urgent only for explicit deadlines <48h or 'urgent/asap'. Detect deadline as ISO if the text mentions a date/time. Extract client/project names if mentioned. Category deep_work=focus/writing/design, admin=paperwork/taxes/emails, calls=phone/whatsapp/meet, creative=ideas/content, learning=read/study, personal=life. Confidence 0-1. Score financial_impact, client_impact, risk_score and execution_ease from 1 (low) to 5 (high) only from explicit evidence in the text; use 3 when evidence is missing. These are editable suggestions, not facts.\n${clientsContext}\n${durationContext}\n${clientDurationContext}`,
+            prompt: `Line: """${line}"""\nToday: ${new Date().toISOString()}`,
+          });
+          extracted = output as any;
+        } catch (e) {
+          console.error("[planner-classify] model error", e);
+        }
+        const fallback = {
+          detected_type: "task" as const,
+          detected_priority: "medium" as const,
+          detected_energy: "medium" as const,
+          detected_category: "admin" as const,
+          detected_duration_min: 30,
+          financial_impact: 3,
+          client_impact: 3,
+          risk_score: 3,
+          execution_ease: 3,
+          detected_deadline: null,
+          detected_client: null,
+          detected_project: null,
+          title: line,
+          reasoning: key ? "Fallback classification after AI response failure." : "Clasificación básica: la IA aún no está configurada en este despliegue.",
+          confidence: 0.3,
+        };
+        const c = extracted ?? fallback;
+        drafts.push({
+          line,
+          title: c.title || line,
+          detected_type: c.detected_type,
+          detected_priority: c.detected_priority,
+          detected_energy: c.detected_energy,
+          detected_category: c.detected_category,
+          detected_duration_min: c.detected_duration_min,
+          financial_impact: c.financial_impact,
+          client_impact: c.client_impact,
+          risk_score: c.risk_score,
+          execution_ease: c.execution_ease,
+          detected_deadline: c.detected_deadline,
+          detected_client: c.detected_client,
+          detected_project: c.detected_project,
+          client_ref: resolveClientRef(c.detected_client),
+          // Una fecha detectada es una intención de agenda, no sólo una fecha
+          // límite: así “el próximo viernes” queda programado de inmediato.
+          scheduled_for: c.detected_deadline ? c.detected_deadline.slice(0, 10) : null,
+          reasoning: c.reasoning,
+          confidence: c.confidence,
+        });
+      }
+    }
+
+    // Modo preview: se devuelve la interpretación sin escribir absolutamente
+    // nada, junto con los clientes reales para que la UI ofrezca el selector.
+    if (body?.preview === true) {
+      return json({ ok: true, preview: true, drafts, clients });
+    }
+
+    const results = [] as any[];
+    for (const c of drafts) {
       const { data: inboxRow, error: ierr } = await admin.from("planner_inbox").insert({
         user_id: userId,
-        raw_text: line,
+        raw_text: c.line,
         detected_type: c.detected_type,
         detected_priority: c.detected_priority,
         detected_energy: c.detected_energy,
@@ -151,7 +223,7 @@ Deno.serve(async (req) => {
       if (ACTIONABLE.has(c.detected_type)) {
         const { data: t, error: terr } = await admin.from("planner_tasks").insert({
           user_id: userId,
-          title: c.title || line,
+          title: c.title || c.line,
           category: c.detected_category,
           priority: c.detected_priority,
           energy_required: c.detected_energy,
@@ -161,11 +233,9 @@ Deno.serve(async (req) => {
           risk_score: c.risk_score,
           execution_ease: c.execution_ease,
           deadline: c.detected_deadline,
-          // Una fecha detectada es una intención de agenda, no sólo una fecha
-          // límite: así “el próximo viernes” queda programado de inmediato.
-          scheduled_for: c.detected_deadline ? c.detected_deadline.slice(0, 10) : null,
+          scheduled_for: c.scheduled_for,
           project_ref: c.detected_project,
-          client_ref: resolveClientRef(c.detected_client),
+          client_ref: c.client_ref,
           source_inbox_id: inboxRow.id,
           ai_notes: c.reasoning,
         }).select("*").single();
