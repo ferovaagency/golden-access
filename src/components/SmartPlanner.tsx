@@ -245,7 +245,7 @@ export default function SmartPlanner() {
 
       {plannerView === 'day' && <DayClientProgress tasks={p.tasks} clients={p.clients} date={p.date} />}
 
-      {plannerView === 'day' && <DayAgendaSummary blocks={p.blocks} tasks={p.tasks} clients={p.clients} timeZone={p.timeZone} onComplete={p.completeTask} />}
+      {plannerView === 'day' && <DayAgendaSummary blocks={p.blocks} tasks={p.tasks} clients={p.clients} timeZone={p.timeZone} onComplete={handleComplete} />}
 
       {/* Briefing */}
       <section className="rounded-2xl border border-[var(--line)] bg-gradient-to-br from-blue-50/60 to-white p-5">
@@ -410,7 +410,7 @@ export default function SmartPlanner() {
           </div>
         ) : (
           <ul className="space-y-2">
-            {p.blocks.map((b) => <BlockRow key={b.id} block={b} tasks={p.tasks} clients={p.clients} timeZone={p.timeZone} onComplete={p.completeTask} />)}
+            {p.blocks.map((b) => <BlockRow key={b.id} block={b} tasks={p.tasks} clients={p.clients} timeZone={p.timeZone} onComplete={handleComplete} />)}
           </ul>
         )}
       </section>}
@@ -448,7 +448,7 @@ export default function SmartPlanner() {
           <p className="text-xs text-slate-400 italic">Bandeja vacía.</p>
         ) : (
           <ul className="space-y-1.5">
-            {openTasks.map((t) => <TaskRow key={t.id} task={t} clientName={p.clients.find((client) => client.id === t.client_ref)?.nombre} isProtected={p.blocks.some((block) => block.task_ids?.includes(t.id) && block.protected)} onEdit={openTaskEditor} onStart={p.startTask} onComplete={p.completeTask} onPostpone={async (id) => { await p.postponeTask(id); setTaskSaveNotice('Tarea reprogramada para mañana.'); setTimeout(() => setTaskSaveNotice(null), 2500); }} onDelete={p.deleteTask} />)}
+            {openTasks.map((t) => <TaskRow key={t.id} task={t} clientName={p.clients.find((client) => client.id === t.client_ref)?.nombre} isProtected={p.blocks.some((block) => block.task_ids?.includes(t.id) && block.protected)} onEdit={openTaskEditor} onStart={p.startTask} onComplete={handleComplete} onPostpone={async (id) => { await p.postponeTask(id); setTaskSaveNotice('Tarea reprogramada para mañana.'); setTimeout(() => setTaskSaveNotice(null), 2500); }} onDelete={p.deleteTask} />)}
           </ul>
         )}
       </section>
