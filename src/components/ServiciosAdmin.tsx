@@ -381,6 +381,8 @@ export default function ServiciosAdmin({
                           {s.precio_habitual != null && (
                             <span className="block text-[9px] font-normal text-slate-400">
                               Vende a: {s.precio_habitual_moneda === 'USD' ? `US$${s.precio_habitual.toLocaleString('en-US')}` : formatCop(s.precio_habitual)}
+                              {/* Con IVA activo el precio de lista es antes de impuesto: mostramos también el total a facturar. */}
+                              {s.aplica_iva && s.precio_habitual_moneda !== 'USD' && ` · con IVA ${formatCop(Math.round(s.precio_habitual * (1 + (config.tarifa_iva ?? 0))))}`}
                             </span>
                           )}
                           <span className={`mt-1 inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${s.aplica_iva ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-500'}`}>{s.aplica_iva ? `IVA ${Math.round(config.tarifa_iva * 100)}%` : 'Sin IVA'}</span>
