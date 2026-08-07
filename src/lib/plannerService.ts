@@ -258,7 +258,7 @@ export const plannerService = {
   async dismissInsight(id: string) {
     await anyDb().from('planner_insights').update({ dismissed: true }).eq('id', id);
   },
-  async completeTask(id: string, actualMinutes?: number) {
+  async completeTask(id: string, actualMinutes?: number): Promise<CompleteTaskResult> {
     const { data: task, error: readError } = await anyDb().from('planner_tasks').select('*').eq('id', id).single();
     if (readError) throw readError;
     const elapsedMinutes = task?.started_at
@@ -271,25 +271,43 @@ export const plannerService = {
       .eq('id', id);
     if (taskError) throw taskError;
 
-    // Un cronómetro sólo registra una hora cobrable cuando la tarea quedó
-    // explícitamente asociada a cliente y servicio. El upsert hace el cierre
-    // idempotente: completar dos veces jamás duplica el registro.
-    if (finalMinutes && task?.client_ref && task?.service_ref) {
-      const today = new Date().toISOString().slice(0, 10);
+    const result: CompleteTaskResult = {
+      estimatedMinutes: task?.estimated_minutes ?? null,
+      actualMinutes: finalMinutes,
+      hourLogged: false,
+      missingService: false,
+      hourDate: null,
+    };
+
+    // Basta con que la tarea tenga cliente: el tiempo real es el dato caro de
+    // recuperar. Si falta el servicio se guarda igual con `servicio_id` nulo y
+    // queda marcado como "sin servicio" en Horas para completarlo después.
+    // El upsert hace el cierre idempotente: completar dos veces no duplica.
+    if (finalMinutes && task?.client_ref) {
+      // La hora pertenece al día en que la tarea estaba programada, no al día
+      // en que se cerró: cerrar el miércoles algo del lunes descuadraba la
+      // rentabilidad por período.
+      const hourDate = (task.scheduled_for as string | null) || new Date().toISOString().slice(0, 10);
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { error: hourError } = await anyDb().from('finance_horas').upsert({
           id: `planner_${id}`,
           user_id: user.id,
-          fecha: today,
+          fecha: hourDate,
           cliente_id: task.client_ref,
-          servicio_id: task.service_ref,
+          servicio_id: task.service_ref ?? null,
           horas: finalMinutes / 60,
           descripcion: `Planner: ${task.title}`,
         }, { onConflict: 'user_id,id' });
         if (hourError) log.error(hourError);
+        else {
+          result.hourLogged = true;
+          result.hourDate = hourDate;
+          result.missingService = !task.service_ref;
+        }
       }
     }
+
 
     // A task can remain referenced by an already-created agenda block. Without
     // removing that reference, the check marks it done in the database but it
