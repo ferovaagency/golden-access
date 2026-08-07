@@ -48,6 +48,7 @@ const ReportsView = lazy(() => import('./components/ReportsView'));
 const OperatingKpiDashboard = lazy(() => import('./components/OperatingKpiDashboard'));
 const FinanceOperativa = lazy(() => import('./components/FinanceOperativa'));
 const MarketingROI = lazy(() => import('./components/MarketingROI'));
+const MemoriaPanel = lazy(() => import('./components/MemoriaPanel'));
 
 import {
   FolderKanban,
@@ -522,6 +523,7 @@ function AppInner() {
     ] },
     { id: 'settings', label: 'Settings', icon: Settings, items: [
       ...(modules.financiero ? [{ id: 'ajustes', label: 'Configuración', hint: 'Datos y Google Sheets' }] : []),
+      ...(isTeam ? [{ id: 'memoria', label: 'Memoria', hint: 'Cerebro del negocio: conocimiento global y privado' }] : []),
       ...(isTeam ? [{ id: 'admin', label: 'Administración Ferova', hint: 'Usuarios, planes, feedback y operaciones' }] : []),
     ] },
   ];
@@ -753,6 +755,7 @@ function AppInner() {
               <ConfigAdmin userId={user.id} businessProfile={businessProfile} onBusinessProfileUpdated={setBusinessProfile} config={appData.config} ventas={appData.ventas} clientes={appData.clientes} horas={appData.horas} hasGoogleToken={!!getAccessToken()} lastSheetBackupLink={lastSheetBackupLink} isBackingUpToSheets={isBackingUpToSheets} onSaveConfig={handleSaveConfig} onBackupToSheets={handleBackupToSheets} onImportFromSheets={handleImportFromSheets} onImportFromSheetsUrl={handleImportFromSheetsUrl} formatCop={formatCop} />
             )}
             {activeTab === 'ventas-crm' && modules.crm_ventas && <CustomerCRM user={user} />}
+            {activeTab === 'memoria' && isTeam && <MemoriaPanel />}
             {modules.crm_ventas && activeTab.startsWith('crm-') && (
               // Las pestañas de crecimiento (Pipeline, Citas, LinkedIn+Reddit,
               // Bot WhatsApp, Reseñas) son del módulo del cliente: cada cuenta

@@ -1,7 +1,8 @@
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
-import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, streamText, type UIMessage } from "npm:ai";
+import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, jsonSchema, stepCountIs, streamText, tool, type UIMessage } from "npm:ai";
 import { createLovableAiGatewayProvider, getLovableAiGatewayRunId, getLovableAiGatewayResponseHeaders, withLovableAiGatewayRunIdHeader } from "../_shared/ai-gateway.ts";
+import { embedText, recallKnowledge, rememberKnowledge } from "../_shared/brain.ts";
 
 function textFromParts(message: UIMessage): string {
   return (message.parts || []).map((part: any) => part.type === "text" ? part.text : "").join("").trim();
@@ -106,7 +107,7 @@ Deno.serve(async (req) => {
     const userEmail = userData.user.email || "";
     const currentArea = (req.headers.get("X-Ferova-Context-Area") || "").slice(0, 80);
     const [{ data: isTeam }, { data: businessProfile }, { data: overview }, { data: services }, { data: growth }, { data: reviews }, { data: opportunities }, { data: clients }, { data: hours }, { data: tasks }, { data: integrations }] = await Promise.all([
-      admin.from("crm_team_members").select("email").eq("email", userEmail).maybeSingle(),
+      admin.from("crm_team_members").select("email, rol").eq("email", userEmail).maybeSingle(),
       admin.from("business_profile").select("nombre_negocio, industria, tipo_negocio, tamano_equipo, ciudad").eq("user_id", userId).maybeSingle(),
       admin.from("business_overview").select("*").eq("user_id", userId).maybeSingle(),
       admin.from("finance_service_profitability").select("servicio_nombre, ingresos_brutos, costos_directos, margen_bruto, ventas_count, horas_registradas").eq("user_id", userId).order("margen_bruto", { ascending: false }).limit(12),
@@ -118,6 +119,11 @@ Deno.serve(async (req) => {
       admin.from("planner_tasks").select("title, priority, category, status, deadline, scheduled_for, client_ref, project_ref").eq("user_id", userId).in("status", ["backlog", "scheduled", "postponed"]).order("deadline", { ascending: true, nullsFirst: false }).limit(30),
       admin.from("google_workspace_connections").select("connected, connected_email, scopes, expires_at, last_error").eq("user_id", userId).maybeSingle(),
     ]);
+
+    const isAdmin = !!isTeam && ["owner", "admin"].includes((isTeam as { rol?: string }).rol || "");
+    const memoriaScopeNote = isAdmin
+      ? "Podés guardar en memoria 'global' (equipo) o 'privado' (solo esta persona)."
+      : "IMPORTANTE: esta persona es colaboradora — SOLO podés guardar en su memoria PRIVADA (alcance 'privado'); nunca en la global.";
 
     const body = await req.json() as { messages?: UIMessage[] };
     // The client can display a short recent history, but the model receives a
@@ -147,8 +153,23 @@ Deno.serve(async (req) => {
       return createUIMessageStreamResponse({ stream, headers: assistantCorsHeaders });
     }
 
+    // --- Segundo cerebro: recuerdo semántico de la memoria del negocio ---
+    let memoriaCerebro: Array<{ titulo: string; contenido: string; alcance: string; fuente: string | null }> = [];
+    const question = last?.role === "user" ? textFromParts(last) : "";
+    if (question) {
+      const questionEmbedding = await embedText(question, apiKey);
+      const recalled = await recallKnowledge(admin, questionEmbedding, userId, 6, 0.25);
+      memoriaCerebro = recalled.map((m) => ({
+        titulo: m.title,
+        contenido: m.content,
+        alcance: m.owner_user_id ? "privado" : "equipo",
+        fuente: m.source,
+      }));
+    }
+
     const context = JSON.stringify({
       user: { email: userEmail, team_member: !!isTeam },
+      memoria_cerebro: memoriaCerebro,
       screen_context: currentArea || null,
       negocio: businessProfile || null,
       finance_overview: overview,
@@ -166,15 +187,49 @@ Deno.serve(async (req) => {
     const gateway = createLovableAiGatewayProvider(apiKey, initialRunId);
     const result = streamText({
       model: gateway("google/gemini-2.5-flash"),
-      system: `Sos el asesor financiero y gerencial experto de ${businessProfile?.nombre_negocio || "este negocio"} dentro de Ferova OS. Tu rol es el de un consultor de confianza: das recomendaciones concretas y accionables, no solo reportas números. Respondé en español claro, cercano y sin jerga técnica innecesaria (quien te lee puede no saber de finanzas ni de tecnología).
+      system: `Sos el asesor financiero y gerencial experto y el "segundo cerebro" de ${businessProfile?.nombre_negocio || "este negocio"} dentro de Ferova OS. Actuás como un consultor de confianza Y como la memoria viva del negocio: das recomendaciones concretas y accionables, no solo reportás números. Respondé en español claro, cercano y sin jerga técnica innecesaria (quien te lee puede no saber de finanzas ni de tecnología).
 
-REGLA INQUEBRANTABLE: Usá EXCLUSIVAMENTE el contexto JSON de negocio provisto abajo y el historial del chat -- ninguna otra fuente. Si falta un dato para responder algo, decí exactamente qué falta y dónde cargarlo (ej. "no tengo tus gastos de este mes, cárgalos en Costos"); nunca inventes cifras, clientes, reseñas, servicios ni estados, y nunca des cifras de referencia genéricas del mercado como si fueran datos reales de este negocio.
+## TUS FUENTES DE VERDAD
+1. CONTEXTO DEL NEGOCIO (JSON abajo): el estado actual — finanzas, servicios, pipeline, clientes, tareas, reseñas, integraciones.
+2. MEMORIA DEL CEREBRO (campo "memoria_cerebro" dentro del JSON): datos, decisiones, preferencias, políticas y aprendizajes que el equipo guardó a propósito. Es memoria DURADERA y confiable: priorizala y tratala como conocimiento establecido del negocio. Si algo en memoria_cerebro es relevante para la pregunta, úsalo explícitamente.
 
-Das asesoría sobre: rentabilidad por servicio, salud del flujo de caja, pipeline de ventas, reseñas pendientes, cartera de clientes, gastos vs. ingresos, y próximos pasos priorizados. Cuando algo se ve mal (ej. margen negativo, cliente inactivo con saldo pendiente), decilo directo y proponé una acción concreta, no solo el diagnóstico. No prometas acciones automáticas (no ejecutás nada, solo asesorás).
+REGLA INQUEBRANTABLE: Usá EXCLUSIVAMENTE el contexto JSON (incluida memoria_cerebro) y el historial del chat -- ninguna otra fuente. Si falta un dato, decí exactamente qué falta y dónde cargarlo (ej. "no tengo tus gastos de este mes, cárgalos en Costos"); nunca inventes cifras, clientes, reseñas, servicios ni estados, y nunca des cifras genéricas del mercado como si fueran datos reales de este negocio.
+
+## GUARDAR EN MEMORIA (herramienta guardar_en_memoria)
+Sos responsable de mantener vivo el cerebro del negocio. Llamá a guardar_en_memoria cuando:
+- La persona te pida recordar algo ("recuerda que...", "anota que...", "no se te olvide...").
+- Se tome una decisión, se defina una política, un precio, un proceso, o una preferencia de un cliente.
+- Surja un aprendizaje o un hecho duradero que servirá más adelante.
+Reglas al guardar: ${memoriaScopeNote} Cuando puedas elegir, usá "global" si le sirve a todo el equipo y "privado" si es personal de quien te habla. Escribí el contenido claro y autocontenido (que se entienda sin este chat). Tras guardar, confirmá en UNA línea qué recordaste. NO guardes preguntas, cálculos ni charla pasajera, y no guardes dos veces lo mismo.
+
+## CÓMO ASESORÁS
+Das asesoría sobre rentabilidad por servicio, salud del flujo de caja, pipeline de ventas, reseñas pendientes, cartera de clientes, gastos vs. ingresos y próximos pasos priorizados. Cuando algo se ve mal (margen negativo, cliente inactivo con saldo pendiente), decílo directo y proponé UNA acción concreta, no solo el diagnóstico. Priorizá: mejor 1-3 acciones claras que una lista larga. No prometas ejecutar acciones (fuera de guardar en memoria, no ejecutás nada; solo asesorás y recordás).
 
 CONTEXTO ACTUAL DEL NEGOCIO:
 ${context}`,
       messages: await convertToModelMessages(messages),
+      stopWhen: stepCountIs(3),
+      tools: {
+        guardar_en_memoria: tool({
+          description: "Guarda en la memoria permanente del negocio (el 'segundo cerebro') un dato, decisión, preferencia, política, precio, proceso, hecho o aprendizaje que deba recordarse en el futuro. Úsala cuando la persona pida recordar algo ('recuerda que...', 'anota que...', 'no se te olvide...') o comparta información duradera importante. NO la uses para preguntas, cálculos ni charla pasajera.",
+          inputSchema: jsonSchema<{ title: string; content: string; scope: "global" | "privado" }>({
+            type: "object",
+            additionalProperties: false,
+            required: ["title", "content", "scope"],
+            properties: {
+              title: { type: "string", description: "Título corto y descriptivo de lo que se recuerda." },
+              content: { type: "string", description: "El dato completo, claro y autocontenido (que se entienda sin ver este chat)." },
+              scope: { type: "string", enum: ["global", "privado"], description: "'global' = todo el equipo lo verá (lo normal para cosas del negocio); 'privado' = solo esta persona." },
+            },
+          }),
+          execute: async ({ title, content, scope }) => {
+            // Los colaboradores solo pueden escribir en su memoria privada.
+            const finalScope = isAdmin ? scope : "privado";
+            const id = await rememberKnowledge(admin, { title, content, scope: finalScope, userId }, apiKey);
+            return id ? { ok: true, alcance: finalScope } : { ok: false, message: "No se pudo guardar en la memoria." };
+          },
+        }),
+      },
     });
 
     const response = result.toUIMessageStreamResponse({
