@@ -131,6 +131,7 @@ export async function loadFinanceData(userId: string): Promise<AppData> {
     precio_habitual: s.precio_habitual != null ? Number(s.precio_habitual) : null,
     precio_habitual_moneda: (s.precio_habitual_moneda as 'COP' | 'USD') || 'COP',
     precio_ofrecido: s.precio_ofrecido != null ? Number(s.precio_ofrecido) : null,
+    aplica_iva: Boolean(s.aplica_iva),
   }));
 
   const herramientas: Herramienta[] = herramientasRaw.map((h) => ({
@@ -274,6 +275,7 @@ export async function saveServicios(userId: string, list: Servicio[]) {
     precio_habitual: s.precio_habitual ?? null,
     precio_habitual_moneda: s.precio_habitual_moneda || 'COP',
     precio_ofrecido: s.precio_ofrecido ?? null,
+    aplica_iva: Boolean(s.aplica_iva),
   })));
 }
 

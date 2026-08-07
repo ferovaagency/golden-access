@@ -52,6 +52,8 @@ export interface Servicio {
   precio_habitual_moneda?: 'COP' | 'USD' | null;
   /** Precio publicado actual; solo lectura desde el motor de "precio ideal". */
   precio_ofrecido?: number | null;
+  /** Define si esta línea causa IVA al facturar; el precio registrado sigue siendo la base antes de IVA. */
+  aplica_iva?: boolean;
 }
 
 export interface Herramienta {

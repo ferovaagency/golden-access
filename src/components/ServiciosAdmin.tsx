@@ -52,6 +52,7 @@ export default function ServiciosAdmin({
   const [srvMargenPct, setSrvMargenPct] = useState(''); // vacío = sin margen propio, usa el margen mínimo por defecto
   const [srvPrecioHabitual, setSrvPrecioHabitual] = useState(''); // vacío = no informado
   const [srvPrecioHabitualMoneda, setSrvPrecioHabitualMoneda] = useState<'COP' | 'USD'>('COP');
+  const [srvAplicaIva, setSrvAplicaIva] = useState(false);
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [confirmDeleteSrvId, setConfirmDeleteSrvId] = useState<string | null>(null);
   const [uploadingCsv, setUploadingCsv] = useState(false);
@@ -80,6 +81,7 @@ export default function ServiciosAdmin({
     setSrvMargenPct(s.margen_objetivo != null ? String(Math.round(s.margen_objetivo * 100)) : '');
     setSrvPrecioHabitual(s.precio_habitual != null ? String(s.precio_habitual) : '');
     setSrvPrecioHabitualMoneda(s.precio_habitual_moneda || 'COP');
+    setSrvAplicaIva(Boolean(s.aplica_iva));
   };
 
   const handleCancelEdit = () => {
@@ -90,6 +92,7 @@ export default function ServiciosAdmin({
     setSrvMargenPct('');
     setSrvPrecioHabitual('');
     setSrvPrecioHabitualMoneda('COP');
+    setSrvAplicaIva(false);
   };
 
   const handleCreateServicio = async (e: React.FormEvent) => {
@@ -110,6 +113,7 @@ export default function ServiciosAdmin({
             margen_objetivo: margenObjetivo,
             precio_habitual: precioHabitual,
             precio_habitual_moneda: srvPrecioHabitualMoneda,
+            aplica_iva: srvAplicaIva,
             descripcion: s.descripcion || `Línea de servicio general para ${srvNombre.trim()}`
           };
         }
@@ -134,6 +138,7 @@ export default function ServiciosAdmin({
         margen_objetivo: margenObjetivo,
         precio_habitual: precioHabitual,
         precio_habitual_moneda: srvPrecioHabitualMoneda,
+        aplica_iva: srvAplicaIva,
         descripcion: `Línea de servicio general para ${srvNombre.trim()}`
       };
 
@@ -147,6 +152,7 @@ export default function ServiciosAdmin({
       setSrvMargenPct('');
       setSrvPrecioHabitual('');
       setSrvPrecioHabitualMoneda('COP');
+      setSrvAplicaIva(false);
     }
   };
 
@@ -308,6 +314,11 @@ export default function ServiciosAdmin({
               <p className="text-[10px] text-slate-400 mt-1">Lo que cobrás hoy por esta línea. Equilibrio por Servicio lo compara contra el precio ideal (costo + margen) y te dice si deberías subirlo o bajarlo.</p>
             </div>
 
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+              <input type="checkbox" checked={srvAplicaIva} onChange={(e) => setSrvAplicaIva(e.target.checked)} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600" />
+              <span><span className="block font-semibold">Este servicio cobra IVA</span><span className="mt-0.5 block text-[10px] text-slate-500">El precio de referencia se considera antes de IVA; al facturar se mostrará el valor del impuesto por separado.</span></span>
+            </label>
+
             <button
               type="submit"
               className="w-full bg-blue-600 hover:bg-[#b09252] text-black font-semibold font-display py-3 rounded transition cursor-pointer"
@@ -372,6 +383,7 @@ export default function ServiciosAdmin({
                               Vende a: {s.precio_habitual_moneda === 'USD' ? `US$${s.precio_habitual.toLocaleString('en-US')}` : formatCop(s.precio_habitual)}
                             </span>
                           )}
+                          <span className={`mt-1 inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${s.aplica_iva ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-500'}`}>{s.aplica_iva ? `IVA ${Math.round(config.tarifa_iva * 100)}%` : 'Sin IVA'}</span>
                         </td>
                         <td className="px-5 py-4 text-right font-mono text-slate-900">
                           {formatCop(stats.unitDirectCost)}
