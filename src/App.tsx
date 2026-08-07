@@ -477,12 +477,12 @@ function AppInner() {
   const metrics = isReady ? calcularMétricasFinancieras(appData, selectedMonth, fiscalProfile) : null;
 
   // Módulo "CRM y Ventas" propio del cliente -- distinto del CRM interno de Ferova (abajo).
+  // Depurado: el CRM/pipeline vive en "CRM y Ventas" (CustomerCRM). Aquí solo
+  // quedan Citas y Bot. Pipeline de prospección, LinkedIn+Reddit y Reseñas se
+  // ocultaron (código intacto en AdminCRM por si se reactivan).
   const CRM_GROWTH_TABS = modules.crm_ventas ? [
-    { id: 'crm-pipeline', label: 'Pipeline', hint: 'Prospectos y playbooks' },
     { id: 'crm-citas', label: 'Citas', hint: 'Diagnósticos y Calendar' },
-    { id: 'crm-contenido', label: 'LinkedIn + Reddit', hint: 'Señales automáticas' },
     { id: 'crm-bot', label: 'Bot WhatsApp', hint: 'Conocimiento y estado' },
-    { id: 'crm-resenas', label: 'Reseñas', hint: 'Gmail y fuentes' },
   ] : [];
 
   const handleNavigate = (tab: string) => {
@@ -494,18 +494,19 @@ function AppInner() {
   };
 
   const NAVIGATION_SECTIONS: NavigationSection[] = [
-    { id: 'home', label: 'Home', icon: LayoutDashboard, items: [{ id: 'dashboard', label: 'Executive Control Center', hint: 'Vista ejecutiva y prioridades' }] },
-    { id: 'workspace', label: 'Workspace', icon: Boxes, items: modules.core_projects ? [
+    { id: 'home', label: 'Inicio', icon: LayoutDashboard, items: [{ id: 'dashboard', label: 'Resumen', hint: 'Salud, prioridades y actividad' }] },
+    { id: 'projects', label: 'Proyectos', icon: FolderKanban, items: modules.core_projects || modules.planner ? [
       { id: 'clientes', label: 'Clientes', hint: 'Cuentas activas' },
       { id: 'servicios', label: 'Servicios', hint: 'Catálogo y costos' },
       { id: 'horas', label: 'Horas', hint: 'Capacidad y rentabilidad' },
+      ...(modules.core_projects ? [
+        { id: 'proyectos', label: 'Proyectos', hint: 'Objetivos, hitos y KPIs' },
+        { id: 'seguimiento', label: 'Seguimiento', hint: 'Diario, semanal y mensual' },
+      ] : []),
+      ...(modules.planner ? [{ id: 'planner', label: 'Planner', hint: 'Prioridades, agenda y bloques' }] : []),
     ] : [] },
-    { id: 'projects', label: 'Projects', icon: FolderKanban, items: modules.core_projects ? [
-      { id: 'proyectos', label: 'Proyectos', hint: 'Objetivos, hitos y KPIs' },
-      { id: 'seguimiento', label: 'Seguimiento', hint: 'Diario → semanal → mensual → anual' },
-    ] : [] },
-    { id: 'modules', label: 'Modules', icon: Grid2X2, items: [
-      ...(modules.advanced_analytics ? [{ id: 'reports', label: 'Reportes CEO', hint: 'Seguimiento ejecutivo', group: 'Finanzas' as const }] : []),
+    { id: 'finance', label: 'Finanzas', icon: Boxes, items: [
+      ...(modules.advanced_analytics ? [{ id: 'reports', label: 'Reportes CEO', hint: 'Seguimiento ejecutivo' }] : []),
       ...(modules.financiero ? [
       { id: 'finops', label: 'Finanzas operativas', hint: 'Cuentas, deudas, flujo', group: 'Finanzas' as const },
       { id: 'ventas', label: 'Ingresos', hint: 'Ventas y abonos', group: 'Finanzas' as const },
@@ -516,12 +517,13 @@ function AppInner() {
       { id: 'iva', label: 'IVA', hint: 'Control tributario', group: 'Finanzas' as const },
       { id: 'alertas', label: 'Alertas', hint: 'Riesgos y topes', group: 'Finanzas' as const },
       ] : []),
-      ...(modules.planner ? [{ id: 'planner', label: 'Planner', hint: 'Prioridades y bloques protegidos', group: 'Planner' as const }] : []),
-      ...(modules.crm_ventas ? [{ id: 'ventas-crm', label: 'CRM y Ventas', hint: 'Tu pipeline propio', group: 'Ventas' as const }] : []),
-      ...(modules.marketing_roi ? [{ id: 'marketingRoi', label: 'Marketing ROI', hint: 'Campañas y calculadora', group: 'Ventas' as const }] : []),
-      ...CRM_GROWTH_TABS.map((item) => ({ ...item, group: 'Ventas' as const })),
     ] },
-    { id: 'settings', label: 'Settings', icon: Settings, items: [
+    { id: 'sales', label: 'Ventas', icon: Grid2X2, items: [
+      ...(modules.crm_ventas ? [{ id: 'ventas-crm', label: 'CRM', hint: 'Pipeline y oportunidades' }] : []),
+      ...(modules.marketing_roi ? [{ id: 'marketingRoi', label: 'Marketing ROI', hint: 'Campañas y calculadora' }] : []),
+      ...CRM_GROWTH_TABS,
+    ] },
+    { id: 'settings', label: 'Configuración', icon: Settings, items: [
       ...(modules.financiero ? [{ id: 'ajustes', label: 'Configuración', hint: 'Datos y Google Sheets' }] : []),
       ...(isTeam ? [{ id: 'memoria', label: 'Memoria', hint: 'Cerebro del negocio: conocimiento global y privado' }] : []),
       ...(isTeam ? [{ id: 'admin', label: 'Administración Ferova', hint: 'Usuarios, planes, feedback y operaciones' }] : []),

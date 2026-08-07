@@ -97,7 +97,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     return message;
   };
   const [authorized, setAuthorized] = useState<boolean | null>(null);
-  const [internalTab, setInternalTab] = useState<CRMTab>('pipeline');
+  const [internalTab, setInternalTab] = useState<CRMTab>('clientes');
   const tab: CRMTab = controlledTab ?? internalTab;
   const setTab = (t: CRMTab) => { if (onTabChange) onTabChange(t); else setInternalTab(t); };
   const [oportunidades, setOportunidades] = useState<Oportunidad[]>([]);
@@ -1033,7 +1033,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
           </header>
 
           <nav className="flex gap-2 px-6 py-3 border-b border-slate-200 text-xs font-mono">
-            {(['pipeline', 'citas', 'contenido', 'bot', 'resenas', 'clientes', 'feedback', 'analitica'] as const).map((t) => (
+            {(['clientes', 'feedback', 'analitica'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -1041,7 +1041,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   tab === t ? 'bg-blue-50 text-blue-600 border border-[#c9a961]/40' : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
-                {t === 'pipeline' ? 'Pipeline' : t === 'citas' ? 'Citas de diagnóstico' : t === 'contenido' ? 'Contenido con potencial' : t === 'bot' ? 'Bot de WhatsApp' : t === 'resenas' ? 'Reseñas' : t === 'clientes' ? 'Clientes' : t === 'feedback' ? 'Feedback & Uso' : 'Analítica profunda'}
+                {t === 'clientes' ? 'Clientes' : t === 'feedback' ? 'Feedback & Uso' : 'Analítica profunda'}
               </button>
             ))}
           </nav>

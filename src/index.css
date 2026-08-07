@@ -240,15 +240,15 @@ pre {
    se consumen desde componentes nuevos detras de VITE_FEROVA_UI_V2.
    ============================================================ */
 :root {
-  --ferova-brand: #541014;
-  --ferova-brand-2: #6f1a21;
-  --ferova-navy: #2F2D56;
-  --ferova-gold: #C0930E;
-  --ferova-canvas: #F4F5F7;
+  --ferova-brand: #2563EB;
+  --ferova-brand-2: #1D4ED8;
+  --ferova-navy: #1E3A8A;
+  --ferova-gold: #6366F1;
+  --ferova-canvas: #F8FAFC;
   --ferova-surface: #FFFFFF;
-  --ferova-soft: #F4F4F5;
-  --ferova-line: #E4E5E7;
-  --ferova-ai: #ECE9FF;
+  --ferova-soft: #F1F5F9;
+  --ferova-line: #E2E8F0;
+  --ferova-ai: #EEF2FF;
   --ferova-positive: #E3F4EB;
   --ferova-warning: #F3EAD6;
   --ferova-danger: #F7E3E4;
@@ -258,8 +258,8 @@ pre {
   --ferova-radius-hero: 18px;
   --ferova-radius-pill: 999px;
 
-  --ferova-shadow: 0 1px 2px rgba(24, 24, 27, 0.04), 0 8px 24px rgba(24, 24, 27, 0.035);
-  --ferova-shadow-hover: 0 14px 36px rgba(24, 24, 27, 0.09);
+  --ferova-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.045);
+  --ferova-shadow-hover: 0 14px 36px rgba(15, 23, 42, 0.10);
 }
 
 /* Material Button GSI */

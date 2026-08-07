@@ -50,11 +50,9 @@ export default function CommandPalette({ open, onClose, onNavigate, isTeam, hasF
     }
     if (isTeam) {
       base.push(
-        { id: 'nav:pipeline', label: 'CRM · Pipeline', group: 'CRM', icon: Target, run: go('crm-pipeline') },
+        { id: 'nav:crm', label: 'CRM y Ventas', group: 'CRM', icon: Target, run: go('ventas-crm') },
         { id: 'nav:citas', label: 'CRM · Citas', group: 'CRM', icon: CalendarCheck, run: go('crm-citas') },
-        { id: 'nav:contenido', label: 'CRM · LinkedIn + Reddit', group: 'CRM', icon: Sparkles, run: go('crm-contenido') },
         { id: 'nav:bot', label: 'CRM · Bot WhatsApp', group: 'CRM', icon: MessageCircle, run: go('crm-bot') },
-        { id: 'nav:resenas', label: 'CRM · Reseñas', group: 'CRM', icon: Star, run: go('crm-resenas') },
       );
     }
     base.push(...searchEntries.map((entry) => ({

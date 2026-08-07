@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { Plus, Loader2, Trash2, Pencil, X, Phone, Mail, Building2 } from 'lucide-react';
+import { Plus, Loader2, Trash2, Pencil, X, Phone, Mail, Building2, Search, MessageCircle, CalendarClock } from 'lucide-react';
 import { Contacto, ContactoEstado, listContactos, upsertContacto, deleteContacto } from '../lib/bizCrmService';
 import { useToast, errMsg } from './ui/toast';
 
@@ -28,6 +28,21 @@ function formatMoney(val: number, moneda: 'COP' | 'USD') {
   }).format(val);
 }
 
+// Suma montos por moneda (no mezcla COP con USD) y los formatea juntos.
+function sumByCurrency(items: Contacto[]): Record<'COP' | 'USD', number> {
+  return items.reduce((acc, c) => {
+    if (c.valor_estimado != null) acc[c.moneda] = (acc[c.moneda] || 0) + Number(c.valor_estimado);
+    return acc;
+  }, { COP: 0, USD: 0 } as Record<'COP' | 'USD', number>);
+}
+
+function formatSums(sums: Record<'COP' | 'USD', number>): string {
+  const parts: string[] = [];
+  if (sums.COP) parts.push(formatMoney(sums.COP, 'COP'));
+  if (sums.USD) parts.push(formatMoney(sums.USD, 'USD'));
+  return parts.join(' · ') || '—';
+}
+
 export default function CustomerCRM({ user }: Props) {
   const { error: toastErr, confirm: askConfirm } = useToast();
   const [contactos, setContactos] = useState<Contacto[]>([]);
@@ -36,6 +51,9 @@ export default function CustomerCRM({ user }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [query, setQuery] = useState('');
+
+  const today = new Date().toISOString().slice(0, 10);
 
   const refresh = async () => {
     setLoading(true);
@@ -49,6 +67,25 @@ export default function CustomerCRM({ user }: Props) {
   };
 
   useEffect(() => { refresh(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [user.id]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return contactos;
+    return contactos.filter((c) =>
+      [c.nombre_contacto, c.empresa, c.email, c.telefono].some((v) => (v || '').toLowerCase().includes(q)),
+    );
+  }, [contactos, query]);
+
+  // Resumen: negocios abiertos (ni ganado ni perdido) y ganados.
+  const stats = useMemo(() => {
+    const abiertos = contactos.filter((c) => c.estado !== 'ganado' && c.estado !== 'perdido');
+    const ganados = contactos.filter((c) => c.estado === 'ganado');
+    return {
+      abiertosCount: abiertos.length,
+      abiertosValor: formatSums(sumByCurrency(abiertos)),
+      ganadosValor: formatSums(sumByCurrency(ganados)),
+    };
+  }, [contactos]);
 
   const openNew = () => { setEditingId(null); setForm(EMPTY_FORM); setModalOpen(true); };
   const openEdit = (c: Contacto) => {
@@ -112,14 +149,41 @@ export default function CustomerCRM({ user }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-xl font-display font-semibold text-slate-900">CRM y Ventas</h2>
-          <p className="text-xs text-slate-500 mt-1">Tu pipeline de ventas propio -- arrastra tus prospectos por las etapas.</p>
+          <p className="text-xs text-slate-500 mt-1">Tu pipeline de ventas: mueve cada prospecto por las etapas hasta cerrarlo.</p>
         </div>
         <button onClick={openNew} className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl">
           <Plus className="w-4 h-4" /> Nuevo contacto
         </button>
+      </div>
+
+      {/* Resumen del pipeline */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="bg-white border border-slate-200 rounded-xl p-3">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">Negocios abiertos</div>
+          <div className="text-lg font-semibold text-slate-900">{stats.abiertosCount}</div>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-xl p-3">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">Valor en pipeline</div>
+          <div className="text-sm font-semibold text-slate-900 mt-0.5">{stats.abiertosValor}</div>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-xl p-3">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">Ganado</div>
+          <div className="text-sm font-semibold text-emerald-600 mt-0.5">{stats.ganadosValor}</div>
+        </div>
+      </div>
+
+      {/* Buscador */}
+      <div className="relative max-w-sm">
+        <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Buscar por nombre, empresa, correo o teléfono…"
+          className="w-full bg-white border border-slate-200 pl-9 pr-3 py-2 rounded-xl text-sm text-slate-900"
+        />
       </div>
 
       {loading && (
@@ -137,43 +201,72 @@ export default function CustomerCRM({ user }: Props) {
       {!loading && contactos.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {COLUMNS.map((col) => {
-            const items = contactos.filter((c) => c.estado === col.estado);
+            const items = filtered.filter((c) => c.estado === col.estado);
+            const colValor = formatSums(sumByCurrency(items));
             return (
               <div key={col.estado} className="bg-slate-50 rounded-2xl p-3 space-y-3 min-h-[200px]">
-                <div className="flex items-center justify-between px-1">
-                  <span className="text-[10px] font-mono uppercase tracking-wider font-bold" style={{ color: col.accent }}>{col.label}</span>
-                  <span className="text-[10px] font-mono text-slate-400">{items.length}</span>
-                </div>
-                {items.map((c) => (
-                  <div key={c.id} className="bg-white border border-slate-200 rounded-xl p-3 space-y-2 shadow-sm text-xs">
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="font-semibold text-slate-900">{c.nombre_contacto}</span>
-                      <div className="flex gap-1 shrink-0">
-                        <button onClick={() => openEdit(c)} aria-label={`Editar ${c.nombre_contacto}`} className="text-slate-400 hover:text-blue-600">
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                        <button onClick={() => handleDelete(c)} aria-label={`Eliminar ${c.nombre_contacto}`} className="text-slate-400 hover:text-red-600">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                    {c.empresa && <div className="flex items-center gap-1 text-slate-500"><Building2 className="w-3 h-3" />{c.empresa}</div>}
-                    {c.telefono && <div className="flex items-center gap-1 text-slate-500"><Phone className="w-3 h-3" />{c.telefono}</div>}
-                    {c.email && <div className="flex items-center gap-1 text-slate-500 truncate"><Mail className="w-3 h-3 shrink-0" />{c.email}</div>}
-                    {c.valor_estimado != null && (
-                      <div className="font-mono font-semibold text-slate-900">{formatMoney(c.valor_estimado, c.moneda)}</div>
-                    )}
-                    <label className="sr-only" htmlFor={`estado-${c.id}`}>Cambiar etapa de {c.nombre_contacto}</label>
-                    <select
-                      id={`estado-${c.id}`}
-                      value={c.estado}
-                      onChange={(e) => handleMove(c, e.target.value as ContactoEstado)}
-                      className="w-full bg-slate-50 border border-slate-200 p-1.5 rounded-lg text-[10px]"
-                    >
-                      {COLUMNS.map((opt) => <option key={opt.estado} value={opt.estado}>{opt.label}</option>)}
-                    </select>
+                <div className="px-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono uppercase tracking-wider font-bold" style={{ color: col.accent }}>{col.label}</span>
+                    <span className="text-[10px] font-mono text-slate-400">{items.length}</span>
                   </div>
-                ))}
+                  <div className="text-[10px] font-mono text-slate-400 mt-0.5">{colValor}</div>
+                </div>
+                {items.map((c) => {
+                  const waNumber = (c.telefono || '').replace(/\D/g, '');
+                  const overdue = !!c.fecha_proxima_accion && c.fecha_proxima_accion < today;
+                  return (
+                    <div key={c.id} className="bg-white border border-slate-200 rounded-xl p-3 space-y-2 shadow-sm text-xs">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="font-semibold text-slate-900">{c.nombre_contacto}</span>
+                        <div className="flex gap-1 shrink-0">
+                          <button onClick={() => openEdit(c)} aria-label={`Editar ${c.nombre_contacto}`} className="text-slate-400 hover:text-blue-600">
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={() => handleDelete(c)} aria-label={`Eliminar ${c.nombre_contacto}`} className="text-slate-400 hover:text-red-600">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                      {c.empresa && <div className="flex items-center gap-1 text-slate-500"><Building2 className="w-3 h-3" />{c.empresa}</div>}
+                      {c.valor_estimado != null && (
+                        <div className="font-mono font-semibold text-slate-900">{formatMoney(c.valor_estimado, c.moneda)}</div>
+                      )}
+                      {(c.proxima_accion || c.fecha_proxima_accion) && (
+                        <div className={`flex items-center gap-1 ${overdue ? 'text-red-600' : 'text-slate-500'}`}>
+                          <CalendarClock className="w-3 h-3 shrink-0" />
+                          <span className="truncate">{c.proxima_accion || 'Seguimiento'}{c.fecha_proxima_accion ? ` · ${c.fecha_proxima_accion}` : ''}{overdue ? ' (vencida)' : ''}</span>
+                        </div>
+                      )}
+
+                      {/* Acciones rápidas */}
+                      {(c.telefono || c.email) && (
+                        <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
+                          {c.telefono && (
+                            <a href={`tel:${c.telefono}`} title="Llamar" className="text-slate-400 hover:text-blue-600"><Phone className="w-3.5 h-3.5" /></a>
+                          )}
+                          {waNumber && (
+                            <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer" title="WhatsApp" className="text-slate-400 hover:text-emerald-600"><MessageCircle className="w-3.5 h-3.5" /></a>
+                          )}
+                          {c.email && (
+                            <a href={`mailto:${c.email}`} title="Enviar correo" className="text-slate-400 hover:text-blue-600"><Mail className="w-3.5 h-3.5" /></a>
+                          )}
+                        </div>
+                      )}
+
+                      <label className="sr-only" htmlFor={`estado-${c.id}`}>Cambiar etapa de {c.nombre_contacto}</label>
+                      <select
+                        id={`estado-${c.id}`}
+                        value={c.estado}
+                        onChange={(e) => handleMove(c, e.target.value as ContactoEstado)}
+                        className="w-full bg-slate-50 border border-slate-200 p-1.5 rounded-lg text-[10px]"
+                      >
+                        {COLUMNS.map((opt) => <option key={opt.estado} value={opt.estado}>{opt.label}</option>)}
+                      </select>
+                    </div>
+                  );
+                })}
+                {items.length === 0 && <div className="text-center text-[10px] text-slate-300 py-4">Vacío</div>}
               </div>
             );
           })}
