@@ -21,6 +21,31 @@ export interface CompleteTaskResult {
   missingService: boolean;
   hourDate: string | null;
 }
+
+/**
+ * Interpretación de una línea de captura natural todavía sin persistir.
+ * La persona confirma o corrige cliente, fecha y duración antes de crearla.
+ */
+export interface PlannerDraft {
+  line: string;
+  title: string;
+  detected_type: string;
+  detected_priority: PlannerPriority;
+  detected_energy: PlannerEnergy;
+  detected_category: PlannerCategory;
+  detected_duration_min: number;
+  financial_impact: number;
+  client_impact: number;
+  risk_score: number;
+  execution_ease: number;
+  detected_deadline: string | null;
+  detected_client: string | null;
+  detected_project: string | null;
+  client_ref: string | null;
+  scheduled_for: string | null;
+  reasoning: string;
+  confidence: number;
+}
 export type PlannerPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type PlannerEnergy = 'low' | 'medium' | 'high';
 export type PlannerTaskStatus = 'backlog' | 'scheduled' | 'in_progress' | 'done' | 'postponed' | 'cancelled';
