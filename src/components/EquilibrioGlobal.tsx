@@ -43,13 +43,13 @@ export default function EquilibrioGlobal({ metrics, formatCop }: EquilibrioGloba
           <span className="text-[10px] text-[#8a8377] font-mono block mt-1">Gastos operativos + Salario Mafe</span>
         </div>
 
-        <div className="bg-[#161412] border border-[#2a2620] p-5 rounded-lg border-l-3 border-l-[#c9a961]">
+        <div className="bg-[#161412] border border-[#2a2620] p-5 rounded-lg border-l-3 border-l-blue-500">
           <span className="text-[10px] font-mono tracking-wider text-[#8a8377] uppercase block">Margen Contribución Prom.</span>
           <div className="text-xl font-display font-semibold text-[#c9a961] mt-2">{(margenContribucion * 100).toFixed(1)}%</div>
           <span className="text-[10px] text-[#8a8377] font-mono block mt-1">Ingresos promedio menos variables</span>
         </div>
 
-        <div className="bg-[#161412] border border-[#2a2620] p-5 rounded-lg border-l-3 border-l-[#c9a961]">
+        <div className="bg-[#161412] border border-[#2a2620] p-5 rounded-lg border-l-3 border-l-blue-500">
           <span className="text-[10px] font-mono tracking-wider text-[#c9a961] uppercase block font-semibold">Punto de Equilibrio</span>
           <div className="text-xl font-display font-bold text-[#c9a961] mt-2">{formatCop(puntoEquilibrioVentas)}</div>
           <span className="text-[10px] text-[#8a8377] font-mono block mt-1">Ventas netas mínimas requeridas</span>

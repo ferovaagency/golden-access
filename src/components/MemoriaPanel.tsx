@@ -6,7 +6,7 @@ import { listMemoria, createMemoria, updateMemoria, deleteMemoria, type BrainIte
 // Pantalla de Memoria (cerebro del negocio), admin-only.
 // Global = conocimiento del equipo; Privado = solo de quien lo escribe.
 
-const inputCls = 'w-full bg-slate-50/50 border border-slate-200 p-2.5 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#c9a961]/40';
+const inputCls = 'w-full bg-slate-50/50 border border-slate-200 p-2.5 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400/40';
 const labelCls = 'font-mono uppercase text-[10px] tracking-wider text-slate-500';
 
 export default function MemoriaPanel() {

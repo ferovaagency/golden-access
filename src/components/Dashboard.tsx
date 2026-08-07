@@ -134,7 +134,7 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
 
   const getFiscalAlertColor = (pct: number) => {
     if (pct < 70) return { bar: '#a8c98a', text: 'bajo control', border: 'border-l-[#a8c98a] bg-slate-50' }; // green
-    if (pct < 100) return { bar: '#c9a961', text: 'alerta preventiva', border: 'border-l-[#c9a961] bg-slate-50' }; // gold
+    if (pct < 100) return { bar: '#c9a961', text: 'alerta preventiva', border: 'border-l-blue-500 bg-slate-50' }; // gold
     return { bar: '#c97a61', text: 'tope superado', border: 'border-l-[#c97a61] bg-slate-50' }; // terracota/red
   };
 
@@ -195,7 +195,7 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
             <div className="text-[10px] text-slate-400 font-mono mt-1">100% de ingresos</div>
           </div>
 
-          <div className="bg-white border border-slate-200 border-l-4 border-l-[#c9a961] p-5 rounded-lg">
+          <div className="bg-white border border-slate-200 border-l-4 border-l-blue-500 p-5 rounded-lg">
             <span className="text-[10px] font-mono tracking-wider text-slate-400 block uppercase">Nivel 1</span>
             <span className="text-sm font-sans font-medium text-slate-500 block mt-1">Utilidad Bruta<MetricTooltip code="UTILIDAD_BRUTA" /></span>
             <div className="text-xl font-display font-semibold text-[#c9a961] mt-3">{formatCop(utilidadBruta)}</div>
@@ -216,7 +216,7 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
             <div className="text-[10px] text-slate-400 font-mono mt-1">Menos salario Mafe</div>
           </div>
 
-          <div className="bg-white border border-slate-200 border-l-4 border-l-[#c9a961] p-5 rounded-lg relative overflow-hidden">
+          <div className="bg-white border border-slate-200 border-l-4 border-l-blue-500 p-5 rounded-lg relative overflow-hidden">
             <div className="absolute top-0 right-0 w-16 h-16 bg-[#c9a961]/5 rounded-bl-full pointer-events-none" />
             <span className="text-[10px] font-mono tracking-wider text-[#c9a961] block uppercase">Nivel 4 · Neto</span>
             <span className="text-sm font-sans font-medium text-slate-900 block mt-1 font-semibold">Utilidad Neta Real<MetricTooltip code="UTILIDAD_NETA" /></span>
@@ -273,7 +273,7 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
       {/* Ventas Nacionales vs Internacionales */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        <div className="bg-white border border-slate-200 border-l-3 border-l-[#c9a961] p-6 rounded-lg flex flex-col justify-between">
+        <div className="bg-white border border-slate-200 border-l-3 border-l-blue-500 p-6 rounded-lg flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-mono tracking-widest text-slate-500 uppercase">Ventas Nacionales</span>

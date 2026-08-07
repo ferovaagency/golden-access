@@ -264,7 +264,7 @@ export default function GastosAdmin({
       {/* E. Resumen final (4 horizontal cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
-        <div className="bg-white border border-slate-200 p-5 rounded-lg border-l-3 border-l-[#c9a961]">
+        <div className="bg-white border border-slate-200 p-5 rounded-lg border-l-3 border-l-blue-500">
           <span className="text-[10px] font-mono tracking-wider text-slate-400 uppercase block">Mi Salario Base</span>
           <div className="text-2xl font-display font-semibold text-slate-900 mt-2">{formatCop(config.salario_propuesto)}</div>
           <span className="text-[10px] text-slate-400 font-mono block mt-1">Carga mensual de nómina</span>
@@ -282,7 +282,7 @@ export default function GastosAdmin({
           <span className="text-[10px] text-slate-400 font-mono block mt-1">Overhead de oficina o administrativos</span>
         </div>
 
-        <div className="bg-slate-50 border border-slate-200 p-5 rounded-lg border-l-3 border-l-[#c9a961] relative overflow-hidden">
+        <div className="bg-slate-50 border border-slate-200 p-5 rounded-lg border-l-3 border-l-blue-500 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-16 h-16 bg-blue-600/5 rounded-bl-full pointer-events-none" />
           <span className="text-[10px] font-mono tracking-wider text-blue-600 uppercase block font-semibold">Total Costos Fijos</span>
           <div className="text-2xl font-display font-bold text-blue-600 mt-2">{formatCop(totalOverheadFijos)}</div>

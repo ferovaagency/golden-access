@@ -41,7 +41,7 @@ export default function AlertasTributarias({ metrics, config, ventas, formatCop 
       return { 
         bar: '#c9a961', 
         bg: 'bg-[#181611]/40', 
-        border: 'border-[#c9a961]/30 border-l-[#c9a961]', 
+        border: 'border-[#c9a961]/30 border-l-blue-500', 
         text: 'Alerta Preventiva', 
         desc: 'Te aproximas a la banda de transición del tope legal. Consulta con tu contador de confianza para organizar tus extractos bancarios.' 
       };
