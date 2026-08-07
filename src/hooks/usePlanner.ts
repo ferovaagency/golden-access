@@ -168,11 +168,12 @@ export function usePlanner() {
     setBusy(null);
   }, []);
 
-  const completeTask = useCallback(async (id: string) => {
+  const completeTask = useCallback(async (id: string): Promise<CompleteTaskResult | null> => {
     setBusy('task'); setError(null);
     try {
-      await plannerService.completeTask(id);
+      const result = await plannerService.completeTask(id);
       await refresh();
+      return result;
     } catch (err: any) {
       setError(err.message || 'No fue posible completar la tarea.');
       throw err;
