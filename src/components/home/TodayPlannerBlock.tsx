@@ -61,6 +61,7 @@ export function TodayPlannerBlock({ onOpenPlanner }: { onOpenPlanner?: () => voi
           {onOpenPlanner && <button onClick={onOpenPlanner} className="text-xs font-semibold text-blue-600 hover:text-blue-800">Abrir Planner</button>}
         </div>
       </div>
+      {notice && <p role="status" className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800">{notice}</p>}
       <div className="mt-4 divide-y divide-slate-100">
         {tasks === null && <p className="py-6 text-center text-sm text-slate-400"><Loader2 className="mr-2 inline h-4 w-4 animate-spin" />Cargando…</p>}
         {tasks?.length === 0 && <p className="py-6 text-center text-sm text-slate-500">No hay tareas agendadas para hoy.</p>}
