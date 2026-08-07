@@ -47,6 +47,8 @@ function MetricCard({ label, value, detail, icon: Icon }: { label: string; value
   );
 }
 
+import { TodayPlannerBlock } from './home/TodayPlannerBlock';
+
 export default function Home({ data, metrics, period, formatCop, onNavigate }: HomeProps) {
   const [sectionOrder, setSectionOrder] = useState<HomeSectionId[]>(readSectionOrder);
   useEffect(() => { localStorage.setItem('ferova.home.sectionOrder', JSON.stringify(sectionOrder)); }, [sectionOrder]);
@@ -171,6 +173,8 @@ export default function Home({ data, metrics, period, formatCop, onNavigate }: H
         <MetricCard label="Horas registradas" value={`${totalHours} h`} detail="Capacidad del período" icon={Clock3} />
       </section>
 
+      <div style={{ order: sectionOrder.indexOf('quick') - 1 }}><TodayPlannerBlock onOpenPlanner={() => onNavigate('planner')} /></div>
+
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/30 sm:p-6" style={{ order: sectionOrder.indexOf('quick') }}><div className="flex items-start justify-between"><div><p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Acceso rápido</p><h3 className="mt-1 text-lg font-semibold text-slate-950">Quick Actions</h3></div><OrderControls id="quick" order={sectionOrder} onMove={moveSection} /></div><div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">{quickActions.map(({ label, icon: Icon, tab }) => <button key={tab} onClick={() => onNavigate(tab)} className="flex min-h-24 flex-col items-start justify-between rounded-xl border border-slate-200 bg-white p-3 text-left transition hover:border-blue-200 hover:bg-blue-50"><Icon className="h-4 w-4 text-blue-600" /><span className="text-xs font-semibold text-slate-700">{label}</span></button>)}</div></section>
 
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-[1.35fr_0.65fr]" style={{ order: sectionOrder.indexOf('priorities') }}>
@@ -195,13 +199,13 @@ function SalesTrendChart({ sales, formatCop }: { sales: AppData['ventas']; forma
     byMonth.set(key, (byMonth.get(key) || 0) + (sale.precio_venta_unitario * sale.cantidad));
   });
   const data = [...byMonth.entries()].sort(([a], [b]) => a.localeCompare(b)).slice(-6).map(([month, ingresos]) => ({ month: new Date(`${month}-15T12:00:00`).toLocaleDateString('es-CO', { month: 'short' }), ingresos }));
-  return <section className="rounded-[var(--ferova-radius-card)] border border-[var(--ferova-line)] bg-[var(--ferova-surface)] p-5 shadow-[var(--ferova-shadow)]"><div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#64748b]">Pulso financiero</p><h2 className="mt-1 font-display text-lg font-semibold text-[#0f172a]">Ingresos por mes</h2></div><span className="rounded-full bg-[var(--ferova-ai)] px-2.5 py-1 text-xs font-semibold text-[var(--ferova-navy)]">Últimos 6 meses</span></div>{data.length ? <div className="mt-4 h-52"><ResponsiveContainer width="100%" height="100%"><AreaChart data={data} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}><defs><linearGradient id="ferovaIncome" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#2563EB" stopOpacity={.24} /><stop offset="100%" stopColor="#2563EB" stopOpacity={0} /></linearGradient></defs><XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} /><YAxis hide /><Tooltip formatter={(value: number) => formatCop(value)} contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} /><Area type="monotone" dataKey="ingresos" stroke="#2563EB" strokeWidth={3} fill="url(#ferovaIncome)" animationDuration={900} /></AreaChart></ResponsiveContainer></div> : <div className="mt-4 grid h-52 place-items-center rounded-xl bg-[var(--ferova-soft)] text-sm text-[#64748b]">Registra ventas para ver la tendencia de ingresos.</div>}</section>;
+  return <section className="rounded-[var(--ferova-radius-card)] border border-[var(--ferova-line)] bg-[var(--ferova-surface)] p-5 shadow-[var(--ferova-shadow)]"><div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#64748b]">Pulso financiero</p><h2 className="mt-1 font-display text-lg font-semibold text-[#0f172a]">Ingresos por mes</h2></div><span className="rounded-full bg-[var(--ferova-ai)] px-2.5 py-1 text-xs font-semibold text-[var(--ferova-navy)]">Últimos 6 meses</span></div>{data.length ? <div className="mt-4 h-52"><ResponsiveContainer width="100%" height="100%"><AreaChart data={data} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}><defs><linearGradient id="ferovaIncome" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#2563EB" stopOpacity={.24} /><stop offset="100%" stopColor="#2563EB" stopOpacity={0} /></linearGradient></defs><XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} /><YAxis hide /><Tooltip formatter={(value) => formatCop(Number(value) || 0)} contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} /><Area type="monotone" dataKey="ingresos" stroke="#2563EB" strokeWidth={3} fill="url(#ferovaIncome)" animationDuration={900} /></AreaChart></ResponsiveContainer></div> : <div className="mt-4 grid h-52 place-items-center rounded-xl bg-[var(--ferova-soft)] text-sm text-[#64748b]">Registra ventas para ver la tendencia de ingresos.</div>}</section>;
 }
 
 function OperationsChart({ income, operatingProfit, totalHours, activeClients, formatCop }: { income: number; operatingProfit: number; totalHours: number; activeClients: number; formatCop: (value: number) => string }) {
   const chart = [{ name: 'Ingresos', value: Math.max(0, income) }, { name: 'Utilidad', value: Math.max(0, operatingProfit) }];
   const margin = income > 0 ? (operatingProfit / income) * 100 : 0;
-  return <section className="rounded-[var(--ferova-radius-card)] border border-[var(--ferova-line)] bg-[var(--ferova-surface)] p-5 shadow-[var(--ferova-shadow)]"><div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#64748b]">Rendimiento operativo</p><h2 className="mt-1 font-display text-lg font-semibold text-[#0f172a]">Ingresos vs. utilidad</h2></div><div className="mt-3 grid grid-cols-3 gap-2"><MetricMini label="Margen" value={`${margin.toFixed(0)}%`} /><MetricMini label="Horas" value={`${Math.round(totalHours)} h`} /><MetricMini label="Clientes" value={String(activeClients)} /></div><div className="mt-3 h-32"><ResponsiveContainer width="100%" height="100%"><BarChart data={chart} barSize={28}><CartesianGrid vertical={false} stroke="#e2e8f0" /><XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#64748b' }} /><YAxis hide /><Tooltip formatter={(value: number) => formatCop(value)} contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} /><Bar dataKey="value" fill="#2563EB" radius={[7, 7, 0, 0]} animationDuration={800} /></BarChart></ResponsiveContainer></div></section>;
+  return <section className="rounded-[var(--ferova-radius-card)] border border-[var(--ferova-line)] bg-[var(--ferova-surface)] p-5 shadow-[var(--ferova-shadow)]"><div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#64748b]">Rendimiento operativo</p><h2 className="mt-1 font-display text-lg font-semibold text-[#0f172a]">Ingresos vs. utilidad</h2></div><div className="mt-3 grid grid-cols-3 gap-2"><MetricMini label="Margen" value={`${margin.toFixed(0)}%`} /><MetricMini label="Horas" value={`${Math.round(totalHours)} h`} /><MetricMini label="Clientes" value={String(activeClients)} /></div><div className="mt-3 h-32"><ResponsiveContainer width="100%" height="100%"><BarChart data={chart} barSize={28}><CartesianGrid vertical={false} stroke="#e2e8f0" /><XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#64748b' }} /><YAxis hide /><Tooltip formatter={(value) => formatCop(Number(value) || 0)} contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} /><Bar dataKey="value" fill="#2563EB" radius={[7, 7, 0, 0]} animationDuration={800} /></BarChart></ResponsiveContainer></div></section>;
 }
 
 function MetricMini({ label, value }: { label: string; value: string }) { return <div className="rounded-xl bg-[var(--ferova-soft)] px-2.5 py-2"><p className="text-[9px] font-semibold uppercase tracking-wide text-[#8a8377]">{label}</p><p className="mt-1 text-sm font-semibold text-[#1f1b16]">{value}</p></div>; }
@@ -244,7 +248,7 @@ function MoneyFlowDonut({ metrics, formatCop }: { metrics: FinancialMetrics; for
                 <Pie data={segments} dataKey="value" nameKey="name" innerRadius={45} outerRadius={70} paddingAngle={2} stroke="none">
                   {segments.map((s) => <Cell key={s.name} fill={s.color} />)}
                 </Pie>
-                <Tooltip formatter={(value: number) => formatCop(value)} contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} />
+                <Tooltip formatter={(value) => formatCop(Number(value) || 0)} contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -275,7 +279,7 @@ function RankBarChart({ title, subtitle, rows, formatCop, color }: { title: stri
             <BarChart data={rows} layout="vertical" margin={{ top: 4, right: 12, left: 4, bottom: 4 }}>
               <XAxis type="number" hide />
               <YAxis type="category" dataKey="name" width={120} tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#475569' }} />
-              <Tooltip formatter={(value: number) => formatCop(value)} contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} cursor={{ fill: '#f1f5f9' }} />
+              <Tooltip formatter={(value) => formatCop(Number(value) || 0)} contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} cursor={{ fill: '#f1f5f9' }} />
               <Bar dataKey="value" fill={color} radius={[0, 6, 6, 0]} barSize={18} animationDuration={700} />
             </BarChart>
           </ResponsiveContainer>

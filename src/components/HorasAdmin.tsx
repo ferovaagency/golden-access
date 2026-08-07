@@ -6,6 +6,7 @@ import { type Period, inPeriod } from '../lib/period';
 import { plannerService } from '../lib/plannerService';
 import { Settings, HelpCircle } from 'lucide-react';
 import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
+import { describeDuration, formatHours } from '../lib/duration';
 
 interface HorasAdminProps {
   horas: Hora[];
@@ -182,46 +183,46 @@ export default function HorasAdmin({
   const last30Horas = currentHoras.slice(0, 30);
 
   return (
-    <div className="space-y-8 animate-fade-in text-[#e8e3d8]">
+    <div className="space-y-8 animate-fade-in text-slate-900">
       
       {/* Visual Header */}
-      <div className="border-b border-[#2a2620] pb-5">
-        <h2 className="text-xl font-display font-medium text-[#c9a961]">Control de Horas de Trabajo</h2>
-        <p className="text-xs text-[#a39d8e] font-mono mt-1">Bitácora de esfuerzo y valor del tiempo del consultor</p>
+      <div className="border-b border-slate-200 pb-5">
+        <h2 className="text-xl font-display font-medium text-blue-700">Control de Horas de Trabajo</h2>
+        <p className="text-xs text-slate-500 font-mono mt-1">Bitácora de esfuerzo y valor del tiempo del consultor</p>
       </div>
 
       {/* A. Métricas principales */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         
-        <div className="bg-[#161412] border border-[#2a2620] border-l-3 border-l-[#a39d8e] p-5 rounded-lg">
-          <span className="text-[10px] font-mono tracking-wider text-[#8a8377] uppercase block">Horas Logs del Periodo</span>
-          <div className="text-2xl font-display font-semibold text-[#e8e3d8] mt-2">{totalHorasLoggeadas} hs</div>
-          <span className="text-[10px] text-[#8a8377] font-mono block mt-1">Total acumulado registrado</span>
+        <div className="bg-white border border-slate-200 border-l-3 border-l-slate-300 p-5 rounded-lg">
+          <span className="text-[10px] font-mono tracking-wider text-slate-500 uppercase block">Horas Logs del Periodo</span>
+          <div className="text-2xl font-display font-semibold text-slate-900 mt-2">{totalHorasLoggeadas} hs</div>
+          <span className="text-[10px] text-slate-500 font-mono block mt-1">Total acumulado registrado</span>
         </div>
 
-        <div className="bg-[#161412] border border-[#2a2620] border-l-3 border-l-[#c9a961] p-5 rounded-lg">
-          <span className="text-[10px] font-mono tracking-wider text-[#8a8377] uppercase block">Hora Cobrada Promedio</span>
-          <div className="text-2xl font-display font-semibold text-[#c9a961] mt-2">{formatCop(horaCobradaObj)}</div>
-          <span className="text-[10px] text-[#8a8377] font-mono block mt-1">Tarifa facturada promediada</span>
+        <div className="bg-white border border-slate-200 border-l-3 border-l-blue-500 p-5 rounded-lg">
+          <span className="text-[10px] font-mono tracking-wider text-slate-500 uppercase block">Hora Cobrada Promedio</span>
+          <div className="text-2xl font-display font-semibold text-blue-700 mt-2">{formatCop(horaCobradaObj)}</div>
+          <span className="text-[10px] text-slate-500 font-mono block mt-1">Tarifa facturada promediada</span>
         </div>
 
-        <div className={`border border-[#2a2620] border-l-3 p-5 rounded-lg ${isHoraRealOptimal ? 'border-l-[#a8c98a] bg-[#141812]' : 'border-l-[#c97a61] bg-[#181312]'}`}>
-          <span className="text-[10px] font-mono tracking-wider text-[#8a8377] uppercase block">Valor Hora Real</span>
+        <div className={`border border-slate-200 border-l-3 p-5 rounded-lg ${isHoraRealOptimal ? 'border-l-emerald-500 bg-white' : 'border-l-rose-500 bg-white'}`}>
+          <span className="text-[10px] font-mono tracking-wider text-slate-500 uppercase block">Valor Hora Real</span>
           <div className="text-2xl font-display font-semibold mt-2" style={{ color: isHoraRealOptimal ? 'var(--success)' : 'var(--danger)' }}>
             {formatCop(horaRealObj)}
           </div>
-          <span className="text-[10px] text-[#8a8377] font-mono block mt-1">
+          <span className="text-[10px] text-slate-500 font-mono block mt-1">
             {isHoraRealOptimal ? 'Por encima de la meta' : 'Menor al valor rentable'}
           </span>
         </div>
 
-        <div className="bg-[#161412] border border-[#2a2620] border-l-3 border-l-[#c9a961] p-5 rounded-lg group relative">
-          <span className="text-[10px] font-mono tracking-wider text-[#8a8377] uppercase flex items-center gap-1">
-            Hora Mínima Objetivo <HelpCircle className="w-3 h-3 text-[#8a8377]" />
+        <div className="bg-white border border-slate-200 border-l-3 border-l-blue-500 p-5 rounded-lg group relative">
+          <span className="text-[10px] font-mono tracking-wider text-slate-500 uppercase flex items-center gap-1">
+            Hora Mínima Objetivo <HelpCircle className="w-3 h-3 text-slate-500" />
           </span>
-          <div className="text-2xl font-display font-semibold text-[#e8e3d8] mt-2">{formatCop(horaObjetivoMinima)}</div>
-          <span className="text-[10px] text-[#8a8377] font-mono block mt-1">Sueldo deseado ÷ horas objetivo/mes</span>
-          <div className="hidden group-hover:block absolute z-10 top-full left-0 mt-1 w-64 bg-[#0f0e0c] border border-[#2a2620] rounded-lg p-3 text-[10px] text-[#a39d8e] leading-relaxed shadow-xl">
+          <div className="text-2xl font-display font-semibold text-slate-900 mt-2">{formatCop(horaObjetivoMinima)}</div>
+          <span className="text-[10px] text-slate-500 font-mono block mt-1">Sueldo deseado ÷ horas objetivo/mes</span>
+          <div className="hidden group-hover:block absolute z-10 top-full left-0 mt-1 w-64 bg-slate-50 border border-slate-200 rounded-lg p-3 text-[10px] text-slate-500 leading-relaxed shadow-xl">
             {formatCop(config.salario_propuesto)} sueldo deseado ÷ {horasObjetivoMes || 160}h objetivo/mes = {formatCop(horaObjetivoMinima)}/hora. Es lo mínimo que necesitas cobrar por hora para cubrir tu sueldo objetivo, sin contar gastos del negocio ni reserva de impuestos.
           </div>
         </div>
@@ -229,23 +230,23 @@ export default function HorasAdmin({
       </div>
 
       {/* Fase 5 del manual: Capacidad y utilización del mes */}
-      <div className="bg-[#161412] border border-[#2a2620] rounded-lg p-5">
+      <div className="bg-white border border-slate-200 rounded-lg p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase font-semibold">Capacidad y Utilización del Mes</h3>
-            <p className="text-[10px] text-[#8a8377] mt-1">Horas registradas y horas pendientes del Planner con fecha o entrega en este período.</p>
+            <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold">Capacidad y Utilización del Mes</h3>
+            <p className="text-[10px] text-slate-500 mt-1">Horas registradas y horas pendientes del Planner con fecha o entrega en este período.</p>
           </div>
           <div className="flex items-center gap-6">
             <div className="text-right">
-              <span className="text-[10px] font-mono text-[#8a8377] uppercase block">Comprometidas</span>
-              <span className="text-lg font-display font-semibold text-[#c9a961]">{capacidadComprometidaHoras.toFixed(0)} hs</span>
+              <span className="text-[10px] font-mono text-slate-500 uppercase block">Comprometidas</span>
+              <span className="text-lg font-display font-semibold text-blue-700">{capacidadComprometidaHoras.toFixed(0)} hs</span>
             </div>
             <div className="text-right">
-              <span className="text-[10px] font-mono text-[#8a8377] uppercase block">Disponibilidad</span>
-              <span className="text-lg font-display font-semibold text-[#e8e3d8]">{Math.max(0, capacidad.disponibilidad).toFixed(0)} hs</span>
+              <span className="text-[10px] font-mono text-slate-500 uppercase block">Disponibilidad</span>
+              <span className="text-lg font-display font-semibold text-slate-900">{Math.max(0, capacidad.disponibilidad).toFixed(0)} hs</span>
             </div>
             <div className="text-right">
-              <span className="text-[10px] font-mono text-[#8a8377] uppercase block">Utilización</span>
+              <span className="text-[10px] font-mono text-slate-500 uppercase block">Utilización</span>
               <span className="text-lg font-display font-semibold" style={{ color: LECTURA_CAPACIDAD[capacidad.lectura || 'operativo'].color }}>
                 {capacidad.utilizacion != null ? `${(capacidad.utilizacion * 100).toFixed(0)}%` : '—'}
               </span>
@@ -263,33 +264,33 @@ export default function HorasAdmin({
         <div className="lg:col-span-4 space-y-6">
           
           {/* B. Configuración del Mes */}
-          <div className="bg-[#161412] border border-[#2a2620] p-5 rounded-lg space-y-4">
-            <h3 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase flex items-center gap-1.5 font-semibold">
-              <Settings className="w-3.5 h-3.5 text-[#c9a961]" /> Parámetro Mensual
+          <div className="bg-white border border-slate-200 p-5 rounded-lg space-y-4">
+            <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase flex items-center gap-1.5 font-semibold">
+              <Settings className="w-3.5 h-3.5 text-blue-700" /> Parámetro Mensual
             </h3>
             
             <form onSubmit={handleConfigSubmit} className="space-y-3">
               <div>
-                <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Horas Facturables Objetivo</label>
+                <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Horas Facturables Objetivo</label>
                 <div className="flex gap-2">
                   <input 
                     type="number"
                     min="1"
                     value={horasObjetivoMes}
                     onChange={(e) => setHorasObjetivoMes(Number(e.target.value))}
-                    className="bg-[#0f0e0c]/60 text-white font-mono text-xs border border-[#2a2620] px-3 py-2 rounded focus:outline-none w-full"
+                    className="bg-white text-slate-900 font-mono text-xs border border-slate-200 px-3 py-2 rounded focus:outline-none w-full"
                   />
                   <button 
                     type="submit"
-                    className="bg-[#c9a961] hover:bg-[#b09252] text-black text-xs font-semibold font-display px-3 py-2 rounded transition cursor-pointer"
+                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold font-display px-3 py-2 rounded transition cursor-pointer"
                   >
                     {isUpdatingConfig ? '...' : 'Fijar'}
                   </button>
                 </div>
-                <p className="text-[10px] text-[#8a8377] mt-1.5">Usado para calcular el costo de tu hora objetivo.</p>
+                <p className="text-[10px] text-slate-500 mt-1.5">Usado para calcular el costo de tu hora objetivo.</p>
               </div>
               <div>
-                <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Umbral de "Pérdida" (% de la hora mínima)</label>
+                <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Umbral de "Pérdida" (% de la hora mínima)</label>
                 <div className="flex gap-2">
                   <input
                     type="number"
@@ -297,24 +298,24 @@ export default function HorasAdmin({
                     max="99"
                     value={umbralPerdidaPct}
                     onChange={(e) => setUmbralPerdidaPct(Number(e.target.value))}
-                    className="bg-[#0f0e0c]/60 text-white font-mono text-xs border border-[#2a2620] px-3 py-2 rounded focus:outline-none w-full"
+                    className="bg-white text-slate-900 font-mono text-xs border border-slate-200 px-3 py-2 rounded focus:outline-none w-full"
                   />
                   <button
                     type="submit"
-                    className="bg-[#c9a961] hover:bg-[#b09252] text-black text-xs font-semibold font-display px-3 py-2 rounded transition cursor-pointer"
+                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold font-display px-3 py-2 rounded transition cursor-pointer"
                   >
                     {isUpdatingConfig ? '...' : 'Fijar'}
                   </button>
                 </div>
-                <p className="text-[10px] text-[#8a8377] mt-1.5">Un cliente se marca "PÉRDIDA" cuando su hora cobrada cae debajo de este % de la hora mínima objetivo. Default 75%.</p>
+                <p className="text-[10px] text-slate-500 mt-1.5">Un cliente se marca "PÉRDIDA" cuando su hora cobrada cae debajo de este % de la hora mínima objetivo. Default 75%.</p>
               </div>
             </form>
           </div>
 
           {/* C. Formulario registro */}
-          <div className="bg-[#161412] border border-[#2a2620] rounded-lg overflow-hidden pb-6">
-            <div className="bg-white/[0.02] border-b border-[#2a2620] px-5 py-3.5">
-              <h3 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase font-semibold">
+          <div className="bg-white border border-slate-200 rounded-lg overflow-hidden pb-6">
+            <div className="bg-slate-50 border-b border-slate-200 px-5 py-3.5">
+              <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold">
                 Registrar Bitácora
               </h3>
             </div>
@@ -322,33 +323,33 @@ export default function HorasAdmin({
             <form onSubmit={handleAddHora} className="p-5 space-y-4 text-xs font-sans">
               
               {/* Alert guidance box */}
-              <div className="bg-[#c9a961]/5 border border-[#c9a961]/20 p-3 rounded text-[11px] text-[#e8e3d8] leading-relaxed">
-                <span className="text-[#c9a961] font-bold block mb-1">⏱️ Control de Tiempos</span>
-                Esta sección es exclusiva para registrar las horas de trabajo. Si deseas facturar servicios o registrar abonos/adelantos de clientes, utiliza la pestaña <strong className="text-[#c9a961]">2. Ingresos (Ventas y Abonos)</strong>.
+              <div className="bg-blue-50 border border-blue-300 p-3 rounded text-[11px] text-slate-900 leading-relaxed">
+                <span className="text-blue-700 font-bold block mb-1">⏱️ Control de Tiempos</span>
+                Esta sección es exclusiva para registrar las horas de trabajo. Si deseas facturar servicios o registrar abonos/adelantos de clientes, utiliza la pestaña <strong className="text-blue-700">2. Ingresos (Ventas y Abonos)</strong>.
               </div>
               
               <div>
-                <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Fecha</label>
+                <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Fecha</label>
                 <input 
                   type="date"
                   value={fecha}
                   onChange={(e) => setFecha(e.target.value)}
-                  className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2 rounded font-mono focus:outline-none"
+                  className="w-full bg-white text-slate-900 border border-slate-200 p-2 rounded font-mono focus:outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Cliente</label>
+                <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Cliente</label>
                 <select 
                   value={clienteId}
                   onChange={(e) => setClienteId(e.target.value)}
-                  className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2 rounded focus:outline-none"
+                  className="w-full bg-white text-slate-900 border border-slate-200 p-2 rounded focus:outline-none"
                   required
                 >
                   <option value="" disabled>Selecciona cliente...</option>
                   {clientes.map((c, idx) => (
-                    <option key={`${c.id || 'cli'}-${idx}`} value={c.id} className="bg-[#0f0e0c]">
+                    <option key={`${c.id || 'cli'}-${idx}`} value={c.id} className="bg-slate-50">
                       {c.nombre} {!c.activo ? ' - [Inactivo]' : ''}
                     </option>
                   ))}
@@ -356,26 +357,26 @@ export default function HorasAdmin({
               </div>
 
               <div>
-                <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Servicio</label>
+                <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Servicio</label>
                 <select 
                   value={servicioId}
                   onChange={(e) => setServicioId(e.target.value)}
-                  className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2 rounded focus:outline-none"
+                  className="w-full bg-white text-slate-900 border border-slate-200 p-2 rounded focus:outline-none"
                   required
                 >
                   <option value="" disabled>Selecciona servicio...</option>
                   {servicios.map((s, idx) => (
-                    <option key={`${s.id || 'srv'}-${idx}`} value={s.id} className="bg-[#0f0e0c]">{s.nombre}</option>
+                    <option key={`${s.id || 'srv'}-${idx}`} value={s.id} className="bg-slate-50">{s.nombre}</option>
                   ))}
                 </select>
               </div>
 
               <div>
                 <div className="mb-1 flex items-center justify-between gap-2">
-                  <label className="block text-[#a39d8e] text-[10px] uppercase font-mono">Tiempo dedicado</label>
-                  <div className="flex rounded-md border border-[#2a2620] p-0.5 text-[10px]">
+                  <label className="block text-slate-500 text-[10px] uppercase font-mono">Tiempo dedicado</label>
+                  <div className="flex rounded-md border border-slate-200 p-0.5 text-[10px]">
                     {(['horas', 'minutos'] as const).map((unidad) => (
-                      <button key={unidad} type="button" onClick={() => { setDuracionUnidad(unidad); setHorasDedicadas(unidad === 'minutos' ? Math.round(horasDedicadas * 60) : horasDedicadas / 60); }} className={`rounded px-2 py-1 ${duracionUnidad === unidad ? 'bg-[#c9a961] text-black' : 'text-[#a39d8e]'}`}>
+                      <button key={unidad} type="button" onClick={() => { setDuracionUnidad(unidad); setHorasDedicadas(unidad === 'minutos' ? Math.round(horasDedicadas * 60) : horasDedicadas / 60); }} className={`rounded px-2 py-1 ${duracionUnidad === unidad ? 'bg-blue-600 text-white' : 'text-slate-500'}`}>
                         {unidad === 'horas' ? 'Horas' : 'Minutos'}
                       </button>
                     ))}
@@ -387,20 +388,20 @@ export default function HorasAdmin({
                   min={duracionUnidad === 'horas' ? '0.25' : '1'}
                   value={horasDedicadas}
                   onChange={(e) => setHorasDedicadas(Number(e.target.value))}
-                  className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2 rounded font-mono focus:outline-none"
+                  className="w-full bg-white text-slate-900 border border-slate-200 p-2 rounded font-mono focus:outline-none"
                   required
                 />
-                <p className="mt-1 text-[10px] text-[#8a8377]">Se guardará como {duracionUnidad === 'minutos' ? `${horasDedicadas || 0} min (${((horasDedicadas || 0) / 60).toFixed(2)} h)` : `${horasDedicadas || 0} h (${Math.round((horasDedicadas || 0) * 60)} min)`}.</p>
+                <p className="mt-1 text-[10px] text-slate-500">Se guardará como {describeDuration(horasDedicadas, duracionUnidad)}.</p>
               </div>
 
               <div>
-                <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1">Hito / Descripción</label>
+                <label className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Hito / Descripción</label>
                 <textarea 
                   rows={2}
                   placeholder="Ej: Maquetación de layouts con Tailwind"
                   value={descripcion}
                   onChange={(e) => setDescripcion(e.target.value)}
-                  className="w-full bg-[#0f0e0c]/50 text-white border border-[#2a2620] p-2 rounded focus:outline-none"
+                  className="w-full bg-white text-slate-900 border border-slate-200 p-2 rounded focus:outline-none"
                   required
                 />
               </div>
@@ -408,7 +409,7 @@ export default function HorasAdmin({
               <button 
                 type="submit"
                 disabled={clientes.length === 0}
-                className="w-full bg-[#c9a961] hover:bg-[#b09252] disabled:bg-[#2a2620] disabled:text-[#8a8377] text-black font-semibold font-display py-2.5 rounded transition cursor-pointer"
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-500 text-white font-semibold font-display py-2.5 rounded transition cursor-pointer"
               >
                 Loguear Horas
               </button>
@@ -422,15 +423,15 @@ export default function HorasAdmin({
         <div className="lg:col-span-8 space-y-6">
           
           {/* D. Tabla rentabilidad por cliente */}
-          <div className="bg-[#161412] border border-[#2a2620] rounded-lg overflow-hidden">
-            <div className="bg-white/[0.02] border-b border-[#2a2620] px-5 py-3.5">
-              <h3 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase font-semibold">
+          <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+            <div className="bg-slate-50 border-b border-slate-200 px-5 py-3.5">
+              <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold">
                 Rentabilidad Relativa por Cliente
               </h3>
             </div>
             <div className="overflow-x-auto text-xs font-sans">
               <table className="w-full text-left">
-                <thead className="bg-[#1c1916] text-[#a39d8e] font-mono uppercase text-[10px] border-b border-[#2a2620]">
+                <thead className="bg-white text-slate-500 font-mono uppercase text-[10px] border-b border-slate-200">
                   <tr>
                     <th className="px-5 py-3">Cliente</th>
                     <th className="px-5 py-3">Horas Logs</th>
@@ -439,28 +440,28 @@ export default function HorasAdmin({
                     <th className="px-5 py-3 text-right">Estatus Rentabilidad</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#2a2620]/40">
+                <tbody className="divide-y divide-slate-200">
                   {clientProductivity.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-5 py-8 text-center text-[#8a8377] font-mono">Sin registros</td>
+                      <td colSpan={5} className="px-5 py-8 text-center text-slate-500 font-mono">Sin registros</td>
                     </tr>
                   ) : (
                     clientProductivity.map((item, idx) => {
                       const computedHourly = item.horasRegistradas > 0 ? item.ingresosCop / item.horasRegistradas : 0;
                       
-                      let badge = { text: 'EQUILIBRIO', style: 'text-[#c9a961] bg-[#c9a961]/10 border border-[#c9a961]/25' };
+                      let badge = { text: 'EQUILIBRIO', style: 'text-blue-700 bg-blue-50 border border-blue-300' };
                       if (computedHourly >= horaObjetivoMinima) {
-                        badge = { text: 'GANANCIA', style: 'text-[#a8c98a] bg-[#a8c98a]/10 border border-[#a8c98a]/25' };
+                        badge = { text: 'GANANCIA', style: 'text-emerald-600 bg-emerald-50 border border-emerald-200' };
                       } else if (computedHourly < (horaObjetivoMinima * umbralPerdida)) {
-                        badge = { text: 'PÉRDIDA', style: 'text-[#c97a61] bg-[#c97a61]/10 border border-[#c97a61]/25' };
+                        badge = { text: 'PÉRDIDA', style: 'text-rose-600 bg-rose-50 border border-rose-200' };
                       }
 
                       return (
-                        <tr key={`${item.clienteId || 'cli'}-${idx}`} className="hover:bg-white/[0.01]/70 transition">
-                          <td className="px-5 py-3.5 font-medium text-[#e8e3d8]">{item.clienteNombre}</td>
-                          <td className="px-5 py-3.5 font-mono text-[#a39d8e]">{item.horasRegistradas.toFixed(1)} hs</td>
+                        <tr key={`${item.clienteId || 'cli'}-${idx}`} className="hover:bg-slate-50 transition">
+                          <td className="px-5 py-3.5 font-medium text-slate-900">{item.clienteNombre}</td>
+                          <td className="px-5 py-3.5 font-mono text-slate-500">{formatHours(item.horasRegistradas)}</td>
                           <td className="px-5 py-3.5 font-mono">{formatCop(item.ingresosCop)}</td>
-                          <td className="px-5 py-3.5 font-mono text-[#c9a961] font-semibold">{formatCop(computedHourly)}</td>
+                          <td className="px-5 py-3.5 font-mono text-blue-700 font-semibold">{formatCop(computedHourly)}</td>
                           <td className="px-5 py-3.5 text-right">
                             <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold ${badge.style}`}>
                               {badge.text}
@@ -476,15 +477,15 @@ export default function HorasAdmin({
           </div>
 
           {/* E. Tabla promedio de horas por servicio */}
-          <div className="bg-[#161412] border border-[#2a2620] rounded-lg overflow-hidden">
-            <div className="bg-white/[0.02] border-b border-[#2a2620] px-5 py-3.5">
-              <h3 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase font-semibold">
+          <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+            <div className="bg-slate-50 border-b border-slate-200 px-5 py-3.5">
+              <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold">
                 Promedio de Horas por Línea de Servicio
               </h3>
             </div>
             <div className="overflow-x-auto text-xs font-sans">
               <table className="w-full text-left">
-                <thead className="bg-[#1c1916] text-[#a39d8e] font-mono uppercase text-[10px] border-b border-[#2a2620]">
+                <thead className="bg-white text-slate-500 font-mono uppercase text-[10px] border-b border-slate-200">
                   <tr>
                     <th className="px-5 py-3">Línea Servicio</th>
                     <th className="px-5 py-3 font-mono">Horas Totales Dedicated</th>
@@ -493,23 +494,23 @@ export default function HorasAdmin({
                     <th className="px-5 py-3 text-right">Tarifa Hora Cobrada</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#2a2620]/40">
+                <tbody className="divide-y divide-slate-200">
                   {serviceProductivity.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-5 py-8 text-center text-[#8a8377] font-mono">Sin registros</td>
+                      <td colSpan={5} className="px-5 py-8 text-center text-slate-500 font-mono">Sin registros</td>
                     </tr>
                   ) : (
                     serviceProductivity.map((item, idx) => {
                       const hourly = item.horasRegistradas > 0 ? item.ingresosCop / item.horasRegistradas : 0;
                       return (
-                        <tr key={`${item.servicioId || 'srv'}-${idx}`} className="hover:bg-white/[0.01]/70 transition">
-                          <td className="px-5 py-3.5 font-medium text-[#e8e3d8]">{item.servicioNombre}</td>
-                          <td className="px-5 py-3.5 font-mono text-[#a39d8e]">{item.horasRegistradas.toFixed(1)} hs</td>
+                        <tr key={`${item.servicioId || 'srv'}-${idx}`} className="hover:bg-slate-50 transition">
+                          <td className="px-5 py-3.5 font-medium text-slate-900">{item.servicioNombre}</td>
+                          <td className="px-5 py-3.5 font-mono text-slate-500">{formatHours(item.horasRegistradas)}</td>
                           <td className="px-5 py-3.5 font-mono">{item.unidadesVendidas} uds</td>
-                          <td className="px-5 py-3.5 font-mono font-medium text-[#c9a961]">
+                          <td className="px-5 py-3.5 font-mono font-medium text-blue-700">
                             {item.promedioHorasPorUnidad.toFixed(1)} hs/ud
                           </td>
-                          <td className="px-5 py-3.5 text-right font-mono font-semibold text-[#a8c98a]">
+                          <td className="px-5 py-3.5 text-right font-mono font-semibold text-emerald-600">
                             {formatCop(hourly)}
                           </td>
                         </tr>
@@ -522,15 +523,15 @@ export default function HorasAdmin({
           </div>
 
           {/* F. Historial de bitácora */}
-          <div className="bg-[#161412] border border-[#2a2620] rounded-lg overflow-hidden">
-            <div className="bg-white/[0.02] border-b border-[#2a2620] px-5 py-3.5">
-              <h3 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase font-semibold">
+          <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+            <div className="bg-slate-50 border-b border-slate-200 px-5 py-3.5">
+              <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold">
                 Línea de Tiempo de Bitácora (Últimos 30 Registros)
               </h3>
             </div>
             <div className="overflow-x-auto text-xs font-sans">
               <table className="w-full text-left">
-                <thead className="bg-[#1c1916] text-[#a39d8e] font-mono uppercase text-[10px] border-b border-[#2a2620]">
+                <thead className="bg-white text-slate-500 font-mono uppercase text-[10px] border-b border-slate-200">
                   <tr>
                     <th className="px-5 py-3">Fecha</th>
                     <th className="px-5 py-3">Cliente</th>
@@ -539,21 +540,21 @@ export default function HorasAdmin({
                     <th className="px-5 py-3 text-right">Eliminar</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#2a2620]/40">
+                <tbody className="divide-y divide-slate-200">
                   {last30Horas.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-5 py-10 text-center text-[#8a8377] font-mono">Aún no hay registros de horas en este periodo</td>
+                      <td colSpan={5} className="px-5 py-10 text-center text-slate-500 font-mono">Aún no hay registros de horas en este periodo</td>
                     </tr>
                   ) : (
                     last30Horas.map((h, idx) => (
-                      <tr key={`${h.id || 'hr'}-${idx}`} className="hover:bg-white/[0.01]/70 transition">
-                        <td className="px-5 py-3 font-mono text-[#a39d8e]">{h.fecha}</td>
-                        <td className="px-5 py-3 font-medium text-[#e8e3d8]">
+                      <tr key={`${h.id || 'hr'}-${idx}`} className="hover:bg-slate-50 transition">
+                        <td className="px-5 py-3 font-mono text-slate-500">{h.fecha}</td>
+                        <td className="px-5 py-3 font-medium text-slate-900">
                           {h.cliente_nombre}
-                          <span className="text-[10px] font-mono text-[#8a8377] block mt-0.5">{h.servicio_nombre}</span>
+                          <span className="text-[10px] font-mono text-slate-500 block mt-0.5">{h.servicio_nombre}</span>
                         </td>
-                        <td className="px-5 py-3 font-mono text-[#c9a961] font-semibold">{h.horas.toFixed(2)} hs</td>
-                        <td className="px-5 py-3 text-[#a39d8e] max-w-xs truncate">{h.descripcion}</td>
+                        <td className="px-5 py-3 font-mono text-blue-700 font-semibold">{formatHours(h.horas)}</td>
+                        <td className="px-5 py-3 text-slate-500 max-w-xs truncate">{h.descripcion}</td>
                         <td className="px-5 py-3 text-right">
                           <InlineDeleteConfirm
                             confirming={confirmDeleteId === h.id}

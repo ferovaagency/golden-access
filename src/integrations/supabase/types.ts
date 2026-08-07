@@ -113,39 +113,6 @@ export type Database = {
         }
         Relationships: []
       }
-      calculation_runs: {
-        Row: {
-          calculation_type: string
-          created_at: string
-          formula_version: string
-          id: string
-          inputs: Json
-          notes: string[]
-          outputs: Json
-          user_id: string
-        }
-        Insert: {
-          calculation_type: string
-          created_at?: string
-          formula_version?: string
-          id?: string
-          inputs?: Json
-          notes?: string[]
-          outputs?: Json
-          user_id: string
-        }
-        Update: {
-          calculation_type?: string
-          created_at?: string
-          formula_version?: string
-          id?: string
-          inputs?: Json
-          notes?: string[]
-          outputs?: Json
-          user_id?: string
-        }
-        Relationships: []
-      }
       biz_crm_contactos: {
         Row: {
           created_at: string
@@ -337,6 +304,7 @@ export type Database = {
       }
       business_profile: {
         Row: {
+          booking_calendar_url: string | null
           ciudad: string | null
           created_at: string
           dias_laborales: number[]
@@ -350,8 +318,10 @@ export type Database = {
           tipo_negocio: string | null
           updated_at: string
           user_id: string
+          zona_horaria: string
         }
         Insert: {
+          booking_calendar_url?: string | null
           ciudad?: string | null
           created_at?: string
           dias_laborales?: number[]
@@ -365,8 +335,10 @@ export type Database = {
           tipo_negocio?: string | null
           updated_at?: string
           user_id: string
+          zona_horaria?: string
         }
         Update: {
+          booking_calendar_url?: string | null
           ciudad?: string | null
           created_at?: string
           dias_laborales?: number[]
@@ -379,6 +351,40 @@ export type Database = {
           telefono_contacto?: string | null
           tipo_negocio?: string | null
           updated_at?: string
+          user_id?: string
+          zona_horaria?: string
+        }
+        Relationships: []
+      }
+      calculation_runs: {
+        Row: {
+          calculation_type: string
+          created_at: string
+          formula_version: string
+          id: string
+          inputs: Json
+          notes: string[]
+          outputs: Json
+          user_id: string
+        }
+        Insert: {
+          calculation_type: string
+          created_at?: string
+          formula_version?: string
+          id?: string
+          inputs?: Json
+          notes?: string[]
+          outputs?: Json
+          user_id: string
+        }
+        Update: {
+          calculation_type?: string
+          created_at?: string
+          formula_version?: string
+          id?: string
+          inputs?: Json
+          notes?: string[]
+          outputs?: Json
           user_id?: string
         }
         Relationships: []
@@ -1739,6 +1745,9 @@ export type Database = {
           adelanto: number
           cantidad: number
           cliente_id: string
+          comision_pasarela_fija: number
+          comision_pasarela_porcentaje: number
+          comision_retiro: number
           costo_unitario: number
           estado_pago: string
           fecha: string
@@ -1746,19 +1755,19 @@ export type Database = {
           moneda: string
           notas: string | null
           pasarela_pago: string | null
-          comision_pasarela_porcentaje: number
-          comision_pasarela_fija: number
-          comision_retiro: number
-          trm_conversion: number | null
           precio_venta_unitario: number
           servicio_id: string
           tipo: string
+          trm_conversion: number | null
           user_id: string
         }
         Insert: {
           adelanto?: number
           cantidad?: number
           cliente_id: string
+          comision_pasarela_fija?: number
+          comision_pasarela_porcentaje?: number
+          comision_retiro?: number
           costo_unitario?: number
           estado_pago?: string
           fecha: string
@@ -1766,19 +1775,19 @@ export type Database = {
           moneda?: string
           notas?: string | null
           pasarela_pago?: string | null
-          comision_pasarela_porcentaje?: number
-          comision_pasarela_fija?: number
-          comision_retiro?: number
-          trm_conversion?: number | null
           precio_venta_unitario?: number
           servicio_id: string
           tipo?: string
+          trm_conversion?: number | null
           user_id: string
         }
         Update: {
           adelanto?: number
           cantidad?: number
           cliente_id?: string
+          comision_pasarela_fija?: number
+          comision_pasarela_porcentaje?: number
+          comision_retiro?: number
           costo_unitario?: number
           estado_pago?: string
           fecha?: string
@@ -1786,13 +1795,10 @@ export type Database = {
           moneda?: string
           notas?: string | null
           pasarela_pago?: string | null
-          comision_pasarela_porcentaje?: number
-          comision_pasarela_fija?: number
-          comision_retiro?: number
-          trm_conversion?: number | null
           precio_venta_unitario?: number
           servicio_id?: string
           tipo?: string
+          trm_conversion?: number | null
           user_id?: string
         }
         Relationships: []
@@ -2005,98 +2011,119 @@ export type Database = {
       }
       operating_kpi_days: {
         Row: {
-          user_id: string
-          fecha: string
-          contactos: number
-          seguimientos: number
           calificadas: number
+          contactos: number
+          fecha: string
           respuestas: number
+          seguimientos: number
           updated_at: string
+          user_id: string
         }
         Insert: {
-          user_id: string
-          fecha: string
-          contactos?: number
-          seguimientos?: number
           calificadas?: number
+          contactos?: number
+          fecha: string
           respuestas?: number
+          seguimientos?: number
           updated_at?: string
+          user_id: string
         }
         Update: {
-          user_id?: string
-          fecha?: string
-          contactos?: number
-          seguimientos?: number
           calificadas?: number
+          contactos?: number
+          fecha?: string
           respuestas?: number
+          seguimientos?: number
           updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
       operating_kpi_settings: {
         Row: {
-          user_id: string
-          metas: Json
           meta_anual_mrr: number
+          metas: Json
           updated_at: string
+          user_id: string
         }
         Insert: {
-          user_id: string
-          metas?: Json
           meta_anual_mrr?: number
+          metas?: Json
           updated_at?: string
+          user_id: string
         }
         Update: {
-          user_id?: string
-          metas?: Json
           meta_anual_mrr?: number
+          metas?: Json
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      paddle_webhook_events: {
+        Row: {
+          event_id: string
+          event_type: string
+          payload: Json
+          processed_at: string
+        }
+        Insert: {
+          event_id: string
+          event_type: string
+          payload: Json
+          processed_at?: string
+        }
+        Update: {
+          event_id?: string
+          event_type?: string
+          payload?: Json
+          processed_at?: string
         }
         Relationships: []
       }
       payment_gateways: {
         Row: {
-          id: string
-          user_id: string
-          nombre: string
-          comision_porcentaje: number
-          comision_fija: number
-          comision_retiro: number
-          moneda: string
-          aplica_cambio_moneda: boolean
           activo: boolean
+          aplica_cambio_moneda: boolean
+          comision_fija: number
+          comision_porcentaje: number
+          comision_retiro: number
           created_at: string
+          id: string
+          moneda: string
+          nombre: string
           updated_at: string
+          user_id: string
         }
         Insert: {
-          id?: string
-          user_id: string
-          nombre: string
-          comision_porcentaje?: number
-          comision_fija?: number
-          comision_retiro?: number
-          moneda?: string
-          aplica_cambio_moneda?: boolean
           activo?: boolean
+          aplica_cambio_moneda?: boolean
+          comision_fija?: number
+          comision_porcentaje?: number
+          comision_retiro?: number
           created_at?: string
+          id?: string
+          moneda?: string
+          nombre: string
           updated_at?: string
+          user_id: string
         }
         Update: {
-          id?: string
-          user_id?: string
-          nombre?: string
-          comision_porcentaje?: number
-          comision_fija?: number
-          comision_retiro?: number
-          moneda?: string
-          aplica_cambio_moneda?: boolean
           activo?: boolean
+          aplica_cambio_moneda?: boolean
+          comision_fija?: number
+          comision_porcentaje?: number
+          comision_retiro?: number
           created_at?: string
+          id?: string
+          moneda?: string
+          nombre?: string
           updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
-      paddle_webhook_events: {
+      paypal_webhook_events: {
         Row: {
           event_id: string
           event_type: string
@@ -2226,7 +2253,6 @@ export type Database = {
         Row: {
           created_at: string
           deadline: string | null
-          dependency_task_ids: string[]
           horizon: Database["public"]["Enums"]["planner_goal_horizon"]
           id: string
           metric: string | null
@@ -2241,7 +2267,6 @@ export type Database = {
         Insert: {
           created_at?: string
           deadline?: string | null
-          dependency_task_ids?: string[]
           horizon: Database["public"]["Enums"]["planner_goal_horizon"]
           id?: string
           metric?: string | null
@@ -2256,7 +2281,6 @@ export type Database = {
         Update: {
           created_at?: string
           deadline?: string | null
-          dependency_task_ids?: string[]
           horizon?: Database["public"]["Enums"]["planner_goal_horizon"]
           id?: string
           metric?: string | null
@@ -2452,10 +2476,12 @@ export type Database = {
           actual_minutes: number | null
           ai_notes: string | null
           category: Database["public"]["Enums"]["planner_category"]
+          client_impact: number
           client_ref: string | null
           completed_at: string | null
           created_at: string
           deadline: string | null
+          dependency_task_ids: string[]
           description: string | null
           energy_required: Database["public"]["Enums"]["planner_energy"]
           estimated_minutes: number
@@ -2466,11 +2492,10 @@ export type Database = {
           id: string
           postponed_count: number
           priority: Database["public"]["Enums"]["planner_priority"]
-          client_impact: number
-          risk_score: number
           project_ref: string | null
           recurrence_days: number[]
           recurrence_until: string | null
+          risk_score: number
           scheduled_for: string | null
           source_inbox_id: string | null
           status: Database["public"]["Enums"]["planner_task_status"]
@@ -2483,10 +2508,12 @@ export type Database = {
           actual_minutes?: number | null
           ai_notes?: string | null
           category?: Database["public"]["Enums"]["planner_category"]
+          client_impact?: number
           client_ref?: string | null
           completed_at?: string | null
           created_at?: string
           deadline?: string | null
+          dependency_task_ids?: string[]
           description?: string | null
           energy_required?: Database["public"]["Enums"]["planner_energy"]
           estimated_minutes?: number
@@ -2497,11 +2524,10 @@ export type Database = {
           id?: string
           postponed_count?: number
           priority?: Database["public"]["Enums"]["planner_priority"]
-          client_impact?: number
-          risk_score?: number
           project_ref?: string | null
           recurrence_days?: number[]
           recurrence_until?: string | null
+          risk_score?: number
           scheduled_for?: string | null
           source_inbox_id?: string | null
           status?: Database["public"]["Enums"]["planner_task_status"]
@@ -2514,10 +2540,12 @@ export type Database = {
           actual_minutes?: number | null
           ai_notes?: string | null
           category?: Database["public"]["Enums"]["planner_category"]
+          client_impact?: number
           client_ref?: string | null
           completed_at?: string | null
           created_at?: string
           deadline?: string | null
+          dependency_task_ids?: string[]
           description?: string | null
           energy_required?: Database["public"]["Enums"]["planner_energy"]
           estimated_minutes?: number
@@ -2528,11 +2556,10 @@ export type Database = {
           id?: string
           postponed_count?: number
           priority?: Database["public"]["Enums"]["planner_priority"]
-          client_impact?: number
-          risk_score?: number
           project_ref?: string | null
           recurrence_days?: number[]
           recurrence_until?: string | null
+          risk_score?: number
           scheduled_for?: string | null
           source_inbox_id?: string | null
           status?: Database["public"]["Enums"]["planner_task_status"]
@@ -2671,6 +2698,57 @@ export type Database = {
           metadata?: Json
           module?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      tax_rules: {
+        Row: {
+          base: string | null
+          country: string
+          created_at: string
+          effective_year: number
+          id: string
+          jurisdiction: string | null
+          rate: number | null
+          source: string | null
+          tax_type: string
+          taxpayer_type: string
+          threshold: number | null
+          valid_from: string
+          valid_to: string | null
+          version: number
+        }
+        Insert: {
+          base?: string | null
+          country: string
+          created_at?: string
+          effective_year: number
+          id?: string
+          jurisdiction?: string | null
+          rate?: number | null
+          source?: string | null
+          tax_type: string
+          taxpayer_type: string
+          threshold?: number | null
+          valid_from: string
+          valid_to?: string | null
+          version?: number
+        }
+        Update: {
+          base?: string | null
+          country?: string
+          created_at?: string
+          effective_year?: number
+          id?: string
+          jurisdiction?: string | null
+          rate?: number | null
+          source?: string | null
+          tax_type?: string
+          taxpayer_type?: string
+          threshold?: number | null
+          valid_from?: string
+          valid_to?: string | null
+          version?: number
         }
         Relationships: []
       }
