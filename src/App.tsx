@@ -612,7 +612,7 @@ function AppInner() {
           href={lastSheetBackupLink}
           target="_blank"
           rel="noreferrer"
-          className="bg-slate-100 hover:bg-slate-800 transition px-3 py-1.5 rounded border border-slate-200 text-xs font-mono text-slate-500 flex items-center gap-2"
+          className="bg-slate-100 hover:bg-slate-200 transition px-3 py-1.5 rounded border border-slate-200 text-xs font-mono text-slate-500 flex items-center gap-2"
         >
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <Database className="w-3.5 h-3.5 text-emerald-500" />
