@@ -502,8 +502,7 @@ function AppInner() {
       { id: 'servicios', label: 'Servicios', hint: 'Catálogo y costos' },
       { id: 'horas', label: 'Horas', hint: 'Capacidad y rentabilidad' },
       ...(modules.core_projects ? [
-        { id: 'proyectos', label: 'Proyectos', hint: 'Objetivos, hitos y KPIs' },
-        { id: 'seguimiento', label: 'Seguimiento', hint: 'Diario, semanal y mensual' },
+        { id: 'proyectos', label: 'Proyectos', hint: 'Plan y seguimiento por cliente' },
       ] : []),
       ...(modules.planner ? [{ id: 'planner', label: 'Planner', hint: 'Prioridades, agenda y bloques' }] : []),
     ] : [] },
@@ -518,6 +517,9 @@ function AppInner() {
       { id: 'equilibrioServicio', label: 'Por servicio', hint: 'Margen unitario', group: 'Finanzas' as const },
       { id: 'iva', label: 'IVA', hint: 'Control tributario', group: 'Finanzas' as const },
       { id: 'alertas', label: 'Alertas', hint: 'Riesgos y topes', group: 'Finanzas' as const },
+      // Los KPIs operativos son globales del negocio (no por cliente): viven en
+      // Finanzas. La pestaña histórica "seguimiento" redirige acá.
+      { id: 'kpisOperativos', label: 'KPIs operativos', hint: 'Diario, semanal y mensual', group: 'Finanzas' as const },
       ] : []),
     ] },
     { id: 'sales', label: 'Ventas', icon: Grid2X2, items: [
