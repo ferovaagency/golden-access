@@ -5,7 +5,7 @@ export type CommandItem = {
   id: string;
   label: string;
   hint?: string;
-  group: 'Navegar' | 'Acciones' | 'CRM' | 'Finanzas';
+  group: 'Navegar' | 'Acciones' | 'CRM' | 'Finanzas' | 'Datos';
   icon?: any;
   keywords?: string;
   run: () => void;
@@ -19,9 +19,11 @@ type Props = {
   hasFinance: boolean;
   onOpenAI?: () => void;
   onOpenNotifications?: () => void;
+  /** Datos de trabajo indexables: se mantienen locales, nunca se envÃ­an a un proveedor externo. */
+  searchEntries?: Array<{ id: string; label: string; hint: string; tab: string; keywords?: string }>;
 };
 
-export default function CommandPalette({ open, onClose, onNavigate, isTeam, hasFinance, onOpenAI, onOpenNotifications }: Props) {
+export default function CommandPalette({ open, onClose, onNavigate, isTeam, hasFinance, onOpenAI, onOpenNotifications, searchEntries = [] }: Props) {
   const [q, setQ] = useState('');
   const [idx, setIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -55,13 +57,22 @@ export default function CommandPalette({ open, onClose, onNavigate, isTeam, hasF
         { id: 'nav:resenas', label: 'CRM · Reseñas', group: 'CRM', icon: Star, run: go('crm-resenas') },
       );
     }
+    base.push(...searchEntries.map((entry) => ({
+      id: `data:${entry.id}`,
+      label: entry.label,
+      hint: entry.hint,
+      keywords: entry.keywords,
+      group: 'Datos' as const,
+      icon: entry.tab === 'clientes' ? Users : entry.tab === 'servicios' ? Wallet : LayoutGrid,
+      run: go(entry.tab),
+    })));
     base.push(
       { id: 'act:ai', label: 'Preguntar a la IA ejecutiva', group: 'Acciones', icon: Sparkles, hint: 'Abre el asistente', run: () => { onOpenAI?.(); onClose(); } },
       { id: 'act:notifs', label: 'Ver notificaciones y puntos ciegos', group: 'Acciones', icon: Zap, run: () => { onOpenNotifications?.(); onClose(); } },
       { id: 'act:report', label: 'Generar reporte CEO ahora', group: 'Acciones', icon: FileText, run: go('reports') },
     );
     return base;
-  }, [isTeam, hasFinance, onNavigate, onClose, onOpenAI, onOpenNotifications]);
+  }, [isTeam, hasFinance, onNavigate, onClose, onOpenAI, onOpenNotifications, searchEntries]);
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();

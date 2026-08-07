@@ -356,3 +356,63 @@ pre {
 
 /* Positivo/advertencia/riesgo se dejan en su verde/ambar/rojo semantico
    nativo de Tailwind -- son indicadores de estado, no del color de marca. */
+
+/* Patrones SaaS compartidos. Se aplican a los mÃ³dulos ya existentes sin
+   alterar sus consultas, formularios ni acciones: tablas densas y legibles,
+   foco consistente y superficies preparadas para escritorio y mÃ³vil. */
+.ferova-v2-theme :is(button, a, input, select, textarea):focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--ferova-brand) 32%, transparent);
+  outline-offset: 2px;
+}
+
+.ferova-v2-theme :is(input, select, textarea) {
+  border-radius: var(--ferova-radius-control);
+  border-color: var(--ferova-line);
+  background-color: var(--ferova-surface);
+  color: var(--ferova-ink);
+}
+
+.ferova-v2-theme input::placeholder,
+.ferova-v2-theme textarea::placeholder { color: #8a8377; }
+
+.ferova-v2-theme table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.ferova-v2-theme thead {
+  background: var(--ferova-soft);
+}
+
+.ferova-v2-theme th {
+  color: #6d665d;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.ferova-v2-theme :is(th, td) {
+  border-bottom: 1px solid var(--ferova-line);
+  padding: .75rem .875rem;
+  vertical-align: middle;
+}
+
+.ferova-v2-theme tbody tr {
+  transition: background-color .16s ease;
+}
+
+.ferova-v2-theme tbody tr:hover { background: color-mix(in srgb, var(--ferova-ai) 48%, transparent); }
+
+.ferova-v2-theme .overflow-x-auto {
+  border: 1px solid var(--ferova-line);
+  border-radius: var(--ferova-radius-card);
+  background: var(--ferova-surface);
+}
+
+.ferova-v2-theme .overflow-x-auto table { min-width: 680px; }
+
+@media (max-width: 640px) {
+  .ferova-v2-theme :is(th, td) { padding: .625rem .75rem; }
+  .ferova-v2-theme .overflow-x-auto table { min-width: 600px; }
+}

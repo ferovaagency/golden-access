@@ -1,6 +1,6 @@
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, type ReactNode, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { HelpCircle, X } from 'lucide-react';
+import { HelpCircle, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
 import { WorkspaceHeader } from './WorkspaceHeader';
 import { PrimaryNavigation } from './PrimaryNavigation';
 import { ContextNavigation } from './ContextNavigation';
@@ -37,6 +37,8 @@ export function AppShell({
   mobileMenuOpen, onToggleMobileMenu, onCloseMobileMenu, children,
 }: AppShellProps) {
   const activeSection = sections.find((section) => section.id === activeSectionId);
+  const activeItem = activeSection?.items.find((item) => item.id === activeTab);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
     <div className="ferova-v2-theme min-h-screen bg-[var(--ferova-canvas)] font-sans text-[#1f1b16]">
@@ -97,32 +99,40 @@ export function AppShell({
         </div>
       )}
 
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-[var(--ferova-line)] bg-[var(--ferova-surface)] lg:flex">
-        <div className="flex h-16 items-center gap-3 border-b border-[var(--ferova-line)] px-4">
+      <aside className={`fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-[var(--ferova-line)] bg-[var(--ferova-surface)] transition-[width] duration-200 lg:flex ${sidebarCollapsed ? 'w-[72px]' : 'w-60'}`}>
+        <div className={`flex h-16 items-center border-b border-[var(--ferova-line)] ${sidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-4'}`}>
           <div className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--ferova-brand)] font-display text-sm font-bold text-white">F</div>
-          <div><p className="font-display text-sm font-semibold tracking-tight text-[var(--ferova-ink)]">Ferova One</p><p className="text-[9px] uppercase tracking-[.14em] text-[#9b968f]">Business OS</p></div>
+          {!sidebarCollapsed && <div><p className="font-display text-sm font-semibold tracking-tight text-[var(--ferova-ink)]">Ferova One</p><p className="text-[9px] uppercase tracking-[.14em] text-[#9b968f]">Business OS</p></div>}
         </div>
-        <div className="flex-1 overflow-y-auto px-3 py-4">
-          <p className="mb-2 px-3 text-[9px] font-bold uppercase tracking-[.16em] text-[#aaa49c]">Navegación</p>
+        <div className={`flex-1 overflow-y-auto ${sidebarCollapsed ? 'px-2 py-4' : 'px-3 py-4'}`}>
+          {!sidebarCollapsed && <p className="mb-2 px-3 text-[9px] font-bold uppercase tracking-[.16em] text-[#aaa49c]">Navegación</p>}
           <PrimaryNavigation
             sections={sections}
             activeSectionId={activeSectionId}
             onSelectSection={(section) => section.items[0] && onNavigateTab(section.items[0].id)}
+            collapsed={sidebarCollapsed}
           />
-          {activeSection && activeSection.items.length > 1 && (
-            <div className="mt-4 border-t border-[var(--ferova-line)] pt-3">
-              <ContextNavigation items={activeSection.items} activeTab={activeTab} onSelectItem={onNavigateTab} variant="vertical" />
-            </div>
-          )}
         </div>
-        <div className="border-t border-[var(--ferova-line)] p-3"><button type="button" className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium text-[#77716a] hover:bg-[var(--ferova-soft)]"><HelpCircle className="h-4 w-4" /> Ayuda</button></div>
+        <div className={`border-t border-[var(--ferova-line)] ${sidebarCollapsed ? 'p-2' : 'p-3'}`}>
+          <button type="button" className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium text-[#77716a] hover:bg-[var(--ferova-soft)] ${sidebarCollapsed ? 'justify-center' : ''}`} title={sidebarCollapsed ? 'Ayuda' : undefined}><HelpCircle className="h-4 w-4" />{!sidebarCollapsed && ' Ayuda'}</button>
+          <button type="button" onClick={() => setSidebarCollapsed((value) => !value)} className={`mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium text-[#77716a] hover:bg-[var(--ferova-soft)] ${sidebarCollapsed ? 'justify-center' : ''}`} title={sidebarCollapsed ? 'Expandir navegación' : 'Contraer navegación'}>
+            {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}{!sidebarCollapsed && ' Contraer menú'}
+          </button>
+        </div>
       </aside>
 
-      <div className="min-h-screen lg:pl-60">
+      <div className={`min-h-screen transition-[padding] duration-200 ${sidebarCollapsed ? 'lg:pl-[72px]' : 'lg:pl-60'}`}>
         {topBar}
         {periodBar}
         <div className="flex w-full min-w-0 flex-1 gap-4 px-3 pb-5 sm:px-5">
           <main className="min-w-0 flex-1">
+            <div className="mx-auto mb-4 max-w-[1380px] border-b border-[var(--ferova-line)] pb-3 pt-4">
+              <div className="mb-3 flex items-center gap-2 text-xs text-[#817a70]" aria-label="Ubicación actual">
+                <span>Ferova One</span><span aria-hidden="true">/</span><span>{activeSection?.label || 'Inicio'}</span>
+                {activeItem && <><span aria-hidden="true">/</span><span className="font-medium text-[var(--ferova-ink)]">{activeItem.label}</span></>}
+              </div>
+              {activeSection && activeSection.items.length > 1 && <ContextNavigation items={activeSection.items} activeTab={activeTab} onSelectItem={onNavigateTab} />}
+            </div>
             {children}
           </main>
           {aiSidebar}

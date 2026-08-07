@@ -779,6 +779,10 @@ function AppInner() {
         hasFinance={!!modules.financiero}
         onOpenAI={() => setAiCollapsed(false)}
         onOpenNotifications={() => handleNavigate('home')}
+        searchEntries={appData ? [
+          ...appData.clientes.map((cliente) => ({ id: `cliente-${cliente.id}`, label: cliente.nombre, hint: 'Cliente', tab: 'clientes', keywords: `${cliente.tipo} ${cliente.activo ? 'activo' : 'inactivo'}` })),
+          ...appData.servicios.map((servicio) => ({ id: `servicio-${servicio.id}`, label: servicio.nombre, hint: 'Servicio', tab: 'servicios', keywords: servicio.descripcion || '' })),
+        ] : []}
       />
       <ProductTour userId={user.id} modules={modules} onNavigate={handleNavigate} />
     </>

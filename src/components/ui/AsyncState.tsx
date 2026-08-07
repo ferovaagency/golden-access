@@ -72,7 +72,7 @@ interface EmptyStateProps {
 
 export function EmptyState({ title, hint, action, icon, className = '' }: EmptyStateProps) {
   return (
-    <div className={`flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-neutral-300 py-10 text-center text-neutral-500 ${className}`}>
+    <div className={`flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-300 bg-white px-5 py-10 text-center text-neutral-500 shadow-sm ${className}`}>
       {icon}
       <p className="text-sm font-medium text-neutral-700">{title}</p>
       {hint && <p className="max-w-md text-xs">{hint}</p>}

@@ -5,6 +5,7 @@ interface PrimaryNavigationProps {
   activeSectionId: string;
   onSelectSection: (section: NavigationSection) => void;
   className?: string;
+  collapsed?: boolean;
 }
 
 /**
@@ -14,7 +15,7 @@ interface PrimaryNavigationProps {
  * los items en si viven en ContextNavigation, no aqui (regla de
  * subnavegacion del manual: no desplegar todos los modulos a la vez).
  */
-export function PrimaryNavigation({ sections, activeSectionId, onSelectSection, className = '' }: PrimaryNavigationProps) {
+export function PrimaryNavigation({ sections, activeSectionId, onSelectSection, className = '', collapsed = false }: PrimaryNavigationProps) {
   return (
     <nav className={`space-y-1 ${className}`} aria-label="Navegación principal">
       {sections.map((section) => {
@@ -25,6 +26,7 @@ export function PrimaryNavigation({ sections, activeSectionId, onSelectSection, 
             key={section.id}
             onClick={() => onSelectSection(section)}
             aria-current={isActive ? 'true' : undefined}
+            title={collapsed ? section.label : undefined}
             className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs font-semibold transition-colors ${
               isActive
                 ? 'bg-[var(--ferova-brand)] text-white shadow-sm'
@@ -32,7 +34,7 @@ export function PrimaryNavigation({ sections, activeSectionId, onSelectSection, 
             }`}
           >
             <Icon className="h-4 w-4 shrink-0" />
-            <span className="truncate">{section.label}</span>
+            <span className={collapsed ? 'sr-only' : 'truncate'}>{section.label}</span>
           </button>
         );
       })}
