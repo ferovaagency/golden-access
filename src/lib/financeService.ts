@@ -383,7 +383,7 @@ export async function saveHoras(userId: string, list: Hora[]) {
     id: h.id,
     fecha: h.fecha,
     cliente_id: h.cliente_id,
-    servicio_id: h.servicio_id,
+    servicio_id: h.servicio_id || null,
     horas: h.horas,
     descripcion: h.descripcion || null,
   })));
