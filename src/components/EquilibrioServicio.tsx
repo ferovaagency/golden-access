@@ -41,7 +41,7 @@ export default function EquilibrioServicio({
       
       {/* Visual Header */}
       <div className="border-b border-[#2a2620] pb-5">
-        <h2 className="text-xl font-display font-medium text-[#c9a961]">Equilibrio por Línea de Servicio</h2>
+        <h2 className="text-xl font-display font-medium text-blue-500">Equilibrio por Línea de Servicio</h2>
         <p className="text-xs text-[#a39d8e] font-mono mt-1">Análisis de autosuficiencia y metas de venta física unitarias</p>
       </div>
 
@@ -92,7 +92,7 @@ export default function EquilibrioServicio({
                   <h3 className="text-sm font-display font-semibold text-[#e8e3d8]">
                     {srv.nombre}
                   </h3>
-                  <span className="text-[10px] font-mono bg-[#c9a961]/10 text-[#c9a961] px-2 py-0.5 rounded uppercase font-bold tracking-wider">
+                  <span className="text-[10px] font-mono bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded uppercase font-bold tracking-wider">
                     Análisis
                   </span>
                 </div>
@@ -102,7 +102,7 @@ export default function EquilibrioServicio({
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-white/[0.01] border border-[#2a2620]/80 p-3 rounded">
                       <span className="font-mono text-[#8a8377] text-[10px] uppercase block">Unidades Equilibrio</span>
-                      <span className="font-display font-bold text-[#c9a961] text-lg mt-1 block">
+                      <span className="font-display font-bold text-blue-500 text-lg mt-1 block">
                         {unidadesEquilibrioEstimadas} <span className="text-xs font-sans text-[#a39d8e]">uds/mes</span>
                       </span>
                     </div>
@@ -119,7 +119,7 @@ export default function EquilibrioServicio({
                   <div className="space-y-1.5 pt-1">
                     <div className="flex justify-between font-mono text-[10px] text-[#a39d8e]">
                       <span>Avance de Equilibrio por Contrato:</span>
-                      <span className={`font-semibold ${metBreakeven ? 'text-[#a8c98a]' : 'text-[#c99a61]'}`}>
+                      <span className={`font-semibold ${metBreakeven ? 'text-emerald-500' : 'text-amber-500'}`}>
                         {porcentajeCumplido.toFixed(0)}%
                       </span>
                     </div>
@@ -173,24 +173,24 @@ export default function EquilibrioServicio({
                     return (
                       <div className="border-t border-[#2a2620] pt-4 space-y-2">
                         <h4 className="text-[10px] font-mono uppercase tracking-wider text-[#a39d8e] flex items-center gap-1.5">
-                          <Sparkles className="h-3 w-3 text-[#c9a961]" /> Precio Ideal Recomendado
+                          <Sparkles className="h-3 w-3 text-blue-500" /> Precio Ideal Recomendado
                         </h4>
-                        <div className="bg-[#c9a961]/5 border border-[#c9a961]/25 rounded p-3 space-y-1.5 font-mono text-[11px]">
+                        <div className="bg-blue-500/5 border border-blue-500/25 rounded p-3 space-y-1.5 font-mono text-[11px]">
                           <div className="flex justify-between text-[#e8e3d8]">
                             <span>Precio ideal (margen {(ideal.margenAplicado * 100).toFixed(0)}%):</span>
-                            <span className="font-display font-bold text-[#c9a961] text-base">{formatCop(ideal.precioIdeal)}</span>
+                            <span className="font-display font-bold text-blue-500 text-base">{formatCop(ideal.precioIdeal)}</span>
                           </div>
                           <div className="text-[10px] text-[#8a8377]">{ideal.formulaHumana}</div>
                           {precioHabitualCop != null && brechaHabitual != null && (
                             <div className="flex justify-between text-[#a39d8e] pt-1 border-t border-[#2a2620]/60">
                               <span>vs precio habitual ({srv.precio_habitual_moneda === 'USD' ? `US$${srv.precio_habitual!.toLocaleString('en-US')} · ` : ''}{formatCop(precioHabitualCop)}):</span>
-                              <span className={brechaHabitual > 0 ? 'text-[#c99a61]' : 'text-[#a8c98a]'}>
+                              <span className={brechaHabitual > 0 ? 'text-amber-500' : 'text-emerald-500'}>
                                 {brechaHabitual > 0 ? '↑ subir ' : '↓ bajar '}{formatCop(Math.abs(brechaHabitual))}
                               </span>
                             </div>
                           )}
                           {ideal.notas.length > 0 && (
-                            <div className="text-[10px] text-[#c99a61] pt-1">{ideal.notas.join(' ')}</div>
+                            <div className="text-[10px] text-amber-500 pt-1">{ideal.notas.join(' ')}</div>
                           )}
                         </div>
                       </div>

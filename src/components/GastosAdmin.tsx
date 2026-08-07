@@ -270,13 +270,13 @@ export default function GastosAdmin({
           <span className="text-[10px] text-slate-400 font-mono block mt-1">Carga mensual de nómina</span>
         </div>
 
-        <div className="bg-white border border-slate-200 p-5 rounded-lg border-l-3 border-l-[#a8c98a]">
+        <div className="bg-white border border-slate-200 p-5 rounded-lg border-l-3 border-l-emerald-500">
           <span className="text-[10px] font-mono tracking-wider text-slate-400 uppercase block">Carga Herramientas SaaS</span>
           <div className="text-2xl font-display font-semibold text-emerald-600 mt-2">{formatCop(totalToolsCop)}</div>
           <span className="text-[10px] text-slate-400 font-mono block mt-1">Herramientas globales y prorrateadas</span>
         </div>
 
-        <div className="bg-white border border-slate-200 p-5 rounded-lg border-l-3 border-l-[#c97a61]">
+        <div className="bg-white border border-slate-200 p-5 rounded-lg border-l-3 border-l-rose-500">
           <span className="text-[10px] font-mono tracking-wider text-slate-400 uppercase block">Otros Gastos Generales</span>
           <div className="text-2xl font-display font-semibold text-slate-900 mt-2">{formatCop(totalOtrosCop)}</div>
           <span className="text-[10px] text-slate-400 font-mono block mt-1">Overhead de oficina o administrativos</span>
@@ -432,7 +432,7 @@ export default function GastosAdmin({
                       type="checkbox"
                       checked={selectedServices.includes(s.id)}
                       onChange={() => toggleServiceLabel(s.id)}
-                      className="accent-[#c9a961]"
+                      className="accent-blue-500"
                     />
                     <span>{s.nombre}</span>
                   </label>

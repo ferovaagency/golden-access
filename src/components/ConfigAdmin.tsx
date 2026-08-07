@@ -196,7 +196,7 @@ export default function ConfigAdmin({
       
       {/* Header */}
       <div className="flex flex-col gap-3 border-b border-slate-200 pb-5 sm:flex-row sm:items-start sm:justify-between">
-        <div><h2 className="text-xl font-display font-medium text-[#c9a961]">Configuración de Ferova One</h2>
+        <div><h2 className="text-xl font-display font-medium text-blue-500">Configuración de Ferova One</h2>
         <p className="text-xs text-slate-500 font-mono mt-1">Identidad, perfil fiscal, personalización y conexiones del negocio.</p></div>
         <button type="button" onClick={() => window.dispatchEvent(new Event('ferova:start-tour'))} className="inline-flex items-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"><Route className="h-4 w-4" />Repetir recorrido</button>
       </div>
@@ -240,7 +240,7 @@ export default function ConfigAdmin({
         <div className="lg:col-span-8 bg-white border border-slate-200 rounded-lg overflow-hidden pb-4">
           <div className="bg-white/[0.02] border-b border-slate-200 px-5 py-4 flex items-center justify-between">
             <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold flex items-center gap-2">
-              <Settings className="w-4 h-4 text-[#c9a961]" /> Parámetros de Tributación Colombiana (DIAN 2026)
+              <Settings className="w-4 h-4 text-blue-500" /> Parámetros de Tributación Colombiana (DIAN 2026)
             </h3>
           </div>
 
@@ -248,7 +248,7 @@ export default function ConfigAdmin({
             
             {/* Constantes 2026 */}
             <div className="space-y-4">
-              <h4 className="font-semibold text-[#c9a961] border-b border-slate-200 pb-1.5 uppercase font-mono text-[10px] tracking-wider">
+              <h4 className="font-semibold text-blue-500 border-b border-slate-200 pb-1.5 uppercase font-mono text-[10px] tracking-wider">
                 1. Constantes DIAN oficiales Ley 2026
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-sans">
@@ -306,7 +306,7 @@ export default function ConfigAdmin({
 
             {/* Topes en UVT */}
             <div className="space-y-4">
-              <h4 className="font-semibold text-[#c9a961] border-b border-slate-200 pb-1.5 uppercase font-mono text-[10px] tracking-wider">
+              <h4 className="font-semibold text-blue-500 border-b border-slate-200 pb-1.5 uppercase font-mono text-[10px] tracking-wider">
                 2. Topes Anuales de Control (En UVT)
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-sans">
@@ -350,7 +350,7 @@ export default function ConfigAdmin({
 
             {/* Tarifas retencion */}
             <div className="space-y-4">
-              <h4 className="font-semibold text-[#c9a961] border-b border-slate-200 pb-1.5 uppercase font-mono text-[10px] tracking-wider">
+              <h4 className="font-semibold text-blue-500 border-b border-slate-200 pb-1.5 uppercase font-mono text-[10px] tracking-wider">
                 3. Porcentajes de Retención en la Fuente
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-sans">
@@ -384,7 +384,7 @@ export default function ConfigAdmin({
 
             {/* Metas Ferova */}
             <div className="space-y-4">
-              <h4 className="font-semibold text-[#c9a961] border-b border-slate-200 pb-1.5 uppercase font-mono text-[10px] tracking-wider">
+              <h4 className="font-semibold text-blue-500 border-b border-slate-200 pb-1.5 uppercase font-mono text-[10px] tracking-wider">
                 4. Parámetros de Operación Ferova Agency
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-sans">
@@ -441,7 +441,7 @@ export default function ConfigAdmin({
               <button 
                 type="submit"
                 disabled={isSubmitting}
-                className="flex items-center gap-1.5 px-5 py-2.5 bg-[#c9a961] hover:bg-[#b09252] text-black font-semibold rounded font-display text-xs transition cursor-pointer"
+                className="flex items-center gap-1.5 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded font-display text-xs transition cursor-pointer"
               >
                 <Save className="w-4 h-4" /> {isSubmitting ? 'Guardando...' : 'Actualizar Parámetros'}
               </button>
@@ -457,7 +457,7 @@ export default function ConfigAdmin({
           <div className="bg-white border border-slate-200 rounded-lg overflow-hidden pb-5">
             <div className="bg-white/[0.02] border-b border-slate-200 px-5 py-3.5 flex items-center justify-between">
               <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold flex items-center gap-2">
-                <FolderSync className="w-4 h-4 text-[#a8c98a]" /> Respaldo en Google Sheets
+                <FolderSync className="w-4 h-4 text-emerald-500" /> Respaldo en Google Sheets
               </h3>
               <div className={`w-2 h-2 rounded-full ${hasGoogleToken ? 'bg-emerald-500 animate-pulse' : 'bg-[#8a8377]'}`} />
             </div>
@@ -476,7 +476,7 @@ export default function ConfigAdmin({
               <button
                 onClick={onBackupToSheets}
                 disabled={isBackingUpToSheets}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#a8c98a] hover:bg-[#96b579] text-black rounded font-bold font-display shadow transition cursor-pointer disabled:bg-neutral-800 disabled:text-neutral-500"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold font-display shadow transition cursor-pointer disabled:bg-neutral-800 disabled:text-neutral-500"
               >
                 <RefreshCw className={`w-4 h-4 ${isBackingUpToSheets ? 'animate-spin' : ''}`} />
                 {isBackingUpToSheets ? 'Respaldando...' : hasGoogleToken ? 'Respaldar ahora' : 'Conectar Google y respaldar'}
@@ -500,7 +500,7 @@ export default function ConfigAdmin({
                 </p>
                 <button
                   onClick={onImportFromSheets}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#c9a961] hover:bg-[#b09252] text-black rounded font-bold font-display shadow transition cursor-pointer text-[11px]"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold font-display shadow transition cursor-pointer text-[11px]"
                 >
                   <FolderSync className="w-4 h-4" />
                   {hasGoogleToken ? 'Importar mi Google Sheet' : 'Conectar Google e importar'}
@@ -510,14 +510,14 @@ export default function ConfigAdmin({
               <div className="border-t border-slate-200 pt-4 mt-2 space-y-2">
                 <p className="text-[10px] text-slate-400 uppercase tracking-widest font-mono">Importar pegando link</p>
                 <p className="text-[11px] text-slate-500 leading-relaxed">
-                  Pega la URL de un Google Sheet con la misma estructura de la plantilla <span className="font-medium text-slate-700">Ferova_OS_Financiero</span>. Debe incluir estas pestañas, con estos nombres exactos: <span className="font-mono text-[#c9a961]">Config, Clientes, Servicios, Herramientas, OtrosGastos, Ventas, Horas, Respaldos y PagosEgresos</span>.
+                  Pega la URL de un Google Sheet con la misma estructura de la plantilla <span className="font-medium text-slate-700">Ferova_OS_Financiero</span>. Debe incluir estas pestañas, con estos nombres exactos: <span className="font-mono text-blue-500">Config, Clientes, Servicios, Herramientas, OtrosGastos, Ventas, Horas, Respaldos y PagosEgresos</span>.
                 </p>
                 <input
                   type="url"
                   value={sheetUrl}
                   onChange={(e) => setSheetUrl(e.target.value)}
                   placeholder="https://docs.google.com/spreadsheets/d/XXXXXXX/edit"
-                  className="w-full bg-[#0f0e0c]/70 text-slate-900 border border-slate-200 p-2.5 rounded font-mono text-[11px] focus:outline-none focus:border-[#c9a961]"
+                  className="w-full bg-[#0f0e0c]/70 text-slate-900 border border-slate-200 p-2.5 rounded font-mono text-[11px] focus:outline-none focus:border-blue-500"
                 />
                 <button
                   onClick={async () => {
@@ -526,7 +526,7 @@ export default function ConfigAdmin({
                     finally { setIsImportingUrl(false); }
                   }}
                   disabled={isImportingUrl || !sheetUrl.trim()}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#a8c98a] hover:bg-[#96b579] text-black rounded font-bold font-display shadow transition cursor-pointer text-[11px] disabled:bg-neutral-800 disabled:text-neutral-500"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold font-display shadow transition cursor-pointer text-[11px] disabled:bg-neutral-800 disabled:text-neutral-500"
                 >
                   <FolderSync className={`w-4 h-4 ${isImportingUrl ? 'animate-spin' : ''}`} />
                   {isImportingUrl ? 'Importando...' : 'Importar desde este link'}
@@ -539,7 +539,7 @@ export default function ConfigAdmin({
           <div className="bg-white border border-slate-200 rounded-lg overflow-hidden pb-5">
             <div className="bg-white/[0.02] border-b border-slate-200 px-5 py-3.5">
               <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold flex items-center gap-2">
-                <Clipboard className="w-4 h-4 text-[#c9a961]" /> Portapapeles contable rápido (TSV)
+                <Clipboard className="w-4 h-4 text-blue-500" /> Portapapeles contable rápido (TSV)
               </h3>
             </div>
 
@@ -572,7 +572,7 @@ export default function ConfigAdmin({
               </div>
 
               {copiedStatus && (
-                <div className="mt-2 text-center p-2 bg-[#c9a961]/10 text-[#c9a961] border border-[#c9a961]/25 text-[10px] font-mono font-semibold rounded animate-pulse">
+                <div className="mt-2 text-center p-2 bg-blue-500/10 text-blue-500 border border-blue-500/25 text-[10px] font-mono font-semibold rounded animate-pulse">
                   📋 Planilla de "{copiedStatus}" copiada. ¡Pégala en Excel!
                 </div>
               )}

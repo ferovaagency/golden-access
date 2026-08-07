@@ -576,14 +576,14 @@ function AppInner() {
                 type="number"
                 value={headerTrm}
                 onChange={(e) => setHeaderTrm(e.target.value)}
-                className="w-16 bg-slate-50 text-slate-900 border border-slate-200 p-0.5 px-1 rounded text-xs font-mono focus:outline-none focus:border-[#c9a961]"
+                className="w-16 bg-slate-50 text-slate-900 border border-slate-200 p-0.5 px-1 rounded text-xs font-mono focus:outline-none focus:border-blue-500"
                 autoFocus
               />
               <button type="submit" className="text-emerald-600 hover:text-emerald-700 font-bold px-1 cursor-pointer" title="Guardar TRM">✓</button>
               <button
                 type="button"
                 onClick={() => { setHeaderTrm(String(appData.config.trm)); setIsEditingTrm(false); }}
-                className="text-[#c97a61] hover:text-[#c97a61]/80 font-bold px-1 cursor-pointer"
+                className="text-rose-500 hover:text-rose-500/80 font-bold px-1 cursor-pointer"
                 title="Cancelar"
               >
                 ✕
@@ -849,7 +849,7 @@ function AppInner() {
 
               <button
                 onClick={handleSignOut}
-                className="bg-slate-50/60 p-1.5 rounded border border-slate-200 text-slate-400 hover:text-[#c97a61] cursor-pointer transition ml-1"
+                className="bg-slate-50/60 p-1.5 rounded border border-slate-200 text-slate-400 hover:text-rose-500 cursor-pointer transition ml-1"
                 title="Cerrar sesion Workspace"
               >
                 <LogOut className="w-3.5 h-3.5" />

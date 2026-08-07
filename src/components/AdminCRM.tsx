@@ -1038,7 +1038,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 key={t}
                 onClick={() => setTab(t)}
                 className={`px-3 py-1.5 rounded uppercase tracking-wider font-semibold ${
-                  tab === t ? 'bg-blue-50 text-blue-600 border border-[#c9a961]/40' : 'text-slate-500 hover:text-slate-900'
+                  tab === t ? 'bg-blue-50 text-blue-600 border border-blue-500/40' : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
                 {t === 'clientes' ? 'Clientes' : t === 'feedback' ? 'Feedback & Uso' : 'Analítica profunda'}
@@ -1235,7 +1235,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 <label className="block"><span className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Comisión %</span><input type="number" min="0" max="100" step="0.1" value={newCommissionPercent} onChange={(event) => setNewCommissionPercent(event.target.value)} placeholder="0" className="w-full rounded border border-slate-200 bg-slate-50/50 p-2 text-slate-900" /></label>
               </div>
               {Number(nuevaValorEstimado) > 0 && Number(newCommissionPercent) > 0 && <p className="rounded-lg bg-blue-50 px-3 py-2 text-[10px] text-blue-700">Comisión estimada: {new Intl.NumberFormat('es-CO', { style: 'currency', currency: nuevaMoneda, maximumFractionDigits: 0 }).format(Number(nuevaValorEstimado) * Number(newCommissionPercent) / 100)}</p>}
-              <button type="submit" className="w-full bg-[#c9a961] hover:bg-[#b09252] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5">
+              <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded flex items-center justify-center gap-1.5">
                 <Plus className="w-3.5 h-3.5" /> Crear
               </button>
             </form>
@@ -1351,7 +1351,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                       <button
                         onClick={() => handleSendWhatsapp(o.id)}
                         disabled={sendingWhatsapp === o.id || !whatsappDrafts[o.id]?.trim()}
-                        className="px-2.5 py-1.5 bg-[#a8c98a]/15 border border-[#a8c98a]/40 text-emerald-600 rounded flex items-center gap-1 disabled:opacity-40"
+                        className="px-2.5 py-1.5 bg-emerald-500/15 border border-emerald-500/40 text-emerald-600 rounded flex items-center gap-1 disabled:opacity-40"
                       >
                         <Send className="w-3 h-3" /> {sendingWhatsapp === o.id ? 'Enviando...' : 'Enviar'}
                       </button>
@@ -1389,7 +1389,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                       <button
                         onClick={() => handleEnrichApollo(o)}
                         disabled={enrichingId === o.id}
-                        className="px-2.5 py-1.5 bg-blue-50 border border-[#c9a961]/40 text-blue-600 rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
+                        className="px-2.5 py-1.5 bg-blue-50 border border-blue-500/40 text-blue-600 rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
                       >
                         <Zap className="w-3 h-3" /> {enrichingId === o.id ? 'Procesando...' : 'Apollo + Playbook'}
                       </button>
@@ -1504,7 +1504,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               <button
                 type="submit"
                 disabled={booking}
-                className="w-full bg-[#c9a961] hover:bg-[#b09252] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
               >
                 <CalendarPlus className="w-3.5 h-3.5" /> {booking ? 'Creando evento...' : 'Agendar y crear Google Meet'}
               </button>
@@ -1576,8 +1576,8 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   </div>
                   <span className={`text-[9px] font-mono uppercase px-2 py-0.5 rounded border ${
                     c.estado === 'cancelada'
-                      ? 'bg-[#c97a61]/10 text-red-600 border-[#c97a61]/30'
-                      : 'bg-[#c9a961]/10 text-blue-600 border-[#c9a961]/30'
+                      ? 'bg-rose-500/10 text-red-600 border-rose-500/30'
+                      : 'bg-blue-500/10 text-blue-600 border-blue-500/30'
                   }`}>
                     {c.estado}
                   </span>
@@ -1649,7 +1649,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 <button
                   onClick={handleSearchLinkedIn}
                   disabled={searchingLi}
-                  className="bg-[#c9a961] hover:bg-[#b09252] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
                 >
                   <Search className={`w-3.5 h-3.5 ${searchingLi ? 'animate-pulse' : ''}`} /> {searchingLi ? 'Buscando...' : 'Buscar LinkedIn'}
                 </button>
@@ -1670,7 +1670,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                       <button
                         onClick={() => handleAnalyzeLinkedInResult(result)}
                         disabled={analyzingPostId === result.id}
-                        className="w-full mt-1 px-2 py-1 bg-blue-50 border border-[#c9a961]/40 text-blue-600 rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
+                        className="w-full mt-1 px-2 py-1 bg-blue-50 border border-blue-500/40 text-blue-600 rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
                       >
                         <Sparkles className="w-2.5 h-2.5" /> {analyzingPostId === result.id ? 'Evaluando...' : 'Evaluar intención'}
                       </button>
@@ -1733,7 +1733,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 <button
                   onClick={handleSearchRedditKw}
                   disabled={searchingKw}
-                  className="bg-[#a8c98a] hover:bg-[#96b579] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
                 >
                   <Search className={`w-3.5 h-3.5 ${searchingKw ? 'animate-pulse' : ''}`} /> {searchingKw ? 'Buscando...' : 'Buscar'}
                 </button>
@@ -1759,7 +1759,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                       <button
                         onClick={() => handleAnalyzeRedditPost(p)}
                         disabled={analyzingPostId === p.id}
-                        className="w-full mt-1 px-2 py-1 bg-blue-50 border border-[#c9a961]/40 text-blue-600 rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
+                        className="w-full mt-1 px-2 py-1 bg-blue-50 border border-blue-500/40 text-blue-600 rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
                       >
                         <Sparkles className="w-2.5 h-2.5" /> {analyzingPostId === p.id ? 'Evaluando...' : 'Evaluar intención'}
                       </button>
@@ -1827,7 +1827,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               <button
                 type="submit"
                 disabled={analyzing}
-                className="w-full bg-[#c9a961] hover:bg-[#b09252] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
               >
                 <Sparkles className="w-3.5 h-3.5" /> {analyzing ? 'Evaluando...' : 'Evaluar y guardar'}
               </button>
@@ -1887,7 +1887,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               <button
                 onClick={handleFetchSubreddit}
                 disabled={fetchingSub}
-                className="w-full bg-[#a8c98a] hover:bg-[#96b579] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
               >
                 <Download className={`w-3.5 h-3.5 ${fetchingSub ? 'animate-pulse' : ''}`} /> {fetchingSub ? 'Trayendo...' : 'Traer hilos'}
               </button>
@@ -1905,14 +1905,14 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                         <span>▲ {p.score}</span>
                         <span className="flex items-center gap-0.5"><MessageSquare className="w-2.5 h-2.5" /> {p.num_comments}</span>
                         <span>{Math.round(p.upvote_ratio * 100)}% ↑</span>
-                        {p.link_flair_text && <span className="bg-[#c9a961]/10 text-blue-600 px-1.5 rounded">{p.link_flair_text}</span>}
+                        {p.link_flair_text && <span className="bg-blue-500/10 text-blue-600 px-1.5 rounded">{p.link_flair_text}</span>}
                         {!p.is_self && <span className="text-red-600">link externo</span>}
                       </div>
                       {p.selftext && <p className="text-[10px] text-slate-500 line-clamp-3">{p.selftext.slice(0, 260)}{p.selftext.length > 260 ? '…' : ''}</p>}
                       <button
                         onClick={() => handleAnalyzeRedditPost(p)}
                         disabled={analyzingPostId === p.id}
-                        className="w-full mt-1 px-2 py-1 bg-blue-50 border border-[#c9a961]/40 text-blue-600 rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
+                        className="w-full mt-1 px-2 py-1 bg-blue-50 border border-blue-500/40 text-blue-600 rounded text-[10px] font-mono flex items-center justify-center gap-1 disabled:opacity-40"
                       >
                         <Sparkles className="w-2.5 h-2.5" /> {analyzingPostId === p.id ? 'Evaluando...' : 'Evaluar intención'}
                       </button>
@@ -1969,7 +1969,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   <div className="flex gap-2 pt-1">
                     <button
                       onClick={() => handleMarkContenido(c, 'publicado_manual')}
-                      className="px-2.5 py-1 bg-[#a8c98a]/15 border border-[#a8c98a]/40 text-emerald-600 rounded text-[10px] font-mono"
+                      className="px-2.5 py-1 bg-emerald-500/15 border border-emerald-500/40 text-emerald-600 rounded text-[10px] font-mono"
                     >
                       Ya lo publiqué
                     </button>
@@ -1998,7 +1998,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                     onClick={handleToggleBot}
                     className={`px-3 py-1 rounded font-mono text-[10px] font-bold uppercase ${
                       botConfig.bot_enabled
-                        ? 'bg-[#a8c98a]/15 text-emerald-600 border border-[#a8c98a]/40'
+                        ? 'bg-emerald-500/15 text-emerald-600 border border-emerald-500/40'
                         : 'bg-white/[0.03] text-[#8a8377] border border-slate-200'
                     }`}
                   >
@@ -2097,7 +2097,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   <button
                     onClick={handleSavePrompt}
                     disabled={savingPrompt}
-                    className="flex-1 bg-[#c9a961] hover:bg-[#b09252] text-black font-bold py-2 rounded disabled:opacity-50"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded disabled:opacity-50"
                   >
                     {savingPrompt ? 'Guardando...' : 'Guardar prompt'}
                   </button>
@@ -2133,7 +2133,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 <button
                   type="submit"
                   disabled={savingKnowledge}
-                  className="w-full bg-[#c9a961] hover:bg-[#b09252] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
                 >
                   <Plus className="w-3.5 h-3.5" /> {savingKnowledge ? 'Entrenando...' : 'Agregar al conocimiento'}
                 </button>
@@ -2174,7 +2174,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               <button
                 onClick={handleScanResenas}
                 disabled={scanningResenas}
-                className="bg-[#c9a961] hover:bg-[#b09252] text-black font-bold px-4 py-2 rounded text-xs flex items-center gap-1.5 disabled:opacity-50"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded text-xs flex items-center gap-1.5 disabled:opacity-50"
               >
                 {scanningResenas ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
                 {scanningResenas ? 'Escaneando...' : 'Buscar reseñas nuevas'}
@@ -2227,7 +2227,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                 <button
                   type="submit"
                   disabled={savingSource}
-                  className="w-full bg-[#a8c98a] hover:bg-[#96b579] text-black font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded flex items-center justify-center gap-1.5 disabled:opacity-50"
                 >
                   <Plus className="w-3.5 h-3.5" /> {savingSource ? 'Guardando...' : 'Guardar fuente'}
                 </button>
@@ -2254,7 +2254,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               </div>
             )}
             {scanResult && (
-              <p className="text-[11px] text-emerald-600 font-mono bg-[#a8c98a]/5 border border-[#a8c98a]/30 rounded p-2">{scanResult}</p>
+              <p className="text-[11px] text-emerald-600 font-mono bg-emerald-500/5 border border-emerald-500/30 rounded p-2">{scanResult}</p>
             )}
 
             <div className="space-y-2">
@@ -2264,7 +2264,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
               {resenas.map((r) => (
                 <div key={r.id} className="bg-white border border-slate-200 rounded-lg p-4 space-y-2 text-xs">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="uppercase font-mono text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-600 border border-[#c9a961]/40">
+                    <span className="uppercase font-mono text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-500/40">
                       {r.plataforma}
                     </span>
                     {r.calificacion != null && (
@@ -2274,7 +2274,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                     )}
                     {r.resenador && <span className="text-slate-500 font-mono text-[10px]">por {r.resenador}</span>}
                     <span className="text-[#8a8377] font-mono text-[10px] ml-auto">{new Date(r.detectada_en).toLocaleString('es-CO')}</span>
-                    <span className={`px-2 py-0.5 rounded font-mono text-[9px] uppercase border ${r.respondida ? 'bg-[#a8c98a]/15 text-emerald-600 border-[#a8c98a]/40' : 'bg-[#c97a61]/15 text-red-600 border-[#c97a61]/40'}`}>
+                    <span className={`px-2 py-0.5 rounded font-mono text-[9px] uppercase border ${r.respondida ? 'bg-emerald-500/15 text-emerald-600 border-emerald-500/40' : 'bg-rose-500/15 text-red-600 border-rose-500/40'}`}>
                       {r.respondida ? 'Respondida' : 'Sin responder'}
                     </span>
                   </div>
@@ -2288,7 +2288,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                     )}
                     <button
                       onClick={() => handleToggleRespondida(r)}
-                      className={`ml-auto text-[10px] font-mono px-2 py-1 rounded border flex items-center gap-1 ${r.respondida ? 'text-red-600 border-[#c97a61]/40 hover:bg-[#c97a61]/10' : 'text-emerald-600 border-[#a8c98a]/40 hover:bg-[#a8c98a]/10'}`}
+                      className={`ml-auto text-[10px] font-mono px-2 py-1 rounded border flex items-center gap-1 ${r.respondida ? 'text-red-600 border-rose-500/40 hover:bg-rose-500/10' : 'text-emerald-600 border-emerald-500/40 hover:bg-emerald-500/10'}`}
                     >
                       <CheckCircle2 className="w-3 h-3" /> {r.respondida ? 'Marcar como sin responder' : 'Ya respondí'}
                     </button>
@@ -2336,9 +2336,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                           </td>
                           <td className="py-2 pr-3">
                             <span className={`px-2 py-0.5 rounded font-mono text-[9px] uppercase border ${
-                              c.estado_suscripcion === 'activo' ? 'bg-[#a8c98a]/15 text-emerald-600 border-[#a8c98a]/40'
+                              c.estado_suscripcion === 'activo' ? 'bg-emerald-500/15 text-emerald-600 border-emerald-500/40'
                                 : c.estado_suscripcion === 'cortesia' ? 'bg-blue-50 text-blue-600 border-blue-200'
-                                : 'bg-[#c97a61]/15 text-red-600 border-[#c97a61]/40'
+                                : 'bg-rose-500/15 text-red-600 border-rose-500/40'
                             }`}>
                               {c.estado_suscripcion === 'activo' ? 'Activo' : c.estado_suscripcion === 'cortesia' ? 'Cortesía' : 'Sin pago'}
                             </span>
@@ -2372,7 +2372,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                                 <button
                                   onClick={() => handleRevokeAccess(c)}
                                   disabled={savingPlanFor === c.user_id}
-                                  className="text-red-600 hover:text-[#e08970] font-mono text-[10px] px-2 py-1 rounded border border-[#c97a61]/30 hover:bg-[#c97a61]/10 disabled:opacity-50"
+                                  className="text-red-600 hover:text-[#e08970] font-mono text-[10px] px-2 py-1 rounded border border-rose-500/30 hover:bg-rose-500/10 disabled:opacity-50"
                                 >
                                   Revocar acceso
                                 </button>
@@ -2469,7 +2469,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                     <div key={f.id} className="border border-slate-100 rounded-lg p-3 text-xs space-y-1.5">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className={`px-2 py-0.5 rounded font-mono text-[9px] uppercase border ${
-                          f.tipo === 'bug' ? 'bg-[#c97a61]/15 text-red-600 border-[#c97a61]/40' : 'bg-blue-50 text-blue-600 border-blue-200'
+                          f.tipo === 'bug' ? 'bg-rose-500/15 text-red-600 border-rose-500/40' : 'bg-blue-50 text-blue-600 border-blue-200'
                         }`}>
                           {f.tipo}
                         </span>

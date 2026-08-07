@@ -64,7 +64,7 @@ export default function ImpuestosIva({ data, metrics, formatCop }: ImpuestosIvaP
 
       {/* Header */}
       <div className="border-b border-[#2a2620] pb-5">
-        <h2 className="text-xl font-display font-medium text-[#c9a961]">Control de IVA y Obligaciones DIAN</h2>
+        <h2 className="text-xl font-display font-medium text-blue-500">Control de IVA y Obligaciones DIAN</h2>
         <p className="text-xs text-[#a39d8e] font-mono mt-1">Evaluación de responsabilidad tributaria bajo el Estatuto Colombiano 2026</p>
       </div>
 
@@ -76,7 +76,7 @@ export default function ImpuestosIva({ data, metrics, formatCop }: ImpuestosIvaP
             <h3 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase font-semibold">
               Chequeo del Art. 437 del Estatuto Tributario
             </h3>
-            <span className="text-[10px] font-mono bg-amber-500/10 text-[#c9a961] px-2 py-0.5 rounded uppercase font-bold">
+            <span className="text-[10px] font-mono bg-amber-500/10 text-blue-500 px-2 py-0.5 rounded uppercase font-bold">
               Límite: 3.500 UVT ({formatCop(limite3500Uvt)})
             </span>
           </div>
@@ -89,20 +89,20 @@ export default function ImpuestosIva({ data, metrics, formatCop }: ImpuestosIvaP
             <div className="space-y-3 pt-2">
               
               {/* Criterion 1 */}
-              <div className={`p-3 rounded border flex items-start gap-3 transition ${criteria1 ? 'bg-white/[0.01] border-[#2a2620]' : 'bg-[#c97a61]/5 border-[#c97a61]/35'}`}>
+              <div className={`p-3 rounded border flex items-start gap-3 transition ${criteria1 ? 'bg-white/[0.01] border-[#2a2620]' : 'bg-rose-500/5 border-rose-500/35'}`}>
                 <input 
                   type="checkbox"
                   checked={criteria1}
                   onChange={(e) => setCriteria1(e.target.checked)}
-                  className="w-4 h-4 accent-[#c9a961] mt-0.5"
+                  className="w-4 h-4 accent-blue-500 mt-0.5"
                 />
                 <div className="space-y-1">
                   <span className="font-semibold block text-[#e8e3d8]">1. Ventas anuales por debajo de 3.500 UVT</span>
                   <span className="text-[11px] text-[#8a8377] block">
-                    Tus ventas anualizadas estimadas son de <b className={isIngresosTopeSuperado ? 'text-[#c97a61]' : 'text-white'}>{formatCop(proyeccionAnualIngresos)}</b>. Límite: {formatCop(limite3500Uvt)}.
+                    Tus ventas anualizadas estimadas son de <b className={isIngresosTopeSuperado ? 'text-rose-500' : 'text-white'}>{formatCop(proyeccionAnualIngresos)}</b>. Límite: {formatCop(limite3500Uvt)}.
                   </span>
                   {isIngresosTopeSuperado && (
-                    <span className="text-[10px] text-[#c97a61] font-mono font-bold block">
+                    <span className="text-[10px] text-rose-500 font-mono font-bold block">
                       ⚠ ALERTA: Has superado el tope automático legal del periodo.
                     </span>
                   )}
@@ -115,7 +115,7 @@ export default function ImpuestosIva({ data, metrics, formatCop }: ImpuestosIvaP
                   type="checkbox"
                   checked={criteria2}
                   onChange={(e) => setCriteria2(e.target.checked)}
-                  className="w-4 h-4 accent-[#c9a961] mt-0.5"
+                  className="w-4 h-4 accent-blue-500 mt-0.5"
                 />
                 <div className="space-y-0.5">
                   <span className="font-semibold block text-[#e8e3d8]">2. Establecimientos de comercio</span>
@@ -129,7 +129,7 @@ export default function ImpuestosIva({ data, metrics, formatCop }: ImpuestosIvaP
                   type="checkbox"
                   checked={criteria3}
                   onChange={(e) => setCriteria3(e.target.checked)}
-                  className="w-4 h-4 accent-[#c9a961] mt-0.5"
+                  className="w-4 h-4 accent-blue-500 mt-0.5"
                 />
                 <div className="space-y-0.5">
                   <span className="font-semibold block text-[#e8e3d8]">3. Actividades operadas bajo Franquicia</span>
@@ -143,7 +143,7 @@ export default function ImpuestosIva({ data, metrics, formatCop }: ImpuestosIvaP
                   type="checkbox"
                   checked={criteria4}
                   onChange={(e) => setCriteria4(e.target.checked)}
-                  className="w-4 h-4 accent-[#c9a961] mt-0.5"
+                  className="w-4 h-4 accent-blue-500 mt-0.5"
                 />
                 <div className="space-y-0.5">
                   <span className="font-semibold block text-[#e8e3d8]">4. Calidad de Usuario Aduanero</span>
@@ -157,7 +157,7 @@ export default function ImpuestosIva({ data, metrics, formatCop }: ImpuestosIvaP
                   type="checkbox"
                   checked={criteria5}
                   onChange={(e) => setCriteria5(e.target.checked)}
-                  className="w-4 h-4 accent-[#c9a961] mt-0.5"
+                  className="w-4 h-4 accent-blue-500 mt-0.5"
                 />
                 <div className="space-y-0.5">
                   <span className="font-semibold block text-[#e8e3d8]">5. Contratos individuales menores a 3.500 UVT</span>
@@ -171,7 +171,7 @@ export default function ImpuestosIva({ data, metrics, formatCop }: ImpuestosIvaP
                   type="checkbox"
                   checked={criteria6}
                   onChange={(e) => setCriteria6(e.target.checked)}
-                  className="w-4 h-4 accent-[#c9a961] mt-0.5"
+                  className="w-4 h-4 accent-blue-500 mt-0.5"
                 />
                 <div className="space-y-0.5">
                   <span className="font-semibold block text-[#e8e3d8]">6. Consignaciones bancarias anuales</span>
@@ -183,13 +183,13 @@ export default function ImpuestosIva({ data, metrics, formatCop }: ImpuestosIvaP
 
             {/* General compliance recommendation */}
             {criteria1 && criteria2 && criteria3 && criteria4 && criteria5 && criteria6 ? (
-              <div className="p-3 bg-[#a8c98a]/10 border border-[#a8c98a]/30 rounded text-[#a8c98a] flex items-center gap-2 mt-4 font-mono text-[11px]">
-                <ShieldCheck className="w-4.5 h-4.5 text-[#a8c98a] shrink-0" />
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded text-emerald-500 flex items-center gap-2 mt-4 font-mono text-[11px]">
+                <ShieldCheck className="w-4.5 h-4.5 text-emerald-500 shrink-0" />
                 <span>Cumples con todo el estatuto simplificado. No eres responsable de IVA.</span>
               </div>
             ) : (
-              <div className="p-3 bg-[#c97a61]/10 border border-[#c97a61]/30 rounded text-[#c97a61] flex items-center gap-2 mt-4 font-mono text-[11px]">
-                <AlertTriangle className="w-4.5 h-4.5 text-[#c97a61] shrink-0" />
+              <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded text-rose-500 flex items-center gap-2 mt-4 font-mono text-[11px]">
+                <AlertTriangle className="w-4.5 h-4.5 text-rose-500 shrink-0" />
                 <span>Déficit normativo: Eres o debes registrarte legalmente como responsable de IVA.</span>
               </div>
             )}
@@ -200,7 +200,7 @@ export default function ImpuestosIva({ data, metrics, formatCop }: ImpuestosIvaP
         {/* B. Cruce de IVA (Simulator) */}
         <div className="lg:col-span-6 bg-[#161412] border border-[#2a2620] rounded-lg overflow-hidden pb-6">
           <div className="bg-white/[0.02] border-b border-[#2a2620] px-5 py-4 flex items-center gap-2">
-            <ArrowRightLeft className="w-4 h-4 text-[#c9a961]" />
+            <ArrowRightLeft className="w-4 h-4 text-blue-500" />
             <h3 className="text-xs font-mono tracking-widest text-[#a39d8e] uppercase font-semibold">
               Simulador del Cruce de IVA Bimestral
             </h3>
@@ -249,13 +249,13 @@ export default function ImpuestosIva({ data, metrics, formatCop }: ImpuestosIvaP
               </div>
 
               {esSaldoAPagar && (
-                <div className="p-3 bg-[#c97a61]/10 border border-[#c97a61]/20 rounded text-[#c97a61] leading-relaxed text-[11px]">
+                <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded text-rose-500 leading-relaxed text-[11px]">
                   <strong>📋 Pago a la DIAN</strong>: Debes presentar declaración de IVA y consignar un saldo de <strong>{formatCop(saldoIvaNettoValue)}</strong>. Esto es dinero recaudado de tus clientes, no un costo directo de Ferova.
                 </div>
               )}
 
               {esSaldoAFavor && (
-                <div className="p-3 bg-[#a8c98a]/10 border border-[#a8c98a]/20 rounded text-[#a8c98a] leading-relaxed text-[11px]">
+                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded text-emerald-500 leading-relaxed text-[11px]">
                   <strong>🌟 Saldo a Favor</strong>: Tienes un saldo a favor de <strong>{formatCop(Math.abs(saldoIvaNettoValue))}</strong>. Puedes compensarlo o arrastrarlo en el próximo bimestre para pagar menos IVA descontando compras futuras.
                 </div>
               )}
