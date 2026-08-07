@@ -328,6 +328,8 @@ export const plannerService = {
       }
       return anyDb().from('planner_blocks').update({ task_ids: remainingTaskIds }).eq('id', block.id);
     }));
+
+    return result;
   },
   async listClients(): Promise<PlannerClient[]> {
     const { data, error } = await anyDb().from('finance_clientes').select('id, nombre').order('nombre');
