@@ -722,7 +722,7 @@ function AppInner() {
                 onSaveClientes={handleSaveClientes}
               />
             )}
-            {activeTab === 'seguimiento' && user && (
+            {(activeTab === 'kpisOperativos' || activeTab === 'seguimiento') && user && (
               <OperatingKpiDashboard userId={user.id} data={appData} formatCop={formatCop} />
             )}
             {activeTab === 'pagosEgresos' && (
