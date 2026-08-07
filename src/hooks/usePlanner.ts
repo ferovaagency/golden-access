@@ -49,15 +49,12 @@ export function usePlanner() {
         // diario del servidor (5:10) y este barrido al abrir el Planner.
         const { data: { user } } = await (await import('../lib/supabase')).supabase.auth.getUser();
         if (user) setRescheduledCount(await countTodayAutoActions(user.id, 'reprogramado_automatico'));
-        // Opening the Planner keeps the rolling agenda current. It no longer
-        // depends on an overdue transition or on pressing the button.
-        const busyBlocks = await plannerService.calendarBusyBlocks(currentDate);
-        const { data: plan, error: planError } = await plannerService.planDay(undefined, true, busyBlocks);
-        if (planError) setError(planError.message);
-        else if (plan) {
-          setPlanNotice(plan.summary);
-          revealFirstPlannedDay(plan.blocks, zone);
-        }
+        // Antes, abrir el Planner reorganizaba TODA la agenda solo (planDay
+        // apply=true) y movía los bloques sin que la persona lo pidiera — esa
+        // era la sensación de "desorden". Ahora abrir el Planner NO reescribe
+        // los bloques: la reorganización es explícita (botón "Organizar mi día").
+        // Solo se adelantan las tareas realmente vencidas (rescheduleOverdueTasks
+        // arriba), que sí es lo esperable.
       }
       const [i, t, c, s, b, ins, br] = await Promise.all([
         plannerService.listInbox(),

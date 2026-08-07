@@ -174,26 +174,32 @@ export default function ServiciosAdmin({
       return sum + convertToCop(v.precio_venta_unitario * v.cantidad, v.moneda, config.trm);
     }, 0);
 
-    // Cost of goods sold (COGS)
+    // Cost of goods sold (COGS): costo directo pactado en cada venta.
     const srvCogsCop = srvSales.reduce((sum, v) => sum + (v.costo_unitario * v.cantidad), 0);
 
-    // Profit
-    const srvMarginCop = srvRevenueCop - srvCogsCop;
-    const marginPct = srvRevenueCop > 0 ? (srvMarginCop / srvRevenueCop) * 100 : 0;
-
-    // Total hours logged to this service
+    // Total hours logged to this service.
     const totalHrs = horas
       .filter(h => h.servicio_id === service.id)
       .reduce((sum, h) => sum + h.horas, 0);
+
+    // Costo del TIEMPO real dedicado (mano de obra interna): horas × costo/hora.
+    // Antes se ignoraba: un servicio podía verse rentable en COGS pero perder
+    // plata al contar las horas. Ahora el margen y el semáforo SÍ lo incluyen.
+    const costoInternoPorHora = config.salario_propuesto / (config.horas_objetivo_mes || 160);
+    const srvCostTimeCop = totalHrs * costoInternoPorHora;
+
+    // Margen REAL = ingresos − costo directo − costo del tiempo dedicado.
+    const srvMarginCop = srvRevenueCop - srvCogsCop - srvCostTimeCop;
+    const marginPct = srvRevenueCop > 0 ? (srvMarginCop / srvRevenueCop) * 100 : 0;
 
     return {
       totalQty,
       srvRevenueCop,
       srvCogsCop,
+      srvCostTimeCop,
       srvMarginCop,
       marginPct,
-      // Motor centralizado (Parte 4.5): mismo semáforo de 4 niveles que
-      // HorasAdmin, en vez del corte ad-hoc >=50/>0 que había antes.
+      // Motor centralizado (Parte 4.5): semáforo de 4 niveles sobre el margen REAL.
       semaforo: srvRevenueCop > 0 ? semaforoMargen(marginPct / 100) : null,
       totalHrs,
       // A sale stores the direct cost agreed at the moment it was recorded.
