@@ -2,7 +2,7 @@
 // and insights in one place, and exposes typed actions that map 1:1 to
 // plannerService. Components should not touch supabase for planner data.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { plannerService, type CreatePlannerBlockInput, type PlannerBlock, type PlannerBriefing, type PlannerClient, type PlannerInbox, type PlannerInsight, type PlannerServiceOption, type PlannerTask, type UpdatePlannerTaskInput } from '../lib/plannerService';
+import { plannerService, type CompleteTaskResult, type CreatePlannerBlockInput, type PlannerBlock, type PlannerBriefing, type PlannerClient, type PlannerDraft, type PlannerInbox, type PlannerInsight, type PlannerServiceOption, type PlannerTask, type UpdatePlannerTaskInput } from '../lib/plannerService';
 import { countTodayAutoActions } from '../lib/auditLogService';
 
 function today() { return todayInTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Bogota'); }
