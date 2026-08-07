@@ -1,6 +1,7 @@
 import { Servicio, Herramienta, Cliente, Venta, Config } from '../types';
 import { convertToCop, calcularCostosHerramientas } from '../lib/calculations';
 import { calcularPrecioIdeal } from '../lib/pricingIdeal';
+import { type Period, inPeriod } from '../lib/period';
 import { Sparkles } from 'lucide-react';
 
 interface EquilibrioServicioProps {
@@ -9,7 +10,7 @@ interface EquilibrioServicioProps {
   clientes: Cliente[];
   ventas: Venta[];
   config: Config;
-  selectedMonth: string;
+  period: Period;
   formatCop: (val: number) => string;
 }
 
@@ -19,12 +20,10 @@ export default function EquilibrioServicio({
   clientes,
   ventas,
   config,
-  selectedMonth,
+  period,
   formatCop
 }: EquilibrioServicioProps) {
-  const currentVentas = selectedMonth === 'Todos'
-    ? ventas
-    : ventas.filter(v => v.fecha && v.fecha.startsWith(selectedMonth));
+  const currentVentas = ventas.filter(v => inPeriod(v.fecha, period));
 
   const clientesActivosCount = clientes.filter(c => c.activo).length;
 

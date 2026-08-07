@@ -3,10 +3,12 @@ import type { LucideIcon } from 'lucide-react';
 import { AlertTriangle, ArrowDown, ArrowRight, ArrowUp, BriefcaseBusiness, CalendarCheck, CheckCircle2, CircleDollarSign, Clock3, HeartPulse, Plus, ShieldCheck, Users, Wallet } from 'lucide-react';
 import type { AppData } from '../types';
 import type { FinancialMetrics } from '../lib/calculations';
+import { convertToCop } from '../lib/calculations';
+import { type Period, inPeriod, periodKey as toPeriodKey } from '../lib/period';
 import { isFerovaUiV2Enabled } from '../lib/featureFlags';
 import type { Signal, Tone } from './executive/types';
 import { ExecutiveHero } from './executive/ExecutiveHero';
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { KpiStrip, type KpiItem } from './executive/KpiStrip';
 import { ExecutiveBrief } from './executive/ExecutiveBrief';
 import { BusinessHealth } from './executive/BusinessHealth';
@@ -18,7 +20,7 @@ import { QuickActionsGrid } from './executive/QuickActionsGrid';
 interface HomeProps {
   data: AppData;
   metrics: FinancialMetrics;
-  selectedMonth: string;
+  period: Period;
   formatCop: (value: number) => string;
   onNavigate: (tab: string) => void;
 }
@@ -45,7 +47,7 @@ function MetricCard({ label, value, detail, icon: Icon }: { label: string; value
   );
 }
 
-export default function Home({ data, metrics, selectedMonth, formatCop, onNavigate }: HomeProps) {
+export default function Home({ data, metrics, period, formatCop, onNavigate }: HomeProps) {
   const [sectionOrder, setSectionOrder] = useState<HomeSectionId[]>(readSectionOrder);
   useEffect(() => { localStorage.setItem('ferova.home.sectionOrder', JSON.stringify(sectionOrder)); }, [sectionOrder]);
   const moveSection = (id: HomeSectionId, direction: -1 | 1) => setSectionOrder((current) => {
@@ -56,8 +58,8 @@ export default function Home({ data, metrics, selectedMonth, formatCop, onNaviga
     [next[from], next[to]] = [next[to], next[from]];
     return next;
   });
-  const periodSales = selectedMonth === 'Todos' ? data.ventas : data.ventas.filter((sale) => sale.fecha.startsWith(selectedMonth));
-  const periodHours = selectedMonth === 'Todos' ? data.horas : data.horas.filter((entry) => entry.fecha.startsWith(selectedMonth));
+  const periodSales = data.ventas.filter((sale) => inPeriod(sale.fecha, period));
+  const periodHours = data.horas.filter((entry) => inPeriod(entry.fecha, period));
   const activeClients = data.clientes.filter((client) => client.activo);
   const totalHours = periodHours.reduce((total, entry) => total + entry.horas, 0);
   const hasSales = periodSales.length > 0;
@@ -100,38 +102,50 @@ export default function Home({ data, metrics, selectedMonth, formatCop, onNaviga
   // cambia la presentacion. Ningun calculo financiero se toca aqui.
   if (isFerovaUiV2Enabled()) {
     const kpiItems: KpiItem[] = [
-      { key: 'ingresos', label: 'Ingresos', value: metrics.totalVentas, format: formatCop, detail: 'Ventas del período', icon: CircleDollarSign },
-      { key: 'utilidadOp', label: 'Utilidad operativa', value: metrics.utilidadOperacional, format: formatCop, detail: 'Después de costos y gastos', icon: Wallet },
-      { key: 'utilidadNeta', label: 'Utilidad neta', value: metrics.utilidadNeta, format: formatCop, detail: 'Estimación después de impuestos', icon: ShieldCheck },
+      { key: 'ingresos', label: 'Ingresos', value: metrics.totalVentas, format: formatCop, detail: 'Ventas del período', icon: CircleDollarSign, tooltipCode: 'VENTAS_TOTALES' },
+      { key: 'utilidadOp', label: 'Utilidad operativa', value: metrics.utilidadOperacional, format: formatCop, detail: 'Después de costos y gastos', icon: Wallet, tooltipCode: 'UTILIDAD_OPERACIONAL' },
+      { key: 'utilidadNeta', label: 'Utilidad neta', value: metrics.utilidadNeta, format: formatCop, detail: 'Estimación después de impuestos', icon: ShieldCheck, tooltipCode: 'UTILIDAD_NETA' },
       { key: 'clientes', label: 'Clientes activos', value: activeClients.length, format: (v) => String(Math.round(v)), detail: 'Cuentas en seguimiento', icon: Users },
     ];
 
-    const reorderableSections: Record<HomeSectionId, ReactElement> = {
-      quick: <QuickActionsGrid actions={quickActions} onNavigate={onNavigate} />,
-      priorities: (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.35fr_0.65fr]">
-          <PrioritiesList priorities={priorities} onNavigate={onNavigate} />
-          <BusinessHealth health={health} onNavigate={onNavigate} />
-        </div>
-      ),
-      blind: <BlindSpots spots={blindSpots} onNavigate={onNavigate} />,
-      activity: <RecentActivity entries={activity} />,
-    };
+    // Agregaciones panorámicas del período (convertidas a COP).
+    const trm = data.config.trm;
+    const topServicios = aggregateRevenue(periodSales, (sale) => sale.servicio_nombre, trm).slice(0, 5);
+    const clientesRanking = aggregateRevenue(periodSales, (sale) => sale.cliente_nombre, trm);
+    const topClientes = clientesRanking.slice(0, 5);
+    const totalClienteRev = clientesRanking.reduce((total, c) => total + c.value, 0);
+    const concentracionTop = totalClienteRev > 0 && clientesRanking[0] ? (clientesRanking[0].value / totalClienteRev) * 100 : 0;
+    const inactiveClients = Math.max(0, data.clientes.length - activeClients.length);
 
     return (
       <div className="mx-auto flex w-full max-w-[1380px] flex-col gap-4 pb-8">
-        <KpiStrip items={kpiItems} periodKey={selectedMonth} />
-        <div className="grid gap-4 xl:grid-cols-[1.45fr_1fr]">
-          <SalesTrendChart sales={periodSales} formatCop={formatCop} />
-          <OperationsChart income={metrics.totalVentas} operatingProfit={metrics.utilidadOperacional} totalHours={totalHours} activeClients={activeClients.length} formatCop={formatCop} />
+        <KpiStrip items={kpiItems} periodKey={toPeriodKey(period)} />
+
+        <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
+          <SalesTrendChart sales={data.ventas} formatCop={formatCop} />
+          <MoneyFlowDonut metrics={metrics} formatCop={formatCop} />
         </div>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <RankBarChart title="Ingresos por servicio" subtitle="Top 5 del período" rows={topServicios} formatCop={formatCop} color="#2563EB" />
+          <RankBarChart title="Ingresos por cliente" subtitle={concentracionTop > 0 ? `Top 5 · el mayor concentra ${concentracionTop.toFixed(0)}%` : 'Top 5 del período'} rows={topClientes} formatCop={formatCop} color="#0ea5e9" />
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          <ClientsDonut activos={activeClients.length} inactivos={inactiveClients} />
+          <OperationsChart income={metrics.totalVentas} operatingProfit={metrics.utilidadOperacional} totalHours={totalHours} activeClients={activeClients.length} formatCop={formatCop} />
+          <BusinessHealth health={health} onNavigate={onNavigate} />
+        </div>
+
         <ExecutiveBrief health={health} topPriority={priorities[0]} onNavigate={onNavigate} />
-        {sectionOrder.filter((id) => id !== 'quick').map((id) => (
-          <div key={id} className="space-y-1.5">
-            <div className="flex justify-end"><OrderControls id={id} order={sectionOrder} onMove={moveSection} /></div>
-            {reorderableSections[id]}
-          </div>
-        ))}
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <BlindSpots spots={blindSpots} onNavigate={onNavigate} />
+          <PrioritiesList priorities={priorities} onNavigate={onNavigate} />
+        </div>
+
+        <RecentActivity entries={activity} />
+        <QuickActionsGrid actions={quickActions} onNavigate={onNavigate} />
       </div>
     );
   }
@@ -191,6 +205,126 @@ function OperationsChart({ income, operatingProfit, totalHours, activeClients, f
 }
 
 function MetricMini({ label, value }: { label: string; value: string }) { return <div className="rounded-xl bg-[var(--ferova-soft)] px-2.5 py-2"><p className="text-[9px] font-semibold uppercase tracking-wide text-[#8a8377]">{label}</p><p className="mt-1 text-sm font-semibold text-[#1f1b16]">{value}</p></div>; }
+
+// Suma ingresos (en COP) agrupados por una dimensión (servicio, cliente...).
+function aggregateRevenue(
+  sales: AppData['ventas'],
+  getName: (sale: AppData['ventas'][number]) => string,
+  trm: number,
+): { name: string; value: number }[] {
+  const map = new Map<string, number>();
+  for (const sale of sales) {
+    const name = getName(sale) || '—';
+    const cop = convertToCop((sale.precio_venta_unitario || 0) * (sale.cantidad || 0), sale.moneda, trm);
+    map.set(name, (map.get(name) || 0) + cop);
+  }
+  return [...map.entries()].map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+}
+
+const FLOW_COLORS = ['#f59e0b', '#8b5cf6', '#0ea5e9', '#ef4444', '#10b981'];
+
+// Donut: de cada peso facturado, a dónde se va.
+function MoneyFlowDonut({ metrics, formatCop }: { metrics: FinancialMetrics; formatCop: (value: number) => string }) {
+  const segments = [
+    { name: 'Costos directos', value: Math.max(0, metrics.costosVariables) },
+    { name: 'Gastos operativos', value: Math.max(0, metrics.gastosOperativos) },
+    { name: 'Sueldo', value: Math.max(0, metrics.salarioPropuesto) },
+    { name: 'Impuestos', value: Math.max(0, metrics.impuestoRentaEstimado) },
+    { name: 'Utilidad neta', value: Math.max(0, metrics.utilidadNeta) },
+  ].map((s, i) => ({ ...s, color: FLOW_COLORS[i] })).filter((s) => s.value > 0);
+  const total = segments.reduce((t, s) => t + s.value, 0);
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/30">
+      <div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-slate-400">Distribución</p><h2 className="mt-1 text-lg font-semibold text-slate-950">¿A dónde va cada peso?</h2></div>
+      {total > 0 ? (
+        <div className="mt-3 flex items-center gap-4">
+          <div className="h-40 w-40 shrink-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={segments} dataKey="value" nameKey="name" innerRadius={45} outerRadius={70} paddingAngle={2} stroke="none">
+                  {segments.map((s) => <Cell key={s.name} fill={s.color} />)}
+                </Pie>
+                <Tooltip formatter={(value: number) => formatCop(value)} contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <ul className="flex-1 space-y-1.5">
+            {segments.map((s) => (
+              <li key={s.name} className="flex items-center justify-between gap-2 text-xs">
+                <span className="flex items-center gap-2 text-slate-600"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />{s.name}</span>
+                <span className="font-semibold text-slate-900">{Math.round((s.value / total) * 100)}%</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <div className="mt-4 grid h-40 place-items-center rounded-xl bg-slate-50 text-sm text-slate-500">Sin datos financieros para el período.</div>
+      )}
+    </section>
+  );
+}
+
+// Barras horizontales de un ranking (top servicios / clientes por ingreso).
+function RankBarChart({ title, subtitle, rows, formatCop, color }: { title: string; subtitle: string; rows: { name: string; value: number }[]; formatCop: (value: number) => string; color: string }) {
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/30">
+      <div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-slate-400">{subtitle}</p><h2 className="mt-1 text-lg font-semibold text-slate-950">{title}</h2></div>
+      {rows.length ? (
+        <div className="mt-3" style={{ height: Math.max(150, rows.length * 44) }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={rows} layout="vertical" margin={{ top: 4, right: 12, left: 4, bottom: 4 }}>
+              <XAxis type="number" hide />
+              <YAxis type="category" dataKey="name" width={120} tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#475569' }} />
+              <Tooltip formatter={(value: number) => formatCop(value)} contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} cursor={{ fill: '#f1f5f9' }} />
+              <Bar dataKey="value" fill={color} radius={[0, 6, 6, 0]} barSize={18} animationDuration={700} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      ) : (
+        <div className="mt-4 grid h-36 place-items-center rounded-xl bg-slate-50 text-sm text-slate-500">Sin ventas en el período.</div>
+      )}
+    </section>
+  );
+}
+
+// Donut de cartera: clientes activos vs inactivos.
+function ClientsDonut({ activos, inactivos }: { activos: number; inactivos: number }) {
+  const total = activos + inactivos;
+  const segments = [
+    { name: 'Activos', value: activos, color: '#10b981' },
+    { name: 'Inactivos', value: inactivos, color: '#94a3b8' },
+  ].filter((s) => s.value > 0);
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/30">
+      <div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-slate-400">Cartera</p><h2 className="mt-1 text-lg font-semibold text-slate-950">Clientes</h2></div>
+      {total > 0 ? (
+        <div className="mt-3 flex items-center gap-4">
+          <div className="relative h-32 w-32 shrink-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={segments} dataKey="value" nameKey="name" innerRadius={42} outerRadius={60} paddingAngle={2} stroke="none">
+                  {segments.map((s) => <Cell key={s.name} fill={s.color} />)}
+                </Pie>
+                <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="pointer-events-none absolute inset-0 grid place-items-center"><div className="text-center"><p className="text-xl font-semibold text-slate-900">{total}</p><p className="text-[10px] text-slate-400">total</p></div></div>
+          </div>
+          <ul className="flex-1 space-y-2">
+            {segments.map((s) => (
+              <li key={s.name} className="flex items-center justify-between gap-2 text-xs">
+                <span className="flex items-center gap-2 text-slate-600"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />{s.name}</span>
+                <span className="font-semibold text-slate-900">{s.value}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <div className="mt-4 grid h-32 place-items-center rounded-xl bg-slate-50 text-sm text-slate-500">Sin clientes registrados.</div>
+      )}
+    </section>
+  );
+}
 
 type HomeSectionId = 'quick' | 'priorities' | 'blind' | 'activity';
 const defaultSectionOrder: HomeSectionId[] = ['quick', 'priorities', 'blind', 'activity'];

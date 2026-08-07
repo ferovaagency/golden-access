@@ -25,6 +25,8 @@ import type { NavigationSection } from './components/layout/navigationTypes';
 import { isFerovaUiV2Enabled } from './lib/featureFlags';
 import { SeoHead } from './seo/SeoHead';
 import { QuickHourLog } from './components/QuickHourLog';
+import { PeriodPicker } from './components/PeriodPicker';
+import { type Period } from './lib/period';
 
 // Tab content: only one of these renders at a time (driven by activeTab), so
 // each is its own lazy chunk instead of bloating the main App bundle.
@@ -124,7 +126,7 @@ function AppInner() {
   };
 
   // Filter and view state
-  const [selectedMonth, setSelectedMonth] = useState<string>('Todos');
+  const [period, setPeriod] = useState<Period>('Todos');
   const [activeTab, setActiveTab] = useState<string>(() => consumeGoogleLinkReturnTab() || sessionStorage.getItem('ferova.activeTab') || 'dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -474,7 +476,7 @@ function AppInner() {
 
   // Estado 3: Pagado => Dashboard (los datos viven en Supabase, Google es solo respaldo opcional)
 
-  const metrics = isReady ? calcularMétricasFinancieras(appData, selectedMonth, fiscalProfile) : null;
+  const metrics = isReady ? calcularMétricasFinancieras(appData, period, fiscalProfile) : null;
 
   // Módulo "CRM y Ventas" propio del cliente -- distinto del CRM interno de Ferova (abajo).
   // Depurado: el CRM/pipeline vive en "CRM y Ventas" (CustomerCRM). Aquí solo
@@ -611,9 +613,6 @@ function AppInner() {
         </a>
       )}
 
-      <button onClick={() => setAiCollapsed((value) => !value)} className="hidden md:flex items-center gap-2 rounded-2xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700">
-        {aiCollapsed ? 'Abrir asistente' : 'Colapsar asistente'}
-      </button>
       <FeedbackWidget user={user} />
     </>
   );
@@ -626,21 +625,7 @@ function AppInner() {
           <p className="leading-5"><strong>Ferova aprende contigo.</strong> Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.</p>
         </div>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-blue-600" />
-          <span className="font-mono text-slate-500 text-[10px] uppercase font-bold tracking-wider">Ventana Periodo DIAN:</span>
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="bg-slate-50 text-slate-900 border border-slate-200 text-xs p-1 rounded font-mono focus:outline-none focus:border-[#c9a961]"
-          >
-            <option value="Todos">Histórico Completo (COP)</option>
-            {Array.from({ length: 12 }).map((_, i) => {
-              const mStr = `2026-${String(i + 1).padStart(2, '0')}`;
-              return <option key={mStr} value={mStr}>{mStr}</option>;
-            })}
-          </select>
-        </div>
+        <PeriodPicker period={period} onChange={setPeriod} />
 
         {metrics && (
           <div className="hidden items-center gap-4 text-[10px] font-mono tracking-wider text-slate-500 lg:flex">
@@ -671,7 +656,7 @@ function AppInner() {
     </footer>
   );
 
-  const topBarNode = <TopBar userId={user.id} onOpenPalette={() => setPaletteOpen(true)} onNavigate={handleNavigate} user={user} extras={headerExtrasNode} onSignOut={handleSignOut} />;
+  const topBarNode = <TopBar userId={user.id} onOpenPalette={() => setPaletteOpen(true)} onNavigate={handleNavigate} user={user} extras={headerExtrasNode} onSignOut={handleSignOut} onOpenAssistant={() => setAiCollapsed(false)} />;
 
   // Contenido del modulo activo: identico switch/Suspense para ambos shells,
   // asi el rediseno de layout nunca puede tocar la logica de que se renderiza.
@@ -715,7 +700,7 @@ function AppInner() {
               <Home
                 data={appData}
                 metrics={metrics}
-                selectedMonth={selectedMonth}
+                period={period}
                 formatCop={formatCop}
                 onNavigate={setActiveTab}
               />
@@ -724,7 +709,7 @@ function AppInner() {
               <VentasAdmin userId={user.id} ventas={appData.ventas} clientes={appData.clientes} servicios={appData.servicios} config={appData.config} onSaveVentas={handleSaveVentas} formatCop={formatCop} formatUsd={formatUsd} />
             )}
             {activeTab === 'horas' && (
-              <HorasAdmin horas={appData.horas} clientes={appData.clientes} servicios={appData.servicios} ventas={appData.ventas} config={appData.config} metrics={metrics} selectedMonth={selectedMonth} onSaveHoras={handleSaveHoras} onSaveConfig={handleSaveConfig} formatCop={formatCop} />
+              <HorasAdmin horas={appData.horas} clientes={appData.clientes} servicios={appData.servicios} ventas={appData.ventas} config={appData.config} metrics={metrics} period={period} onSaveHoras={handleSaveHoras} onSaveConfig={handleSaveConfig} formatCop={formatCop} />
             )}
             {activeTab === 'clientes' && (
               <ClientesAdmin clientes={appData.clientes} ventas={appData.ventas} horas={appData.horas} config={appData.config} onSaveClientes={handleSaveClientes} formatCop={formatCop} formatUsd={formatUsd} />
@@ -746,7 +731,7 @@ function AppInner() {
             )}
             {activeTab === 'equilibrioGlobal' && <EquilibrioGlobal metrics={metrics} formatCop={formatCop} />}
             {activeTab === 'equilibrioServicio' && (
-              <EquilibrioServicio servicios={appData.servicios} herramientas={appData.herramientas} clientes={appData.clientes} ventas={appData.ventas} config={appData.config} selectedMonth={selectedMonth} formatCop={formatCop} />
+              <EquilibrioServicio servicios={appData.servicios} herramientas={appData.herramientas} clientes={appData.clientes} ventas={appData.ventas} config={appData.config} period={period} formatCop={formatCop} />
             )}
             {activeTab === 'iva' && <ImpuestosIva data={appData} metrics={metrics} formatCop={formatCop} />}
             {activeTab === 'alertas' && <AlertasTributarias metrics={metrics} config={appData.config} ventas={appData.ventas} formatCop={formatCop} />}

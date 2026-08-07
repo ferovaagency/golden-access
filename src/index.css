@@ -14,6 +14,20 @@
   --text: #0f172a;
   --muted: #64748b;
   --accent: #2563eb;
+  /* Colores semánticos (semáforos de márgenes, capacidad y tarifa). Deben vivir
+     en :root, no solo bajo .ferova-light-theme: el workspace /app (Servicios,
+     Horas) usa estilos inline var(--danger|--warning|--success|--primary) fuera
+     de esa clase; sin definirlos aquí, colapsaban al color heredado (neutro). */
+  --primary: #2563eb;
+  --primary-soft: #dbeafe;
+  --success: #16a34a;
+  --success-soft: #dcfce7;
+  --warning: #ca8a04;
+  --warning-soft: #fef9c3;
+  --danger: #dc2626;
+  --danger-soft: #fee2e2;
+  --violet: #7c3aed;
+  --violet-soft: #ede9fe;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;

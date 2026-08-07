@@ -60,9 +60,19 @@ export default function VentasAdmin({
     setPasarelaPago(nombre);
     const found = gateways.find((g) => g.nombre === nombre);
     if (!found) return;
-    setComisionPasarelaPct(found.comision_porcentaje);
-    setComisionPasarelaFija(found.comision_fija);
-    setComisionRetiro(found.comision_retiro);
+    // Los importes fijos de la pasarela están en SU moneda (found.moneda). La
+    // venta los guarda en la moneda de la venta, así que hay que convertirlos:
+    // ej. PayPal $0.30 USD en una venta COP => ~1.200 COP, no 0.30 COP.
+    const effectiveTrm = (typeof trmConversion === 'number' && trmConversion > 0) ? trmConversion : config.trm;
+    const toSaleCurrency = (amount: number) => {
+      if (!amount || found.moneda === moneda) return amount;
+      if (found.moneda === 'USD' && moneda === 'COP') return amount * effectiveTrm;
+      if (found.moneda === 'COP' && moneda === 'USD') return effectiveTrm ? amount / effectiveTrm : amount;
+      return amount;
+    };
+    setComisionPasarelaPct(found.comision_porcentaje); // el % es independiente de la moneda
+    setComisionPasarelaFija(toSaleCurrency(found.comision_fija));
+    setComisionRetiro(toSaleCurrency(found.comision_retiro));
   };
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [editingVentaId, setEditingVentaId] = useState<string | null>(null);

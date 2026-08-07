@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Hora, Cliente, Servicio, Config, AppData } from '../types';
 import { FinancialMetrics, calcularProductividadClientes, calcularProductividadServicios } from '../lib/calculations';
 import { calculateHourlyCost, calculateCapacity } from '../lib/engine/financialEngine';
+import { type Period, inPeriod } from '../lib/period';
 import { plannerService } from '../lib/plannerService';
 import { Settings, HelpCircle } from 'lucide-react';
 import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
@@ -13,7 +14,7 @@ interface HorasAdminProps {
   ventas: any[];
   config: Config;
   metrics: FinancialMetrics;
-  selectedMonth: string;
+  period: Period;
   onSaveHoras: (updated: Hora[]) => Promise<void>;
   onSaveConfig: (updated: Partial<Config>) => Promise<void>;
   formatCop: (val: number) => string;
@@ -26,7 +27,7 @@ export default function HorasAdmin({
   ventas,
   config,
   metrics,
-  selectedMonth,
+  period,
   onSaveHoras,
   onSaveConfig,
   formatCop
@@ -66,18 +67,16 @@ export default function HorasAdmin({
         .filter((task) => ['backlog', 'scheduled', 'in_progress', 'postponed'].includes(task.status))
         .filter((task) => {
           const periodDate = task.scheduled_for || task.deadline;
-          return Boolean(periodDate && (selectedMonth === 'Todos' || periodDate.startsWith(selectedMonth)));
+          return Boolean(periodDate && inPeriod(periodDate, period));
         })
         .reduce((total, task) => total + Math.max(0, (task.estimated_minutes - (task.actual_minutes || 0)) / 60), 0);
       setCapacidadComprometidaHoras(committed);
     }).catch(() => { if (active) setCapacidadComprometidaHoras(0); });
     return () => { active = false; };
-  }, [selectedMonth]);
+  }, [period]);
 
   // 1. Calculations
-  const currentHoras = selectedMonth === 'Todos' 
-    ? horas 
-    : horas.filter(h => h.fecha && h.fecha.startsWith(selectedMonth));
+  const currentHoras = horas.filter(h => inPeriod(h.fecha, period));
 
   // Filtered hours total
   const totalHorasLoggeadas = currentHoras.reduce((sum, h) => sum + h.horas, 0);
@@ -171,10 +170,10 @@ export default function HorasAdmin({
     respaldos: [],
     pagosEgresos: []
   };
-  const clientProductivity = calcularProductividadClientes(appFakeData, selectedMonth, horaObjetivoMinima);
+  const clientProductivity = calcularProductividadClientes(appFakeData, period, horaObjetivoMinima);
 
   // 3. Promedio de horas por servicio
-  const serviceProductivity = calcularProductividadServicios(appFakeData, selectedMonth);
+  const serviceProductivity = calcularProductividadServicios(appFakeData, period);
 
   // Last 30 hours entries
   const last30Horas = currentHoras.slice(0, 30);

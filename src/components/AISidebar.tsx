@@ -154,18 +154,10 @@ export default function AISidebar({ user, collapsed, onToggle, width, onResize, 
     window.addEventListener('mouseup', up);
   };
 
-  if (collapsed) {
-    return (
-      <aside className="fixed right-0 top-1/2 z-40 flex w-12 -translate-y-1/2 flex-col items-center rounded-l-2xl border border-r-0 border-[var(--line)] bg-white py-4 shadow-lg lg:sticky lg:top-24 lg:h-fit lg:self-start lg:translate-y-0 lg:rounded-2xl lg:border lg:shadow-sm">
-        <button onClick={onToggle} className="grid h-9 w-9 place-items-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900" title="Abrir asistente IA">
-          <PanelRightOpen className="h-4 w-4" />
-        </button>
-        <div className="mt-3 grid h-9 w-9 place-items-center rounded-xl bg-blue-50 text-blue-700">
-          <Sparkles className="h-4 w-4" />
-        </div>
-      </aside>
-    );
-  }
+  // Colapsado no renderiza nada: el asistente se reabre desde el botón
+  // "Asistente" del header (TopBar). Antes había un rail con dos controles a
+  // la derecha (uno abría el asistente, el otro era decorativo y no hacía nada).
+  if (collapsed) return null;
 
   return (
     <aside className="fixed inset-y-2 right-2 z-40 flex w-[min(340px,calc(100vw-1rem))] flex-col rounded-2xl border border-[var(--line)] bg-white shadow-2xl lg:sticky lg:top-24 lg:inset-auto lg:h-[calc(100vh-7rem)] lg:max-h-[820px] lg:w-auto lg:shrink-0 lg:self-start lg:rounded-2xl lg:shadow-sm" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1024 ? width : undefined }}>

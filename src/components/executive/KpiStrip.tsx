@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { animate, useMotionValue, useMotionValueEvent, useReducedMotion } from 'motion/react';
 import { AnimatedCard } from '../motion/AnimatedCard';
+import { MetricTooltip } from '../ui/MetricTooltip';
 
 export interface KpiItem {
   key: string;
@@ -10,6 +11,8 @@ export interface KpiItem {
   format: (value: number) => string;
   detail: string;
   icon: LucideIcon;
+  /** Código del glosario para el ícono de ayuda (qué significa la métrica). */
+  tooltipCode?: string;
 }
 
 interface KpiStripProps {
@@ -43,7 +46,7 @@ function KpiCard({ item, periodKey, reduce }: { item: KpiItem; periodKey: string
     <AnimatedCard className="rounded-[var(--ferova-radius-card)] border border-[var(--ferova-line)] bg-[var(--ferova-surface)] p-4 shadow-[var(--ferova-shadow)] sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="font-display text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a39a8a]">{item.label}</p>
+          <p className="font-display text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a39a8a]">{item.label}{item.tooltipCode && <MetricTooltip code={item.tooltipCode} />}</p>
           <p className="mt-2 font-display text-xl font-semibold tracking-tight text-[#1f1b16] sm:text-2xl">{item.format(displayValue)}</p>
         </div>
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[var(--ferova-soft)] text-[var(--ferova-navy)]">

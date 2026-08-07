@@ -1,5 +1,6 @@
 import { AppData, Herramienta, Venta } from '../types';
 import type { FiscalProfile } from './fiscalProfileService';
+import { type Period, inPeriod } from './period';
 
 /**
  * FiscalContext identifica el país activo y decide si aplicar reglas tributarias
@@ -162,7 +163,7 @@ export interface FinancialMetrics {
 
 export function calcularMétricasFinancieras(
   data: AppData,
-  selectedMonth: string, // YYYY-MM or "Todos"
+  period: Period, // rango { from, to }, 'Todos', o 'YYYY-MM' (legacy)
   fiscal?: FiscalContext,
 ): FinancialMetrics {
   const { config, clientes, herramientas, otrosGastos, ventas, pagosEgresos = [] } = data;
@@ -170,15 +171,12 @@ export function calcularMétricasFinancieras(
   const isCO = isColombiaFiscal(fiscal);
   const fiscalCountry = (fiscal?.country || 'CO').toUpperCase();
 
-  // Filter sales and hours by selected period
-  const isAll = selectedMonth === 'Todos';
-  const filteredVentas = isAll 
-    ? ventas 
-    : ventas.filter(v => v.fecha && v.fecha.startsWith(selectedMonth));
+  // Filter sales by selected period (rango de fechas o 'Todos')
+  const filteredVentas = ventas.filter(v => inPeriod(v.fecha, period));
 
-  // Determine active months scale
-  const uniqueMonths = getUniqueSalesMonths(ventas);
-  const activeMonthsCountScale = isAll ? (uniqueMonths.length || 1) : 1;
+  // Meses distintos con ventas dentro del período: escala los costos fijos
+  // mensuales (un mes => 1; un rango de 3 meses => hasta 3; 'Todos' => todos).
+  const activeMonthsCountScale = getUniqueSalesMonths(filteredVentas).length || 1;
 
   // 1. Core sales in COP
   let totalVentas = 0;
@@ -190,9 +188,7 @@ export function calcularMétricasFinancieras(
   });
 
   // Calculate real disbursements (egresos) for the current period (filter by month if not 'Todos')
-  const filteredEgresos = isAll 
-    ? pagosEgresos 
-    : pagosEgresos.filter(p => p.fecha && p.fecha.startsWith(selectedMonth));
+  const filteredEgresos = pagosEgresos.filter(p => inPeriod(p.fecha, period));
 
   let salariosRealesPagados = 0;
   let totalEgresosReales = 0;
@@ -300,14 +296,13 @@ export interface ProductividadCliente {
 
 export function calcularProductividadClientes(
   data: AppData,
-  selectedMonth: string,
+  period: Period,
   valorHoraObjetivo: number
 ): ProductividadCliente[] {
   const { config, clientes, ventas, horas } = data;
 
-  const isAll = selectedMonth === 'Todos';
-  const filteredVentas = isAll ? ventas : ventas.filter(v => v.fecha && v.fecha.startsWith(selectedMonth));
-  const filteredHoras = isAll ? horas : horas.filter(h => h.fecha && h.fecha.startsWith(selectedMonth));
+  const filteredVentas = ventas.filter(v => inPeriod(v.fecha, period));
+  const filteredHoras = horas.filter(h => inPeriod(h.fecha, period));
 
   // Compute stats per client
   const mapClientes = new Map<string, { id: string; nombre: string; horas: number; ingresos: number }>();
@@ -380,13 +375,12 @@ export interface ProductividadServicio {
 
 export function calcularProductividadServicios(
   data: AppData,
-  selectedMonth: string
+  period: Period
 ): ProductividadServicio[] {
   const { config, servicios, ventas, horas } = data;
 
-  const isAll = selectedMonth === 'Todos';
-  const filteredVentas = isAll ? ventas : ventas.filter(v => v.fecha && v.fecha.startsWith(selectedMonth));
-  const filteredHoras = isAll ? horas : horas.filter(h => h.fecha && h.fecha.startsWith(selectedMonth));
+  const filteredVentas = ventas.filter(v => inPeriod(v.fecha, period));
+  const filteredHoras = horas.filter(h => inPeriod(h.fecha, period));
 
   const mapServicios = new Map<string, { id: string; nombre: string; horas: number; cantidadVendida: number; ingresos: number }>();
 
