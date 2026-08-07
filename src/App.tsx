@@ -183,7 +183,12 @@ function AppInner() {
   // Si el cliente no tiene el módulo Financiero (plan solo "CRM y Ventas"),
   // ninguna de estas pestañas existe para él -- redirige a su módulo real.
   // Cubre tanto el tab inicial por defecto como un cambio de plan en caliente.
-  const FINANCIERO_TAB_IDS = ['dashboard', 'ventas', 'pagosEgresos', 'gastos', 'equilibrioGlobal', 'equilibrioServicio', 'iva', 'alertas', 'ajustes', 'proyectos', 'horas', 'clientes', 'servicios'];
+  const FINANCIERO_TAB_IDS = ['dashboard', 'ventas', 'pagosEgresos', 'gastos', 'equilibrioGlobal', 'equilibrioServicio', 'iva', 'alertas', 'ajustes', 'proyectos', 'horas', 'clientes', 'servicios', 'kpisOperativos', 'seguimiento'];
+  // Alias compatible: enlaces y estados guardados con el id antiguo
+  // "seguimiento" ahora abren los KPIs operativos dentro de Finanzas.
+  useEffect(() => {
+    if (activeTab === 'seguimiento') setActiveTab('kpisOperativos');
+  }, [activeTab]);
   useEffect(() => {
     if (!appData) return;
     if (!modules.financiero && FINANCIERO_TAB_IDS.includes(activeTab)) {
