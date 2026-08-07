@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Sparkles, Wand2, Loader2, Check, Clock, Zap, Battery, BatteryLow, Trash2, ChevronLeft, ChevronRight, Sunrise, AlertTriangle, Lightbulb, TrendingUp, Info, Lock, Edit2, X, CalendarDays, Columns3, List, SlidersHorizontal } from 'lucide-react';
 import { usePlanner } from '../hooks/usePlanner';
 import { plannerService, type PlannerBlock, type PlannerCategory, type PlannerEnergy, type PlannerTask } from '../lib/plannerService';
+import { DayClientProgress } from './planner/DayClientProgress';
 import { AiDisclosure } from './AiDisclosure';
 
 const categoryMeta: Record<PlannerCategory, { label: string; tone: string }> = {
@@ -208,6 +209,8 @@ export default function SmartPlanner() {
       {p.error && <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{p.error}</div>}
 
       {plannerView !== 'day' && <PlannerCalendar view={plannerView} date={p.date} tasks={openTasks} clients={p.clients} compact={compactCalendar} timeZone={p.timeZone} onChangeDate={p.setDate} onSelectDate={(date) => { p.setDate(date); setPlannerView('day'); }} onEdit={openTaskEditor} />}
+
+      {plannerView === 'day' && <DayClientProgress tasks={p.tasks} clients={p.clients} date={p.date} />}
 
       {plannerView === 'day' && <DayAgendaSummary blocks={p.blocks} tasks={p.tasks} clients={p.clients} timeZone={p.timeZone} onComplete={p.completeTask} />}
 
