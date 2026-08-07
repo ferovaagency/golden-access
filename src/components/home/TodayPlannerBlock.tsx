@@ -28,7 +28,15 @@ export function TodayPlannerBlock({ onOpenPlanner }: { onOpenPlanner?: () => voi
     setBusyId(id);
     try {
       if (action === 'start') await plannerService.startTask(id);
-      else await plannerService.completeTask(id);
+      else {
+        const result = await plannerService.completeTask(id);
+        const parts: string[] = [];
+        if (result.estimatedMinutes != null) parts.push(`estimado ${result.estimatedMinutes} min`);
+        if (result.actualMinutes != null) parts.push(`real ${result.actualMinutes} min`);
+        if (result.hourLogged) parts.push(result.missingService ? `en Horas (${result.hourDate}), falta asignar servicio` : `en Horas (${result.hourDate})`);
+        setNotice(parts.length ? parts.join(' · ') : 'Tarea completada.');
+        window.setTimeout(() => setNotice(null), 9000);
+      }
       await load();
     } finally {
       setBusyId(null);
