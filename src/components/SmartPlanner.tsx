@@ -499,7 +499,9 @@ function TaskRow({ task, clientName, isProtected, onEdit, onStart, onComplete, o
       <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] ${categoryMeta[task.category].tone}`}>{categoryMeta[task.category].label}</span>
       <span className="inline-flex items-center gap-1 text-[10px] text-slate-500"><EIcon className="h-3 w-3" aria-hidden /> {task.energy_required}</span>
       <span className="text-sm text-slate-800 flex-1 min-w-[8rem] truncate">{task.title}</span>
-      {task.status === 'in_progress' ? <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">En curso desde {new Date(task.started_at || '').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span> : <button onClick={() => onStart(task.id)} className="rounded-lg border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-700 hover:bg-blue-100">Iniciar</button>}
+      {task.status === 'in_progress' && task.started_at
+        ? <LiveTimer startedAt={task.started_at} estimatedMinutes={task.estimated_minutes} />
+        : <button onClick={() => onStart(task.id)} className="rounded-lg border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-700 hover:bg-blue-100">Iniciar</button>}
       {clientName && <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${clientTone(task.client_ref)}`}>● {clientName}</span>}
       <span className="text-[10px] text-slate-400 inline-flex items-center gap-1"><Clock className="h-3 w-3" aria-hidden /> {task.estimated_minutes}m</span>
       {isProtected && <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] text-amber-700"><Lock className="h-3 w-3" aria-hidden /> Protegido</span>}
