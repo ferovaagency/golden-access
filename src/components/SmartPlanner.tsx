@@ -67,6 +67,10 @@ export default function SmartPlanner() {
   const [taskRepeatUntil, setTaskRepeatUntil] = useState('');
   const [taskSyncGoogle, setTaskSyncGoogle] = useState(false);
   const [taskSaveNotice, setTaskSaveNotice] = useState<string | null>(null);
+  // Captura natural en dos pasos: primero se interpreta (sin escribir nada) y
+  // la persona confirma o corrige cliente, fecha y duración; después se crea.
+  const [drafts, setDrafts] = useState<PlannerDraft[] | null>(null);
+  const [completionNotice, setCompletionNotice] = useState<string | null>(null);
 
   useEffect(() => { localStorage.setItem('ferova.planner.view', plannerView); }, [plannerView]);
   useEffect(() => { localStorage.setItem('ferova.planner.compact', compactCalendar ? '1' : '0'); }, [compactCalendar]);
@@ -74,8 +78,37 @@ export default function SmartPlanner() {
   const submitDump = async () => {
     const text = dump.trim();
     if (!text) return;
+    const detected = await p.previewCapture(text);
+    if (detected.length) setDrafts(detected);
+  };
+
+  const patchDraft = (index: number, patch: Partial<PlannerDraft>) => {
+    setDrafts((prev) => prev?.map((draft, i) => (i === index ? { ...draft, ...patch } : draft)) ?? prev);
+  };
+
+  const confirmDrafts = async () => {
+    if (!drafts?.length) return;
+    await p.commitCapture(drafts);
+    setDrafts(null);
     setDump('');
-    await p.classify(text);
+  };
+
+  /** Cierra la tarea y deja visible el estimado vs. real y el registro de Horas. */
+  const handleComplete = async (id: string) => {
+    const result = await p.completeTask(id);
+    if (!result) return;
+    const parts: string[] = [];
+    if (result.estimatedMinutes != null) parts.push(`estimado ${result.estimatedMinutes} min`);
+    if (result.actualMinutes != null) parts.push(`real ${result.actualMinutes} min`);
+    if (result.hourLogged) {
+      parts.push(result.missingService
+        ? `registrado en Horas (${result.hourDate}) sin servicio: asignalo en Horas`
+        : `registrado en Horas (${result.hourDate})`);
+    } else if (result.actualMinutes != null) {
+      parts.push('sin cliente asociado: no se registró en Horas');
+    }
+    setCompletionNotice(parts.length ? `Tarea completada · ${parts.join(' · ')}` : 'Tarea completada.');
+    window.setTimeout(() => setCompletionNotice(null), 9000);
   };
 
   const createProtectedBlock = async (event: React.FormEvent) => {
