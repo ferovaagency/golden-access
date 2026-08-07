@@ -487,6 +487,33 @@ function BlockRow({ block, tasks, clients, timeZone, onComplete }: { block: Plan
   );
 }
 
+/**
+ * Cronómetro real de la tarea en curso. Antes sólo se mostraba la hora de
+ * inicio, así que el tiempo transcurrido había que calcularlo mentalmente.
+ */
+function LiveTimer({ startedAt, estimatedMinutes }: { startedAt: string; estimatedMinutes: number }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const elapsedSeconds = Math.max(0, Math.floor((now - new Date(startedAt).getTime()) / 1000));
+  const hh = Math.floor(elapsedSeconds / 3600);
+  const mm = Math.floor((elapsedSeconds % 3600) / 60);
+  const ss = elapsedSeconds % 60;
+  const overrun = elapsedSeconds / 60 > estimatedMinutes;
+  return (
+    <span
+      title={`Estimado ${estimatedMinutes} min`}
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold tabular-nums ${overrun ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'}`}
+    >
+      <Clock className="h-3 w-3" aria-hidden />
+      {hh > 0 ? `${hh}:` : ''}{String(mm).padStart(2, '0')}:{String(ss).padStart(2, '0')}
+      <span className="font-sans font-normal opacity-70">/ est. {estimatedMinutes}m</span>
+    </span>
+  );
+}
+
 function TaskRow({ task, clientName, isProtected, onEdit, onStart, onComplete, onPostpone, onDelete }: { task: PlannerTask; clientName?: string; isProtected: boolean; onEdit: (task: PlannerTask) => void; onStart: (id: string) => void; onComplete: (id: string) => void; onPostpone: (id: string) => void | Promise<void>; onDelete: (id: string) => void }) {
   const EIcon = energyIcon[task.energy_required];
   return (
