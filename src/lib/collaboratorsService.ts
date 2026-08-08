@@ -81,18 +81,22 @@ export async function deleteCollaborator(id: string): Promise<void> {
   if (error) throw new Error(`[collaboratorsService] delete: ${error.message}`);
 }
 
+export interface CollaboratorContext { ownerUserId: string; permisos: PermisosMap }
+
 /**
- * Permisos del usuario actual como colaborador (para recortar su navegación).
- * Devuelve null si no es colaborador (p. ej. el dueño, que ve todo).
+ * Contexto del usuario actual como colaborador: a qué dueño pertenece y qué
+ * puede ver/editar. Devuelve null si NO es colaborador (p. ej. el dueño, que ve
+ * todo con su propia cuenta). Se usa para recortar la navegación y para cargar
+ * los datos del negocio del dueño.
  */
-export async function getMyCollaboratorPermissions(): Promise<PermisosMap | null> {
+export async function getMyCollaboratorContext(): Promise<CollaboratorContext | null> {
   const { data: userData } = await supabase.auth.getUser();
   const email = userData?.user?.email;
   if (!email) return null;
-  const { data, error } = await db<Row>('collaborators')
-    .select('permisos, activo, email')
+  const { data, error } = await db<Row & { owner_user_id: string }>('collaborators')
+    .select('owner_user_id, permisos, activo, email')
     .ilike('email', email)
     .maybeSingle();
   if (error || !data || !data.activo) return null;
-  return data.permisos || {};
+  return { ownerUserId: data.owner_user_id, permisos: data.permisos || {} };
 }

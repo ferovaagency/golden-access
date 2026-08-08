@@ -4,6 +4,7 @@ import { backupAppDataToSheets, fetchSpreadsheetData, findSpreadsheet, importShe
 import * as financeService from './lib/financeService';
 import { useAuthAndAccess } from './hooks/useAuthAndAccess';
 import { getBusinessProfile, BusinessProfile } from './lib/businessProfileService';
+import { getMyCollaboratorContext, type CollaboratorContext } from './lib/collaboratorsService';
 import PlanOnboarding from './components/PlanOnboarding';
 import ProductTour from './components/ProductTour';
 import FeedbackWidget from './components/FeedbackWidget';
@@ -108,6 +109,26 @@ function AppInner() {
   const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
   const { profile: fiscalProfile } = useFiscalProfile(user?.id);
 
+  // Colaborador: si el usuario actual es colaborador de un negocio, opera sobre
+  // los datos de ESE dueño (accountId). Para el dueño, collab=null y accountId =
+  // su propio id, así que su experiencia no cambia en absoluto.
+  const [collab, setCollab] = useState<CollaboratorContext | null>(null);
+  const [collabResolved, setCollabResolved] = useState(false);
+  useEffect(() => {
+    if (!user) { setCollab(null); setCollabResolved(false); return; }
+    let alive = true;
+    setCollabResolved(false);
+    getMyCollaboratorContext()
+      .then((c) => { if (alive) { setCollab(c); setCollabResolved(true); } })
+      .catch(() => { if (alive) { setCollab(null); setCollabResolved(true); } });
+    return () => { alive = false; };
+  }, [user]);
+  const accountId = collab?.ownerUserId ?? user?.id ?? '';
+  const canView = (tab: string) => !collab || collab.permisos?.[tab]?.view === true;
+  // Para componentes que reciben el objeto `user` y consultan por user.id:
+  // un colaborador opera sobre los datos del dueño. Para el dueño, es su propio user.
+  const effectiveUser = (collab && user ? { ...user, id: collab.ownerUserId } : user) as typeof user;
+
   // Google Sheets backup (optional, manual). Persisted per user in
   // localStorage -- previously it was only in-memory React state, so the
   // link the user just imported/backed up from disappeared on every reload.
@@ -176,9 +197,9 @@ function AppInner() {
   // logged-in user with paid access and haven't loaded it yet -- covers both
   // the initial login and the Paywall's onPaid transition uniformly.
   useEffect(() => {
-    if (user && hasPaid && appData === null) bootstrapFinanceData(user.id);
+    if (user && hasPaid && appData === null && collabResolved && accountId) bootstrapFinanceData(accountId);
     if (!user) setAppData(null);
-  }, [user, hasPaid]);
+  }, [user, hasPaid, collabResolved, accountId]);
 
   // Si el cliente no tiene el módulo Financiero (plan solo "CRM y Ventas"),
   // ninguna de estas pestañas existe para él -- redirige a su módulo real.
@@ -248,8 +269,8 @@ function AppInner() {
 
   const persistImportedFinanceData = async (data: AppData) => {
     if (!user) return;
-    await financeService.saveImportedFinanceData(user.id, data);
-    const fresh = await financeService.loadFinanceData(user.id);
+    await financeService.saveImportedFinanceData(accountId, data);
+    const fresh = await financeService.loadFinanceData(accountId);
     setAppData(fresh);
   };
 
@@ -306,7 +327,7 @@ function AppInner() {
     if (!appData || !user) return;
     setSheetsLoading(true);
     try {
-      await financeService.saveClientes(user.id, updatedClientes);
+      await financeService.saveClientes(accountId, updatedClientes);
       setAppData({ ...appData, clientes: updatedClientes });
     } catch (err: any) {
       toastErr(`Error guardando clientes: ${errMsg(err)}`);
@@ -319,7 +340,7 @@ function AppInner() {
     if (!appData || !user) return;
     setSheetsLoading(true);
     try {
-      await financeService.saveServicios(user.id, updatedServicios);
+      await financeService.saveServicios(accountId, updatedServicios);
       setAppData({ ...appData, servicios: updatedServicios });
     } catch (err: any) {
       toastErr(`Error guardando servicios: ${errMsg(err)}`);
@@ -332,7 +353,7 @@ function AppInner() {
     if (!appData || !user) return;
     setSheetsLoading(true);
     try {
-      await financeService.saveHerramientas(user.id, updatedHerramientas);
+      await financeService.saveHerramientas(accountId, updatedHerramientas);
       setAppData({ ...appData, herramientas: updatedHerramientas });
     } catch (err: any) {
       toastErr(`Error guardando herramientas: ${errMsg(err)}`);
@@ -345,7 +366,7 @@ function AppInner() {
     if (!appData || !user) return;
     setSheetsLoading(true);
     try {
-      await financeService.saveOtrosGastos(user.id, updatedGastos);
+      await financeService.saveOtrosGastos(accountId, updatedGastos);
       const googleToken = getAccessToken();
       if (googleToken) await syncExpenseDocumentsToSheets(googleToken, updatedGastos, appData.pagosEgresos || []);
       setAppData({ ...appData, otrosGastos: updatedGastos });
@@ -360,7 +381,7 @@ function AppInner() {
     if (!appData || !user) return;
     setSheetsLoading(true);
     try {
-      await financeService.savePagosEgresos(user.id, updatedPagos);
+      await financeService.savePagosEgresos(accountId, updatedPagos);
       const googleToken = getAccessToken();
       if (googleToken) await syncExpenseDocumentsToSheets(googleToken, appData.otrosGastos || [], updatedPagos);
       setAppData({ ...appData, pagosEgresos: updatedPagos });
@@ -375,7 +396,7 @@ function AppInner() {
     if (!appData || !user) return;
     setSheetsLoading(true);
     try {
-      await financeService.saveVentas(user.id, updatedVentas);
+      await financeService.saveVentas(accountId, updatedVentas);
       setAppData({ ...appData, ventas: updatedVentas });
     } catch (err: any) {
       toastErr(`Error guardando ventas: ${errMsg(err)}`);
@@ -388,7 +409,7 @@ function AppInner() {
     if (!appData || !user) return;
     setSheetsLoading(true);
     try {
-      await financeService.saveHoras(user.id, updatedHoras);
+      await financeService.saveHoras(accountId, updatedHoras);
       setAppData({ ...appData, horas: updatedHoras });
     } catch (err: any) {
       toastErr(`Error guardando horas: ${errMsg(err)}`);
@@ -402,7 +423,7 @@ function AppInner() {
     setSheetsLoading(true);
     try {
       const fullConfig = { ...appData.config, ...updatedConfig };
-      await financeService.saveConfig(user.id, fullConfig);
+      await financeService.saveConfig(accountId, fullConfig);
       setAppData({ ...appData, config: fullConfig });
     } catch (err: any) {
       toastErr(`Error actualizando constantes: ${errMsg(err)}`);
@@ -539,12 +560,24 @@ function AppInner() {
   ];
 
   const activeSectionId = NAVIGATION_SECTIONS.find((section) => section.items.some((item) => item.id === activeTab))?.id ?? 'home';
-  const visibleNavigationSections = NAVIGATION_SECTIONS.filter((section) => section.items.length > 0);
+  // Recorte por permisos de colaborador (para el dueño, canView es siempre true).
+  const visibleNavigationSections = NAVIGATION_SECTIONS
+    .map((section) => ({ ...section, items: section.items.filter((item) => canView(item.id)) }))
+    .filter((section) => section.items.length > 0);
   const navigateTo = (tab: string) => {
     if (tab === 'admin') { window.location.assign('/admin'); return; }
     setActiveTab(tab);
     setIsMobileMenuOpen(false);
   };
+
+  // Si un colaborador cae en una pestaña sin permiso, lo llevamos a la primera
+  // que sí puede ver. (No aplica al dueño: canView siempre es true para él.)
+  useEffect(() => {
+    if (collab && collabResolved && !canView(activeTab)) {
+      const first = visibleNavigationSections[0]?.items[0]?.id;
+      if (first && first !== activeTab) setActiveTab(first);
+    }
+  }, [collab, collabResolved, activeTab, visibleNavigationSections]);
 
   // Extras del header (TRM, clientes activos, link de respaldo Sheets, toggle
   // IA, feedback) -- compartidos tal cual entre el shell actual y AppShell v2.
@@ -684,7 +717,7 @@ function AppInner() {
             <div className="space-y-1.5 w-full">
               <p className="font-semibold">Inconveniente de sincronización</p>
               <p className="text-red-700 leading-relaxed">{errorMsg}</p>
-              <button onClick={() => user && bootstrapFinanceData(user.id)} className="underline text-red-900 font-semibold text-xs">Reintentar</button>
+              <button onClick={() => user && bootstrapFinanceData(accountId)} className="underline text-red-900 font-semibold text-xs">Reintentar</button>
             </div>
           </div>
         )}
@@ -699,9 +732,9 @@ function AppInner() {
         {isReady && metrics && appData && (
           <Suspense fallback={<LoadingState label="Cargando módulo…" />}>
             {activeTab === 'planner' && <SmartPlanner />}
-            {activeTab === 'reports' && user && <ReportsView user={user} />}
-            {activeTab === 'finops' && <FinanceOperativa user={user} appData={appData} formatCop={formatCop} />}
-            {activeTab === 'marketingRoi' && <MarketingROI user={user} ventas={appData.ventas} config={appData.config} formatCop={formatCop} />}
+            {activeTab === 'reports' && user && <ReportsView user={effectiveUser} />}
+            {activeTab === 'finops' && <FinanceOperativa user={effectiveUser} appData={appData} formatCop={formatCop} />}
+            {activeTab === 'marketingRoi' && <MarketingROI user={effectiveUser} ventas={appData.ventas} config={appData.config} formatCop={formatCop} />}
             {activeTab === 'dashboard' && (
               <Home
                 data={appData}
@@ -712,7 +745,7 @@ function AppInner() {
               />
             )}
             {activeTab === 'ventas' && (
-              <VentasAdmin userId={user.id} ventas={appData.ventas} clientes={appData.clientes} servicios={appData.servicios} config={appData.config} onSaveVentas={handleSaveVentas} formatCop={formatCop} formatUsd={formatUsd} />
+              <VentasAdmin userId={accountId} ventas={appData.ventas} clientes={appData.clientes} servicios={appData.servicios} config={appData.config} onSaveVentas={handleSaveVentas} formatCop={formatCop} formatUsd={formatUsd} />
             )}
             {activeTab === 'horas' && (
               <HorasAdmin horas={appData.horas} clientes={appData.clientes} servicios={appData.servicios} ventas={appData.ventas} config={appData.config} metrics={metrics} period={period} onSaveHoras={handleSaveHoras} onSaveConfig={handleSaveConfig} formatCop={formatCop} />
@@ -727,7 +760,7 @@ function AppInner() {
               />
             )}
             {activeTab === 'pagosEgresos' && (
-              <PagosEgresosAdmin pagosEgresos={appData.pagosEgresos || []} config={appData.config} onSavePagosEgresos={handleSavePagosEgresos} userId={user.id} />
+              <PagosEgresosAdmin pagosEgresos={appData.pagosEgresos || []} config={appData.config} onSavePagosEgresos={handleSavePagosEgresos} userId={accountId} />
             )}
             {activeTab === 'gastos' && (
               <GastosAdmin herramientas={appData.herramientas} otrosGastos={appData.otrosGastos} servicios={appData.servicios} clientes={appData.clientes} config={appData.config} fiscalProfile={fiscalProfile} onSaveHerramientas={handleSaveHerramientas} onSaveOtrosGastos={handleSaveOtrosGastos} onSaveConfig={handleSaveConfig} formatCop={formatCop} formatUsd={formatUsd} />
@@ -742,7 +775,7 @@ function AppInner() {
               <ServiciosAdmin servicios={appData.servicios} ventas={appData.ventas} horas={appData.horas} config={appData.config} onSaveServicios={handleSaveServicios} formatCop={formatCop} />
             )}
             {activeTab === 'ajustes' && (
-              <ConfigAdmin userId={user.id} businessProfile={businessProfile} onBusinessProfileUpdated={setBusinessProfile} config={appData.config} ventas={appData.ventas} clientes={appData.clientes} horas={appData.horas} hasGoogleToken={!!getAccessToken()} lastSheetBackupLink={lastSheetBackupLink} isBackingUpToSheets={isBackingUpToSheets} onSaveConfig={handleSaveConfig} onBackupToSheets={handleBackupToSheets} onImportFromSheets={handleImportFromSheets} onImportFromSheetsUrl={handleImportFromSheetsUrl} formatCop={formatCop} />
+              <ConfigAdmin userId={accountId} businessProfile={businessProfile} onBusinessProfileUpdated={setBusinessProfile} config={appData.config} ventas={appData.ventas} clientes={appData.clientes} horas={appData.horas} hasGoogleToken={!!getAccessToken()} lastSheetBackupLink={lastSheetBackupLink} isBackingUpToSheets={isBackingUpToSheets} onSaveConfig={handleSaveConfig} onBackupToSheets={handleBackupToSheets} onImportFromSheets={handleImportFromSheets} onImportFromSheetsUrl={handleImportFromSheetsUrl} formatCop={formatCop} />
             )}
             {activeTab === 'ventas-crm' && modules.crm_ventas && <CustomerCRM user={user} />}
             {activeTab === 'memoria' && isTeam && <MemoriaPanel />}
