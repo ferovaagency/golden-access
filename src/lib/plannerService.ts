@@ -318,10 +318,11 @@ export const plannerService = {
     // recuperar. Si falta el servicio se guarda igual con `servicio_id` nulo y
     // queda marcado como "sin servicio" en Horas para completarlo después.
     // El upsert hace el cierre idempotente: completar dos veces no duplica.
-    if (finalMinutes && task?.client_ref) {
+    if (finalMinutes) {
       // La hora pertenece al día en que la tarea estaba programada, no al día
-      // en que se cerró: cerrar el miércoles algo del lunes descuadraba la
-      // rentabilidad por período.
+      // en que se cerró. Se registra SIEMPRE que haya tiempo real; si no hay
+      // cliente asignado, queda como interno (cliente_id nulo) y se puede asignar
+      // después en Horas — antes se PERDÍA el tiempo si faltaba el cliente.
       const hourDate = (task.scheduled_for as string | null) || new Date().toISOString().slice(0, 10);
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -329,7 +330,7 @@ export const plannerService = {
           id: `planner_${id}`,
           user_id: user.id,
           fecha: hourDate,
-          cliente_id: task.client_ref,
+          cliente_id: task.client_ref ?? null,
           servicio_id: task.service_ref ?? null,
           horas: finalMinutes / 60,
           descripcion: `Planner: ${task.title}`,

@@ -203,8 +203,8 @@ export async function loadFinanceData(userId: string): Promise<AppData> {
   const horas: Hora[] = horasRaw.map((h) => ({
     id: h.id,
     fecha: h.fecha,
-    cliente_id: h.cliente_id,
-    cliente_nombre: clienteNombreMap.get(h.cliente_id) || 'Cliente',
+    cliente_id: h.cliente_id ?? '',
+    cliente_nombre: h.cliente_id ? (clienteNombreMap.get(h.cliente_id) || 'Cliente') : 'Interno',
     servicio_id: h.servicio_id ?? null,
     servicio_nombre: h.servicio_id ? (servicioNombreMap.get(h.servicio_id) || 'Servicio') : 'Sin servicio',
     horas: Number(h.horas),
