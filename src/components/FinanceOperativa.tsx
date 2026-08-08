@@ -58,7 +58,7 @@ export default function FinanceOperativa({ user, appData, formatCop }: { user: U
       {tab === 'metodos' && <PaymentMethodsTab userId={user.id} />}
       {tab === 'deudas' && <DebtsTab userId={user.id} formatCop={formatCop} />}
       {tab === 'cobrar' && <ReceivablesTab userId={user.id} appData={appData} formatCop={formatCop} />}
-      {tab === 'pagar' && <PayablesTab userId={user.id} formatCop={formatCop} />}
+      {tab === 'pagar' && <PayablesTab userId={user.id} appData={appData} formatCop={formatCop} />}
       {tab === 'presupuesto' && <BudgetTab userId={user.id} appData={appData} periodo={periodo} formatCop={formatCop} />}
     </div>
   );
@@ -327,13 +327,23 @@ function ReceivablesTab({ userId, appData, formatCop }: { userId: string; appDat
   const [payments, setPayments] = useState<ReceivablePayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ cliente_id: '', factura: '', concepto: '', valor: 0, moneda: 'COP', vencimiento: '', estado: 'pendiente' as ReceivableStatus, documento_url: '', documento_nombre: '' });
+  const [form, setForm] = useState({ cliente_id: '', factura: '', concepto: '', valor: 0, moneda: 'COP', vencimiento: '', estado: 'pendiente' as ReceivableStatus, documento_url: '', documento_nombre: '', venta_id: '' });
   const reload = () => { setLoading(true); Promise.all([listReceivables(userId), listReceivablePayments(userId)]).then(([r, p]) => { setItems(r); setPayments(p); const token = getAccessToken(); if (token) void syncReceivablesToSheets(token, r).catch((error) => console.error('[FinanceOperativa] Sheets PorCobrar:', error)); }).finally(() => setLoading(false)); };
   useEffect(() => { reload(); }, [userId]);
-  const resetForm = () => { setEditingId(null); setForm({ cliente_id: '', factura: '', concepto: '', valor: 0, moneda: 'COP', vencimiento: '', estado: 'pendiente', documento_url: '', documento_nombre: '' }); };
+  const resetForm = () => { setEditingId(null); setForm({ cliente_id: '', factura: '', concepto: '', valor: 0, moneda: 'COP', vencimiento: '', estado: 'pendiente', documento_url: '', documento_nombre: '', venta_id: '' }); };
+
+  // Saldo pendiente de una venta del libro (misma lógica que el flujo de caja).
+  const ventaSaldo = (v: AppData['ventas'][number]) => {
+    const abonos = v.abonos || [];
+    const pagado = abonos.length > 0 ? abonos.reduce((s, a) => s + a.monto, 0) : (v.adelanto || 0);
+    return Math.max(0, v.cantidad * v.precio_venta_unitario - pagado);
+  };
+  const ventasDelCliente = (clienteId: string) => (appData.ventas || []).filter((v) => v.cliente_id === clienteId);
+  const ventaById = (id?: string | null) => (appData.ventas || []).find((v) => v.id === id);
+
   const save = async () => {
     if (!form.concepto.trim() || !form.valor) return;
-    const input = { cliente_id: form.cliente_id || null, factura: form.factura || null, concepto: form.concepto, valor: form.valor, moneda: form.moneda, vencimiento: form.vencimiento || null, estado: form.estado, documento_url: form.documento_url || null, documento_nombre: form.documento_nombre || null };
+    const input = { cliente_id: form.cliente_id || null, factura: form.factura || null, concepto: form.concepto, valor: form.valor, moneda: form.moneda, vencimiento: form.vencimiento || null, estado: form.estado, documento_url: form.documento_url || null, documento_nombre: form.documento_nombre || null, venta_id: form.venta_id || null };
     if (editingId) await updateReceivable(editingId, input);
     else await createReceivable(userId, input);
     resetForm();
@@ -359,10 +369,27 @@ function ReceivablesTab({ userId, appData, formatCop }: { userId: string; appDat
         <h3 className="font-semibold text-slate-900 mb-1">{editingId ? 'Editar cuenta por cobrar' : 'Nueva cuenta por cobrar'}</h3>
         <p className="text-xs text-slate-500 mb-3">Plata que un cliente te debe (factura emitida, aún sin pagar). Usa "Abonar" en la tabla cuando el cliente pague parcial o total — el saldo se recalcula solo.</p>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-          <select className={inputClass} value={form.cliente_id} onChange={(e) => setForm({ ...form, cliente_id: e.target.value })}>
+          <select className={inputClass} value={form.cliente_id} onChange={(e) => setForm({ ...form, cliente_id: e.target.value, venta_id: '' })}>
             <option value="">— Cliente —</option>
             {appData.clientes.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
           </select>
+          {form.cliente_id && ventasDelCliente(form.cliente_id).length > 0 && (
+            <select
+              className={inputClass}
+              value={form.venta_id}
+              title="Vincula esta cuenta por cobrar a una venta ya registrada: el saldo saldrá de la venta y no se contará dos veces."
+              onChange={(e) => {
+                const v = ventaById(e.target.value);
+                if (v) setForm({ ...form, venta_id: v.id, concepto: form.concepto || `${v.servicio_nombre} — ${v.cliente_nombre}`, valor: v.cantidad * v.precio_venta_unitario, moneda: v.moneda });
+                else setForm({ ...form, venta_id: '' });
+              }}
+            >
+              <option value="">— Vincular a venta (opcional) —</option>
+              {ventasDelCliente(form.cliente_id).map((v) => (
+                <option key={v.id} value={v.id}>{v.fecha} · {v.servicio_nombre} · saldo {formatCop(ventaSaldo(v))}</option>
+              ))}
+            </select>
+          )}
           <input className={inputClass} placeholder="Factura #" value={form.factura} onChange={(e) => setForm({ ...form, factura: e.target.value })} />
           <input className={inputClass} placeholder="Concepto" value={form.concepto} onChange={(e) => setForm({ ...form, concepto: e.target.value })} />
           <input className={inputClass} type="number" placeholder="Valor" value={form.valor} onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })} />
@@ -380,14 +407,18 @@ function ReceivablesTab({ userId, appData, formatCop }: { userId: string; appDat
           <thead><tr className="text-left text-xs text-slate-500 border-b border-slate-200"><th className="py-2">Cliente</th><th>Concepto</th><th className="text-right">Valor</th><th className="text-right">Saldo</th><th className="text-right">Cobro esperado</th><th>Vence</th><th>Estado</th><th></th></tr></thead>
           <tbody>
             {items.map((r) => {
-              const bal = receivableBalance(r, payments);
+              const linkedVenta = ventaById(r.venta_id);
+              const bal = linkedVenta ? ventaSaldo(linkedVenta) : receivableBalance(r, payments);
               const cli = appData.clientes.find((c) => c.id === r.cliente_id)?.nombre || '—';
               const isActive = r.estado !== 'cancelada' && r.estado !== 'pagada';
               const weighted = isActive ? calculateWeightedReceivable({ saldo: bal, vencimiento: r.vencimiento || null, cancelada: false }) : null;
               return (
                 <tr key={r.id} className="border-b border-slate-100">
                   <td className="py-2">{cli}</td>
-                  <td className="font-medium">{r.concepto}</td>
+                  <td className="font-medium">
+                    {r.concepto}
+                    {linkedVenta && <span className="ml-1.5 inline-flex items-center gap-0.5 rounded bg-blue-50 px-1.5 py-0.5 text-[9px] font-semibold text-blue-700 align-middle" title="Vinculada a una venta: el saldo viene de la venta y no se cuenta dos veces.">🔗 venta</span>}
+                  </td>
                   <td className="text-right">{formatCop(r.valor)}</td>
                   <td className="text-right font-semibold">{formatCop(bal)}</td>
                   <td className="text-right text-blue-700" title={weighted ? `${(weighted.probabilidad * 100).toFixed(0)}% de probabilidad de cobro` : undefined}>
@@ -397,11 +428,15 @@ function ReceivablesTab({ userId, appData, formatCop }: { userId: string; appDat
                   <td className="text-slate-500">{r.estado}</td>
                   <td className="text-right space-x-2">
                     {r.documento_url && <a href={r.documento_url} target="_blank" rel="noreferrer" className="text-emerald-600" title={r.documento_nombre || 'Ver factura en Drive'}><ExternalLink className="w-4 h-4 inline" /></a>}
-                    <button onClick={() => { setEditingId(r.id); setForm({ cliente_id: r.cliente_id || '', factura: r.factura || '', concepto: r.concepto, valor: r.valor, moneda: r.moneda, vencimiento: r.vencimiento || '', estado: r.estado, documento_url: r.documento_url || '', documento_nombre: r.documento_nombre || '' }); }} className="text-blue-600 text-xs font-semibold">Editar</button>
-                    <button onClick={async () => {
-                      const monto = Number(prompt('Monto del abono:') || '0');
-                      if (monto > 0) { await addReceivablePayment(userId, { receivable_id: r.id, fecha: new Date().toISOString().slice(0, 10), monto }); reload(); }
-                    }} className="text-blue-600 text-xs font-semibold">Abonar</button>
+                    <button onClick={() => { setEditingId(r.id); setForm({ cliente_id: r.cliente_id || '', factura: r.factura || '', concepto: r.concepto, valor: r.valor, moneda: r.moneda, vencimiento: r.vencimiento || '', estado: r.estado, documento_url: r.documento_url || '', documento_nombre: r.documento_nombre || '', venta_id: r.venta_id || '' }); }} className="text-blue-600 text-xs font-semibold">Editar</button>
+                    {linkedVenta ? (
+                      <span className="text-slate-400 text-xs" title="Registra el cobro en Ventas (abonos). El saldo aquí se actualiza solo.">Cobro en Ventas</span>
+                    ) : (
+                      <button onClick={async () => {
+                        const monto = Number(prompt('Monto del abono:') || '0');
+                        if (monto > 0) { await addReceivablePayment(userId, { receivable_id: r.id, fecha: new Date().toISOString().slice(0, 10), monto }); reload(); }
+                      }} className="text-blue-600 text-xs font-semibold">Abonar</button>
+                    )}
                     <button onClick={() => deleteReceivable(r.id).then(reload)} className="text-red-600"><Trash2 className="w-4 h-4 inline" /></button>
                   </td>
                 </tr>
@@ -416,17 +451,24 @@ function ReceivablesTab({ userId, appData, formatCop }: { userId: string; appDat
 }
 
 /* ------------------ PAYABLES ------------------ */
-function PayablesTab({ userId, formatCop }: { userId: string; formatCop: (n: number) => string }) {
+function PayablesTab({ userId, appData, formatCop }: { userId: string; appData: AppData; formatCop: (n: number) => string }) {
   const [items, setItems] = useState<Payable[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ proveedor: '', factura: '', concepto: '', valor: 0, moneda: 'COP', vencimiento: '', estado: 'pendiente' as PayableStatus, documento_url: '', documento_nombre: '' });
+  const [form, setForm] = useState({ proveedor: '', factura: '', concepto: '', valor: 0, moneda: 'COP', vencimiento: '', estado: 'pendiente' as PayableStatus, documento_url: '', documento_nombre: '', pago_egreso_id: '' });
   const reload = () => { setLoading(true); listPayables(userId).then((rows) => { setItems(rows); const token = getAccessToken(); if (token) void syncPayablesToSheets(token, rows).catch((error) => console.error('[FinanceOperativa] Sheets PorPagar:', error)); }).finally(() => setLoading(false)); };
   useEffect(() => { reload(); }, [userId]);
-  const resetForm = () => { setEditingId(null); setForm({ proveedor: '', factura: '', concepto: '', valor: 0, moneda: 'COP', vencimiento: '', estado: 'pendiente', documento_url: '', documento_nombre: '' }); };
+  const resetForm = () => { setEditingId(null); setForm({ proveedor: '', factura: '', concepto: '', valor: 0, moneda: 'COP', vencimiento: '', estado: 'pendiente', documento_url: '', documento_nombre: '', pago_egreso_id: '' }); };
+
+  const egresoById = (id?: string | null) => (appData.pagosEgresos || []).find((e) => e.id === id);
+  const egresosOrdenados = [...(appData.pagosEgresos || [])].sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
+
   const save = async () => {
     if (!form.proveedor.trim() || !form.valor) return;
-    const input = { proveedor: form.proveedor, factura: form.factura || null, concepto: form.concepto || null, valor: form.valor, moneda: form.moneda, vencimiento: form.vencimiento || null, estado: form.estado, documento_url: form.documento_url || null, documento_nombre: form.documento_nombre || null };
+    const egreso = egresoById(form.pago_egreso_id);
+    const base = { proveedor: form.proveedor, factura: form.factura || null, concepto: form.concepto || null, valor: form.valor, moneda: form.moneda, vencimiento: form.vencimiento || null, estado: form.estado, documento_url: form.documento_url || null, documento_nombre: form.documento_nombre || null, pago_egreso_id: form.pago_egreso_id || null };
+    // Si se vincula a un egreso ya registrado, la cuenta queda saldada por él.
+    const input = egreso ? { ...base, estado: 'pagada' as PayableStatus, monto_pagado: egreso.monto, fecha_pago_real: egreso.fecha } : base;
     if (editingId) await updatePayable(editingId, input);
     else await createPayable(userId, input);
     resetForm();
@@ -440,6 +482,23 @@ function PayablesTab({ userId, formatCop }: { userId: string; formatCop: (n: num
         <p className="text-xs text-slate-500 mb-3">Plata que TÚ le debes a un proveedor o contratista (factura recibida, aún sin pagar) — no es una deuda tuya con un banco, eso va en "Deudas". Usa "Pagar" en la tabla cuando la liquides.</p>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
           <input className={inputClass} placeholder="Proveedor" value={form.proveedor} onChange={(e) => setForm({ ...form, proveedor: e.target.value })} />
+          {egresosOrdenados.length > 0 && (
+            <select
+              className={inputClass}
+              value={form.pago_egreso_id}
+              title="Vincula esta cuenta por pagar a un pago/egreso ya registrado: queda saldada y no se cuenta dos veces."
+              onChange={(e) => {
+                const eg = egresoById(e.target.value);
+                if (eg) setForm({ ...form, pago_egreso_id: eg.id, proveedor: form.proveedor || eg.concepto, concepto: form.concepto || eg.concepto, valor: eg.monto, moneda: eg.moneda });
+                else setForm({ ...form, pago_egreso_id: '' });
+              }}
+            >
+              <option value="">— Vincular a pago/egreso (opcional) —</option>
+              {egresosOrdenados.slice(0, 100).map((eg) => (
+                <option key={eg.id} value={eg.id}>{eg.fecha} · {eg.concepto} · {formatCop(eg.monto)}</option>
+              ))}
+            </select>
+          )}
           <input className={inputClass} placeholder="Factura #" value={form.factura} onChange={(e) => setForm({ ...form, factura: e.target.value })} />
           <input className={inputClass} placeholder="Concepto" value={form.concepto} onChange={(e) => setForm({ ...form, concepto: e.target.value })} />
           <input className={inputClass} type="number" placeholder="Valor" value={form.valor} onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })} />
@@ -458,7 +517,10 @@ function PayablesTab({ userId, formatCop }: { userId: string; formatCop: (n: num
           <tbody>
             {items.map((p) => (
               <tr key={p.id} className="border-b border-slate-100">
-                <td className="py-2 font-medium">{p.proveedor}</td>
+                <td className="py-2 font-medium">
+                  {p.proveedor}
+                  {p.pago_egreso_id && <span className="ml-1.5 inline-flex items-center gap-0.5 rounded bg-blue-50 px-1.5 py-0.5 text-[9px] font-semibold text-blue-700 align-middle" title="Vinculada a un pago/egreso: no se cuenta dos veces.">🔗 egreso</span>}
+                </td>
                 <td className="text-slate-500">{p.concepto || '—'}</td>
                 <td className="text-right">{formatCop(p.valor)}</td>
                 <td className="text-right">{p.monto_pagado != null ? formatCop(p.monto_pagado) : '—'}</td>
@@ -467,11 +529,15 @@ function PayablesTab({ userId, formatCop }: { userId: string; formatCop: (n: num
                 <td className="text-slate-500">{p.estado}</td>
                 <td className="text-right space-x-2">
                   {p.documento_url && <a href={p.documento_url} target="_blank" rel="noreferrer" className="text-emerald-600" title={p.documento_nombre || 'Ver factura en Drive'}><ExternalLink className="w-4 h-4 inline" /></a>}
-                  <button onClick={() => { setEditingId(p.id); setForm({ proveedor: p.proveedor, factura: p.factura || '', concepto: p.concepto || '', valor: p.valor, moneda: p.moneda, vencimiento: p.vencimiento || '', estado: p.estado, documento_url: p.documento_url || '', documento_nombre: p.documento_nombre || '' }); }} className="text-blue-600 text-xs font-semibold">Editar</button>
-                  <button onClick={async () => {
-                    const monto = Number(prompt('Monto pagado:', String(p.valor)) || '0');
-                    if (monto > 0) { await updatePayable(p.id, { monto_pagado: monto, fecha_pago_real: new Date().toISOString().slice(0, 10), estado: 'pagada' }); reload(); }
-                  }} className="text-blue-600 text-xs font-semibold">Pagar</button>
+                  <button onClick={() => { setEditingId(p.id); setForm({ proveedor: p.proveedor, factura: p.factura || '', concepto: p.concepto || '', valor: p.valor, moneda: p.moneda, vencimiento: p.vencimiento || '', estado: p.estado, documento_url: p.documento_url || '', documento_nombre: p.documento_nombre || '', pago_egreso_id: p.pago_egreso_id || '' }); }} className="text-blue-600 text-xs font-semibold">Editar</button>
+                  {p.pago_egreso_id ? (
+                    <span className="text-slate-400 text-xs" title="Saldada con un pago/egreso ya registrado.">Pagada (egreso)</span>
+                  ) : (
+                    <button onClick={async () => {
+                      const monto = Number(prompt('Monto pagado:', String(p.valor)) || '0');
+                      if (monto > 0) { await updatePayable(p.id, { monto_pagado: monto, fecha_pago_real: new Date().toISOString().slice(0, 10), estado: 'pagada' }); reload(); }
+                    }} className="text-blue-600 text-xs font-semibold">Pagar</button>
+                  )}
                   <button onClick={() => deletePayable(p.id).then(reload)} className="text-red-600"><Trash2 className="w-4 h-4 inline" /></button>
                 </td>
               </tr>

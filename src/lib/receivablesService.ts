@@ -14,6 +14,10 @@ export interface Receivable {
   vencimiento?: string | null;
   estado: ReceivableStatus;
   notas?: string | null;
+  /** Enlace opcional a una venta del libro (finance_ventas). Si está presente,
+   * esta cuenta por cobrar refleja el saldo de esa venta y el flujo de caja NO
+   * la cuenta aparte (evita inflar los ingresos). */
+  venta_id?: string | null;
 }
 
 export interface ReceivablePayment {

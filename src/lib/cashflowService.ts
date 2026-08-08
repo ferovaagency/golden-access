@@ -79,20 +79,25 @@ export async function buildCashflow(userId: string, periodo: string, appData?: A
     .filter((payment) => isInPeriod(payment.fecha, periodo))
     .reduce((sum, payment) => sum + convertToCop(payment.monto, payment.moneda, appData!.config.trm), 0);
 
+  // Cuentas por cobrar/pagar VINCULADAS a una venta/pago del libro: su dinero ya
+  // lo aportan las ventas (legacyReceipts/legacyPending) y los pagos/egresos
+  // (legacyExpenses), así que aquí se excluyen para no contar dos veces.
+  const linkedReceivableIds = new Set(receivables.filter((r) => r.venta_id).map((r) => r.id));
+
   const ingresos_reales = recvPayments
-    .filter((payment) => isInPeriod(payment.fecha, periodo))
+    .filter((payment) => isInPeriod(payment.fecha, periodo) && !linkedReceivableIds.has(payment.receivable_id))
     .reduce((s, p) => s + p.monto, 0) + legacyReceipts;
   const ingresos_pendientes = receivables
-    .filter((r) => r.estado !== 'pagada' && r.estado !== 'cancelada')
+    .filter((r) => r.estado !== 'pagada' && r.estado !== 'cancelada' && !r.venta_id)
     .reduce((s, r) => s + receivableBalance(r, recvPayments), 0) + legacyPending;
   const gastos_reales = payables
-    .filter((p) => p.estado === 'pagada' && isInPeriod(p.fecha_pago_real, periodo))
+    .filter((p) => p.estado === 'pagada' && isInPeriod(p.fecha_pago_real, periodo) && !p.pago_egreso_id)
     .reduce((s, p) => s + (p.monto_pagado || p.valor), 0) + legacyExpenses;
   const obligaciones_proximas = payables
     .filter((p) => p.estado !== 'pagada' && p.estado !== 'cancelada')
     .reduce((s, p) => s + p.valor, 0);
   const cobros_esperados = receivables
-    .filter((r) => r.estado !== 'pagada' && r.estado !== 'cancelada')
+    .filter((r) => r.estado !== 'pagada' && r.estado !== 'cancelada' && !r.venta_id)
     .reduce((sum, r) => sum + calculateWeightedReceivable({ saldo: receivableBalance(r, recvPayments), vencimiento: r.vencimiento || null, cancelada: false }).cobroEsperado, 0)
     // Older Ventas do not carry a receivable due date; the engine labels this
     // as estimated using its documented no-date probability rather than cash.

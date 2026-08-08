@@ -18,6 +18,10 @@ export interface Payable {
   account_id?: string | null;
   estado: PayableStatus;
   notas?: string | null;
+  /** Enlace opcional a un pago/egreso del libro (pagosEgresos). Si está
+   * presente, el flujo de caja NO cuenta esta cuenta por pagar aparte (evita
+   * inflar los gastos: el egreso ya lo aporta). */
+  pago_egreso_id?: string | null;
 }
 
 type PayableRow = Omit<Payable, 'valor' | 'monto_pagado'> & { valor: number | string; monto_pagado: number | string | null };

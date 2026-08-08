@@ -23,6 +23,8 @@ export interface DebtPayment {
   monto: number;
   payment_method_id?: string | null;
   notas?: string | null;
+  /** Enlace opcional al pago/egreso del libro que corresponde a esta cuota. */
+  pago_egreso_id?: string | null;
 }
 
 type DebtRow = Omit<Debt, 'saldo_inicial' | 'tasa'> & { saldo_inicial: number | string; tasa: number | string | null };
