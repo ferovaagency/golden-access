@@ -176,13 +176,30 @@ pre {
   color: #1f1b16 !important;
 }
 
-/* Texto SIEMPRE blanco sobre botones/pestañas de fondo azul. El text-white de
-   Tailwind se estaba sobrescribiendo a un color oscuro e ilegible sobre el azul
-   (pasaba en el /app bajo .ferova-v2-theme). bg-blue-600/700 es siempre azul
-   oscuro, así que blanco es siempre el color correcto del texto. */
+/* Texto SIEMPRE blanco sobre botones/pestañas de fondo azul saturado. El
+   text-white de Tailwind se sobrescribía a un color oscuro e ilegible sobre el
+   azul (pasaba en el /app bajo .ferova-v2-theme). Los azules 500-800 y el azul
+   de marca son siempre oscuros → blanco es el color correcto, también en los
+   elementos hijos (íconos y <span> dentro del botón). NO se tocan los azules
+   claros (bg-blue-50/100/200), que sí llevan texto oscuro. */
+.bg-blue-500,
 .bg-blue-600,
-.bg-blue-700 {
+.bg-blue-700,
+.bg-blue-800,
+.bg-\[var\(--ferova-brand\)\],
+.bg-blue-500 *,
+.bg-blue-600 *,
+.bg-blue-700 *,
+.bg-blue-800 *,
+.bg-\[var\(--ferova-brand\)\] * {
   color: #ffffff !important;
+}
+/* Excepción: un menú/tarjeta con fondo azul puede contener chips claros con su
+   propio color; esos se respetan si traen un bg claro explícito. */
+.bg-blue-500 .bg-white,
+.bg-blue-600 .bg-white,
+.bg-blue-700 .bg-white {
+  color: inherit !important;
 }
 
 .ferova-light-theme p,

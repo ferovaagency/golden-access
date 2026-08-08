@@ -192,6 +192,7 @@ export function usePlanner() {
   }, [refresh]);
   const postponeTask = useCallback(async (id: string) => { await plannerService.postponeTask(id); await refresh(); }, [refresh]);
   const deleteTask = useCallback(async (id: string) => { await plannerService.deleteTask(id); await refresh(); }, [refresh]);
+  const updateTaskDescription = useCallback(async (id: string, description: string | null) => { await plannerService.updateTaskDescription(id, description); await refresh(); }, [refresh]);
   const createBlock = useCallback(async (input: CreatePlannerBlockInput) => {
     setBusy('block'); setError(null);
     try {
@@ -210,6 +211,6 @@ export function usePlanner() {
     inbox, tasks, clients, services, blocks, insights, briefing, rescheduledCount, planNotice,
     loading, busy, error, date, setDate, timeZone,
     refresh, classify, previewCapture, commitCapture, planDay, regenerateInsights, regenerateBriefing,
-    completeTask, startTask, updateTask, postponeTask, deleteTask, createBlock, dismissInsight,
+    completeTask, startTask, updateTask, updateTaskDescription, postponeTask, deleteTask, createBlock, dismissInsight,
   };
 }

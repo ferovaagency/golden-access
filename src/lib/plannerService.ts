@@ -395,6 +395,10 @@ export const plannerService = {
     await anyDb().from('planner_tasks').update({ status: 'postponed', scheduled_for: tomorrow.toISOString().slice(0, 10), postponed_count: (data?.postponed_count ?? 0) + 1 }).eq('id', id);
   },
   async deleteTask(id: string) { await anyDb().from('planner_tasks').delete().eq('id', id); },
+  /** Guarda los detalles/contexto de la tarea (para que la IA tenga más información). */
+  async updateTaskDescription(id: string, description: string | null) {
+    await anyDb().from('planner_tasks').update({ description: description || null }).eq('id', id);
+  },
   /**
    * Punto #4 pendiente del backlog: si una tarea quedó asignada a un día que
    * ya pasó y nunca se completó, se reprograma sola para hoy (no se pierde

@@ -48,6 +48,7 @@ export default function SmartPlanner() {
   const [blockEnd, setBlockEnd] = useState('10:00');
   const [editingTask, setEditingTask] = useState<PlannerTask | null>(null);
   const [taskTitle, setTaskTitle] = useState('');
+  const [taskDescription, setTaskDescription] = useState('');
   const [taskDate, setTaskDate] = useState('');
   const [taskTime, setTaskTime] = useState('');
   const [taskEstimatedMinutes, setTaskEstimatedMinutes] = useState(30);
@@ -129,6 +130,7 @@ export default function SmartPlanner() {
     const linkedBlock = p.blocks.find((block) => block.task_ids?.includes(task.id));
     setEditingTask(task);
     setTaskTitle(task.title);
+    setTaskDescription(task.description || '');
     setTaskDate((linkedBlock?.starts_at || task.scheduled_for || p.date).slice(0, 10));
     setTaskTime(linkedBlock ? new Date(linkedBlock.starts_at).toLocaleTimeString('en-GB', { timeZone: p.timeZone, hour: '2-digit', minute: '2-digit', hour12: false }) : '');
     setTaskEstimatedMinutes(task.estimated_minutes);
@@ -177,6 +179,10 @@ export default function SmartPlanner() {
       recurrence_until: taskRepeatDays.length ? (taskRepeatUntil || null) : null,
       sync_to_google_calendar: taskSyncGoogle,
     });
+    // Detalles/contexto para la IA se guardan directo en la tarea.
+    if ((taskDescription || '') !== (editingTask.description || '')) {
+      try { await p.updateTaskDescription(editingTask.id, taskDescription.trim() || null); } catch { /* no bloquea el guardado principal */ }
+    }
     if (taskSyncGoogle) setTaskSaveNotice(result?.message || 'Tarea guardada.');
     setEditingTask(null);
   };
@@ -304,7 +310,7 @@ export default function SmartPlanner() {
 
       {plannerView === 'day' && <DayClientProgress tasks={p.tasks} clients={p.clients} date={p.date} />}
 
-      {plannerView === 'day' && <DayAgendaSummary blocks={p.blocks} tasks={p.tasks} clients={p.clients} timeZone={p.timeZone} onComplete={handleComplete} />}
+      {plannerView === 'day' && <DayAgendaSummary blocks={p.blocks} tasks={p.tasks} clients={p.clients} timeZone={p.timeZone} onComplete={handleComplete} onEdit={openTaskEditor} />}
 
       {/* Brain Dump */}
       <section className="rounded-2xl border border-[var(--line)] bg-white p-5">
@@ -437,7 +443,7 @@ export default function SmartPlanner() {
           </div>
         ) : (
           <ul className="space-y-2">
-            {p.blocks.map((b) => <BlockRow key={b.id} block={b} tasks={p.tasks} clients={p.clients} timeZone={p.timeZone} onComplete={handleComplete} />)}
+            {p.blocks.map((b) => <BlockRow key={b.id} block={b} tasks={p.tasks} clients={p.clients} timeZone={p.timeZone} onComplete={handleComplete} onEdit={openTaskEditor} />)}
           </ul>
         )}
       </section>}
@@ -447,10 +453,20 @@ export default function SmartPlanner() {
         <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500">Prioridades · Pareto 80/20 · {openTasks.length}</h2><span className="text-[11px] text-slate-400">Ordenadas por impacto, no por orden de llegada: ataca primero las de arriba — son el 20% que mueve el 80% de la aguja.</span></div>
         {taskSaveNotice && <div className="mb-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">{taskSaveNotice}</div>}
         {editingTask && (
-          <form onSubmit={saveTaskEditor} className="mb-3 rounded-2xl border border-blue-200 bg-blue-50 p-4">
-            <div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-sm font-semibold text-slate-900">Editar tarea</p><p className="text-[11px] text-slate-600">“Programar desde” reserva la tarea a partir de esa fecha; una hora fija crea un bloque manual.</p></div><button type="button" onClick={() => setEditingTask(null)} className="text-slate-500 hover:text-slate-900" aria-label="Cerrar edición"><X className="h-4 w-4" /></button></div>
+          <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/40 p-3" role="dialog" aria-modal="true" aria-label="Detalle de la tarea" onClick={(e) => { if (e.target === e.currentTarget) setEditingTask(null); }}>
+          <form onSubmit={saveTaskEditor} className="my-6 w-full max-w-3xl rounded-2xl border border-blue-200 bg-white p-4 shadow-2xl">
+            <div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-sm font-semibold text-slate-900">{editingTask.title}</p><p className="text-[11px] text-slate-600">Ábrela para interactuar: inicia/finaliza, dale contexto a la IA y ajusta lo que necesites.</p></div><button type="button" onClick={() => setEditingTask(null)} className="text-slate-500 hover:text-slate-900" aria-label="Cerrar"><X className="h-4 w-4" /></button></div>
+            {/* Acciones rápidas */}
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              {editingTask.status === 'in_progress' && editingTask.started_at
+                ? <><LiveTimer startedAt={editingTask.started_at} estimatedMinutes={editingTask.estimated_minutes} /><button type="button" onClick={async () => { await handleComplete(editingTask.id); setEditingTask(null); }} className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700">Finalizar y registrar tiempo</button></>
+                : <button type="button" onClick={async () => { await p.startTask(editingTask.id); setEditingTask(null); }} className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700">▶ Iniciar ahora</button>}
+              <button type="button" onClick={async () => { await p.postponeTask(editingTask.id); setEditingTask(null); }} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Posponer a mañana</button>
+              <button type="button" onClick={async () => { const id = editingTask.id; setEditingTask(null); await p.deleteTask(id); }} className="ml-auto rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50">Eliminar</button>
+            </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <label className="sm:col-span-2 text-xs text-slate-600">Tarea<input required value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" /></label>
+              <label className="sm:col-span-2 lg:col-span-4 text-xs text-slate-600">Tarea<input required value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" /></label>
+              <label className="sm:col-span-2 lg:col-span-4 text-xs text-slate-600">Detalles / contexto para la IA<textarea value={taskDescription} onChange={(event) => setTaskDescription(event.target.value)} rows={3} placeholder="Qué implica la tarea, links, criterios de 'listo', a quién entregar… entre más contexto, mejor te ayuda el asistente." className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" /></label>
               <label className="text-xs text-slate-600">Programar desde<input type="date" value={taskDate} onChange={(event) => setTaskDate(event.target.value)} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" /><span className="mt-1 block text-[10px] text-slate-400">Déjala vacía para que la IA la ubique lo antes posible.</span></label>
               <label className="text-xs text-slate-600">Hora fija (opcional)<input type="time" value={taskTime} onChange={(event) => setTaskTime(event.target.value)} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" /><span className="mt-1 block text-[10px] text-slate-400">Con hora, no se moverá sola.</span></label>
               <label className="text-xs text-slate-600">Fecha de entrega<input type="date" value={taskDeadline} onChange={(event) => setTaskDeadline(event.target.value)} className="mt-1 block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" /></label>
@@ -470,6 +486,7 @@ export default function SmartPlanner() {
               <div className="flex items-end gap-2"><button type="submit" disabled={p.busy === 'task'} className="rounded-lg bg-blue-700 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-50">{p.busy === 'task' ? 'Guardando…' : 'Guardar tarea'}</button><button type="button" onClick={() => setEditingTask(null)} className="rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Cancelar</button></div>
             </div>
           </form>
+          </div>
         )}
         {openTasks.length === 0 ? (
           <p className="text-xs text-slate-400 italic">Bandeja vacía.</p>
@@ -510,10 +527,10 @@ function addDays(date: Date, days: number) {
   return next;
 }
 
-function DayAgendaSummary({ blocks, tasks, clients, timeZone, onComplete }: { blocks: PlannerBlock[]; tasks: PlannerTask[]; clients: Array<{ id: string; nombre: string }>; timeZone: string; onComplete: (id: string) => void }) {
+function DayAgendaSummary({ blocks, tasks, clients, timeZone, onComplete, onEdit }: { blocks: PlannerBlock[]; tasks: PlannerTask[]; clients: Array<{ id: string; nombre: string }>; timeZone: string; onComplete: (id: string) => void; onEdit?: (task: PlannerTask) => void }) {
   return <section className="rounded-2xl border border-blue-200 bg-blue-50/60 p-4">
     <div className="flex items-center justify-between gap-3"><div><h2 className="text-sm font-semibold text-blue-950">Agenda de hoy</h2><p className="mt-0.5 text-[11px] text-blue-800">Tus tareas ya asignadas aparecen aquí en su hora; el detalle completo continúa más abajo.</p></div><span className="rounded-full bg-white px-2 py-1 text-xs font-semibold text-blue-700">{blocks.length} bloques</span></div>
-    {blocks.length ? <ul className="mt-3 space-y-2">{blocks.map((block) => <BlockRow key={block.id} block={block} tasks={tasks} clients={clients} timeZone={timeZone} onComplete={onComplete} />)}</ul> : <p className="mt-3 rounded-xl border border-dashed border-blue-200 bg-white px-3 py-3 text-xs text-slate-500">Aún no hay tareas con horario. Usa “Reorganizar mi día” para asignarlas.</p>}
+    {blocks.length ? <ul className="mt-3 space-y-2">{blocks.map((block) => <BlockRow key={block.id} block={block} tasks={tasks} clients={clients} timeZone={timeZone} onComplete={onComplete} onEdit={onEdit} />)}</ul> : <p className="mt-3 rounded-xl border border-dashed border-blue-200 bg-white px-3 py-3 text-xs text-slate-500">Aún no hay tareas con horario. Usa “Reorganizar mi día” para asignarlas.</p>}
   </section>;
 }
 
@@ -578,7 +595,7 @@ function PlannerCalendar({ view, date, tasks, clients, compact, timeZone, onChan
   </section>;
 }
 
-function BlockRow({ block, tasks, clients, timeZone, onComplete }: { block: PlannerBlock; tasks: PlannerTask[]; clients: Array<{ id: string; nombre: string }>; timeZone?: string; onComplete: (id: string) => void }) {
+function BlockRow({ block, tasks, clients, timeZone, onComplete, onEdit }: { block: PlannerBlock; tasks: PlannerTask[]; clients: Array<{ id: string; nombre: string }>; timeZone?: string; onComplete: (id: string) => void; onEdit?: (task: PlannerTask) => void }) {
   const meta = categoryMeta[block.category];
   const linked = tasks.filter((t) => block.task_ids?.includes(t.id));
   return (
@@ -605,9 +622,9 @@ function BlockRow({ block, tasks, clients, timeZone, onComplete }: { block: Plan
               <ul className="mt-2 space-y-1">
                 {linked.map((t) => (
                   <li key={t.id} className="flex items-center gap-2 text-xs text-slate-600">
-                    <button onClick={() => onComplete(t.id)} className="grid h-4 w-4 place-items-center rounded border border-slate-300 hover:border-emerald-400 hover:bg-emerald-50"><Check className="h-2.5 w-2.5 text-transparent hover:text-emerald-500" /></button>
-                    <span className="truncate">{t.title}</span>
-                    <span className="text-slate-300">· {t.estimated_minutes}m</span>
+                    <button onClick={() => onComplete(t.id)} title="Completar" className="grid h-4 w-4 shrink-0 place-items-center rounded border border-slate-300 hover:border-emerald-400 hover:bg-emerald-50"><Check className="h-2.5 w-2.5 text-transparent hover:text-emerald-500" /></button>
+                    <button type="button" onClick={() => onEdit?.(t)} className="min-w-0 flex-1 truncate text-left hover:text-blue-700" title="Abrir tarea">{t.title}</button>
+                    <span className="shrink-0 text-slate-300">· {t.estimated_minutes}m</span>
                   </li>
                 ))}
               </ul>
@@ -647,32 +664,21 @@ function LiveTimer({ startedAt, estimatedMinutes }: { startedAt: string; estimat
 }
 
 function TaskRow({ task, clientName, isProtected, onEdit, onStart, onComplete, onPostpone, onDelete }: { task: PlannerTask; clientName?: string; isProtected: boolean; onEdit: (task: PlannerTask) => void; onStart: (id: string) => void; onComplete: (id: string) => void; onPostpone: (id: string) => void | Promise<void>; onDelete: (id: string) => void }) {
-  const EIcon = energyIcon[task.energy_required];
+  // Fila mínima: título + cliente + editar/eliminar. Todo lo demás (prioridad,
+  // score, categoría, tiempos, iniciar/finalizar, contexto para la IA) vive en
+  // el popup que se abre al hacer clic en la tarea.
+  const running = task.status === 'in_progress' && task.started_at;
+  void isProtected; void onStart; void onComplete; void onPostpone;
   return (
-    <li className="group flex flex-wrap items-center gap-2 rounded-xl border border-[var(--line)] bg-white px-3 py-2">
-      <button onClick={() => onComplete(task.id)} aria-label="Marcar como completada" title="Completar" className="grid h-5 w-5 place-items-center rounded-md border border-slate-300 hover:border-emerald-400 hover:bg-emerald-50">
-        <Check className="h-3 w-3 text-transparent group-hover:text-emerald-400" />
+    <li className="group flex items-center gap-2 rounded-xl border border-[var(--line)] bg-white px-3 py-2">
+      <button onClick={() => onEdit(task)} className="flex min-w-0 flex-1 items-center gap-2 text-left" title="Abrir tarea">
+        <span className={`h-2 w-2 shrink-0 rounded-full ${running ? 'bg-emerald-500 animate-pulse' : task.deadline ? 'bg-amber-400' : 'bg-slate-300'}`} aria-hidden />
+        <span className="truncate text-sm text-slate-800">{task.title}</span>
+        {clientName && <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${clientTone(task.client_ref)}`}>● {clientName}</span>}
       </button>
-      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${priorityTone[task.priority] || priorityTone.medium}`}>{task.priority}</span>
-      <span title={`Priority Score ${visiblePriorityScore(task).toFixed(2)}/5. Urgencia 30%, impacto financiero 25%, impacto cliente 20%, riesgo 15%, facilidad 10%.`} className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-700">Score {visiblePriorityScore(task).toFixed(1)}</span>
-      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] ${categoryMeta[task.category].tone}`}>{categoryMeta[task.category].label}</span>
-      <span className="inline-flex items-center gap-1 text-[10px] text-slate-500"><EIcon className="h-3 w-3" aria-hidden /> {task.energy_required}</span>
-      <span className="text-sm text-slate-800 flex-1 min-w-[8rem] truncate">{task.title}</span>
-      {task.status === 'in_progress' && task.started_at
-        ? <span className="inline-flex items-center gap-1.5">
-            <LiveTimer startedAt={task.started_at} estimatedMinutes={task.estimated_minutes} />
-            <button onClick={() => onComplete(task.id)} title="Finalizar y registrar el tiempo en Horas" className="rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-100">Finalizar</button>
-          </span>
-        : <button onClick={() => onStart(task.id)} className="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1 text-[10px] font-semibold text-blue-700 hover:bg-blue-100">Iniciar</button>}
-      {clientName && <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${clientTone(task.client_ref)}`}>● {clientName}</span>}
-      <span className="text-[10px] text-slate-400 inline-flex items-center gap-1"><Clock className="h-3 w-3" aria-hidden /> {task.estimated_minutes}m</span>
-      {isProtected && <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] text-amber-700"><Lock className="h-3 w-3" aria-hidden /> Protegido</span>}
-      {task.scheduled_for && <span className="text-[10px] text-blue-700 bg-blue-50 rounded-full px-2 py-0.5">Desde {new Date(`${task.scheduled_for.slice(0, 10)}T12:00:00`).toLocaleDateString()}</span>}
-      {task.deadline && <span className="text-[10px] text-amber-700 bg-amber-50 rounded-full px-2 py-0.5">⏰ {new Date(task.deadline).toLocaleDateString()}</span>}
-      {/* Actions: always visible on touch/mobile, subtle on desktop hover. */}
-      <div className="flex items-center gap-1 sm:opacity-70 sm:group-hover:opacity-100 transition-opacity">
-        <button onClick={() => onEdit(task)} aria-label="Editar tarea" title="Editar tarea" className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-blue-700"><Edit2 className="h-3.5 w-3.5" /></button>
-        <button onClick={() => onPostpone(task.id)} aria-label="Posponer a mañana" title="Posponer a mañana" className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900"><ChevronRight className="h-3.5 w-3.5" aria-hidden /> Mañana</button>
+      {running && <LiveTimer startedAt={task.started_at} estimatedMinutes={task.estimated_minutes} />}
+      <div className="flex shrink-0 items-center gap-1 sm:opacity-70 sm:group-hover:opacity-100 transition-opacity">
+        <button onClick={() => onEdit(task)} aria-label="Abrir / editar tarea" title="Abrir / editar" className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-blue-700"><Edit2 className="h-3.5 w-3.5" /></button>
         <button onClick={() => onDelete(task.id)} aria-label="Eliminar tarea" title="Eliminar tarea" className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-red-50 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
       </div>
     </li>
