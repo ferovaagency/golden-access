@@ -123,6 +123,9 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const [canalOrigen, setCanalOrigen] = useState('linkedin');
   const [fuenteUrl, setFuenteUrl] = useState('');
   const [telefono, setTelefono] = useState('');
+  const [nuevoEmail, setNuevoEmail] = useState('');
+  const [nuevoSitioWeb, setNuevoSitioWeb] = useState('');
+  const [pipelineView, setPipelineView] = useState<'lista' | 'kanban' | 'origen'>('lista');
   const [nuevaServicioId, setNuevaServicioId] = useState('');
   const [nuevaValorEstimado, setNuevaValorEstimado] = useState<string>('');
   const [nuevaMoneda, setNuevaMoneda] = useState<'COP' | 'USD'>('COP');
@@ -923,6 +926,8 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
         canal_origen: canalOrigen as any,
         estado: 'nuevo',
         fuente_url: fuenteUrl.trim() || null,
+        sitio_web: nuevoSitioWeb.trim() || null,
+        email: nuevoEmail.trim() || null,
         telefono: telefono.trim() || null,
         servicio_id: nuevaServicioId || null,
         valor_estimado: valor,
@@ -936,6 +941,8 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       setEmpresa('');
       setFuenteUrl('');
       setTelefono('');
+      setNuevoEmail('');
+      setNuevoSitioWeb('');
       setNuevaServicioId('');
       setNuevaValorEstimado('');
       setNewVendedor('');
@@ -1244,6 +1251,10 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   className="w-full bg-slate-50/50 border border-slate-200 p-2 rounded text-slate-900"
                 />
               </div>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="block"><span className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Email (opcional)</span><input type="email" value={nuevoEmail} onChange={(e) => setNuevoEmail(e.target.value)} placeholder="contacto@empresa.com" className="w-full rounded border border-slate-200 bg-slate-50/50 p-2 text-slate-900" /></label>
+                <label className="block"><span className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Sitio web (opcional)</span><input value={nuevoSitioWeb} onChange={(e) => setNuevoSitioWeb(e.target.value)} placeholder="empresa.com" className="w-full rounded border border-slate-200 bg-slate-50/50 p-2 text-slate-900" /></label>
+              </div>
               <div>
                 <label htmlFor="op-servicio" className="block text-slate-500 text-[10px] uppercase font-mono mb-1">Servicio del catálogo (opcional)</label>
                 <select
@@ -1293,10 +1304,31 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
             </form>
 
             <div className="lg:col-span-8 space-y-2">
+              {/* Selector de vista del pipeline */}
+              <div className="flex items-center gap-1.5 pb-1">
+                <span className="text-[10px] font-mono uppercase text-slate-400 mr-1">Vista:</span>
+                {([['lista', 'Lista'], ['kanban', 'Por estado'], ['origen', 'Por origen']] as const).map(([v, label]) => (
+                  <button
+                    key={v}
+                    onClick={() => setPipelineView(v)}
+                    className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${pipelineView === v ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+                {pipelineView !== 'lista' && <span className="text-[10px] text-slate-400 ml-1">agrupadas por {pipelineView === 'kanban' ? 'etapa del pipeline' : 'canal de origen'}</span>}
+              </div>
               {oportunidades.length === 0 && !loading && (
                 <p className="text-[#8a8377] text-xs font-mono text-center py-10">Sin oportunidades todavía.</p>
               )}
-              {oportunidades.map((o) => {
+              {(() => {
+                const stageIndex = (e: string) => { const i = PIPELINE_STAGES.indexOf(e as EstadoOportunidad); return i < 0 ? 99 : i; };
+                const displayedOpps = pipelineView === 'lista'
+                  ? oportunidades
+                  : [...oportunidades].sort((a, b) => pipelineView === 'origen'
+                    ? String(a.canal_origen || 'otro').localeCompare(String(b.canal_origen || 'otro'))
+                    : stageIndex(a.estado) - stageIndex(b.estado));
+                return displayedOpps.map((o) => {
                 const srv = o.servicio_id ? servicios.find((s) => s.id === o.servicio_id) : null;
                 const valor = o.valor_estimado ?? null;
                 let margen: { abs: number; pct: number; color: string } | null = null;
@@ -1361,6 +1393,11 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                       {o.fuente_url && (
                         <a href={o.fuente_url} target="_blank" rel="noreferrer" className="text-blue-600 flex items-center gap-1">
                           <ExternalLink className="w-3 h-3" /> ver
+                        </a>
+                      )}
+                      {o.sitio_web && (
+                        <a href={/^https?:\/\//i.test(o.sitio_web) ? o.sitio_web : `https://${o.sitio_web}`} target="_blank" rel="noreferrer" className="text-emerald-600 flex items-center gap-1" title="Sitio web del lead">
+                          <ExternalLink className="w-3 h-3" /> web
                         </a>
                       )}
                       <select
@@ -1484,7 +1521,8 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   </div>
                   </div>
                 );
-              })}
+              });
+              })()}
             </div>
           </div>
           </div>

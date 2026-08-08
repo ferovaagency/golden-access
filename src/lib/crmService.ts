@@ -32,6 +32,7 @@ export interface Oportunidad {
   moneda: 'COP' | 'USD' | null;
   probabilidad: number | null;
   fuente_url: string | null;
+  sitio_web: string | null;
   telefono: string | null;
   email: string | null;
   notas: string | null;
