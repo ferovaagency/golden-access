@@ -204,6 +204,15 @@ pre {
   color: inherit !important;
 }
 
+/* Botones azules de TODA la plataforma: texto blanco Y en negrita (pedido
+   explícito). Se aplica solo a elementos interactivos (button/a/role=button)
+   con fondo azul saturado, para no ensombrecer texto de tarjetas azules. */
+:is(button, a, [role="button"], input[type="submit"], input[type="button"], summary):is(.bg-blue-500, .bg-blue-600, .bg-blue-700, .bg-blue-800, .bg-\[var\(--ferova-brand\)\]),
+:is(button, a, [role="button"], summary):is(.bg-blue-500, .bg-blue-600, .bg-blue-700, .bg-blue-800, .bg-\[var\(--ferova-brand\)\]) * {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
 .ferova-light-theme p,
 .ferova-light-theme span,
 .ferova-light-theme a,
