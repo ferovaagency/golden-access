@@ -1135,6 +1135,26 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
 
         {tab === 'pipeline' && (
           <div className="space-y-6">
+          {/* CRM + Citas juntos: las próximas citas se ven aquí mismo. */}
+          <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-blue-600 font-mono uppercase text-[10px] tracking-wider font-bold"><CalendarPlus className="w-3.5 h-3.5" /> Próximas citas</div>
+              <button type="button" onClick={() => setTab('citas')} className="text-[11px] font-semibold text-blue-600 hover:text-blue-800">Gestionar citas →</button>
+            </div>
+            {citas.filter((c) => c.estado !== 'cancelada').length === 0 ? (
+              <p className="text-xs text-slate-400">No tienes citas próximas. <button type="button" onClick={() => setTab('citas')} className="font-semibold text-blue-600">Agenda una →</button></p>
+            ) : (
+              <ul className="space-y-1.5">
+                {citas.filter((c) => c.estado !== 'cancelada').slice(0, 4).map((c) => (
+                  <li key={c.id} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="min-w-0 flex-1 truncate font-medium text-slate-800">{c.nombre_prospecto}</span>
+                    <span className="shrink-0 text-slate-500">{new Date(c.fecha_hora).toLocaleString('es-CO', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                    {c.meet_link && <a href={c.meet_link} target="_blank" rel="noreferrer" className="shrink-0 font-semibold text-blue-600">unirse</a>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           <form onSubmit={handleImportApollo} className="bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-xs">
             <div className="flex items-center gap-2 text-blue-600 font-mono uppercase text-[10px] tracking-wider font-bold">
               <Search className="w-3.5 h-3.5" /> Importar lista desde Apollo
