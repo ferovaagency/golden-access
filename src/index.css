@@ -167,6 +167,15 @@ pre {
   color: #ffffff !important;
 }
 
+/* Texto SIEMPRE blanco sobre botones/pestañas de fondo azul. El text-white de
+   Tailwind se estaba sobrescribiendo a un color oscuro e ilegible sobre el azul
+   (pasaba en el /app bajo .ferova-v2-theme). bg-blue-600/700 es siempre azul
+   oscuro, así que blanco es siempre el color correcto del texto. */
+.bg-blue-600,
+.bg-blue-700 {
+  color: #ffffff !important;
+}
+
 .ferova-light-theme p,
 .ferova-light-theme span,
 .ferova-light-theme a,
