@@ -720,6 +720,7 @@ export type Database = {
           probabilidad: number | null
           servicio_id: string | null
           siguiente_accion: string | null
+          sitio_web: string | null
           telefono: string | null
           updated_at: string
           valor_estimado: number | null
@@ -754,6 +755,7 @@ export type Database = {
           probabilidad?: number | null
           servicio_id?: string | null
           siguiente_accion?: string | null
+          sitio_web?: string | null
           telefono?: string | null
           updated_at?: string
           valor_estimado?: number | null
@@ -788,6 +790,7 @@ export type Database = {
           probabilidad?: number | null
           servicio_id?: string | null
           siguiente_accion?: string | null
+          sitio_web?: string | null
           telefono?: string | null
           updated_at?: string
           valor_estimado?: number | null
@@ -974,6 +977,74 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      ferova_knowledge: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          owner_user_id: string | null
+          source: string | null
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          owner_user_id?: string | null
+          source?: string | null
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          owner_user_id?: string | null
+          source?: string | null
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ferova_knowledge_embeddings: {
+        Row: {
+          content_chunk: string
+          created_at: string
+          embedding: string | null
+          id: string
+          knowledge_id: string
+        }
+        Insert: {
+          content_chunk: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          knowledge_id: string
+        }
+        Update: {
+          content_chunk?: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          knowledge_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ferova_knowledge_embeddings_knowledge_id_fkey"
+            columns: ["knowledge_id"]
+            isOneToOne: false
+            referencedRelation: "ferova_knowledge"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       finance_abonos: {
         Row: {
@@ -1220,6 +1291,7 @@ export type Database = {
           id: string
           monto: number
           notas: string | null
+          pago_egreso_id: string | null
           payment_method_id: string | null
           user_id: string
         }
@@ -1230,6 +1302,7 @@ export type Database = {
           id?: string
           monto: number
           notas?: string | null
+          pago_egreso_id?: string | null
           payment_method_id?: string | null
           user_id: string
         }
@@ -1240,6 +1313,7 @@ export type Database = {
           id?: string
           monto?: number
           notas?: string | null
+          pago_egreso_id?: string | null
           payment_method_id?: string | null
           user_id?: string
         }
@@ -1369,7 +1443,7 @@ export type Database = {
       }
       finance_horas: {
         Row: {
-          cliente_id: string
+          cliente_id: string | null
           descripcion: string | null
           fecha: string
           horas: number
@@ -1378,7 +1452,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          cliente_id: string
+          cliente_id?: string | null
           descripcion?: string | null
           fecha: string
           horas?: number
@@ -1387,7 +1461,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          cliente_id?: string
+          cliente_id?: string | null
           descripcion?: string | null
           fecha?: string
           horas?: number
@@ -1432,42 +1506,51 @@ export type Database = {
       }
       finance_pagos_egresos: {
         Row: {
+          account_id: string | null
           categoria: string
           comprobante_nombre: string | null
           comprobante_url: string | null
           concepto: string
           fecha: string
           id: string
+          iva: number
           metodo_pago: string | null
           moneda: string
           monto: number
           notas: string | null
+          retencion: number
           user_id: string
         }
         Insert: {
+          account_id?: string | null
           categoria: string
           comprobante_nombre?: string | null
           comprobante_url?: string | null
           concepto: string
           fecha: string
           id: string
+          iva?: number
           metodo_pago?: string | null
           moneda?: string
           monto?: number
           notas?: string | null
+          retencion?: number
           user_id: string
         }
         Update: {
+          account_id?: string | null
           categoria?: string
           comprobante_nombre?: string | null
           comprobante_url?: string | null
           concepto?: string
           fecha?: string
           id?: string
+          iva?: number
           metodo_pago?: string | null
           moneda?: string
           monto?: number
           notas?: string | null
+          retencion?: number
           user_id?: string
         }
         Relationships: []
@@ -1486,6 +1569,7 @@ export type Database = {
           moneda: string
           monto_pagado: number | null
           notas: string | null
+          pago_egreso_id: string | null
           payment_method_id: string | null
           proveedor: string
           updated_at: string
@@ -1506,6 +1590,7 @@ export type Database = {
           moneda?: string
           monto_pagado?: number | null
           notas?: string | null
+          pago_egreso_id?: string | null
           payment_method_id?: string | null
           proveedor: string
           updated_at?: string
@@ -1526,6 +1611,7 @@ export type Database = {
           moneda?: string
           monto_pagado?: number | null
           notas?: string | null
+          pago_egreso_id?: string | null
           payment_method_id?: string | null
           proveedor?: string
           updated_at?: string
@@ -1657,6 +1743,7 @@ export type Database = {
           user_id: string
           valor: number
           vencimiento: string | null
+          venta_id: string | null
         }
         Insert: {
           cliente_id?: string | null
@@ -1673,6 +1760,7 @@ export type Database = {
           user_id: string
           valor: number
           vencimiento?: string | null
+          venta_id?: string | null
         }
         Update: {
           cliente_id?: string | null
@@ -1689,11 +1777,13 @@ export type Database = {
           user_id?: string
           valor?: number
           vencimiento?: string | null
+          venta_id?: string | null
         }
         Relationships: []
       }
       finance_servicios: {
         Row: {
+          aplica_iva: boolean
           costo_entrega_estimado: number | null
           costo_unitario: number
           descripcion: string | null
@@ -1709,6 +1799,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          aplica_iva?: boolean
           costo_entrega_estimado?: number | null
           costo_unitario?: number
           descripcion?: string | null
@@ -1724,6 +1815,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          aplica_iva?: boolean
           costo_entrega_estimado?: number | null
           costo_unitario?: number
           descripcion?: string | null
@@ -1742,6 +1834,7 @@ export type Database = {
       }
       finance_ventas: {
         Row: {
+          account_id: string | null
           adelanto: number
           cantidad: number
           cliente_id: string
@@ -1752,16 +1845,19 @@ export type Database = {
           estado_pago: string
           fecha: string
           id: string
+          iva: number
           moneda: string
           notas: string | null
           pasarela_pago: string | null
           precio_venta_unitario: number
+          retencion: number
           servicio_id: string
           tipo: string
           trm_conversion: number | null
           user_id: string
         }
         Insert: {
+          account_id?: string | null
           adelanto?: number
           cantidad?: number
           cliente_id: string
@@ -1772,16 +1868,19 @@ export type Database = {
           estado_pago?: string
           fecha: string
           id: string
+          iva?: number
           moneda?: string
           notas?: string | null
           pasarela_pago?: string | null
           precio_venta_unitario?: number
+          retencion?: number
           servicio_id: string
           tipo?: string
           trm_conversion?: number | null
           user_id: string
         }
         Update: {
+          account_id?: string | null
           adelanto?: number
           cantidad?: number
           cliente_id?: string
@@ -1792,10 +1891,12 @@ export type Database = {
           estado_pago?: string
           fecha?: string
           id?: string
+          iva?: number
           moneda?: string
           notas?: string | null
           pasarela_pago?: string | null
           precio_venta_unitario?: number
+          retencion?: number
           servicio_id?: string
           tipo?: string
           trm_conversion?: number | null
@@ -2497,7 +2598,9 @@ export type Database = {
           recurrence_until: string | null
           risk_score: number
           scheduled_for: string | null
+          service_ref: string | null
           source_inbox_id: string | null
+          started_at: string | null
           status: Database["public"]["Enums"]["planner_task_status"]
           sync_to_google_calendar: boolean
           title: string
@@ -2529,7 +2632,9 @@ export type Database = {
           recurrence_until?: string | null
           risk_score?: number
           scheduled_for?: string | null
+          service_ref?: string | null
           source_inbox_id?: string | null
+          started_at?: string | null
           status?: Database["public"]["Enums"]["planner_task_status"]
           sync_to_google_calendar?: boolean
           title: string
@@ -2561,7 +2666,9 @@ export type Database = {
           recurrence_until?: string | null
           risk_score?: number
           scheduled_for?: string | null
+          service_ref?: string | null
           source_inbox_id?: string | null
+          started_at?: string | null
           status?: Database["public"]["Enums"]["planner_task_status"]
           sync_to_google_calendar?: boolean
           title?: string
