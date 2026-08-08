@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import ComprobanteUpload from './ComprobanteUpload';
 import { useToast, errMsg } from './ui/toast';
+import { usePersistentState, clearDraftNamespace } from '../lib/usePersistentState';
 
 interface PagosEgresosAdminProps {
   pagosEgresos: PagoEgreso[];
@@ -25,18 +26,19 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
   const { error: toastErr, confirm: askConfirm } = useToast();
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
-  
+  // Borrador persistente (N1: no perder lo escrito al cambiar de pestaña).
+  const [editingId, setEditingId] = usePersistentState<string | null>('pagosEgresos.editingId', null);
+
   // Form state
-  const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
-  const [concepto, setConcepto] = useState('');
-  const [categoria, setCategoria] = useState<'Herramientas' | 'Salarios' | 'Contratistas' | 'Administrativo' | 'Otros'>('Salarios');
-  const [monto, setMonto] = useState<number | ''>('');
-  const [moneda, setMoneda] = useState<'COP' | 'USD'>('COP');
-  const [metodoPago, setMetodoPago] = useState('Bancolombia');
-  const [notas, setNotas] = useState('');
-  const [comprobanteUrl, setComprobanteUrl] = useState<string | undefined>(undefined);
-  const [comprobanteNombre, setComprobanteNombre] = useState<string | undefined>(undefined);
+  const [fecha, setFecha] = usePersistentState('pagosEgresos.fecha', new Date().toISOString().split('T')[0]);
+  const [concepto, setConcepto] = usePersistentState('pagosEgresos.concepto', '');
+  const [categoria, setCategoria] = usePersistentState<'Herramientas' | 'Salarios' | 'Contratistas' | 'Administrativo' | 'Otros'>('pagosEgresos.categoria', 'Salarios');
+  const [monto, setMonto] = usePersistentState<number | ''>('pagosEgresos.monto', '');
+  const [moneda, setMoneda] = usePersistentState<'COP' | 'USD'>('pagosEgresos.moneda', 'COP');
+  const [metodoPago, setMetodoPago] = usePersistentState('pagosEgresos.metodoPago', 'Bancolombia');
+  const [notas, setNotas] = usePersistentState('pagosEgresos.notas', '');
+  const [comprobanteUrl, setComprobanteUrl] = usePersistentState<string | undefined>('pagosEgresos.comprobanteUrl', undefined);
+  const [comprobanteNombre, setComprobanteNombre] = usePersistentState<string | undefined>('pagosEgresos.comprobanteNombre', undefined);
 
   const resetForm = () => {
     setEditingId(null);
@@ -49,6 +51,7 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
     setNotas('');
     setComprobanteUrl(undefined);
     setComprobanteNombre(undefined);
+    clearDraftNamespace('pagosEgresos.');
   };
 
   // Filters state

@@ -4,6 +4,7 @@ import { convertToCop } from '../lib/calculations';
 import { calculatePaymentFees } from '../lib/paymentFees';
 import { listPaymentGateways, type PaymentGateway } from '../lib/paymentGatewaysService';
 import { CsvPagoImportado, parsePagosCsv } from '../lib/csvImportExport';
+import { usePersistentState, clearDraftNamespace } from '../lib/usePersistentState';
 import { useToast } from './ui/toast';
 import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
 import {
@@ -36,24 +37,25 @@ export default function VentasAdmin({
 }: VentasAdminProps) {
   const { error: toastErr, success: toastSuccess } = useToast();
   // Form states
-  const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
-  const [clienteId, setClienteId] = useState('');
-  const [servicioId, setServicioId] = useState('');
-  const [cantidad, setCantidad] = useState(1);
-  const [precioVentaUnitario, setPrecioVentaUnitario] = useState(0);
-  const [costoUnitario, setCostoUnitario] = useState(0);
-  const [moneda, setMoneda] = useState<'COP' | 'USD'>('COP');
-  const [adelanto, setAdelanto] = useState(0);
-  const [notas, setNotas] = useState('');
-  const [pasarelaPago, setPasarelaPago] = useState('');
-  const [comisionPasarelaPct, setComisionPasarelaPct] = useState(0);
-  const [comisionPasarelaFija, setComisionPasarelaFija] = useState(0);
-  const [comisionRetiro, setComisionRetiro] = useState(0);
-  const [trmConversion, setTrmConversion] = useState<number | ''>('');
+  // Borrador persistente (N1: no perder lo escrito al cambiar de pestaña).
+  const [fecha, setFecha] = usePersistentState('ventas.fecha', new Date().toISOString().split('T')[0]);
+  const [clienteId, setClienteId] = usePersistentState('ventas.clienteId', '');
+  const [servicioId, setServicioId] = usePersistentState('ventas.servicioId', '');
+  const [cantidad, setCantidad] = usePersistentState('ventas.cantidad', 1);
+  const [precioVentaUnitario, setPrecioVentaUnitario] = usePersistentState('ventas.precioVentaUnitario', 0);
+  const [costoUnitario, setCostoUnitario] = usePersistentState('ventas.costoUnitario', 0);
+  const [moneda, setMoneda] = usePersistentState<'COP' | 'USD'>('ventas.moneda', 'COP');
+  const [adelanto, setAdelanto] = usePersistentState('ventas.adelanto', 0);
+  const [notas, setNotas] = usePersistentState('ventas.notas', '');
+  const [pasarelaPago, setPasarelaPago] = usePersistentState('ventas.pasarelaPago', '');
+  const [comisionPasarelaPct, setComisionPasarelaPct] = usePersistentState('ventas.comisionPasarelaPct', 0);
+  const [comisionPasarelaFija, setComisionPasarelaFija] = usePersistentState('ventas.comisionPasarelaFija', 0);
+  const [comisionRetiro, setComisionRetiro] = usePersistentState('ventas.comisionRetiro', 0);
+  const [trmConversion, setTrmConversion] = usePersistentState<number | ''>('ventas.trmConversion', '');
   // Catálogo de pasarelas del usuario: elegir una copia sus comisiones a esta
   // venta y las deja editables (un cliente puede tener una tarifa distinta).
   const [gateways, setGateways] = useState<PaymentGateway[]>([]);
-  const [manualGateway, setManualGateway] = useState(false);
+  const [manualGateway, setManualGateway] = usePersistentState('ventas.manualGateway', false);
   useEffect(() => { void listPaymentGateways(userId).then(setGateways).catch(() => setGateways([])); }, [userId]);
 
   const applyGateway = (nombre: string) => {
@@ -75,7 +77,7 @@ export default function VentasAdmin({
     setComisionRetiro(toSaleCurrency(found.comision_retiro));
   };
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [editingVentaId, setEditingVentaId] = useState<string | null>(null);
+  const [editingVentaId, setEditingVentaId] = usePersistentState<string | null>('ventas.editingVentaId', null);
 
   const [activeAbonos, setActiveAbonos] = useState<any[]>([]);
   const [newAbonoMonto, setNewAbonoMonto] = useState<number | ''>('');
@@ -195,6 +197,7 @@ export default function VentasAdmin({
     setActiveAbonos([]);
     setNewAbonoMonto('');
     setNewAbonoNotas('');
+    clearDraftNamespace('ventas.');
   };
 
   const handleAddAbonoItem = () => {

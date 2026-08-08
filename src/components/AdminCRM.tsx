@@ -78,6 +78,7 @@ import {
 import type { PlanId } from '../lib/planService';
 import { useToast, errMsg } from './ui/toast';
 import { getBusinessProfile, upsertBusinessProfile } from '../lib/businessProfileService';
+import { crearClienteYVentaDesdeOportunidad } from '../lib/financeService';
 
 export type CRMTab = 'pipeline' | 'citas' | 'contenido' | 'bot' | 'resenas' | 'clientes' | 'feedback' | 'analitica';
 
@@ -928,6 +929,37 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     try {
       const updated = await upsertOportunidad({ id: o.id, estado });
       setOportunidades(oportunidades.map((x) => (x.id === o.id ? updated : x)));
+      // Puente CRM -> Finanzas: al ganar, ofrecer crear el cliente (y la venta si hay valor).
+      if (estado === 'ganado' && o.estado !== 'ganado') {
+        const cliente = o.empresa?.trim() || o.nombre_contacto?.trim() || 'este contacto';
+        const conVenta = Boolean(o.servicio_id && o.valor_estimado != null);
+        const ok = await askConfirm({
+          description: conVenta
+            ? `¡Felicidades! ¿Creo el cliente "${cliente}" en Finanzas y le registro la venta por ${fmt(Number(o.valor_estimado), o.moneda || 'COP')} (pendiente de pago)?`
+            : `¡Felicidades! ¿Creo el cliente "${cliente}" en Finanzas? (Sin servicio/valor no registro venta; la puedes agregar luego.)`,
+          confirmText: 'Sí, crear en Finanzas',
+        });
+        if (ok) {
+          try {
+            const res = await crearClienteYVentaDesdeOportunidad(user.id, {
+              nombre_contacto: o.nombre_contacto,
+              empresa: o.empresa,
+              servicio_id: o.servicio_id,
+              valor_estimado: o.valor_estimado,
+              moneda: o.moneda,
+              telefono: o.telefono,
+              email: o.email,
+              notas: o.notas,
+            });
+            toastOk(
+              `${res.clienteReutilizado ? 'Cliente vinculado' : 'Cliente creado'}: ${res.clienteNombre}.` +
+              (res.ventaCreada ? ' Venta registrada (pendiente de pago).' : ' Sin venta (agrégala en Finanzas cuando quieras).')
+            );
+          } catch (bridgeErr: any) {
+            toastErr(`Se marcó como ganado, pero no se pudo crear en Finanzas: ${errMsg(bridgeErr)}`);
+          }
+        }
+      }
     } catch (err: any) {
       toastErr(`Error actualizando estado: ${errMsg(err)}`);
     }

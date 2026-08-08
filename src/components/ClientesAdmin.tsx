@@ -4,6 +4,7 @@ import { Search, Download, Upload } from 'lucide-react';
 import { useToast, errMsg } from './ui/toast';
 import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
 import { downloadClientesTemplate, parseClientesCsv } from '../lib/csvImportExport';
+import { usePersistentState, clearDraftNamespace } from '../lib/usePersistentState';
 import { convertToCop } from '../lib/calculations';
 
 interface ClientesAdminProps {
@@ -35,12 +36,13 @@ export default function ClientesAdmin({
 }: ClientesAdminProps) {
   const { success: toastOk, error: toastErr } = useToast();
   // Form State
-  const [nombre, setNombre] = useState('');
-  const [id, setId] = useState('');
-  const [pais, setPais] = useState('CO');
-  const [declarante, setDeclarante] = useState(true);
-  const [activo, setActivo] = useState(true);
-  const [notas, setNotas] = useState('');
+  // Borrador persistente (N1: no perder lo escrito al cambiar de pestaña).
+  const [nombre, setNombre] = usePersistentState('clientes.nombre', '');
+  const [id, setId] = usePersistentState('clientes.id', '');
+  const [pais, setPais] = usePersistentState('clientes.pais', 'CO');
+  const [declarante, setDeclarante] = usePersistentState('clientes.declarante', true);
+  const [activo, setActivo] = usePersistentState('clientes.activo', true);
+  const [notas, setNotas] = usePersistentState('clientes.notas', '');
   const [searchTerm, setSearchTerm] = useState('');
   const [confirmDeleteCliId, setConfirmDeleteCliId] = useState<string | null>(null);
   const [uploadingCsv, setUploadingCsv] = useState(false);
@@ -98,6 +100,7 @@ export default function ClientesAdmin({
     setNombre('');
     setId('');
     setNotas('');
+    clearDraftNamespace('clientes.');
   };
 
   const handleDeleteClient = async (cliId: string) => {

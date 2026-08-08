@@ -702,7 +702,7 @@ function AppInner() {
             {activeTab === 'planner' && <SmartPlanner />}
             {activeTab === 'reports' && user && <ReportsView user={user} />}
             {activeTab === 'finops' && <FinanceOperativa user={user} appData={appData} formatCop={formatCop} />}
-            {activeTab === 'marketingRoi' && <MarketingROI user={user} formatCop={formatCop} />}
+            {activeTab === 'marketingRoi' && <MarketingROI user={user} ventas={appData.ventas} config={appData.config} formatCop={formatCop} />}
             {activeTab === 'dashboard' && (
               <Home
                 data={appData}

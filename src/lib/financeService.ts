@@ -409,3 +409,97 @@ export async function fetchOfficialTrm(): Promise<OfficialTrm> {
   if (!data?.ok) throw new Error(data?.message || 'No se pudo obtener la TRM oficial.');
   return { trm: data.trm, source: data.source, vigente_desde: data.vigente_desde ?? null };
 }
+
+// ============================================================
+// Puente CRM -> Finanzas: cuando una oportunidad se marca "ganado",
+// creamos (o reutilizamos) el cliente y, si hay servicio + valor, la venta.
+// Inserta directo en finance_clientes/finance_ventas para no depender de que
+// el módulo de Finanzas esté cargado en memoria. Idempotente por nombre.
+// ============================================================
+export interface OportunidadGanada {
+  nombre_contacto: string;
+  empresa: string | null;
+  servicio_id: string | null;
+  valor_estimado: number | null;
+  moneda: 'COP' | 'USD' | null;
+  telefono?: string | null;
+  email?: string | null;
+  notas?: string | null;
+}
+
+export interface PuenteGanadoResultado {
+  clienteId: string;
+  clienteNombre: string;
+  clienteReutilizado: boolean;
+  ventaCreada: boolean;
+}
+
+function nuevoId(): string {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  } catch { /* noop */ }
+  return `id_${Date.now().toString(36)}_${Math.floor(Math.random() * 1e9).toString(36)}`;
+}
+
+export async function crearClienteYVentaDesdeOportunidad(userId: string, o: OportunidadGanada): Promise<PuenteGanadoResultado> {
+  const finance = supabase as any;
+  const nombreCliente = (o.empresa?.trim() || o.nombre_contacto?.trim() || 'Cliente sin nombre');
+  const tipo: 'Nacional' | 'Internacional' = o.moneda === 'USD' ? 'Internacional' : 'Nacional';
+
+  // Reutilizar cliente existente (mismo nombre, sin distinguir mayúsculas) para no duplicar.
+  const existing = await finance.from('finance_clientes')
+    .select('id').eq('user_id', userId).ilike('nombre', nombreCliente).limit(1).maybeSingle();
+  if (existing.error) throw new Error(`[financeService] puente ganado (buscar cliente): ${existing.error.message}`);
+
+  let clienteId: string = existing.data?.id;
+  const clienteReutilizado = Boolean(clienteId);
+
+  if (!clienteReutilizado) {
+    clienteId = nuevoId();
+    const contactoNotas = [
+      o.telefono ? `Tel: ${o.telefono}` : null,
+      o.email ? `Email: ${o.email}` : null,
+      o.notas || null,
+      'Creado desde el CRM al ganar la oportunidad.',
+    ].filter(Boolean).join(' · ');
+    const insC = await finance.from('finance_clientes').insert({
+      id: clienteId,
+      user_id: userId,
+      nombre: nombreCliente,
+      tipo,
+      declarante: false,
+      activo: true,
+      fecha_creacion: new Date().toISOString().slice(0, 10),
+      notas: contactoNotas || null,
+    });
+    if (insC.error) throw new Error(`[financeService] puente ganado (crear cliente): ${insC.error.message}`);
+  }
+
+  let ventaCreada = false;
+  if (o.servicio_id && o.valor_estimado != null) {
+    const srv = await finance.from('finance_servicios')
+      .select('costo_unitario').eq('user_id', userId).eq('id', o.servicio_id).maybeSingle();
+    const insV = await finance.from('finance_ventas').insert({
+      id: nuevoId(),
+      user_id: userId,
+      fecha: new Date().toISOString().slice(0, 10),
+      cliente_id: clienteId,
+      servicio_id: o.servicio_id,
+      cantidad: 1,
+      precio_venta_unitario: o.valor_estimado,
+      costo_unitario: Number(srv.data?.costo_unitario ?? 0),
+      moneda: o.moneda || 'COP',
+      tipo,
+      adelanto: 0,
+      estado_pago: 'Pendiente',
+      notas: 'Creada automáticamente al ganar la oportunidad en el CRM.',
+      comision_pasarela_porcentaje: 0,
+      comision_pasarela_fija: 0,
+      comision_retiro: 0,
+    });
+    if (insV.error) throw new Error(`[financeService] puente ganado (crear venta): ${insV.error.message}`);
+    ventaCreada = true;
+  }
+
+  return { clienteId, clienteNombre: nombreCliente, clienteReutilizado, ventaCreada };
+}

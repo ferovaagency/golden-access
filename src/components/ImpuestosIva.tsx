@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { AppData } from '../types';
-import { FinancialMetrics, calcularProyeccionAnualIngresos } from '../lib/calculations';
+import { FinancialMetrics, calcularProyeccionAnualIngresos, convertToCop } from '../lib/calculations';
 import { ShieldCheck, ArrowRightLeft, AlertTriangle } from 'lucide-react';
 
 interface ImpuestosIvaProps {
@@ -10,7 +10,21 @@ interface ImpuestosIvaProps {
 }
 
 export default function ImpuestosIva({ data, metrics, formatCop }: ImpuestosIvaProps) {
-  const { config, ventas } = data;
+  const { config, ventas, servicios } = data;
+
+  // IVA Generado real: suma del IVA de las ventas cuyo servicio marca `aplica_iva`.
+  // Solo ventas nacionales causan IVA (las exportaciones de servicios son exentas,
+  // Art. 481 ET). El precio registrado es la base antes de IVA.
+  const ivaGeneradoCalculado = useMemo(() => {
+    const tarifa = config.tarifa_iva ?? 0.19;
+    return ventas.reduce((sum, v) => {
+      const srv = servicios.find((s) => s.id === v.servicio_id);
+      if (!srv?.aplica_iva) return sum;
+      if (v.tipo !== 'Nacional') return sum;
+      const baseCop = convertToCop(v.precio_venta_unitario * v.cantidad, v.moneda, config.trm);
+      return sum + baseCop * tarifa;
+    }, 0);
+  }, [ventas, servicios, config.tarifa_iva, config.trm]);
 
   // Calculamos ingresos anualizados proyectados para evaluar tope del Art 437 (3500 uvt)
   const { proyeccionAnual: proyeccionAnualIngresos } = calcularProyeccionAnualIngresos(ventas, metrics.totalVentas);
@@ -34,9 +48,15 @@ export default function ImpuestosIva({ data, metrics, formatCop }: ImpuestosIvaP
     setCriteria1(!isIngresosTopeSuperado);
   }, [isIngresosTopeSuperado]);
 
-  // Cruce de IVA Simulator State
+  // Cruce de IVA Simulator State. El IVA generado se precarga con el real de las
+  // ventas; si la persona lo edita a mano dejamos de sobrescribirlo (ivaGenTouched).
   const [ivaGeneradoInput, setIvaGeneradoInput] = useState<number>(0);
+  const [ivaGenTouched, setIvaGenTouched] = useState(false);
   const [ivaDescontableInput, setIvaDescontableInput] = useState<number>(0);
+
+  useEffect(() => {
+    if (!ivaGenTouched) setIvaGeneradoInput(Math.round(ivaGeneradoCalculado));
+  }, [ivaGeneradoCalculado, ivaGenTouched]);
 
   const saldoIvaNettoValue = ivaGeneradoInput - ivaDescontableInput;
   const esSaldoAPagar = saldoIvaNettoValue > 0;
@@ -214,14 +234,20 @@ export default function ImpuestosIva({ data, metrics, formatCop }: ImpuestosIvaP
             <div className="grid grid-cols-2 gap-4 pt-2">
               <div>
                 <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1.5">IVA Generado (Tus Ventas)</label>
-                <input 
+                <input
                   type="number"
                   min="0"
                   value={ivaGeneradoInput}
-                  onChange={(e) => setIvaGeneradoInput(Number(e.target.value))}
+                  onChange={(e) => { setIvaGenTouched(true); setIvaGeneradoInput(Number(e.target.value)); }}
                   className="w-full bg-[#0f0e0c]/50 text-white font-mono p-2.5 rounded border border-[#2a2620] focus:outline-none"
                   placeholder="300000"
                 />
+                <p className="mt-1.5 text-[10px] text-[#8a8377] leading-snug">
+                  Calculado de tus ventas nacionales con IVA: <b className="text-blue-500">{formatCop(Math.round(ivaGeneradoCalculado))}</b>
+                  {ivaGenTouched && (
+                    <button type="button" onClick={() => { setIvaGenTouched(false); }} className="ml-1 text-blue-500 underline hover:no-underline">usar este</button>
+                  )}
+                </p>
               </div>
 
               <div>

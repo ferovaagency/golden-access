@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
+import type { Venta, Config } from '../types';
+import { convertToCop } from '../lib/calculations';
 import { listCampaigns, listMetrics, createCampaign, deleteCampaign, upsertMetrics, type Campaign, type CampaignMetrics } from '../lib/marketingService';
 import { computeRoi, reverseRoi, type CampaignMetricsInput } from '../lib/roiCalc';
 import { CircleHelp, Loader2, Plus, Trash2 } from 'lucide-react';
@@ -11,7 +13,7 @@ const btnPrimary = 'inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3
 const pct = (v: number) => `${(v * 100).toFixed(2)}%`;
 const fmt = (v: number) => new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(v);
 
-export default function MarketingROI({ user, formatCop }: { user: User; formatCop: (n: number) => string }) {
+export default function MarketingROI({ user, ventas = [], config, formatCop }: { user: User; ventas?: Venta[]; config?: Config; formatCop: (n: number) => string }) {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [metrics, setMetrics] = useState<CampaignMetrics[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,6 +30,24 @@ export default function MarketingROI({ user, formatCop }: { user: User; formatCo
     return map;
   }, [metrics]);
 
+  // Cruce con ventas reales del negocio (finance_ventas), para contrastar lo que
+  // el marketing atribuye contra lo que de verdad entró en caja.
+  const trm = config?.trm ?? 4000;
+  const ventasReales = useMemo(() => {
+    const enCop = (v: Venta) => convertToCop(v.precio_venta_unitario * v.cantidad, v.moneda, trm);
+    const total = ventas.reduce((s, v) => s + enCop(v), 0);
+    const mesActual = new Date().toISOString().slice(0, 7);
+    const totalMes = ventas.filter((v) => (v.fecha || '').slice(0, 7) === mesActual).reduce((s, v) => s + enCop(v), 0);
+    const ticketPromedio = ventas.length ? Math.round(total / ventas.length) : 0;
+    return { total, totalMes, ticketPromedio, count: ventas.length };
+  }, [ventas, trm]);
+
+  const ingresosAtribuidosMarketing = useMemo(
+    () => Array.from(latestByCampaign.values()).reduce((s, m) => s + computeRoi(m).ingresos_brutos, 0),
+    [latestByCampaign]
+  );
+  const coberturaAtribuida = ventasReales.total > 0 ? ingresosAtribuidosMarketing / ventasReales.total : 0;
+
   if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>;
 
   return (
@@ -35,6 +55,25 @@ export default function MarketingROI({ user, formatCop }: { user: User; formatCo
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Marketing ROI</h1>
         <p className="text-sm text-slate-500">Registra campañas, costos completos y resultados. El ROI real incluye pauta, entrega, comisiones y honorarios profesionales.</p>
+      </div>
+
+      {/* Cruce con ventas reales del negocio */}
+      <div className={cardClass}>
+        <h3 className="font-semibold text-slate-900 mb-3">Ventas reales del negocio <span className="text-xs font-normal text-slate-400">(desde Finanzas)</span></h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+          <Kpi label="Ingresos reales (mes actual)" value={formatCop(ventasReales.totalMes)} />
+          <Kpi label="Ingresos reales (total)" value={formatCop(ventasReales.total)} />
+          <Kpi label="Ticket promedio real" value={formatCop(ventasReales.ticketPromedio)} />
+          <Kpi
+            label="Cobertura atribuida a marketing"
+            value={ventasReales.total > 0 ? pct(coberturaAtribuida) : '—'}
+            highlight={coberturaAtribuida > 1 ? 'bad' : undefined}
+          />
+        </div>
+        <p className="mt-2 text-[11px] text-slate-400 leading-snug">
+          "Cobertura atribuida" compara los ingresos que suman tus campañas ({formatCop(ingresosAtribuidosMarketing)}) contra las ventas reales registradas.
+          Si pasa del 100% es señal de doble conteo entre campañas o de ingresos atribuidos de más.
+        </p>
       </div>
 
       <div className={cardClass}>
@@ -89,7 +128,7 @@ export default function MarketingROI({ user, formatCop }: { user: User; formatCo
         <Comparator campaigns={campaigns.filter((c) => selection.includes(c.id))} latestByCampaign={latestByCampaign} formatCop={formatCop} />
       )}
 
-      <ReverseCalculator latestByCampaign={latestByCampaign} formatCop={formatCop} />
+      <ReverseCalculator latestByCampaign={latestByCampaign} formatCop={formatCop} defaultTicket={ventasReales.ticketPromedio} />
     </div>
   );
 }
@@ -201,7 +240,7 @@ function Comparator({ campaigns, latestByCampaign, formatCop }: { campaigns: Cam
   );
 }
 
-function ReverseCalculator({ latestByCampaign, formatCop }: { latestByCampaign: Map<string, CampaignMetrics>; formatCop: (n: number) => string }) {
+function ReverseCalculator({ latestByCampaign, formatCop, defaultTicket = 0 }: { latestByCampaign: Map<string, CampaignMetrics>; formatCop: (n: number) => string; defaultTicket?: number }) {
   // Baseline: promedio de tasas históricas
   const rates = useMemo(() => {
     const all = Array.from(latestByCampaign.values());
@@ -219,7 +258,7 @@ function ReverseCalculator({ latestByCampaign, formatCop }: { latestByCampaign: 
   }, [latestByCampaign]);
 
   const [meta, setMeta] = useState(10000000);
-  const [ticket, setTicket] = useState(1500000);
+  const [ticket, setTicket] = useState(defaultTicket > 0 ? defaultTicket : 1500000);
   const result = reverseRoi({ meta_facturacion: meta, ticket_promedio: ticket, ...rates });
 
   return (

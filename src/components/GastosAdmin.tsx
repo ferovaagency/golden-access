@@ -4,6 +4,7 @@ import { convertToCop, calcularPrestaciones, calcularCostosHerramientas, isColom
 import { PenTool, LayoutGrid, Edit2, Paperclip, Info } from 'lucide-react';
 import ComprobanteUpload from './ComprobanteUpload';
 import { InlineDeleteConfirm } from './ui/InlineDeleteConfirm';
+import { usePersistentState, clearDraftNamespace } from '../lib/usePersistentState';
 
 interface GastosAdminProps {
   herramientas: Herramienta[];
@@ -37,22 +38,23 @@ export default function GastosAdmin({
   const [isUpdatingSalario, setIsUpdatingSalario] = useState(false);
 
   // B. Herramientas Form State
-  const [toolNombre, setToolNombre] = useState('');
-  const [toolMonto, setToolMonto] = useState(0);
-  const [toolMoneda, setToolMoneda] = useState<'COP' | 'USD'>('COP');
-  const [toolTipoCobro, setToolTipoCobro] = useState<'global' | 'porCliente'>('global');
-  const [selectedServices, setSelectedServices] = useState<string[]>([]);
-  const [editingToolId, setEditingToolId] = useState<string | null>(null);
+  // Borradores persistentes (N1: no perder lo escrito al cambiar de pestaña).
+  const [toolNombre, setToolNombre] = usePersistentState('gastos.tool.nombre', '');
+  const [toolMonto, setToolMonto] = usePersistentState('gastos.tool.monto', 0);
+  const [toolMoneda, setToolMoneda] = usePersistentState<'COP' | 'USD'>('gastos.tool.moneda', 'COP');
+  const [toolTipoCobro, setToolTipoCobro] = usePersistentState<'global' | 'porCliente'>('gastos.tool.tipoCobro', 'global');
+  const [selectedServices, setSelectedServices] = usePersistentState<string[]>('gastos.tool.selectedServices', []);
+  const [editingToolId, setEditingToolId] = usePersistentState<string | null>('gastos.tool.editingId', null);
   const [confirmDeleteToolId, setConfirmDeleteToolId] = useState<string | null>(null);
 
   // C. Otros Gastos Form State
-  const [otroNombre, setOtroNombre] = useState('');
-  const [otroMonto, setOtroMonto] = useState(0);
-  const [otroMoneda, setOtroMoneda] = useState<'COP' | 'USD'>('COP');
-  const [otroCategoria, setOtroCategoria] = useState<'Operativo' | 'Administrativo' | 'Otros'>('Operativo');
-  const [otroComprobanteUrl, setOtroComprobanteUrl] = useState<string | undefined>(undefined);
-  const [otroComprobanteNombre, setOtroComprobanteNombre] = useState<string | undefined>(undefined);
-  const [editingOtroId, setEditingOtroId] = useState<string | null>(null);
+  const [otroNombre, setOtroNombre] = usePersistentState('gastos.otro.nombre', '');
+  const [otroMonto, setOtroMonto] = usePersistentState('gastos.otro.monto', 0);
+  const [otroMoneda, setOtroMoneda] = usePersistentState<'COP' | 'USD'>('gastos.otro.moneda', 'COP');
+  const [otroCategoria, setOtroCategoria] = usePersistentState<'Operativo' | 'Administrativo' | 'Otros'>('gastos.otro.categoria', 'Operativo');
+  const [otroComprobanteUrl, setOtroComprobanteUrl] = usePersistentState<string | undefined>('gastos.otro.comprobanteUrl', undefined);
+  const [otroComprobanteNombre, setOtroComprobanteNombre] = usePersistentState<string | undefined>('gastos.otro.comprobanteNombre', undefined);
+  const [editingOtroId, setEditingOtroId] = usePersistentState<string | null>('gastos.otro.editingId', null);
   const [confirmDeleteOtroId, setConfirmDeleteOtroId] = useState<string | null>(null);
 
   // --- CALCULATIONS ---
@@ -126,6 +128,7 @@ export default function GastosAdmin({
       setToolNombre('');
       setToolMonto(0);
       setSelectedServices([]);
+      clearDraftNamespace('gastos.tool.');
     }
   };
 
@@ -145,6 +148,7 @@ export default function GastosAdmin({
     setToolMoneda('COP');
     setToolTipoCobro('global');
     setSelectedServices([]);
+    clearDraftNamespace('gastos.tool.');
   };
 
   const handleDeleteTool = async (id: string) => {
@@ -197,6 +201,7 @@ export default function GastosAdmin({
       setOtroMonto(0);
       setOtroComprobanteUrl(undefined);
       setOtroComprobanteNombre(undefined);
+      clearDraftNamespace('gastos.otro.');
     }
   };
 
@@ -218,6 +223,7 @@ export default function GastosAdmin({
     setOtroCategoria('Operativo');
     setOtroComprobanteUrl(undefined);
     setOtroComprobanteNombre(undefined);
+    clearDraftNamespace('gastos.otro.');
   };
 
   const handleDeleteOtro = async (id: string) => {
