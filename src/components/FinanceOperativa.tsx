@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import type { AppData } from '../types';
 import { listPaymentMethods, createPaymentMethod, deletePaymentMethod, updatePaymentMethod, type PaymentMethod, type PaymentMethodType } from '../lib/paymentMethodsService';
@@ -56,7 +56,7 @@ export default function FinanceOperativa({ user, appData, formatCop }: { user: U
       {tab === 'estado' && <FinancialStatement userId={user.id} appData={appData} period={periodo} formatCop={formatCop} />}
       {tab === 'cuentas' && <AccountsTab userId={user.id} appData={appData} formatCop={formatCop} />}
       {tab === 'metodos' && <PaymentMethodsTab userId={user.id} />}
-      {tab === 'deudas' && <DebtsTab userId={user.id} formatCop={formatCop} />}
+      {tab === 'deudas' && <DebtsTab userId={user.id} appData={appData} formatCop={formatCop} />}
       {tab === 'cobrar' && <ReceivablesTab userId={user.id} appData={appData} formatCop={formatCop} />}
       {tab === 'pagar' && <PayablesTab userId={user.id} appData={appData} formatCop={formatCop} />}
       {tab === 'presupuesto' && <BudgetTab userId={user.id} appData={appData} periodo={periodo} formatCop={formatCop} />}
@@ -271,12 +271,24 @@ function PaymentMethodsTab({ userId }: { userId: string }) {
 }
 
 /* ------------------ DEBTS ------------------ */
-function DebtsTab({ userId, formatCop }: { userId: string; formatCop: (n: number) => string }) {
+function DebtsTab({ userId, appData, formatCop }: { userId: string; appData: AppData; formatCop: (n: number) => string }) {
   const [items, setItems] = useState<Debt[]>([]);
   const [payments, setPayments] = useState<DebtPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ nombre: '', saldo_inicial: 0, tasa: '', cuotas: '', fecha_corte: '', fecha_limite: '', estado: 'activo' as DebtStatus, moneda: 'COP' });
+  // Pago inline por deuda: monto + egreso opcional a enlazar.
+  const [payingId, setPayingId] = useState<string | null>(null);
+  const [payMonto, setPayMonto] = useState('');
+  const [payEgresoId, setPayEgresoId] = useState('');
+  const egresosDeuda = [...(appData.pagosEgresos || [])].sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
+  const registrarPago = async (debtId: string) => {
+    const monto = Number(payMonto);
+    if (!monto || monto <= 0) return;
+    await addDebtPayment(userId, { debt_id: debtId, fecha: new Date().toISOString().slice(0, 10), monto, pago_egreso_id: payEgresoId || null });
+    setPayingId(null); setPayMonto(''); setPayEgresoId('');
+    reload();
+  };
   const reload = () => { setLoading(true); Promise.all([listDebts(userId), listDebtPayments(userId)]).then(([d, p]) => { setItems(d); setPayments(p); }).finally(() => setLoading(false)); };
   useEffect(() => { reload(); }, [userId]);
   const resetForm = () => { setEditingId(null); setForm({ nombre: '', saldo_inicial: 0, tasa: '', cuotas: '', fecha_corte: '', fecha_limite: '', estado: 'activo', moneda: 'COP' }); };
@@ -313,7 +325,8 @@ function DebtsTab({ userId, formatCop }: { userId: string; formatCop: (n: number
               const bal = debtBalance(d, payments);
               const paid = d.saldo_inicial - bal;
               return (
-                <tr key={d.id} className="border-b border-slate-100">
+                <Fragment key={d.id}>
+                <tr className="border-b border-slate-100">
                   <td className="py-2 font-medium">{d.nombre}</td>
                   <td className="text-right">{formatCop(d.saldo_inicial)}</td>
                   <td className="text-right text-emerald-700">{formatCop(paid)}</td>
@@ -322,13 +335,29 @@ function DebtsTab({ userId, formatCop }: { userId: string; formatCop: (n: number
                   <td className="text-slate-500">{d.estado}</td>
                   <td className="text-right space-x-2">
                     <button onClick={() => { setEditingId(d.id); setForm({ nombre: d.nombre, saldo_inicial: d.saldo_inicial, tasa: d.tasa?.toString() || '', cuotas: d.cuotas?.toString() || '', fecha_corte: d.fecha_corte || '', fecha_limite: d.fecha_limite || '', estado: d.estado, moneda: d.moneda }); }} className="text-blue-600 text-xs font-semibold" title="Editar deuda">Editar</button>
-                    <button onClick={async () => {
-                      const monto = Number(prompt('Monto del pago:') || '0');
-                      if (monto > 0) { await addDebtPayment(userId, { debt_id: d.id, fecha: new Date().toISOString().slice(0, 10), monto }); reload(); }
-                    }} className="text-blue-600 hover:text-blue-700 text-xs font-semibold">Pagar</button>
+                    <button onClick={() => { setPayingId(payingId === d.id ? null : d.id); setPayMonto(''); setPayEgresoId(''); }} className="text-blue-600 hover:text-blue-700 text-xs font-semibold">Pagar</button>
                     <button onClick={() => deleteDebt(d.id).then(reload)} className="text-red-600"><Trash2 className="w-4 h-4 inline" /></button>
                   </td>
                 </tr>
+                {payingId === d.id && (
+                  <tr className="border-b border-slate-100 bg-blue-50/40">
+                    <td colSpan={7} className="px-2 py-2">
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="font-semibold text-slate-700">Registrar pago de "{d.nombre}":</span>
+                        <input type="number" min="0" value={payMonto} onChange={(e) => setPayMonto(e.target.value)} placeholder="Monto" className="w-28 rounded border border-slate-200 bg-white px-2 py-1" />
+                        {egresosDeuda.length > 0 && (
+                          <select value={payEgresoId} onChange={(e) => setPayEgresoId(e.target.value)} className="rounded border border-slate-200 bg-white px-2 py-1" title="Enlaza este pago a un egreso ya registrado (opcional)">
+                            <option value="">— Enlazar a egreso (opcional) —</option>
+                            {egresosDeuda.slice(0, 100).map((eg) => <option key={eg.id} value={eg.id}>{eg.fecha} · {eg.concepto} · {formatCop(eg.monto)}</option>)}
+                          </select>
+                        )}
+                        <button onClick={() => registrarPago(d.id)} className="rounded bg-emerald-600 px-3 py-1 font-semibold text-white hover:bg-emerald-700">Guardar pago</button>
+                        <button onClick={() => { setPayingId(null); setPayMonto(''); setPayEgresoId(''); }} className="rounded border border-slate-200 px-3 py-1 font-semibold text-slate-600 hover:bg-slate-50">Cancelar</button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               );
             })}
             {items.length === 0 && <tr><td colSpan={7} className="py-6 text-center text-slate-400 text-sm">Sin deudas registradas.</td></tr>}
