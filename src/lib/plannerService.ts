@@ -299,7 +299,9 @@ export const plannerService = {
     const elapsedMinutes = task?.started_at
       ? Math.max(1, Math.round((Date.now() - new Date(task.started_at).getTime()) / 60_000))
       : null;
-    const finalMinutes = actualMinutes ?? elapsedMinutes ?? task?.actual_minutes ?? null;
+    // Si no se cronometró (no hubo "Iniciar") ni se pasó tiempo manual, cae al
+    // estimado — así completar una tarea SIEMPRE registra algo en Horas (editable).
+    const finalMinutes = actualMinutes ?? elapsedMinutes ?? task?.actual_minutes ?? task?.estimated_minutes ?? null;
     const { error: taskError } = await anyDb()
       .from('planner_tasks')
       .update({ status: 'done', completed_at: new Date().toISOString(), actual_minutes: finalMinutes })

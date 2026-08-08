@@ -438,8 +438,10 @@ export default function SmartPlanner() {
         </div>
       )}
 
+      {/* Híbrido: Prioridades (izquierda) + Agenda del día (derecha), lado a lado en pantallas grandes */}
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
       {/* Timeline of blocks */}
-      {plannerView === 'day' && <section>
+      {plannerView === 'day' && <section className="lg:order-2">
         <div className="mb-1 flex items-center justify-between">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500">Tu agenda del {new Date(p.date + 'T00:00').toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })}</h2>
           <div className="flex items-center gap-3">
@@ -475,7 +477,7 @@ export default function SmartPlanner() {
       </section>}
 
       {/* Tasks queue */}
-      <section>
+      <section className="lg:order-1">
         <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500">Prioridades · Pareto 80/20 · {openTasks.length}</h2><span className="text-[11px] text-slate-400">Ordenadas por impacto, no por orden de llegada: ataca primero las de arriba — son el 20% que mueve el 80% de la aguja.</span></div>
         {taskSaveNotice && <div className="mb-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">{taskSaveNotice}</div>}
         {editingTask && (
@@ -511,6 +513,7 @@ export default function SmartPlanner() {
           </ul>
         )}
       </section>
+      </div>
 
       {completedToday.length > 0 && (
         <section>
