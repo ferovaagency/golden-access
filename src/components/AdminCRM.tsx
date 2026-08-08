@@ -962,7 +962,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
         const conVenta = Boolean(o.servicio_id && o.valor_estimado != null);
         const ok = await askConfirm({
           description: conVenta
-            ? `¡Felicidades! ¿Creo el cliente "${cliente}" en Finanzas y le registro la venta por ${fmt(Number(o.valor_estimado), o.moneda || 'COP')} (pendiente de pago)?`
+            ? `¡Felicidades! ¿Creo el cliente "${cliente}" en Finanzas y le registro la venta por ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: o.moneda || 'COP', maximumFractionDigits: 0 }).format(Number(o.valor_estimado))} (pendiente de pago)?`
             : `¡Felicidades! ¿Creo el cliente "${cliente}" en Finanzas? (Sin servicio/valor no registro venta; la puedes agregar luego.)`,
           confirmText: 'Sí, crear en Finanzas',
         });

@@ -149,7 +149,7 @@ export async function listOportunidades(): Promise<Oportunidad[]> {
     .select('*')
     .order('updated_at', { ascending: false });
   if (error) throw new Error(`[crmService] listOportunidades: ${error.message}`);
-  return data as Oportunidad[];
+  return data as unknown as Oportunidad[];
 }
 
 export async function upsertOportunidad(o: Partial<Oportunidad> & { id?: string }): Promise<Oportunidad> {
