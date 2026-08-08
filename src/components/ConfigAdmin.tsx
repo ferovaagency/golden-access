@@ -6,6 +6,7 @@ import { Settings, Save, RefreshCw, FolderSync, Clipboard, Landmark, Route, Shie
 import { copyText } from '../lib/clipboard';
 import FiscalProfileSection from './FiscalProfileSection';
 import BusinessProfileSettings from './BusinessProfileSettings';
+import CollaboratorsManager from './CollaboratorsManager';
 import type { BusinessProfile } from '../lib/businessProfileService';
 import { useToast, errMsg } from './ui/toast';
 import { listActiveTaxRules, type TaxRule } from '../lib/taxRulesService';
@@ -202,6 +203,8 @@ export default function ConfigAdmin({
       </div>
 
       <BusinessProfileSettings userId={userId} profile={businessProfile} onUpdated={onBusinessProfileUpdated} />
+
+      <CollaboratorsManager />
 
       <FiscalProfileSection />
 
