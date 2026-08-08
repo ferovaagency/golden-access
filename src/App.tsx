@@ -184,10 +184,10 @@ function AppInner() {
   // ninguna de estas pestañas existe para él -- redirige a su módulo real.
   // Cubre tanto el tab inicial por defecto como un cambio de plan en caliente.
   const FINANCIERO_TAB_IDS = ['dashboard', 'ventas', 'pagosEgresos', 'gastos', 'equilibrioGlobal', 'equilibrioServicio', 'iva', 'alertas', 'ajustes', 'proyectos', 'horas', 'clientes', 'servicios', 'kpisOperativos', 'seguimiento'];
-  // Alias compatible: enlaces y estados guardados con el id antiguo
-  // "seguimiento" ahora abren los KPIs operativos dentro de Finanzas.
+  // El seguimiento ahora vive DENTRO de cada proyecto (Proyectos). Los ids
+  // antiguos "seguimiento"/"kpisOperativos" redirigen a Proyectos.
   useEffect(() => {
-    if (activeTab === 'seguimiento') setActiveTab('kpisOperativos');
+    if (activeTab === 'seguimiento' || activeTab === 'kpisOperativos') setActiveTab('proyectos');
   }, [activeTab]);
   useEffect(() => {
     if (!appData) return;
@@ -510,7 +510,6 @@ function AppInner() {
         { id: 'proyectos', label: 'Proyectos', hint: 'Plan y seguimiento por cliente' },
       ] : []),
       ...(modules.core_projects || modules.financiero ? [
-        { id: 'kpisOperativos', label: 'Seguimiento', hint: 'KPIs del negocio: diario, semanal y mensual' },
       ] : []),
       ...(modules.planner ? [{ id: 'planner', label: 'Planner', hint: 'Prioridades, agenda y bloques' }] : []),
     ] : [] },
@@ -726,9 +725,6 @@ function AppInner() {
                 projectData={appData}
                 onSaveClientes={handleSaveClientes}
               />
-            )}
-            {(activeTab === 'kpisOperativos' || activeTab === 'seguimiento') && user && (
-              <OperatingKpiDashboard userId={user.id} data={appData} formatCop={formatCop} />
             )}
             {activeTab === 'pagosEgresos' && (
               <PagosEgresosAdmin pagosEgresos={appData.pagosEgresos || []} config={appData.config} onSavePagosEgresos={handleSavePagosEgresos} userId={user.id} />
