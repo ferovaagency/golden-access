@@ -182,6 +182,31 @@ export default function SmartPlanner() {
   };
 
   const openTasks = p.tasks.filter((t) => t.status !== 'done' && t.status !== 'cancelled');
+
+  // --- Anti-procrastinación: la tarea que más mueve la aguja hoy (Pareto) ---
+  const rankedTasks = [...openTasks].sort((a, b) => visiblePriorityScore(b) - visiblePriorityScore(a));
+  const inProgressTask = openTasks.find((t) => t.status === 'in_progress');
+  const topTask = inProgressTask || rankedTasks[0] || null;
+
+  // --- Factor realidad: aprende cuánto te toman DE VERDAD las tareas, por
+  // categoría, con el historial de tiempo real medido (actual_minutes). ---
+  const realityByCategory: Record<string, { realSum: number; estSum: number; n: number }> = {};
+  for (const t of p.tasks) {
+    if (t.status === 'done' && t.actual_minutes && t.actual_minutes > 0) {
+      const c = t.category || 'admin';
+      realityByCategory[c] = realityByCategory[c] || { realSum: 0, estSum: 0, n: 0 };
+      realityByCategory[c].realSum += t.actual_minutes;
+      realityByCategory[c].estSum += (t.estimated_minutes || t.actual_minutes);
+      realityByCategory[c].n += 1;
+    }
+  }
+  // Minutos "según tu historial" para una tarea (null si aún no hay suficiente).
+  const learnedMinutes = (t: PlannerTask): number | null => {
+    const r = realityByCategory[t.category || 'admin'];
+    if (!r || r.n < 2) return null;
+    const factor = r.estSum > 0 ? r.realSum / r.estSum : 1;
+    return Math.round((t.estimated_minutes || 30) * factor);
+  };
   const completedToday = p.tasks.filter((t) => t.status === 'done' && (t.completed_at || '').slice(0, 10) === p.date);
 
   return (
@@ -242,6 +267,40 @@ export default function SmartPlanner() {
       {p.error && <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{p.error}</div>}
 
       {plannerView !== 'day' && <PlannerCalendar view={plannerView} date={p.date} tasks={openTasks} clients={p.clients} compact={compactCalendar} timeZone={p.timeZone} onChangeDate={p.setDate} onSelectDate={(date) => { p.setDate(date); setPlannerView('day'); }} onEdit={openTaskEditor} />}
+
+      {topTask && (
+        <section className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-5 shadow-sm">
+          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-blue-700">
+            <Sparkles className="h-3.5 w-3.5" /> Empieza por esto
+          </div>
+          <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-lg font-semibold text-slate-900">{topTask.title}</p>
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                {topTask.client_ref && <span className="inline-flex items-center gap-1 font-medium">● {p.clients.find((c) => c.id === topTask.client_ref)?.nombre || 'Cliente'}</span>}
+                {topTask.deadline && (() => {
+                  const d = Math.ceil((new Date(topTask.deadline).getTime() - Date.now()) / 86_400_000);
+                  return <span className={`inline-flex items-center gap-1 font-semibold ${d <= 1 ? 'text-red-600' : d <= 3 ? 'text-amber-600' : 'text-slate-500'}`}>⏰ {d <= 0 ? 'Vence hoy' : d === 1 ? 'Vence mañana' : `Entrega en ${d} días`}</span>;
+                })()}
+                <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" /> {learnedMinutes(topTask) ? `~${learnedMinutes(topTask)} min (según tu historial)` : `~${topTask.estimated_minutes} min`}</span>
+              </div>
+              {learnedMinutes(topTask) && learnedMinutes(topTask)! > (topTask.estimated_minutes || 0) && (
+                <p className="mt-1.5 text-[11px] text-amber-700">Ojo: tareas así te toman más de lo que crees — bloquea el tiempo real y arranca ya.</p>
+              )}
+            </div>
+            <div className="shrink-0">
+              {topTask.status === 'in_progress' && topTask.started_at ? (
+                <div className="flex items-center gap-2">
+                  <LiveTimer startedAt={topTask.started_at} estimatedMinutes={topTask.estimated_minutes} />
+                  <button onClick={() => handleComplete(topTask.id)} className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">Finalizar</button>
+                </div>
+              ) : (
+                <button onClick={() => p.startTask(topTask.id)} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">▶ Iniciar ahora</button>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {plannerView === 'day' && <DayClientProgress tasks={p.tasks} clients={p.clients} date={p.date} />}
 
@@ -417,7 +476,7 @@ export default function SmartPlanner() {
 
       {/* Tasks queue */}
       <section>
-        <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500">Tu lista de tareas · {openTasks.length}</h2><span className="text-[11px] text-slate-400">Esto es lo que tenés pendiente. Edita agenda, entrega, prioridad, cliente y recurrencia; "Reorganizar mi día" las convierte en bloques de la agenda.</span></div>
+        <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500">Prioridades · Pareto 80/20 · {openTasks.length}</h2><span className="text-[11px] text-slate-400">Ordenadas por impacto, no por orden de llegada: ataca primero las de arriba — son el 20% que mueve el 80% de la aguja.</span></div>
         {taskSaveNotice && <div className="mb-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">{taskSaveNotice}</div>}
         {editingTask && (
           <form onSubmit={saveTaskEditor} className="mb-3 rounded-2xl border border-blue-200 bg-blue-50 p-4">
@@ -448,7 +507,7 @@ export default function SmartPlanner() {
           <p className="text-xs text-slate-400 italic">Bandeja vacía.</p>
         ) : (
           <ul className="space-y-1.5">
-            {openTasks.map((t) => <TaskRow key={t.id} task={t} clientName={p.clients.find((client) => client.id === t.client_ref)?.nombre} isProtected={p.blocks.some((block) => block.task_ids?.includes(t.id) && block.protected)} onEdit={openTaskEditor} onStart={p.startTask} onComplete={handleComplete} onPostpone={async (id) => { await p.postponeTask(id); setTaskSaveNotice('Tarea reprogramada para mañana.'); setTimeout(() => setTaskSaveNotice(null), 2500); }} onDelete={p.deleteTask} />)}
+            {rankedTasks.map((t) => <TaskRow key={t.id} task={t} clientName={p.clients.find((client) => client.id === t.client_ref)?.nombre} isProtected={p.blocks.some((block) => block.task_ids?.includes(t.id) && block.protected)} onEdit={openTaskEditor} onStart={p.startTask} onComplete={handleComplete} onPostpone={async (id) => { await p.postponeTask(id); setTaskSaveNotice('Tarea reprogramada para mañana.'); setTimeout(() => setTaskSaveNotice(null), 2500); }} onDelete={p.deleteTask} />)}
           </ul>
         )}
       </section>
