@@ -440,6 +440,39 @@ export type Database = {
         }
         Relationships: []
       }
+      collaborators: {
+        Row: {
+          activo: boolean
+          created_at: string
+          email: string
+          id: string
+          nombre: string | null
+          owner_user_id: string
+          permisos: Json
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          email: string
+          id?: string
+          nombre?: string | null
+          owner_user_id?: string
+          permisos?: Json
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          email?: string
+          id?: string
+          nombre?: string | null
+          owner_user_id?: string
+          permisos?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       courtesy_access_grants: {
         Row: {
           created_at: string
@@ -2727,6 +2760,69 @@ export type Database = {
           tipo?: string
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      project_kpi_entries: {
+        Row: {
+          created_at: string
+          fecha: string
+          id: string
+          kpi_id: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          fecha: string
+          id?: string
+          kpi_id: string
+          user_id?: string
+          valor?: number
+        }
+        Update: {
+          created_at?: string
+          fecha?: string
+          id?: string
+          kpi_id?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
+      project_kpis: {
+        Row: {
+          activo: boolean
+          cliente_id: string
+          created_at: string
+          frecuencia: string
+          id: string
+          meta: number
+          nombre: string
+          unidad: string | null
+          user_id: string
+        }
+        Insert: {
+          activo?: boolean
+          cliente_id: string
+          created_at?: string
+          frecuencia?: string
+          id?: string
+          meta?: number
+          nombre: string
+          unidad?: string | null
+          user_id?: string
+        }
+        Update: {
+          activo?: boolean
+          cliente_id?: string
+          created_at?: string
+          frecuencia?: string
+          id?: string
+          meta?: number
+          nombre?: string
+          unidad?: string | null
+          user_id?: string
         }
         Relationships: []
       }
