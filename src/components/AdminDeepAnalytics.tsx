@@ -10,6 +10,20 @@ const riskTone: Record<DeepAnalyticsCustomer['risk']['level'], string> = {
   bajo: 'bg-emerald-50 text-emerald-700 border-emerald-200',
 };
 
+// Ideas de contenido accionables por cliente, según sus señales de uso.
+// El objetivo (pedido de Mafe): saber qué contenido crearle/enviarle a cada uno.
+function contentIdeas(c: DeepAnalyticsCustomer): string[] {
+  const ideas: string[] = [];
+  const inact = c.engagement?.inactiveDays;
+  if (c.risk.level === 'alto' || (inact != null && inact >= 14)) ideas.push('Reactivación: envíale un caso de éxito o una novedad para reenganchar.');
+  if (c.finance.overdueReceivables.count > 0) ideas.push('Refuerzo de valor: pieza corta sobre el ROI/beneficios antes de recordar el cobro.');
+  if (c.crossSell.length) ideas.push(`Educativo de ${c.crossSell.slice(0, 2).join(' y ')}: muéstrale cómo eso resuelve su problema.`);
+  if (c.planner.completionRate != null && c.planner.completionRate < 40) ideas.push('Tips de uso: mini-guía para aprovechar el módulo que menos usa.');
+  if (c.crm.totalContacts === 0) ideas.push('Onboarding: plantilla para cargar sus primeros contactos/leads.');
+  if (!ideas.length) ideas.push('Testimonio o upsell: pídele una reseña o propón el siguiente nivel.');
+  return ideas.slice(0, 3);
+}
+
 export default function AdminDeepAnalytics() {
   const [portfolio, setPortfolio] = useState<DeepAnalyticsPortfolio | null>(null);
   const [customers, setCustomers] = useState<DeepAnalyticsCustomer[]>([]);
@@ -77,6 +91,7 @@ export default function AdminDeepAnalytics() {
                 <th>Finanzas</th>
                 <th>CRM propio</th>
                 <th>Venta cruzada</th>
+                <th>Contenido sugerido</th>
               </tr>
             </thead>
             <tbody>
@@ -122,6 +137,13 @@ export default function AdminDeepAnalytics() {
                         ? <span className="text-[10px] text-slate-400">Usa todos los módulos</span>
                         : c.crossSell.map((m) => <span key={m} className="rounded-full bg-blue-50 px-2 py-0.5 text-[9px] font-semibold text-blue-700">{m}</span>)}
                     </div>
+                  </td>
+                  <td className="pr-3">
+                    <ul className="max-w-[240px] space-y-1 text-[10px] leading-4 text-slate-600">
+                      {contentIdeas(c).map((idea, i) => (
+                        <li key={i} className="flex items-start gap-1"><span className="mt-0.5 text-blue-500">▸</span><span>{idea}</span></li>
+                      ))}
+                    </ul>
                   </td>
                 </tr>
               ))}
