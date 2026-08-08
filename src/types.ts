@@ -87,6 +87,10 @@ export interface PagoEgreso {
   notas?: string;
   comprobante_url?: string;
   comprobante_nombre?: string;
+  /** IVA pagado en este egreso (descontable). En la moneda del pago. */
+  iva?: number;
+  /** Retención practicada/soportada en este egreso. En la moneda del pago. */
+  retencion?: number;
 }
 
 export interface AbonoLog {
@@ -122,6 +126,10 @@ export interface Venta {
   comision_retiro?: number;
   /** Tasa realmente aplicada al convertir una venta USD a COP. */
   trm_conversion?: number;
+  /** IVA generado en esta venta (base × tarifa). En la moneda de la venta. */
+  iva?: number;
+  /** Retención en la fuente que el cliente te practica. En la moneda de la venta. */
+  retencion?: number;
 }
 
 export interface Hora {

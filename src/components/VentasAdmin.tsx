@@ -52,6 +52,8 @@ export default function VentasAdmin({
   const [comisionPasarelaFija, setComisionPasarelaFija] = usePersistentState('ventas.comisionPasarelaFija', 0);
   const [comisionRetiro, setComisionRetiro] = usePersistentState('ventas.comisionRetiro', 0);
   const [trmConversion, setTrmConversion] = usePersistentState<number | ''>('ventas.trmConversion', '');
+  const [ivaVenta, setIvaVenta] = usePersistentState<number | ''>('ventas.iva', '');
+  const [retencionVenta, setRetencionVenta] = usePersistentState<number | ''>('ventas.retencion', '');
   // Catálogo de pasarelas del usuario: elegir una copia sus comisiones a esta
   // venta y las deja editables (un cliente puede tener una tarifa distinta).
   const [gateways, setGateways] = useState<PaymentGateway[]>([]);
@@ -165,6 +167,8 @@ export default function VentasAdmin({
     setComisionPasarelaFija(v.comision_pasarela_fija || 0);
     setComisionRetiro(v.comision_retiro || 0);
     setTrmConversion(v.trm_conversion || '');
+    setIvaVenta(v.iva ?? '');
+    setRetencionVenta(v.retencion ?? '');
     setActiveAbonos(v.abonos || []);
     setNewAbonoMonto('');
     setNewAbonoNotas('');
@@ -197,6 +201,8 @@ export default function VentasAdmin({
     setActiveAbonos([]);
     setNewAbonoMonto('');
     setNewAbonoNotas('');
+    setIvaVenta('');
+    setRetencionVenta('');
     clearDraftNamespace('ventas.');
   };
 
@@ -263,6 +269,8 @@ export default function VentasAdmin({
             comision_pasarela_fija: Number(comisionPasarelaFija),
             comision_retiro: Number(comisionRetiro),
             trm_conversion: moneda === 'USD' && trmConversion !== '' ? Number(trmConversion) : undefined,
+            iva: ivaVenta === '' ? 0 : Number(ivaVenta),
+            retencion: retencionVenta === '' ? 0 : Number(retencionVenta),
           };
         }
         return v;
@@ -292,6 +300,8 @@ export default function VentasAdmin({
         comision_pasarela_fija: Number(comisionPasarelaFija),
         comision_retiro: Number(comisionRetiro),
         trm_conversion: moneda === 'USD' && trmConversion !== '' ? Number(trmConversion) : undefined,
+        iva: ivaVenta === '' ? 0 : Number(ivaVenta),
+        retencion: retencionVenta === '' ? 0 : Number(retencionVenta),
       };
 
       const updated = [newVenta, ...ventas];
@@ -306,6 +316,8 @@ export default function VentasAdmin({
       setComisionPasarelaFija(0);
       setComisionRetiro(0);
       setTrmConversion('');
+      setIvaVenta('');
+      setRetencionVenta('');
     }
   };
 
@@ -784,10 +796,32 @@ export default function VentasAdmin({
               )}
             </div>
 
+            {/* IVA y Retención (opcional) */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-slate-500 font-semibold mb-1 uppercase tracking-wider font-mono text-[10px]">IVA generado</label>
+                <input
+                  type="number" min="0" step="any" placeholder="0"
+                  value={ivaVenta}
+                  onChange={(e) => setIvaVenta(e.target.value === '' ? '' : Number(e.target.value))}
+                  className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-slate-500 font-semibold mb-1 uppercase tracking-wider font-mono text-[10px]">Retención en la fuente</label>
+                <input
+                  type="number" min="0" step="any" placeholder="0"
+                  value={retencionVenta}
+                  onChange={(e) => setRetencionVenta(e.target.value === '' ? '' : Number(e.target.value))}
+                  className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none"
+                />
+              </div>
+            </div>
+
             {/* Notas */}
             <div>
               <label className="block text-slate-500 font-semibold mb-1 uppercase tracking-wider font-mono text-[10px]">Notas de Transacción</label>
-              <input 
+              <input
                 type="text"
                 placeholder="Ej: Cobro de kick-off inicial"
                 value={notas}

@@ -37,6 +37,8 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
   const [moneda, setMoneda] = usePersistentState<'COP' | 'USD'>('pagosEgresos.moneda', 'COP');
   const [metodoPago, setMetodoPago] = usePersistentState('pagosEgresos.metodoPago', 'Bancolombia');
   const [notas, setNotas] = usePersistentState('pagosEgresos.notas', '');
+  const [iva, setIva] = usePersistentState<number | ''>('pagosEgresos.iva', '');
+  const [retencion, setRetencion] = usePersistentState<number | ''>('pagosEgresos.retencion', '');
   const [comprobanteUrl, setComprobanteUrl] = usePersistentState<string | undefined>('pagosEgresos.comprobanteUrl', undefined);
   const [comprobanteNombre, setComprobanteNombre] = usePersistentState<string | undefined>('pagosEgresos.comprobanteNombre', undefined);
 
@@ -49,6 +51,8 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
     setMoneda('COP');
     setMetodoPago('Bancolombia');
     setNotas('');
+    setIva('');
+    setRetencion('');
     setComprobanteUrl(undefined);
     setComprobanteNombre(undefined);
     clearDraftNamespace('pagosEgresos.');
@@ -97,6 +101,8 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
       moneda,
       metodo_pago: metodoPago,
       notas: notas.trim() || undefined,
+      iva: iva === '' ? 0 : Number(iva),
+      retencion: retencion === '' ? 0 : Number(retencion),
       comprobante_url: comprobanteUrl,
       comprobante_nombre: comprobanteNombre,
     };
@@ -126,6 +132,8 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
     setMoneda(pago.moneda);
     setMetodoPago(pago.metodo_pago);
     setNotas(pago.notas || '');
+    setIva(pago.iva ?? '');
+    setRetencion(pago.retencion ?? '');
     setComprobanteUrl(pago.comprobante_url);
     setComprobanteNombre(pago.comprobante_nombre);
   };
@@ -338,6 +346,28 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
                 onChange={(e) => setMetodoPago(e.target.value)}
                 className="w-full bg-white/50 text-white border border-slate-200 p-2.5 rounded focus:outline-none focus:border-blue-300"
               />
+            </div>
+
+            {/* IVA y Retención (opcional) */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-slate-500 font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">IVA pagado (descontable)</label>
+                <input
+                  type="number" min="0" step="any" placeholder="0"
+                  value={iva}
+                  onChange={(e) => setIva(e.target.value === '' ? '' : Number(e.target.value))}
+                  className="w-full bg-white/50 text-white border border-slate-200 p-2.5 rounded focus:outline-none focus:border-blue-300"
+                />
+              </div>
+              <div>
+                <label className="block text-slate-500 font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Retención practicada</label>
+                <input
+                  type="number" min="0" step="any" placeholder="0"
+                  value={retencion}
+                  onChange={(e) => setRetencion(e.target.value === '' ? '' : Number(e.target.value))}
+                  className="w-full bg-white/50 text-white border border-slate-200 p-2.5 rounded focus:outline-none focus:border-blue-300"
+                />
+              </div>
             </div>
 
             {/* Notas opcionales */}

@@ -18,6 +18,9 @@ export default function ImpuestosIva({ data, metrics, formatCop }: ImpuestosIvaP
   const ivaGeneradoCalculado = useMemo(() => {
     const tarifa = config.tarifa_iva ?? 0.19;
     return ventas.reduce((sum, v) => {
+      // Si la venta trae un IVA indicado a mano, se respeta; si no, se estima
+      // desde el servicio (solo ventas nacionales con aplica_iva).
+      if (v.iva && v.iva > 0) return sum + convertToCop(v.iva, v.moneda, config.trm);
       const srv = servicios.find((s) => s.id === v.servicio_id);
       if (!srv?.aplica_iva) return sum;
       if (v.tipo !== 'Nacional') return sum;
@@ -25,6 +28,11 @@ export default function ImpuestosIva({ data, metrics, formatCop }: ImpuestosIvaP
       return sum + baseCop * tarifa;
     }, 0);
   }, [ventas, servicios, config.tarifa_iva, config.trm]);
+
+  // IVA descontable real: suma del IVA indicado en los pagos/egresos.
+  const ivaDescontableCalculado = useMemo(() => {
+    return (data.pagosEgresos || []).reduce((sum, p) => sum + (p.iva && p.iva > 0 ? convertToCop(p.iva, p.moneda, config.trm) : 0), 0);
+  }, [data.pagosEgresos, config.trm]);
 
   // Calculamos ingresos anualizados proyectados para evaluar tope del Art 437 (3500 uvt)
   const { proyeccionAnual: proyeccionAnualIngresos } = calcularProyeccionAnualIngresos(ventas, metrics.totalVentas);
@@ -53,10 +61,14 @@ export default function ImpuestosIva({ data, metrics, formatCop }: ImpuestosIvaP
   const [ivaGeneradoInput, setIvaGeneradoInput] = useState<number>(0);
   const [ivaGenTouched, setIvaGenTouched] = useState(false);
   const [ivaDescontableInput, setIvaDescontableInput] = useState<number>(0);
+  const [ivaDescTouched, setIvaDescTouched] = useState(false);
 
   useEffect(() => {
     if (!ivaGenTouched) setIvaGeneradoInput(Math.round(ivaGeneradoCalculado));
   }, [ivaGeneradoCalculado, ivaGenTouched]);
+  useEffect(() => {
+    if (!ivaDescTouched) setIvaDescontableInput(Math.round(ivaDescontableCalculado));
+  }, [ivaDescontableCalculado, ivaDescTouched]);
 
   const saldoIvaNettoValue = ivaGeneradoInput - ivaDescontableInput;
   const esSaldoAPagar = saldoIvaNettoValue > 0;
@@ -252,14 +264,20 @@ export default function ImpuestosIva({ data, metrics, formatCop }: ImpuestosIvaP
 
               <div>
                 <label className="block text-[#a39d8e] text-[10px] uppercase font-mono mb-1.5">IVA Descontable (Tus Compras)</label>
-                <input 
+                <input
                   type="number"
                   min="0"
                   value={ivaDescontableInput}
-                  onChange={(e) => setIvaDescontableInput(Number(e.target.value))}
+                  onChange={(e) => { setIvaDescTouched(true); setIvaDescontableInput(Number(e.target.value)); }}
                   className="w-full bg-[#0f0e0c]/50 text-white font-mono p-2.5 rounded border border-[#2a2620] focus:outline-none"
                   placeholder="100000"
                 />
+                <p className="mt-1.5 text-[10px] text-[#8a8377] leading-snug">
+                  Calculado del IVA indicado en tus pagos/egresos: <b className="text-blue-500">{formatCop(Math.round(ivaDescontableCalculado))}</b>
+                  {ivaDescTouched && (
+                    <button type="button" onClick={() => setIvaDescTouched(false)} className="ml-1 text-blue-500 underline hover:no-underline">usar este</button>
+                  )}
+                </p>
               </div>
             </div>
 
