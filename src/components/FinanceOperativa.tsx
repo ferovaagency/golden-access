@@ -9,6 +9,7 @@ import { listPayables, createPayable, deletePayable, updatePayable, payableDiffe
 import { listBudget, upsertBudgetLine, deleteBudgetLine, seedBudget, type BudgetLine } from '../lib/budgetService';
 import { buildCashflow, type CashflowSnapshot } from '../lib/cashflowService';
 import { calculateWeightedReceivable } from '../lib/engine/financialEngine';
+import { convertToCop } from '../lib/calculations';
 import { Loader2, Plus, Trash2, AlertTriangle, RefreshCcw, Edit2, X, ExternalLink } from 'lucide-react';
 import ComprobanteUpload from './ComprobanteUpload';
 import { getAccessToken } from '../lib/supabase';
@@ -492,15 +493,89 @@ function BudgetTab({ userId, appData, periodo, formatCop }: { userId: string; ap
   const [form, setForm] = useState({ categoria: '', monto_presupuestado: 0 });
   const reload = () => { setLoading(true); listBudget(userId, periodo).then(setItems).finally(() => setLoading(false)); };
   useEffect(() => { reload(); }, [userId, periodo]);
+
+  const trm = appData.config?.trm ?? 4000;
+  const norm = (s: string) => (s || '').trim().toLocaleLowerCase('es');
+
+  // GASTO REAL del periodo por categoría (pagos/egresos registrados, en COP).
+  const realPorCategoria = new Map<string, number>();
+  (appData.pagosEgresos || []).forEach((p) => {
+    if ((p.fecha || '').slice(0, 7) !== periodo) return;
+    const cop = convertToCop(p.monto, p.moneda, trm);
+    realPorCategoria.set(norm(p.categoria), (realPorCategoria.get(norm(p.categoria)) || 0) + cop);
+  });
+
+  // PLANEADO = costos fijos comprometidos (Otros Gastos Operacionales fijos +
+  // herramientas SaaS) reflejados en las líneas de presupuesto, más lo que la
+  // usuaria fije a mano. Aquí solo leemos las líneas ya guardadas.
+  const totalPlaneado = items.reduce((s, b) => s + b.monto_presupuestado, 0);
+  const usedCats = new Set(items.map((b) => norm(b.categoria)));
+  const totalReal = Array.from(realPorCategoria.values()).reduce((s, v) => s + v, 0);
+  const sinPresupuesto = Array.from(realPorCategoria.entries()).filter(([cat, val]) => val > 0 && !usedCats.has(cat));
+  const dif = totalPlaneado - totalReal;
+
+  const realDe = (cat: string) => realPorCategoria.get(norm(cat)) || 0;
+
+  // SUGERENCIAS interpretativas.
+  const sugerencias: { tono: 'malo' | 'bueno' | 'info'; texto: string }[] = [];
+  items.forEach((b) => {
+    const real = realDe(b.categoria);
+    if (b.monto_presupuestado > 0 && real > b.monto_presupuestado * 1.05) {
+      sugerencias.push({ tono: 'malo', texto: `Te pasaste en "${b.categoria}": planeaste ${formatCop(b.monto_presupuestado)} y llevas ${formatCop(real)} (${Math.round((real / b.monto_presupuestado - 1) * 100)}% de más). Recorta aquí o súbele el presupuesto si es real.` });
+    } else if (b.monto_presupuestado > 0 && real < b.monto_presupuestado * 0.5) {
+      sugerencias.push({ tono: 'bueno', texto: `En "${b.categoria}" solo usaste ${Math.round((real / b.monto_presupuestado) * 100)}% de lo planeado. Puedes reasignar ${formatCop(b.monto_presupuestado - real)} a lo que sí mueve la aguja.` });
+    }
+  });
+  sinPresupuesto.forEach(([cat, val]) => {
+    const original = (appData.pagosEgresos || []).find((p) => norm(p.categoria) === cat);
+    sugerencias.push({ tono: 'info', texto: `Estás gastando ${formatCop(val)} en "${original?.categoria || cat}" sin presupuesto. Agrégale una línea para controlarlo.` });
+  });
+  if (totalReal > 0) {
+    const top = Array.from(realPorCategoria.entries()).sort((a, b) => b[1] - a[1])[0];
+    if (top && top[1] / totalReal > 0.4) {
+      const orig = (appData.pagosEgresos || []).find((p) => norm(p.categoria) === top[0]);
+      sugerencias.push({ tono: 'info', texto: `El ${Math.round((top[1] / totalReal) * 100)}% de tu gasto real del mes se va en "${orig?.categoria || top[0]}". ¿Es tu mejor inversión?` });
+    }
+  }
+  if (totalPlaneado > 0) {
+    sugerencias.push(dif >= 0
+      ? { tono: 'bueno', texto: `Vas ${formatCop(dif)} por DEBAJO del presupuesto del mes. Buen control.` }
+      : { tono: 'malo', texto: `Vas ${formatCop(-dif)} por ENCIMA del presupuesto del mes. Ojo con el cierre.` });
+  }
+
+  const pctEjec = totalPlaneado > 0 ? Math.round((totalReal / totalPlaneado) * 100) : 0;
+
   if (loading) return <Loader />;
   return (
     <div className="space-y-4">
+      {/* Resumen planeado vs real */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className={cardClass}><p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Planeado</p><p className="text-lg font-bold text-slate-900">{formatCop(totalPlaneado)}</p></div>
+        <div className={cardClass}><p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Real (mes)</p><p className="text-lg font-bold text-slate-900">{formatCop(totalReal)}</p></div>
+        <div className={cardClass}><p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Diferencia</p><p className={`text-lg font-bold ${dif >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>{dif >= 0 ? '+' : '−'}{formatCop(Math.abs(dif))}</p></div>
+        <div className={cardClass}><p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Ejecución</p><p className={`text-lg font-bold ${pctEjec > 100 ? 'text-red-600' : 'text-slate-900'}`}>{pctEjec}%</p></div>
+      </div>
+
+      {/* Sugerencias interpretativas */}
+      {sugerencias.length > 0 && (
+        <div className={cardClass}>
+          <h3 className="font-semibold text-slate-900 mb-2">Sugerencias del presupuesto</h3>
+          <ul className="space-y-1.5">
+            {sugerencias.map((s, i) => (
+              <li key={i} className={`text-sm flex items-start gap-2 ${s.tono === 'malo' ? 'text-red-700' : s.tono === 'bueno' ? 'text-emerald-700' : 'text-slate-700'}`}>
+                <span className="mt-0.5">{s.tono === 'malo' ? '⚠' : s.tono === 'bueno' ? '✓' : '💡'}</span>{s.texto}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className={cardClass}>
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <h3 className="font-semibold text-slate-900">Presupuesto {periodo}</h3>
           <button onClick={async () => { const n = await seedBudget(userId, appData, periodo); toastOk(`Sembradas ${n} categorías desde tus datos reales.`); reload(); }} className={btnGhost}><RefreshCcw className="w-3.5 h-3.5" /> Sembrar desde datos reales</button>
         </div>
-        <p className="text-xs text-slate-500 mb-3">Cuánto planeas gastar por categoría este mes (no lo que ya gastaste — eso se compara solo en "Flujo de caja"). "Sembrar desde datos reales" crea una línea por cada categoría de gasto que ya tienes registrada, usando el promedio como punto de partida.</p>
+        <p className="text-xs text-slate-500 mb-3">Cuánto planeas gastar por categoría este mes. "Real" es lo que ya llevas gastado (pagos/egresos registrados en {periodo}). "Sembrar desde datos reales" crea una línea por cada categoría de gasto que ya tienes registrada.</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
           <input className={inputClass} placeholder="Categoría" value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} />
           <input className={inputClass} type="number" placeholder="Monto presupuestado" value={form.monto_presupuestado} onChange={(e) => setForm({ ...form, monto_presupuestado: Number(e.target.value) })} />
@@ -515,17 +590,30 @@ function BudgetTab({ userId, appData, periodo, formatCop }: { userId: string; ap
           {editingLine && <button onClick={() => { setEditingLine(null); setForm({ categoria: '', monto_presupuestado: 0 }); }} className={btnGhost}><X className="w-3.5 h-3.5" /> Cancelar</button>}
         </div>
         <table className="w-full text-sm">
-          <thead><tr className="text-left text-xs text-slate-500 border-b border-slate-200"><th className="py-2">Categoría</th><th className="text-right">Presupuestado</th><th>Origen</th><th></th></tr></thead>
+          <thead><tr className="text-left text-xs text-slate-500 border-b border-slate-200"><th className="py-2">Categoría</th><th className="text-right">Planeado</th><th className="text-right">Real</th><th className="text-right">Dif.</th><th className="w-24">Uso</th><th></th></tr></thead>
           <tbody>
-            {items.map((b) => (
-              <tr key={b.id} className="border-b border-slate-100">
-                <td className="py-2 font-medium">{b.categoria}</td>
-                <td className="text-right">{formatCop(b.monto_presupuestado)}</td>
-                <td className="text-slate-500">{b.origen}</td>
-                <td className="text-right space-x-2"><button onClick={() => { setEditingLine(b); setForm({ categoria: b.categoria, monto_presupuestado: b.monto_presupuestado }); }} className="text-blue-600" title="Editar presupuesto"><Edit2 className="w-4 h-4 inline" /></button><button onClick={() => deleteBudgetLine(b.id).then(reload)} className="text-red-600" title="Eliminar presupuesto"><Trash2 className="w-4 h-4 inline" /></button></td>
-              </tr>
-            ))}
-            {items.length === 0 && <tr><td colSpan={4} className="py-6 text-center text-slate-400 text-sm">Sin presupuesto para este periodo.</td></tr>}
+            {items.map((b) => {
+              const real = realDe(b.categoria);
+              const d = b.monto_presupuestado - real;
+              const pct = b.monto_presupuestado > 0 ? Math.min(Math.round((real / b.monto_presupuestado) * 100), 999) : 0;
+              const over = b.monto_presupuestado > 0 && real > b.monto_presupuestado;
+              return (
+                <tr key={b.id} className="border-b border-slate-100">
+                  <td className="py-2 font-medium">{b.categoria}</td>
+                  <td className="text-right">{formatCop(b.monto_presupuestado)}</td>
+                  <td className="text-right">{formatCop(real)}</td>
+                  <td className={`text-right ${d >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>{d >= 0 ? '' : '−'}{formatCop(Math.abs(d))}</td>
+                  <td>
+                    <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                      <div className={`h-full ${over ? 'bg-red-500' : pct > 85 ? 'bg-amber-500' : 'bg-emerald-500'}`} style={{ width: `${Math.min(pct, 100)}%` }} />
+                    </div>
+                    <span className={`text-[10px] ${over ? 'text-red-600' : 'text-slate-400'}`}>{pct}%</span>
+                  </td>
+                  <td className="text-right space-x-2"><button onClick={() => { setEditingLine(b); setForm({ categoria: b.categoria, monto_presupuestado: b.monto_presupuestado }); }} className="text-blue-600" title="Editar presupuesto"><Edit2 className="w-4 h-4 inline" /></button><button onClick={() => deleteBudgetLine(b.id).then(reload)} className="text-red-600" title="Eliminar presupuesto"><Trash2 className="w-4 h-4 inline" /></button></td>
+                </tr>
+              );
+            })}
+            {items.length === 0 && <tr><td colSpan={6} className="py-6 text-center text-slate-400 text-sm">Sin presupuesto para este periodo. Usa "Sembrar desde datos reales" para empezar.</td></tr>}
           </tbody>
         </table>
       </div>
