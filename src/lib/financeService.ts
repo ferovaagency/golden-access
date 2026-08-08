@@ -168,6 +168,7 @@ export async function loadFinanceData(userId: string): Promise<AppData> {
     notas: p.notas ?? undefined,
     iva: p.iva != null ? Number(p.iva) : 0,
     retencion: p.retencion != null ? Number(p.retencion) : 0,
+    account_id: p.account_id ?? undefined,
     comprobante_url: p.comprobante_url ?? undefined,
     comprobante_nombre: p.comprobante_nombre ?? undefined,
   }));
@@ -194,6 +195,7 @@ export async function loadFinanceData(userId: string): Promise<AppData> {
     trm_conversion: v.trm_conversion == null ? undefined : Number(v.trm_conversion),
     iva: v.iva != null ? Number(v.iva) : 0,
     retencion: v.retencion != null ? Number(v.retencion) : 0,
+    account_id: v.account_id ?? undefined,
     abonos: abonosRaw
       .filter((a) => a.venta_id === v.id)
       .map((a) => ({
@@ -326,6 +328,7 @@ export async function savePagosEgresos(userId: string, list: PagoEgreso[]) {
     notas: p.notas || null,
     iva: p.iva ?? 0,
     retencion: p.retencion ?? 0,
+    account_id: p.account_id || null,
     comprobante_url: p.comprobante_url || null,
     comprobante_nombre: p.comprobante_nombre || null,
   })));
@@ -347,6 +350,7 @@ export async function saveVentas(userId: string, list: Venta[]) {
     notas: v.notas || null,
     iva: v.iva ?? 0,
     retencion: v.retencion ?? 0,
+    account_id: v.account_id || null,
     pasarela_pago: v.pasarela_pago || null,
     comision_pasarela_porcentaje: v.comision_pasarela_porcentaje ?? 0,
     comision_pasarela_fija: v.comision_pasarela_fija ?? 0,

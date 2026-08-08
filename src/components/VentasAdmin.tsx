@@ -3,6 +3,7 @@ import { Venta, Cliente, Servicio, Config } from '../types';
 import { convertToCop } from '../lib/calculations';
 import { calculatePaymentFees } from '../lib/paymentFees';
 import { listPaymentGateways, type PaymentGateway } from '../lib/paymentGatewaysService';
+import { listAccounts, type FinanceAccount } from '../lib/accountsService';
 import { CsvPagoImportado, parsePagosCsv } from '../lib/csvImportExport';
 import { usePersistentState, clearDraftNamespace } from '../lib/usePersistentState';
 import { useToast } from './ui/toast';
@@ -59,6 +60,9 @@ export default function VentasAdmin({
   const [gateways, setGateways] = useState<PaymentGateway[]>([]);
   const [manualGateway, setManualGateway] = usePersistentState('ventas.manualGateway', false);
   useEffect(() => { void listPaymentGateways(userId).then(setGateways).catch(() => setGateways([])); }, [userId]);
+  const [accounts, setAccounts] = useState<FinanceAccount[]>([]);
+  useEffect(() => { void listAccounts(userId).then(setAccounts).catch(() => setAccounts([])); }, [userId]);
+  const [accountId, setAccountId] = usePersistentState('ventas.accountId', '');
 
   const applyGateway = (nombre: string) => {
     setPasarelaPago(nombre);
@@ -169,6 +173,7 @@ export default function VentasAdmin({
     setTrmConversion(v.trm_conversion || '');
     setIvaVenta(v.iva ?? '');
     setRetencionVenta(v.retencion ?? '');
+    setAccountId(v.account_id || '');
     setActiveAbonos(v.abonos || []);
     setNewAbonoMonto('');
     setNewAbonoNotas('');
@@ -203,6 +208,7 @@ export default function VentasAdmin({
     setNewAbonoNotas('');
     setIvaVenta('');
     setRetencionVenta('');
+    setAccountId('');
     clearDraftNamespace('ventas.');
   };
 
@@ -271,6 +277,7 @@ export default function VentasAdmin({
             trm_conversion: moneda === 'USD' && trmConversion !== '' ? Number(trmConversion) : undefined,
             iva: ivaVenta === '' ? 0 : Number(ivaVenta),
             retencion: retencionVenta === '' ? 0 : Number(retencionVenta),
+            account_id: accountId || null,
           };
         }
         return v;
@@ -302,6 +309,7 @@ export default function VentasAdmin({
         trm_conversion: moneda === 'USD' && trmConversion !== '' ? Number(trmConversion) : undefined,
         iva: ivaVenta === '' ? 0 : Number(ivaVenta),
         retencion: retencionVenta === '' ? 0 : Number(retencionVenta),
+        account_id: accountId || null,
       };
 
       const updated = [newVenta, ...ventas];
@@ -318,6 +326,7 @@ export default function VentasAdmin({
       setTrmConversion('');
       setIvaVenta('');
       setRetencionVenta('');
+      setAccountId('');
     }
   };
 
@@ -795,6 +804,21 @@ export default function VentasAdmin({
                 </div>
               )}
             </div>
+
+            {/* Cuenta donde entra el dinero */}
+            {accounts.length > 0 && (
+              <div>
+                <label className="block text-slate-500 font-semibold mb-1 uppercase tracking-wider font-mono text-[10px]">Cuenta (dónde entra)</label>
+                <select
+                  value={accountId}
+                  onChange={(e) => setAccountId(e.target.value)}
+                  className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none"
+                >
+                  <option value="">— Sin cuenta —</option>
+                  {accounts.map((a) => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                </select>
+              </div>
+            )}
 
             {/* IVA y Retención (opcional) */}
             <div className="grid grid-cols-2 gap-3">

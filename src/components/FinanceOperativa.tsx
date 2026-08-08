@@ -54,7 +54,7 @@ export default function FinanceOperativa({ user, appData, formatCop }: { user: U
 
       {tab === 'flujo' && <FlujoTab userId={user.id} periodo={periodo} appData={appData} formatCop={formatCop} />}
       {tab === 'estado' && <FinancialStatement userId={user.id} appData={appData} period={periodo} formatCop={formatCop} />}
-      {tab === 'cuentas' && <AccountsTab userId={user.id} formatCop={formatCop} />}
+      {tab === 'cuentas' && <AccountsTab userId={user.id} appData={appData} formatCop={formatCop} />}
       {tab === 'metodos' && <PaymentMethodsTab userId={user.id} />}
       {tab === 'deudas' && <DebtsTab userId={user.id} formatCop={formatCop} />}
       {tab === 'cobrar' && <ReceivablesTab userId={user.id} appData={appData} formatCop={formatCop} />}
@@ -134,13 +134,27 @@ function FlujoTab({ userId, periodo, appData, formatCop }: { userId: string; per
 }
 
 /* ------------------ ACCOUNTS ------------------ */
-function AccountsTab({ userId, formatCop }: { userId: string; formatCop: (n: number) => string }) {
+function AccountsTab({ userId, appData, formatCop }: { userId: string; appData: AppData; formatCop: (n: number) => string }) {
   const [items, setItems] = useState<FinanceAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ nombre: '', tipo: 'banco' as AccountType, saldo_inicial: 0, moneda: 'COP', cupo: '', corte_dia: '', pago_dia: '' });
   const reload = () => { setLoading(true); listAccounts(userId).then(setItems).finally(() => setLoading(false)); };
   useEffect(() => { reload(); }, [userId]);
+
+  // Movimientos reales por cuenta: lo recibido de ventas asignadas a la cuenta
+  // menos lo pagado en egresos asignados a la cuenta (todo en COP).
+  const trm = appData.config?.trm ?? 4000;
+  const recibidoVenta = (v: AppData['ventas'][number]) => {
+    const abonos = v.abonos || [];
+    const enMoneda = abonos.length > 0 ? abonos.reduce((s, a) => s + a.monto, 0) : (v.adelanto || 0);
+    return convertToCop(enMoneda, v.moneda, trm);
+  };
+  const saldoActualDe = (accountId: string, saldoInicial: number) => {
+    const entradas = (appData.ventas || []).filter((v) => v.account_id === accountId).reduce((s, v) => s + recibidoVenta(v), 0);
+    const salidas = (appData.pagosEgresos || []).filter((p) => p.account_id === accountId).reduce((s, p) => s + convertToCop(p.monto, p.moneda, trm), 0);
+    return saldoInicial + entradas - salidas;
+  };
   const resetForm = () => {
     setEditingId(null);
     setForm({ nombre: '', tipo: 'banco', saldo_inicial: 0, moneda: 'COP', cupo: '', corte_dia: '', pago_dia: '' });
@@ -185,20 +199,24 @@ function AccountsTab({ userId, formatCop }: { userId: string; formatCop: (n: num
       </div>
       <div className={cardClass}>
         <table className="w-full text-sm">
-          <thead><tr className="text-left text-xs text-slate-500 border-b border-slate-200"><th className="py-2">Nombre</th><th>Tipo</th><th className="text-right">Saldo inicial</th><th className="text-right">Cupo</th><th></th></tr></thead>
+          <thead><tr className="text-left text-xs text-slate-500 border-b border-slate-200"><th className="py-2">Nombre</th><th>Tipo</th><th className="text-right">Saldo inicial</th><th className="text-right">Saldo actual</th><th className="text-right">Cupo</th><th></th></tr></thead>
           <tbody>
-            {items.map((a) => (
+            {items.map((a) => {
+              const saldoActual = saldoActualDe(a.id, a.saldo_inicial);
+              return (
               <tr key={a.id} className="border-b border-slate-100">
                 <td className="py-2 font-medium">{a.nombre}</td><td className="text-slate-500">{a.tipo}</td>
                 <td className="text-right">{formatCop(a.saldo_inicial)}</td>
+                <td className={`text-right font-semibold ${saldoActual < 0 ? 'text-red-600' : 'text-slate-900'}`}>{formatCop(saldoActual)}</td>
                 <td className="text-right">{a.cupo ? formatCop(a.cupo) : '—'}</td>
                 <td className="text-right space-x-2">
                   <button onClick={() => { setEditingId(a.id); setForm({ nombre: a.nombre, tipo: a.tipo, saldo_inicial: a.saldo_inicial, moneda: a.moneda, cupo: a.cupo?.toString() || '', corte_dia: a.corte_dia?.toString() || '', pago_dia: a.pago_dia?.toString() || '' }); }} className="text-blue-600 hover:text-blue-700" title="Editar cuenta"><Edit2 className="w-4 h-4 inline" /></button>
                   <button onClick={() => deleteAccount(a.id).then(reload)} className="text-red-600 hover:text-red-700" title="Eliminar cuenta"><Trash2 className="w-4 h-4 inline" /></button>
                 </td>
               </tr>
-            ))}
-            {items.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-slate-400 text-sm">Sin cuentas aún.</td></tr>}
+              );
+            })}
+            {items.length === 0 && <tr><td colSpan={6} className="py-6 text-center text-slate-400 text-sm">Sin cuentas aún.</td></tr>}
           </tbody>
         </table>
       </div>

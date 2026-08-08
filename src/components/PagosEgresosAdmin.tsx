@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PagoEgreso, Config } from '../types';
+import { listAccounts, type FinanceAccount } from '../lib/accountsService';
 import {
   Coins,
   Trash2,
@@ -20,9 +21,12 @@ interface PagosEgresosAdminProps {
   pagosEgresos: PagoEgreso[];
   config: Config;
   onSavePagosEgresos: (updated: PagoEgreso[]) => Promise<void>;
+  userId?: string;
 }
 
-export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePagosEgresos }: PagosEgresosAdminProps) {
+export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePagosEgresos, userId }: PagosEgresosAdminProps) {
+  const [accounts, setAccounts] = useState<FinanceAccount[]>([]);
+  useEffect(() => { if (userId) void listAccounts(userId).then(setAccounts).catch(() => setAccounts([])); }, [userId]);
   const { error: toastErr, confirm: askConfirm } = useToast();
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
@@ -39,6 +43,7 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
   const [notas, setNotas] = usePersistentState('pagosEgresos.notas', '');
   const [iva, setIva] = usePersistentState<number | ''>('pagosEgresos.iva', '');
   const [retencion, setRetencion] = usePersistentState<number | ''>('pagosEgresos.retencion', '');
+  const [accountId, setAccountId] = usePersistentState('pagosEgresos.accountId', '');
   const [comprobanteUrl, setComprobanteUrl] = usePersistentState<string | undefined>('pagosEgresos.comprobanteUrl', undefined);
   const [comprobanteNombre, setComprobanteNombre] = usePersistentState<string | undefined>('pagosEgresos.comprobanteNombre', undefined);
 
@@ -53,6 +58,7 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
     setNotas('');
     setIva('');
     setRetencion('');
+    setAccountId('');
     setComprobanteUrl(undefined);
     setComprobanteNombre(undefined);
     clearDraftNamespace('pagosEgresos.');
@@ -103,6 +109,7 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
       notas: notas.trim() || undefined,
       iva: iva === '' ? 0 : Number(iva),
       retencion: retencion === '' ? 0 : Number(retencion),
+      account_id: accountId || null,
       comprobante_url: comprobanteUrl,
       comprobante_nombre: comprobanteNombre,
     };
@@ -134,6 +141,7 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
     setNotas(pago.notas || '');
     setIva(pago.iva ?? '');
     setRetencion(pago.retencion ?? '');
+    setAccountId(pago.account_id || '');
     setComprobanteUrl(pago.comprobante_url);
     setComprobanteNombre(pago.comprobante_nombre);
   };
@@ -336,10 +344,25 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
               </div>
             </div>
 
+            {/* Cuenta de la que sale el dinero */}
+            {accounts.length > 0 && (
+              <div>
+                <label className="block text-slate-500 font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Cuenta (de dónde sale)</label>
+                <select
+                  value={accountId}
+                  onChange={(e) => setAccountId(e.target.value)}
+                  className="w-full bg-white/50 text-white border border-slate-200 p-2.5 rounded focus:outline-none focus:border-blue-300"
+                >
+                  <option value="">— Sin cuenta —</option>
+                  {accounts.map((a) => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                </select>
+              </div>
+            )}
+
             {/* Metodo de Pago */}
             <div>
               <label className="block text-slate-500 font-semibold mb-1 uppercase tracking-wider font-mono text-[9px]">Método de Pago / Origen</label>
-              <input 
+              <input
                 type="text"
                 placeholder="Ej. Transferencia Bancolombia, Tarjeta de Crédito, Efectivo, Pyg"
                 value={metodoPago}

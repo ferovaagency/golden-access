@@ -91,6 +91,8 @@ export interface PagoEgreso {
   iva?: number;
   /** Retención practicada/soportada en este egreso. En la moneda del pago. */
   retencion?: number;
+  /** Cuenta (finance_accounts) de donde sale el dinero de este egreso. */
+  account_id?: string | null;
 }
 
 export interface AbonoLog {
@@ -130,6 +132,8 @@ export interface Venta {
   iva?: number;
   /** Retención en la fuente que el cliente te practica. En la moneda de la venta. */
   retencion?: number;
+  /** Cuenta (finance_accounts) donde entra el dinero de esta venta. */
+  account_id?: string | null;
 }
 
 export interface Hora {
