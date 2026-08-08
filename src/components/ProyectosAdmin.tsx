@@ -278,12 +278,12 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
         </div>
       )}
 
+      {selectedClient && <ProjectDailyKpis clienteId={selectedClient.id} kpis={kpis} />}
+
       {selectedClient && <section className="rounded-lg border border-slate-200 bg-white p-4">
         <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-[10px] font-mono uppercase tracking-wider text-slate-500">Seguimiento operativo</p><p className="mt-1 text-sm font-semibold text-slate-900">Indicadores de {selectedClient.nombre}</p></div><span className="rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-semibold text-blue-700">{kpis.length} KPI{kpis.length === 1 ? '' : 's'} configurado{kpis.length === 1 ? '' : 's'}</span></div>
         {kpis.length ? <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{kpis.map((kpi) => { const meta = Number(kpi.meta.replace(/[^0-9.-]/g, '')); const actual = Number(kpi.actual.replace(/[^0-9.-]/g, '')); const pct = Number.isFinite(meta) && meta > 0 && Number.isFinite(actual) ? Math.max(0, Math.min(100, Math.round(actual / meta * 100))) : null; return <div key={kpi.id} className="rounded-lg border border-slate-200 bg-white p-3"><div className="flex items-start justify-between gap-2"><p className="text-xs font-semibold text-slate-900">{kpi.nombre}</p><span className="text-[10px] text-slate-500">{cadenciaLabel(kpi.cadencia)}</span></div><p className="mt-2 text-[11px] text-slate-500">Actual <b className="text-blue-700">{kpi.actual}</b> · Meta {kpi.meta}</p>{pct != null && <><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-600" style={{ width: `${pct}%` }} /></div><p className="mt-1 text-[10px] text-slate-500">{pct}% de la meta</p></>}</div>; })}</div> : <p className="mt-3 text-xs text-slate-500">Crea el primer KPI abajo. No hay metas fijas ni códigos como “010”: cada medición parte de los indicadores de este proyecto.</p>}
       </section>}
-
-      {selectedClient && <ProjectDailyKpis clienteId={selectedClient.id} />}
 
       {/* Select active client view */}
       <div className="bg-white border border-slate-200 p-4 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-4">

@@ -48,6 +48,7 @@ function MetricCard({ label, value, detail, icon: Icon }: { label: string; value
 }
 
 import { TodayPlannerBlock } from './home/TodayPlannerBlock';
+import ProjectsKpiHomeBlock from './ProjectsKpiHomeBlock';
 
 export default function Home({ data, metrics, period, formatCop, onNavigate }: HomeProps) {
   const [sectionOrder, setSectionOrder] = useState<HomeSectionId[]>(readSectionOrder);
@@ -175,6 +176,8 @@ export default function Home({ data, metrics, period, formatCop, onNavigate }: H
       </section>
 
       <div style={{ order: sectionOrder.indexOf('quick') - 1 }}><TodayPlannerBlock onOpenPlanner={() => onNavigate('planner')} /></div>
+
+      <div style={{ order: sectionOrder.indexOf('quick') - 1 }}><ProjectsKpiHomeBlock data={data} onNavigate={onNavigate} /></div>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/30 sm:p-6" style={{ order: sectionOrder.indexOf('quick') }}><div className="flex items-start justify-between"><div><p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Acceso rápido</p><h3 className="mt-1 text-lg font-semibold text-slate-950">Quick Actions</h3></div><OrderControls id="quick" order={sectionOrder} onMove={moveSection} /></div><div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">{quickActions.map(({ label, icon: Icon, tab }) => <button key={tab} onClick={() => onNavigate(tab)} className="flex min-h-24 flex-col items-start justify-between rounded-xl border border-slate-200 bg-white p-3 text-left transition hover:border-blue-200 hover:bg-blue-50"><Icon className="h-4 w-4 text-blue-600" /><span className="text-xs font-semibold text-slate-700">{label}</span></button>)}</div></section>
 
