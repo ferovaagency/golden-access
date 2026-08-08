@@ -676,7 +676,7 @@ function TaskRow({ task, clientName, isProtected, onEdit, onStart, onComplete, o
         <span className="truncate text-sm text-slate-800">{task.title}</span>
         {clientName && <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${clientTone(task.client_ref)}`}>● {clientName}</span>}
       </button>
-      {running && <LiveTimer startedAt={task.started_at} estimatedMinutes={task.estimated_minutes} />}
+      {task.started_at && running && <LiveTimer startedAt={task.started_at} estimatedMinutes={task.estimated_minutes} />}
       <div className="flex shrink-0 items-center gap-1 sm:opacity-70 sm:group-hover:opacity-100 transition-opacity">
         <button onClick={() => onEdit(task)} aria-label="Abrir / editar tarea" title="Abrir / editar" className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-blue-700"><Edit2 className="h-3.5 w-3.5" /></button>
         <button onClick={() => onDelete(task.id)} aria-label="Eliminar tarea" title="Eliminar tarea" className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-red-50 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
