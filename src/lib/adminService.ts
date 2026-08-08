@@ -64,6 +64,17 @@ export async function revokeCustomerAccess(user_id: string): Promise<void> {
   if (!data?.ok) throw new Error(data?.message || 'No se pudo revocar el acceso.');
 }
 
+/**
+ * Elimina por completo un cliente registrado (cancela suscripción, borra
+ * cortesía y elimina la cuenta de auth). Irreversible. Solo owner; el backend
+ * bloquea borrar miembros del equipo o tu propia cuenta.
+ */
+export async function deleteCustomer(user_id: string): Promise<void> {
+  const { data, error } = await supabase.functions.invoke('admin-delete-customer', { body: { user_id } });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.message || 'No se pudo eliminar el cliente.');
+}
+
 export async function grantCourtesyAccess(email: string, plan: PlanId, notas?: string): Promise<void> {
   const { data, error } = await supabase.functions.invoke('admin-grant-courtesy-access', { body: { email, plan, notas } });
   if (error) throw error;

@@ -167,6 +167,15 @@ pre {
   color: #ffffff !important;
 }
 
+/* Red de seguridad de contraste: el énfasis en <b>/<strong> con text-white de
+   Tailwind quedaba invisible sobre fondos remapeados a claro (Equilibrio, IVA,
+   Alertas). <b>/<strong> nunca son botones, así que forzar texto oscuro es
+   seguro y no afecta a los botones azules. */
+.ferova-light-theme b.text-white,
+.ferova-light-theme strong.text-white {
+  color: #1f1b16 !important;
+}
+
 /* Texto SIEMPRE blanco sobre botones/pestañas de fondo azul. El text-white de
    Tailwind se estaba sobrescribiendo a un color oscuro e ilegible sobre el azul
    (pasaba en el /app bajo .ferova-v2-theme). bg-blue-600/700 es siempre azul

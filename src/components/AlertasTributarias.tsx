@@ -92,7 +92,7 @@ export default function AlertasTributarias({ metrics, config, ventas, formatCop 
         <div className="space-y-1">
           <span className="font-semibold text-[#e8e3d8] block">Metodología de Proyección Anual</span>
           <p className="text-[#a39d8e]">
-            Las alertas toman tu promedio de facturación real acumulado mensual (<b className="text-white">{formatCop(avgMonthlySales)}/mes</b>) multiplicándolo por 12 meses. Esto permite anticipar con meses de anticipación qué topes romperás a fin de año bajo tu volumen actual de operación.
+            Las alertas toman tu promedio de facturación real acumulado mensual (<b className="text-slate-900">{formatCop(avgMonthlySales)}/mes</b>) multiplicándolo por 12 meses. Esto permite anticipar con meses de anticipación qué topes romperás a fin de año bajo tu volumen actual de operación.
           </p>
         </div>
       </div>

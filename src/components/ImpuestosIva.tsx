@@ -119,7 +119,7 @@ export default function ImpuestosIva({ data, metrics, formatCop }: ImpuestosIvaP
                 <div className="space-y-1">
                   <span className="font-semibold block text-[#e8e3d8]">1. Ventas anuales por debajo de 3.500 UVT</span>
                   <span className="text-[11px] text-[#8a8377] block">
-                    Tus ventas anualizadas estimadas son de <b className={isIngresosTopeSuperado ? 'text-rose-500' : 'text-white'}>{formatCop(proyeccionAnualIngresos)}</b>. Límite: {formatCop(limite3500Uvt)}.
+                    Tus ventas anualizadas estimadas son de <b className={isIngresosTopeSuperado ? 'text-rose-500' : 'text-slate-900'}>{formatCop(proyeccionAnualIngresos)}</b>. Límite: {formatCop(limite3500Uvt)}.
                   </span>
                   {isIngresosTopeSuperado && (
                     <span className="text-[10px] text-rose-500 font-mono font-bold block">

@@ -306,40 +306,6 @@ export default function SmartPlanner() {
 
       {plannerView === 'day' && <DayAgendaSummary blocks={p.blocks} tasks={p.tasks} clients={p.clients} timeZone={p.timeZone} onComplete={handleComplete} />}
 
-      {/* Briefing */}
-      <section className="rounded-2xl border border-[var(--line)] bg-gradient-to-br from-blue-50/60 to-white p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-blue-100 text-blue-700"><Sunrise className="h-4 w-4" /></div>
-            <div>
-              <p className="text-xs uppercase tracking-widest text-slate-500 font-semibold">Resumen del día (generado por IA)</p>
-              <p className="text-base font-semibold text-slate-900 mt-1">{p.briefing?.headline || 'Todavía no hay resumen generado.'}</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">Solo un vistazo narrativo — tu lista real de tareas está en "Bandeja de tareas", más abajo.</p>
-            </div>
-          </div>
-          <button
-            onClick={() => p.regenerateBriefing('morning')}
-            disabled={p.busy === 'briefing'}
-            className="text-xs font-semibold text-blue-700 hover:text-blue-900 disabled:opacity-50 inline-flex items-center gap-1"
-          >
-            {p.busy === 'briefing' && <Loader2 className="h-3 w-3 animate-spin" />} Generar
-          </button>
-        </div>
-        {p.briefing?.bullets?.length ? (
-          <ul className="mt-3 space-y-1.5 pl-12">
-            {p.briefing.bullets.map((b, i) => (
-              <li key={i} className="text-sm text-slate-700 flex items-start gap-2"><span className="text-slate-300 mt-1">•</span>{b}</li>
-            ))}
-          </ul>
-        ) : null}
-        {p.briefing?.suggested_focus && (
-          <div className="mt-3 ml-12 rounded-xl bg-white border border-[var(--line)] px-3 py-2 text-xs text-slate-600">
-            <span className="font-semibold text-slate-900">Foco sugerido:</span> {p.briefing.suggested_focus}
-            {p.briefing.estimated_workload_minutes ? <span className="ml-2 text-slate-400">· ~{Math.round(p.briefing.estimated_workload_minutes / 60)}h</span> : null}
-          </div>
-        )}
-      </section>
-
       {/* Brain Dump */}
       <section className="rounded-2xl border border-[var(--line)] bg-white p-5">
         <div className="flex items-center gap-2">

@@ -71,6 +71,7 @@ import {
   listCustomers,
   setCustomerPlan,
   revokeCustomerAccess,
+  deleteCustomer,
   grantCourtesyAccess,
   listFeedback,
   updateFeedbackStatus,
@@ -613,6 +614,25 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
       toastOk('Acceso revocado.');
     } catch (err: any) {
       toastErr(`Error revocando el acceso: ${errMsg(err)}`);
+    } finally {
+      setSavingPlanFor(null);
+    }
+  };
+
+  const handleDeleteCustomer = async (customer: AdminCustomer) => {
+    if (!(await askConfirm({
+      title: 'Eliminar cliente',
+      description: `Vas a ELIMINAR por completo a ${customer.nombre_negocio || customer.email}: su cuenta y sus datos. Esto es IRREVERSIBLE. ¿Continuar?`,
+      destructive: true,
+      confirmText: 'Sí, eliminar definitivamente',
+    }))) return;
+    setSavingPlanFor(customer.user_id);
+    try {
+      await deleteCustomer(customer.user_id);
+      setCustomers((prev) => prev.filter((c) => c.user_id !== customer.user_id));
+      toastOk('Cliente eliminado.');
+    } catch (err: any) {
+      toastErr(`Error eliminando el cliente: ${errMsg(err)}`);
     } finally {
       setSavingPlanFor(null);
     }
@@ -2400,15 +2420,25 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                           </td>
                           {teamRole === 'owner' && (
                             <td className="py-2 pr-3">
-                              {c.estado_suscripcion !== 'sin_pago' && (
+                              <div className="flex items-center gap-1.5">
+                                {c.estado_suscripcion !== 'sin_pago' && (
+                                  <button
+                                    onClick={() => handleRevokeAccess(c)}
+                                    disabled={savingPlanFor === c.user_id}
+                                    className="text-red-600 hover:text-[#e08970] font-mono text-[10px] px-2 py-1 rounded border border-rose-500/30 hover:bg-rose-500/10 disabled:opacity-50"
+                                  >
+                                    Revocar acceso
+                                  </button>
+                                )}
                                 <button
-                                  onClick={() => handleRevokeAccess(c)}
+                                  onClick={() => handleDeleteCustomer(c)}
                                   disabled={savingPlanFor === c.user_id}
-                                  className="text-red-600 hover:text-[#e08970] font-mono text-[10px] px-2 py-1 rounded border border-rose-500/30 hover:bg-rose-500/10 disabled:opacity-50"
+                                  title="Eliminar cliente y sus datos (irreversible)"
+                                  className="text-red-700 hover:text-white hover:bg-red-600 font-mono text-[10px] px-2 py-1 rounded border border-red-600/40 disabled:opacity-50 inline-flex items-center gap-1"
                                 >
-                                  Revocar acceso
+                                  <Trash2 className="w-3 h-3" /> Eliminar
                                 </button>
-                              )}
+                              </div>
                             </td>
                           )}
                         </tr>

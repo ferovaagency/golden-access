@@ -92,7 +92,7 @@ export default function EquilibrioGlobal({ metrics, formatCop }: EquilibrioGloba
           </div>
           
           <p className="text-[11px] font-mono text-[#8a8377] text-right">
-            Nivel de auto-cobertura estructural: <span className="text-white font-bold">{porcentajeAvance.toFixed(0)}%</span>
+            Nivel de auto-cobertura estructural: <span className="text-slate-900 font-bold">{porcentajeAvance.toFixed(0)}%</span>
           </p>
         </div>
       </div>
