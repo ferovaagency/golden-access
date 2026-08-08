@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
     const gateway = createLovableAiGatewayProvider(key);
 
     const { text } = await generateText({
-      model: gateway("google/gemini-3.5-flash"),
+      model: gateway("google/gemini-2.5-flash"),
       system: mode === "prompt" ? PROMPT_SYSTEM : KNOWLEDGE_SYSTEM,
       prompt: draft,
     });

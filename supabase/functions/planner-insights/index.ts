@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
       if (gateway) {
         try {
           const { output } = await generateText({
-            model: gateway("google/gemini-3.5-flash"),
+            model: gateway("google/gemini-2.5-flash"),
             output: Output.object({ schema: InsightsSchema }),
             system: "You are the executive insights engine for Ferova OS. Detect: cash-flow risk, late follow-ups, projects over budget/hours, inactive clients, upcoming deadlines, overload, too many meetings, lack of deep work, revenue concentration, growth opportunities. Only use the provided context. Spanish. Each insight is 1-2 short sentences. action_route uses the tab slug: home, planner, ventas, gastos, pagosEgresos, proyectos, clientes, crm_pipeline, crm_reviews.",
             prompt: `Business context JSON:\n${context}\n\nReturn max 6 concise insights, prioritized.`,
@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
     if (gateway) {
       try {
         const { output } = await generateText({
-          model: gateway("google/gemini-3.5-flash"),
+          model: gateway("google/gemini-2.5-flash"),
           output: Output.object({ schema: BriefingSchema }),
           system: sys,
           prompt: `Context:\n${context}\n\nDate: ${new Date().toISOString().slice(0, 10)}`,

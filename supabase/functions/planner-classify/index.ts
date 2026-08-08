@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
         try {
           if (!gateway) throw new Error("AI gateway is not configured");
           const { output } = await generateText({
-            model: gateway("google/gemini-3.5-flash"),
+            model: gateway("google/gemini-2.5-flash"),
             output: Output.object({ schema: ClassifySchema }),
             system: `You are an executive assistant that classifies brain-dump lines from a business owner. Respond in the same language as the input. Estimate a realistic duration (5-240 min). Set priority=urgent only for explicit deadlines <48h or 'urgent/asap'. Detect deadline as ISO if the text mentions a date/time. Extract client/project names if mentioned. Category deep_work=focus/writing/design, admin=paperwork/taxes/emails, calls=phone/whatsapp/meet, creative=ideas/content, learning=read/study, personal=life. Confidence 0-1. Score financial_impact, client_impact, risk_score and execution_ease from 1 (low) to 5 (high) only from explicit evidence in the text; use 3 when evidence is missing. These are editable suggestions, not facts.\n${clientsContext}\n${durationContext}\n${clientDurationContext}`,
             prompt: `Line: """${line}"""\nToday: ${new Date().toISOString()}`,
