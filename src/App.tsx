@@ -210,6 +210,14 @@ function AppInner() {
   useEffect(() => {
     if (activeTab === 'seguimiento' || activeTab === 'kpisOperativos') setActiveTab('proyectos');
   }, [activeTab]);
+  // Colaborador en una pestaña sin permiso -> primera que sí puede ver.
+  // Aquí (tras declarar activeTab, antes de cualquier return) para no romper hooks.
+  useEffect(() => {
+    if (!collab || !collabResolved) return;
+    if (collab.permisos?.[activeTab]?.view === true) return;
+    const first = Object.keys(collab.permisos || {}).find((t) => collab.permisos[t]?.view === true);
+    if (first && first !== activeTab) setActiveTab(first);
+  }, [collab, collabResolved, activeTab]);
   useEffect(() => {
     if (!appData) return;
     if (!modules.financiero && FINANCIERO_TAB_IDS.includes(activeTab)) {
@@ -570,14 +578,6 @@ function AppInner() {
     setIsMobileMenuOpen(false);
   };
 
-  // Si un colaborador cae en una pestaña sin permiso, lo llevamos a la primera
-  // que sí puede ver. (No aplica al dueño: canView siempre es true para él.)
-  useEffect(() => {
-    if (collab && collabResolved && !canView(activeTab)) {
-      const first = visibleNavigationSections[0]?.items[0]?.id;
-      if (first && first !== activeTab) setActiveTab(first);
-    }
-  }, [collab, collabResolved, activeTab, visibleNavigationSections]);
 
   // Extras del header (TRM, clientes activos, link de respaldo Sheets, toggle
   // IA, feedback) -- compartidos tal cual entre el shell actual y AppShell v2.
