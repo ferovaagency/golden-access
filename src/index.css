@@ -546,3 +546,37 @@ pre {
   .ferova-v2-theme :is(th, td) { padding: .625rem .75rem; }
   .ferova-v2-theme .overflow-x-auto table { min-width: 600px; }
 }
+
+/* ============================================================
+   MUNDO "TABLERO DE OPERACIONES" — rediseño global (modo Operate)
+   Lleva el carácter de un tablero de control financiero / de salidas
+   a TODA la app por CSS, sin tocar función ni JSX: cifras en mono
+   tabular alineadas por columna, cabeceras de tabla como rótulos de
+   tablero (mayúscula tracked + hairline), y reglas finas consistentes.
+   Azul Ferova = estructura; el color de alerta se reserva por rol.
+   ============================================================ */
+
+/* 1) Cifras alineadas como en un libro mayor: mismo ancho de dígito y
+      tabulación estable (columnas de dinero que no bailan). */
+:is(.ferova-light-theme, .ferova-v2-theme) table,
+:is(.ferova-light-theme, .ferova-v2-theme) .font-mono,
+:is(.ferova-light-theme, .ferova-v2-theme) .tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+/* 2) Cabeceras de tabla = rótulos de tablero. Mayúscula, tracking corto,
+      hairline inferior. Es la seña más reconocible del mundo. */
+:is(.ferova-light-theme, .ferova-v2-theme) thead th {
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+  font-weight: 600;
+  color: var(--fv-muted);
+  border-bottom: 1px solid var(--fv-line);
+  white-space: nowrap;
+}
+
+/* 3) Reglas finas y uniformes entre filas: densidad de tablero, legible. */
+:is(.ferova-light-theme, .ferova-v2-theme) tbody tr {
+  border-color: var(--fv-line);
+}

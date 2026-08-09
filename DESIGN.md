@@ -1,5 +1,31 @@
 # Ferova One — Sistema visual
 
+## Mundo: "Tablero de operaciones" (modo Operate)
+
+**Tesis:** una app financiera que se lee como un **tablero de control / de salidas**: la
+urgencia y las cifras mandan. Rechaza el dashboard-SaaS de tarjetas iguales y aire vacío.
+Seña de identidad = **cifras en mono tabular alineadas por columna** + **cabeceras de tabla
+como rótulos de tablero** (mayúscula, tracking corto, hairline).
+
+- **Color:** *Restrained-committed*. Lienzo casi-blanco frío + tinta; **azul Ferova como
+  estructura** (reglas, cabeceras activas, cifras clave); **un color de alerta reservado**
+  a "por vencer / vencido / requiere acción" (ámbar→rojo, nunca decorativo).
+- **Tipografía:** dinero y datos con `font-variant-numeric: tabular-nums`; rótulos pequeños
+  en mayúscula tracked; títulos en Outfit (display); cuerpo Figtree.
+- **Composición:** rejilla de columnas estricta, hairlines 1px, filas densas, separación
+  generosa entre bloques. La cuadrícula del tablero es la retícula.
+- **Movimiento:** filas de urgencia que "se mueven en su sitio" (no desaparecen y reaparecen);
+  un momento orquestado, no efectos dispersos.
+- **Escena de uso:** oficina, escritorio, sesiones largas → densidad alta, claro, legible.
+
+El mundo se aplica **globalmente por la capa de tema** (`.ferova-light-theme` /
+`.ferova-v2-theme` + tokens `--fv-*`), sin tocar función. Contrato de dirección en
+`index.html` (`<body>`, seed `d068a80f`). Próxima iteración (requiere prueba visual):
+Inicio con franja de cifras clave + bloque "lo que exige acción", y filas de cobros/pagos/
+deudas re-ordenadas por vencimiento estilo tablero de salidas.
+
+---
+
 Fuente única de verdad: los tokens `--fv-*` en `src/index.css` (bloque al inicio).
 Todo lo demás (`--primary`, `--ferova-brand`, `--danger`, `--ferova-radius-*`, `--ferova-shadow`…)
 son **alias** que apuntan a `--fv-*`. Cambia un valor canónico y cascada a toda la plataforma.
