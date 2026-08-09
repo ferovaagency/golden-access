@@ -6,30 +6,80 @@
   --font-mono: "Figtree", ui-sans-serif, system-ui, sans-serif;
 }
 
+/* ============================================================
+   FEROVA ONE · SISTEMA DE TOKENS (fuente única de verdad)
+   Prefijo --fv-*. Todo lo demás (--primary, --ferova-brand, etc.)
+   son ALIAS que apuntan aquí: cambia un valor acá y cascada a toda
+   la plataforma. Al escribir UI nueva, usa --fv-*. Ver DESIGN.md.
+   ============================================================ */
 :root {
+  /* Marca */
+  --fv-brand: #2563EB;        /* azul de acción principal */
+  --fv-brand-strong: #1D4ED8; /* hover / énfasis */
+  --fv-brand-deep: #1E3A8A;   /* navy: gráficos y acentos oscuros */
+  --fv-accent: #6366F1;       /* índigo: insignias de IA (antes mal llamado 'gold') */
+
+  /* Superficies */
+  --fv-canvas: #F8FAFC;       /* fondo de la app */
+  --fv-surface: #FFFFFF;      /* tarjetas y paneles */
+  --fv-soft: #F1F5F9;         /* superficie tenue / hover */
+  --fv-tint: #EFF6FF;         /* tinte azul muy claro */
+  --fv-ai: #EEF2FF;           /* fondo de elementos de IA */
+  --fv-line: #E2E8F0;         /* bordes y divisores */
+
+  /* Texto (jerarquía) */
+  --fv-ink: #0F172A;          /* títulos y texto principal */
+  --fv-ink-2: #334155;        /* texto secundario fuerte */
+  --fv-muted: #64748B;        /* texto de apoyo */
+  --fv-subtle: #94A3B8;       /* metadatos, placeholders */
+
+  /* Estado — fuerte + tinte suave */
+  --fv-success: #16A34A;  --fv-success-soft: #DCFCE7;
+  --fv-warning: #CA8A04;  --fv-warning-soft: #FEF9C3;
+  --fv-danger: #DC2626;   --fv-danger-soft: #FEE2E2;
+  --fv-info: #2563EB;     --fv-info-soft: #DBEAFE;
+  --fv-violet: #7C3AED;   --fv-violet-soft: #EDE9FE;
+
+  /* Radios */
+  --fv-radius-xs: 8px;
+  --fv-radius-sm: 10px;
+  --fv-radius-md: 12px;   /* controles */
+  --fv-radius-lg: 14px;   /* tarjetas */
+  --fv-radius-xl: 18px;   /* héroes */
+  --fv-radius-pill: 999px;
+
+  /* Sombras — siempre con offset + blur (nunca un halo plano de color) */
+  --fv-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.045);
+  --fv-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --fv-shadow-lg: 0 14px 36px rgba(15, 23, 42, 0.10);
+}
+
+:root {
+  /* Alias legacy -> tokens canónicos --fv-*. Mismos valores de siempre; ahora
+     con una sola fuente de verdad. (--bg y --line conservan su matiz propio.) */
   --bg: #f7f8fa;
-  --surface: #ffffff;
-  --surface-2: #f1f5f9;
+  --surface: var(--fv-surface);
+  --surface-2: var(--fv-soft);
   --line: #e5e7eb;
-  --text: #0f172a;
-  --muted: #64748b;
-  --accent: #2563eb;
+  --text: var(--fv-ink);
+  --muted: var(--fv-muted);
+  --accent: var(--fv-brand);
   /* Colores semánticos (semáforos de márgenes, capacidad y tarifa). Deben vivir
      en :root, no solo bajo .ferova-light-theme: el workspace /app (Servicios,
      Horas) usa estilos inline var(--danger|--warning|--success|--primary) fuera
      de esa clase; sin definirlos aquí, colapsaban al color heredado (neutro). */
-  --primary: #2563eb;
-  --primary-soft: #dbeafe;
-  --success: #16a34a;
-  --success-soft: #dcfce7;
-  --warning: #ca8a04;
-  --warning-soft: #fef9c3;
-  --danger: #dc2626;
-  --danger-soft: #fee2e2;
-  --violet: #7c3aed;
-  --violet-soft: #ede9fe;
-  --radius-sm: 8px;
-  --radius-md: 12px;
+  --primary: var(--fv-brand);
+  --primary-soft: var(--fv-info-soft);
+  --success: var(--fv-success);
+  --success-soft: var(--fv-success-soft);
+  --warning: var(--fv-warning);
+  --warning-soft: var(--fv-warning-soft);
+  --danger: var(--fv-danger);
+  --danger-soft: var(--fv-danger-soft);
+  --violet: var(--fv-violet);
+  --violet-soft: var(--fv-violet-soft);
+  --radius-sm: var(--fv-radius-xs);
+  --radius-md: var(--fv-radius-md);
   --radius-lg: 16px;
 }
 
@@ -77,24 +127,25 @@ pre {
 }
 
 .ferova-light-theme {
-  --bg: #f8fafc;
-  --surface: #ffffff;
-  --surface-soft: #f1f5f9;
-  --surface-tint: #eff6ff;
-  --line: #e2e8f0;
-  --text: #0f172a;
-  --muted: #64748b;
-  --primary: #2563eb;
-  --primary-soft: #dbeafe;
-  --success: #16a34a;
-  --success-soft: #dcfce7;
-  --warning: #ca8a04;
-  --warning-soft: #fef9c3;
-  --danger: #dc2626;
-  --danger-soft: #fee2e2;
-  --violet: #7c3aed;
-  --violet-soft: #ede9fe;
-  --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  /* Tema aplicado a toda la app: sus tokens ahora derivan de --fv-*. */
+  --bg: var(--fv-canvas);
+  --surface: var(--fv-surface);
+  --surface-soft: var(--fv-soft);
+  --surface-tint: var(--fv-tint);
+  --line: var(--fv-line);
+  --text: var(--fv-ink);
+  --muted: var(--fv-muted);
+  --primary: var(--fv-brand);
+  --primary-soft: var(--fv-info-soft);
+  --success: var(--fv-success);
+  --success-soft: var(--fv-success-soft);
+  --warning: var(--fv-warning);
+  --warning-soft: var(--fv-warning-soft);
+  --danger: var(--fv-danger);
+  --danger-soft: var(--fv-danger-soft);
+  --violet: var(--fv-violet);
+  --violet-soft: var(--fv-violet-soft);
+  --shadow-soft: var(--fv-shadow-md);
 }
 
 .ferova-light-theme {
@@ -300,26 +351,29 @@ pre {
    se consumen desde componentes nuevos detras de VITE_FEROVA_UI_V2.
    ============================================================ */
 :root {
-  --ferova-brand: #2563EB;
-  --ferova-brand-2: #1D4ED8;
-  --ferova-navy: #1E3A8A;
-  --ferova-gold: #6366F1;
-  --ferova-canvas: #F8FAFC;
-  --ferova-surface: #FFFFFF;
-  --ferova-soft: #F1F5F9;
-  --ferova-line: #E2E8F0;
-  --ferova-ai: #EEF2FF;
+  /* Alias legacy --ferova-* -> tokens canónicos --fv-*. Idénticos valores.
+     Las tres tintas cálidas (positive/warning/danger) se conservan tal cual:
+     son un set propio del tema v2, pendiente de migrar a los soft --fv-*. */
+  --ferova-brand: var(--fv-brand);
+  --ferova-brand-2: var(--fv-brand-strong);
+  --ferova-navy: var(--fv-brand-deep);
+  --ferova-gold: var(--fv-accent);
+  --ferova-canvas: var(--fv-canvas);
+  --ferova-surface: var(--fv-surface);
+  --ferova-soft: var(--fv-soft);
+  --ferova-line: var(--fv-line);
+  --ferova-ai: var(--fv-ai);
   --ferova-positive: #E3F4EB;
   --ferova-warning: #F3EAD6;
   --ferova-danger: #F7E3E4;
 
-  --ferova-radius-control: 12px;
-  --ferova-radius-card: 14px;
-  --ferova-radius-hero: 18px;
-  --ferova-radius-pill: 999px;
+  --ferova-radius-control: var(--fv-radius-md);
+  --ferova-radius-card: var(--fv-radius-lg);
+  --ferova-radius-hero: var(--fv-radius-xl);
+  --ferova-radius-pill: var(--fv-radius-pill);
 
-  --ferova-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.045);
-  --ferova-shadow-hover: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --ferova-shadow: var(--fv-shadow-sm);
+  --ferova-shadow-hover: var(--fv-shadow-lg);
 }
 
 /* Material Button GSI */
