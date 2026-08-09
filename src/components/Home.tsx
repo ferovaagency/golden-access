@@ -156,23 +156,33 @@ export default function Home({ data, metrics, period, formatCop, onNavigate }: H
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 pb-10 animate-fade-in">
-      <section className="flex flex-col justify-between gap-4 rounded-3xl border border-slate-200 bg-white px-5 py-6 shadow-sm shadow-slate-200/40 sm:px-7 sm:py-8 lg:flex-row lg:items-end" style={{ order: -2 }}>
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-600">Executive Control Center</p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">Tu negocio, en una mirada.</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">Prioridades, salud y señales que requieren tu atención para el período seleccionado.</p>
+      {/* Tablero de control: franja de mando oscura + rail de cifras clave en
+          mono tabular alineadas, como el tope de un tablero de operaciones. */}
+      <section aria-label="Tablero de control" className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 text-white shadow-sm" style={{ order: -2 }}>
+        <div className="flex flex-col justify-between gap-4 px-6 py-6 sm:flex-row sm:items-end sm:px-7">
+          <div>
+            <h2 className="font-display text-2xl font-semibold tracking-tight text-white sm:text-3xl">Panorama del negocio</h2>
+            <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-300">Las cifras que mandan y lo que exige tu atención en el período seleccionado.</p>
+          </div>
+          <button onClick={() => onNavigate('proyectos')} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
+            Revisar proyectos <ArrowRight className="h-4 w-4" />
+          </button>
         </div>
-        <button onClick={() => onNavigate('proyectos')} className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800">
-          Revisar proyectos <ArrowRight className="h-4 w-4" />
-        </button>
-      </section>
-
-      <section aria-label="Indicadores clave" className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-5" style={{ order: -1 }}>
-        <MetricCard label="Ingresos" value={formatCop(metrics.totalVentas)} detail="Ventas del período" icon={CircleDollarSign} />
-        <MetricCard label="Utilidad operativa" value={formatCop(metrics.utilidadOperacional)} detail="Después de costos y gastos" icon={Wallet} />
-        <MetricCard label="Utilidad neta" value={formatCop(metrics.utilidadNeta)} detail="Estimación después de impuestos" icon={ShieldCheck} />
-        <MetricCard label="Clientes activos" value={String(activeClients.length)} detail="Cuentas en seguimiento" icon={Users} />
-        <MetricCard label="Horas registradas" value={`${totalHours} h`} detail="Capacidad del período" icon={Clock3} />
+        <div className="grid grid-cols-2 border-t border-slate-800 sm:grid-cols-3 xl:grid-cols-5">
+          {[
+            { label: 'Ingresos', value: formatCop(metrics.totalVentas), detail: 'Ventas del período' },
+            { label: 'Utilidad operativa', value: formatCop(metrics.utilidadOperacional), detail: 'Tras costos y gastos' },
+            { label: 'Utilidad neta', value: formatCop(metrics.utilidadNeta), detail: 'Tras impuestos' },
+            { label: 'Clientes activos', value: String(activeClients.length), detail: 'En seguimiento' },
+            { label: 'Horas', value: `${totalHours} h`, detail: 'Capacidad' },
+          ].map((k, i) => (
+            <div key={k.label} className={`border-slate-800 px-5 py-4 ${i > 0 ? 'border-l' : ''} ${i >= 2 ? 'border-t xl:border-t-0' : ''} ${i >= 3 ? 'sm:border-t xl:border-t-0' : ''}`}>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">{k.label}</p>
+              <p className="mt-1.5 font-mono text-xl font-bold tabular-nums leading-none text-white">{k.value}</p>
+              <p className="mt-1 text-[11px] text-slate-400">{k.detail}</p>
+            </div>
+          ))}
+        </div>
       </section>
 
       <div style={{ order: sectionOrder.indexOf('quick') - 1 }}><TodayPlannerBlock onOpenPlanner={() => onNavigate('planner')} /></div>
