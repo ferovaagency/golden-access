@@ -14,7 +14,6 @@ const AdminCRMRoute = lazy(() => import('./routes/AdminRoute'));
 const Privacidad = lazy(() => import('./routes/Privacidad'));
 const Terminos = lazy(() => import('./routes/Terminos'));
 const Landing = lazy(() => import('./routes/Landing'));
-const LandingV2 = lazy(() => import('./routes/LandingV2'));
 
 // Capa publica indexable (Manual_Landing_Blog_SEO_Ferova_One, sec. 3 y 8).
 const FeaturesPage = lazy(() => import('./marketing/pages/FeaturesPage'));
