@@ -121,9 +121,68 @@ export default function Home({ data, metrics, period, formatCop, onNavigate }: H
     const concentracionTop = totalClienteRev > 0 && clientesRanking[0] ? (clientesRanking[0].value / totalClienteRev) * 100 : 0;
     const inactiveClients = Math.max(0, data.clientes.length - activeClients.length);
 
+    // "Lo que exige acción": mismas señales reales (blindSpots + priorities),
+    // ordenadas por severidad y sin duplicados. No cambia ningún cálculo.
+    const sevRank: Record<string, number> = { critical: 0, warning: 1, neutral: 2, positive: 3 };
+    const sevClass: Record<string, string> = { critical: 'bg-red-500', warning: 'bg-amber-500', neutral: 'bg-blue-500', positive: 'bg-emerald-500' };
+    const chipClass: Record<string, string> = { critical: 'text-red-700 bg-red-50', warning: 'text-amber-700 bg-amber-50', neutral: 'text-blue-700 bg-blue-50', positive: 'text-emerald-700 bg-emerald-50' };
+    const chipLabel: Record<string, string> = { critical: 'URGENTE', warning: 'POR REVISAR', neutral: 'PENDIENTE', positive: 'OK' };
+    const needsAction = [...blindSpots, ...priorities]
+      .filter((s, i, arr) => arr.findIndex((x) => x.title === s.title) === i)
+      .sort((a, b) => (sevRank[a.tone] ?? 9) - (sevRank[b.tone] ?? 9))
+      .slice(0, 5);
+
     return (
       <div className="mx-auto flex w-full max-w-[1380px] flex-col gap-4 pb-8">
-        <KpiStrip items={kpiItems} periodKey={toPeriodKey(period)} />
+        {/* Franja de mando: tablero de control con las cifras clave en mono tabular */}
+        <section className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 text-white shadow-sm">
+          <div className="flex flex-col justify-between gap-4 px-6 py-5 sm:flex-row sm:items-end sm:px-7">
+            <div>
+              <h1 className="font-display text-2xl font-semibold tracking-tight text-white sm:text-[26px]">Panorama del negocio</h1>
+              <p className="mt-1 text-sm text-slate-300">Las cifras que mandan y lo que exige tu atención hoy.</p>
+            </div>
+            <button onClick={() => onNavigate('proyectos')} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
+              Revisar proyectos <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 border-t border-slate-800 sm:grid-cols-3 xl:grid-cols-5">
+            {kpiItems.map((k, i) => (
+              <div key={k.key} className={`border-slate-800 px-5 py-4 ${i > 0 ? 'border-l' : ''} ${i >= 3 ? 'border-t sm:border-t-0 xl:border-t-0' : ''} ${i >= 2 && i < 3 ? 'border-t sm:border-t-0' : ''}`}>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">{k.label}</p>
+                <p className="mt-1.5 font-mono text-lg font-bold leading-none text-white" style={{ fontVariantNumeric: 'tabular-nums' }}>{k.format(k.value)}</p>
+                <p className="mt-1 text-[11px] text-slate-400">{k.detail}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Lo que exige acción */}
+        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Prioridad</p>
+              <h3 className="mt-0.5 text-base font-semibold text-slate-900">Lo que exige acción</h3>
+            </div>
+            <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">{needsAction.length} señal{needsAction.length === 1 ? '' : 'es'}</span>
+          </div>
+          {needsAction.length === 0 ? (
+            <p className="px-5 py-6 text-sm text-slate-500">Todo en orden para este período. Nada urgente por ahora.</p>
+          ) : (
+            <ul>
+              {needsAction.map((s) => (
+                <li key={s.title} className="flex items-center gap-3 border-b border-slate-50 px-5 py-3 last:border-b-0">
+                  <span className={`h-9 w-1 shrink-0 rounded ${sevClass[s.tone] || 'bg-slate-300'}`} aria-hidden="true" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-slate-900">{s.title}</p>
+                    <p className="truncate text-xs text-slate-500">{s.detail}</p>
+                  </div>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${chipClass[s.tone] || 'text-slate-600 bg-slate-100'}`}>{chipLabel[s.tone] || 'REVISAR'}</span>
+                  {s.action && <button onClick={() => onNavigate(s.action!.tab)} className="shrink-0 text-xs font-semibold text-blue-600 hover:text-blue-800">{s.action.label} →</button>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
         <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
           <SalesTrendChart sales={data.ventas} formatCop={formatCop} />
@@ -142,11 +201,6 @@ export default function Home({ data, metrics, period, formatCop, onNavigate }: H
         </div>
 
         <ExecutiveBrief health={health} topPriority={priorities[0]} onNavigate={onNavigate} />
-
-        <div className="grid gap-4 lg:grid-cols-2">
-          <BlindSpots spots={blindSpots} onNavigate={onNavigate} />
-          <PrioritiesList priorities={priorities} onNavigate={onNavigate} />
-        </div>
 
         <RecentActivity entries={activity} />
         <QuickActionsGrid actions={quickActions} onNavigate={onNavigate} />
