@@ -147,10 +147,10 @@ export default function Home({ data, metrics, period, formatCop, onNavigate }: H
           </div>
           <div className="grid grid-cols-2 border-t border-slate-800 sm:grid-cols-3 xl:grid-cols-5">
             {kpiItems.map((k, i) => (
-              <div key={k.key} className={`border-slate-800 px-5 py-4 ${i > 0 ? 'border-l' : ''} ${i >= 3 ? 'border-t sm:border-t-0 xl:border-t-0' : ''} ${i >= 2 && i < 3 ? 'border-t sm:border-t-0' : ''}`}>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">{k.label}</p>
-                <p className="mt-1.5 font-mono text-lg font-bold leading-none text-white" style={{ fontVariantNumeric: 'tabular-nums' }}>{k.format(k.value)}</p>
-                <p className="mt-1 text-[11px] text-slate-400">{k.detail}</p>
+              <div key={k.key} className={`border-slate-800 px-5 py-5 ${i > 0 ? 'border-l' : ''} ${i >= 3 ? 'border-t sm:border-t-0 xl:border-t-0' : ''} ${i >= 2 && i < 3 ? 'border-t sm:border-t-0' : ''}`}>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">{k.label}</p>
+                <p className="mt-2 font-mono text-2xl font-bold leading-none text-white" style={{ fontVariantNumeric: 'tabular-nums' }}>{k.format(k.value)}</p>
+                <p className="mt-1.5 text-xs text-slate-300">{k.detail}</p>
               </div>
             ))}
           </div>

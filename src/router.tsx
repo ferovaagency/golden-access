@@ -59,9 +59,9 @@ export default function Router() {
         <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route path="/" element={<Landing />} />
-            {/* /landing -> / : el manual pide una sola URL canonica para la landing (sec. 6.4). */}
+            {/* Una sola landing canónica en "/": /landing y /landing-v2 redirigen ahí. */}
             <Route path="/landing" element={<Navigate to="/" replace />} />
-            <Route path="/landing-v2" element={<LandingV2 />} />
+            <Route path="/landing-v2" element={<Navigate to="/" replace />} />
             <Route path="/funciones" element={<FeaturesPage />} />
             <Route path="/funciones/finanzas" element={<FeatureFinancePage />} />
             <Route path="/funciones/crm" element={<FeatureCRMPage />} />
