@@ -213,6 +213,10 @@ Si el correo NO es una notificación de reseña recibida (por ejemplo digest, ti
         email_subject: subject,
         email_from: from,
         detectada_en: detectedAt,
+        // Taint: viene de un correo (contenido no confiable) vía IA. No se
+        // confía ni se propaga hasta que un humano la confirme.
+        origen: 'ia_email',
+        confirmada: false,
       }).select('*').single();
       if (insErr) { console.error('[reviews-scan] insert error', insErr); skipped++; continue; }
       inserted.push(ins);

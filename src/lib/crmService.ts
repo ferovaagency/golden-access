@@ -524,6 +524,8 @@ export interface Resena {
   email_subject: string | null;
   email_from: string | null;
   detectada_en: string;
+  origen: string;
+  confirmada: boolean;
 }
 
 export interface ReviewSource {
@@ -586,6 +588,11 @@ export async function scanSortlistLeads(days = 30): Promise<{ inserted: number; 
   if (error) throw error;
   if (!data?.ok) throw new Error(data?.message || 'No se pudo escanear.');
   return data;
+}
+
+export async function confirmarResena(id: string): Promise<void> {
+  const { error } = await db('crm_resenas').update({ confirmada: true }).eq('id', id);
+  if (error) throw new Error(`[crmService] confirmarResena: ${error.message}`);
 }
 
 export async function markResenaRespondida(id: string, respondida: boolean): Promise<void> {
