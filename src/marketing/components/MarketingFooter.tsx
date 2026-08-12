@@ -24,7 +24,9 @@ export function MarketingFooter() {
           <p className="text-xs font-semibold uppercase tracking-widest text-[#a39a8a]">Recursos</p>
           <ul className="mt-3 space-y-2 text-sm text-[#57524a]">
             <li><Link to="/blog" className="hover:text-[#1f1b16]">Blog</Link></li>
-            {CATEGORIES.slice(0, 4).map((category) => (
+            <li><Link to="/novedades" className="hover:text-[#1f1b16]">Novedades</Link></li>
+            <li><Link to="/seguridad" className="hover:text-[#1f1b16]">Seguridad</Link></li>
+            {CATEGORIES.slice(0, 2).map((category) => (
               <li key={category.slug}><Link to={`/blog/categoria/${category.slug}`} className="hover:text-[#1f1b16]">{category.name}</Link></li>
             ))}
           </ul>
@@ -34,6 +36,8 @@ export function MarketingFooter() {
           <ul className="mt-3 space-y-2 text-sm text-[#57524a]">
             <li><Link to="/terminos" className="hover:text-[#1f1b16]">Términos</Link></li>
             <li><Link to="/privacidad" className="hover:text-[#1f1b16]">Privacidad</Link></li>
+            <li><Link to="/reembolsos" className="hover:text-[#1f1b16]">Reembolsos</Link></li>
+            <li><Link to="/subencargados" className="hover:text-[#1f1b16]">Subencargados</Link></li>
           </ul>
         </div>
       </div>

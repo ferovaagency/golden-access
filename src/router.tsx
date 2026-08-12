@@ -13,6 +13,10 @@ const App = lazy(() => import('./App'));
 const AdminCRMRoute = lazy(() => import('./routes/AdminRoute'));
 const Privacidad = lazy(() => import('./routes/Privacidad'));
 const Terminos = lazy(() => import('./routes/Terminos'));
+const Reembolsos = lazy(() => import('./routes/Reembolsos'));
+const Subencargados = lazy(() => import('./routes/Subencargados'));
+const Seguridad = lazy(() => import('./routes/Seguridad'));
+const Novedades = lazy(() => import('./routes/Novedades'));
 const Landing = lazy(() => import('./routes/Landing'));
 
 // Capa publica indexable (Manual_Landing_Blog_SEO_Ferova_One, sec. 3 y 8).
@@ -73,6 +77,10 @@ export default function Router() {
             <Route path="/autores/:slug" element={<AuthorPage />} />
             <Route path="/privacidad" element={<Privacidad />} />
             <Route path="/terminos" element={<Terminos />} />
+            <Route path="/reembolsos" element={<Reembolsos />} />
+            <Route path="/subencargados" element={<Subencargados />} />
+            <Route path="/seguridad" element={<Seguridad />} />
+            <Route path="/novedades" element={<Novedades />} />
             <Route path="/admin/*" element={<AdminCRMRoute />} />
             <Route path="/maintenance" element={<MaintenancePage />} />
             <Route path="/app" element={<App />} />
