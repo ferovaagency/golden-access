@@ -65,6 +65,42 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_usage_log: {
+        Row: {
+          cached_input_tokens: number | null
+          created_at: string
+          funcion: string
+          id: string
+          input_tokens: number | null
+          modelo: string
+          output_tokens: number | null
+          total_tokens: number | null
+          user_id: string | null
+        }
+        Insert: {
+          cached_input_tokens?: number | null
+          created_at?: string
+          funcion: string
+          id?: string
+          input_tokens?: number | null
+          modelo: string
+          output_tokens?: number | null
+          total_tokens?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          cached_input_tokens?: number | null
+          created_at?: string
+          funcion?: string
+          id?: string
+          input_tokens?: number | null
+          modelo?: string
+          output_tokens?: number | null
+          total_tokens?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action: string
@@ -1939,7 +1975,6 @@ export type Database = {
       }
       google_workspace_connections: {
         Row: {
-          access_token: string | null
           connected: boolean
           connected_email: string | null
           created_at: string
@@ -1950,7 +1985,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          access_token?: string | null
           connected?: boolean
           connected_email?: string | null
           created_at?: string
@@ -1961,7 +1995,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          access_token?: string | null
           connected?: boolean
           connected_email?: string | null
           created_at?: string
@@ -3133,7 +3166,24 @@ export type Database = {
     Functions: {
       complete_past_crm_citas: { Args: never; Returns: undefined }
       founder_slots_taken: { Args: never; Returns: number }
+      is_collaborator_of: { Args: { owner: string }; Returns: boolean }
       is_team_member: { Args: never; Returns: boolean }
+      match_ferova_knowledge: {
+        Args: {
+          match_count?: number
+          match_user?: string
+          min_similarity?: number
+          query_embedding: string
+        }
+        Returns: {
+          content: string
+          knowledge_id: string
+          owner_user_id: string
+          similarity: number
+          source: string
+          title: string
+        }[]
+      }
       roll_forward_missed_planner_tasks: { Args: never; Returns: undefined }
     }
     Enums: {
