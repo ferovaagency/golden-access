@@ -104,12 +104,9 @@ Deno.serve(async (req) => {
     }
 
     const body = (await req.json()) as Body;
-    const { data: savedConnection } = await supabase
-      .from('google_workspace_connections')
-      .select('access_token')
-      .eq('user_id', user.id)
-      .maybeSingle();
-    const accessToken = body.access_token?.trim() || savedConnection?.access_token?.trim();
+    // El token de Google llega en el cuerpo desde session.provider_token (memoria
+    // del navegador); NUNCA se guarda en la BD. No hay token OAuth en reposo.
+    const accessToken = body.access_token?.trim();
     if (!accessToken) {
       return new Response(JSON.stringify({ ok: false, message: 'Falta access_token de Google. Reconecta Google Workspace con permiso Gmail.' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
