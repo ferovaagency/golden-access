@@ -5,6 +5,7 @@ import { DefaultChatTransport, type UIMessage } from 'ai';
 import { Sparkles, PanelRightClose, PanelRightOpen, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { db } from '../lib/db';
+import { trackActivationOnce } from '../lib/analytics';
 import type { FinancialMetrics } from '../lib/calculations';
 import { getSupabaseFunctionUrl, SUPABASE_PUBLISHABLE_KEY } from '../integrations/supabase/client';
 import { Conversation, ConversationContent } from './ai-elements/conversation';
@@ -146,6 +147,8 @@ export default function AISidebar({ user, collapsed, onToggle, width, onResize, 
     const text = input.trim();
     if (!text || status === 'submitted' || status === 'streaming') return;
     setInput('');
+    // Momento de valor: la primera consulta real al asistente (el diferenciador).
+    trackActivationOnce('primer_uso_asistente');
     await sendMessage({ text });
     textareaRef.current?.focus();
   };

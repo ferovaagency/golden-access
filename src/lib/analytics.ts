@@ -14,6 +14,7 @@ export type AnalyticsEvent =
   | 'blog_cta_click'
   | 'signup_start'
   | 'signup_complete'
+  | 'activation'
   | 'login_click';
 
 declare global {
@@ -26,4 +27,22 @@ export function trackEvent(event: AnalyticsEvent, props: Record<string, unknown>
   window.dataLayer = window.dataLayer || [];
   window.dataLayer.push(payload);
   if (import.meta.env.DEV) console.debug('[analytics]', payload);
+}
+
+/**
+ * Momento de valor (Fase 8): la primera acción concreta que indica que el
+ * cliente "entendió" el producto. Se dispara UNA sola vez por hito y navegador
+ * (guarda en localStorage), para medir activación limpia sin duplicar. `milestone`
+ * distingue qué acción activó (p. ej. 'primer_uso_asistente', 'primera_venta').
+ */
+export function trackActivationOnce(milestone: string, props: Record<string, unknown> = {}) {
+  if (typeof window === 'undefined') return;
+  const key = `ferova_activation_${milestone}`;
+  try {
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, new Date().toISOString());
+  } catch {
+    // Si localStorage no está disponible, igual registramos el evento una vez por sesión.
+  }
+  trackEvent('activation', { milestone, ...props });
 }
