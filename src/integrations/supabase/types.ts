@@ -3168,6 +3168,22 @@ export type Database = {
       founder_slots_taken: { Args: never; Returns: number }
       is_collaborator_of: { Args: { owner: string }; Returns: boolean }
       is_team_member: { Args: never; Returns: boolean }
+      match_ferova_knowledge: {
+        Args: {
+          match_count?: number
+          match_user?: string
+          min_similarity?: number
+          query_embedding: string
+        }
+        Returns: {
+          content: string
+          knowledge_id: string
+          owner_user_id: string
+          similarity: number
+          source: string
+          title: string
+        }[]
+      }
       roll_forward_missed_planner_tasks: { Args: never; Returns: undefined }
     }
     Enums: {
