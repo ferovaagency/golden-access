@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Config, Venta, Cliente, Hora } from '../types';
 import { convertToCop } from '../lib/calculations';
 import { fetchOfficialTrm } from '../lib/financeService';
-import { Settings, Save, RefreshCw, FolderSync, Clipboard, Landmark, Route, ShieldCheck, Download } from 'lucide-react';
+import { Settings, Save, RefreshCw, FolderSync, Clipboard, Landmark, Route, ShieldCheck, Download, AlertTriangle } from 'lucide-react';
 import { copyText } from '../lib/clipboard';
 import { supabase } from '../lib/supabase';
+import { requestAccountDeletion, cancelAccountDeletion, ACCOUNT_DELETION_GRACE_DAYS } from '../lib/businessProfileService';
 import FiscalProfileSection from './FiscalProfileSection';
 import BusinessProfileSettings from './BusinessProfileSettings';
 import CollaboratorsManager from './CollaboratorsManager';
@@ -51,6 +52,9 @@ export default function ConfigAdmin({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copiedStatus, setCopiedStatus] = useState<string | null>(null);
   const [exportingAll, setExportingAll] = useState(false);
+  const [deletionScheduledFor, setDeletionScheduledFor] = useState<string | null>(businessProfile?.deletion_scheduled_for ?? null);
+  const [confirmingDeletion, setConfirmingDeletion] = useState(false);
+  const [deletionBusy, setDeletionBusy] = useState(false);
   const [sheetUrl, setSheetUrl] = useState('');
   const [isImportingUrl, setIsImportingUrl] = useState(false);
   const [fetchingTrm, setFetchingTrm] = useState(false);
@@ -215,6 +219,35 @@ export default function ConfigAdmin({
       toastErr(errMsg(e) || 'No se pudo exportar. Intenta de nuevo.');
     } finally {
       setExportingAll(false);
+    }
+  };
+
+  // Eliminación de cuenta con período de gracia (Fase 6): no destruye nada de
+  // inmediato; marca la intención y programa la purga, reversible mientras dure.
+  const handleRequestDeletion = async () => {
+    setDeletionBusy(true);
+    try {
+      const { scheduledFor } = await requestAccountDeletion(userId);
+      setDeletionScheduledFor(scheduledFor);
+      setConfirmingDeletion(false);
+      toastOk('Solicitud registrada. Puedes cancelarla durante el período de gracia.');
+    } catch (e) {
+      toastErr(errMsg(e) || 'No se pudo registrar la solicitud.');
+    } finally {
+      setDeletionBusy(false);
+    }
+  };
+
+  const handleCancelDeletion = async () => {
+    setDeletionBusy(true);
+    try {
+      await cancelAccountDeletion(userId);
+      setDeletionScheduledFor(null);
+      toastOk('Eliminación cancelada. Tu cuenta sigue activa.');
+    } catch (e) {
+      toastErr(errMsg(e) || 'No se pudo cancelar la solicitud.');
+    } finally {
+      setDeletionBusy(false);
     }
   };
 
@@ -626,6 +659,64 @@ export default function ConfigAdmin({
               >
                 {exportingAll ? 'Preparando tu copia…' : 'Descargar copia completa (JSON)'}
               </button>
+            </div>
+          </div>
+
+          {/* Zona de peligro: eliminación de cuenta con período de gracia */}
+          <div className="bg-white border border-rose-200 rounded-lg overflow-hidden pb-5">
+            <div className="bg-rose-50/50 border-b border-rose-200 px-5 py-3.5">
+              <h3 className="text-xs font-mono tracking-widest text-rose-600 uppercase font-semibold flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-rose-500" /> Eliminar mi cuenta
+              </h3>
+            </div>
+            <div className="p-5 space-y-4 font-sans text-xs">
+              {deletionScheduledFor ? (
+                <>
+                  <p className="text-slate-700 leading-relaxed text-[11px]">
+                    Tu cuenta está programada para eliminarse el{' '}
+                    <strong>{new Date(deletionScheduledFor).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>.
+                    Antes de esa fecha puedes cancelar y todo sigue igual. Al eliminarse se borran tus datos y los derivados (incluida la memoria del negocio).
+                  </p>
+                  <button
+                    onClick={handleCancelDeletion}
+                    disabled={deletionBusy}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-black disabled:opacity-60 text-white rounded text-xs font-mono font-semibold transition cursor-pointer"
+                  >
+                    {deletionBusy ? 'Cancelando…' : 'Cancelar eliminación · mantener mi cuenta'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-slate-500 leading-relaxed text-[11px]">
+                    Solicita eliminar tu cuenta y tus datos. Tienes un período de gracia de {ACCOUNT_DELETION_GRACE_DAYS} días para arrepentirte; después, la eliminación es definitiva. Si tienes una suscripción activa, recuerda cancelarla en PayPal. Considera <strong>exportar tus datos</strong> antes.
+                  </p>
+                  {confirmingDeletion ? (
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <button
+                        onClick={handleRequestDeletion}
+                        disabled={deletionBusy}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-60 text-white rounded text-xs font-mono font-semibold transition cursor-pointer"
+                      >
+                        {deletionBusy ? 'Registrando…' : 'Sí, programar la eliminación'}
+                      </button>
+                      <button
+                        onClick={() => setConfirmingDeletion(false)}
+                        disabled={deletionBusy}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-60 text-slate-700 rounded text-xs font-mono font-semibold transition cursor-pointer"
+                      >
+                        Mejor no
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmingDeletion(true)}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-rose-300 text-rose-600 hover:bg-rose-50 rounded text-xs font-mono font-semibold transition cursor-pointer"
+                    >
+                      Solicitar eliminación de mi cuenta
+                    </button>
+                  )}
+                </>
+              )}
             </div>
           </div>
 
