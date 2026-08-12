@@ -210,10 +210,10 @@ Sos responsable de mantener vivo el cerebro del negocio. Llamá a guardar_en_mem
 Reglas al guardar: ${memoriaScopeNote} Cuando puedas elegir, usá "global" si le sirve a todo el equipo y "privado" si es personal de quien te habla. Escribí el contenido claro y autocontenido (que se entienda sin este chat). Tras guardar, confirmá en UNA línea qué recordaste. NO guardes preguntas, cálculos ni charla pasajera, y no guardes dos veces lo mismo.
 
 ## CREAR DATOS REALES (herramientas de escritura)
-Además de recordar, PODÉS registrar cosas por la persona: usá crear_tarea para pendientes accionables del Planner, y registrar_gasto para pagos/egresos reales del negocio (solo si es admin). Antes de registrar un gasto, confirmá monto, concepto y categoría en tu respuesta; no inventes cifras ni categorías — si falta un dato clave, preguntalo. Tras crear algo, confirmá en UNA línea qué registraste.
+Además de recordar, PODÉS registrar cosas por la persona: usá crear_tarea para pendientes accionables del Planner, registrar_gasto para pagos/egresos reales del negocio (solo si es admin), y registrar_horas para el tiempo real trabajado (alimenta la rentabilidad por servicio y cliente). Antes de registrar un gasto, confirmá monto, concepto y categoría en tu respuesta; no inventes cifras ni categorías — si falta un dato clave, preguntalo. Tras crear algo, confirmá en UNA línea qué registraste.
 
 ## CÓMO ASESORÁS
-Das asesoría sobre rentabilidad por servicio, salud del flujo de caja, pipeline de ventas, reseñas pendientes, cartera de clientes, gastos vs. ingresos y próximos pasos priorizados. Cuando algo se ve mal (margen negativo, cliente inactivo con saldo pendiente), decílo directo y proponé UNA acción concreta, no solo el diagnóstico. Priorizá: mejor 1-3 acciones claras que una lista larga. No prometas ejecutar acciones (fuera de guardar en memoria, no ejecutás nada; solo asesorás y recordás).
+Das asesoría sobre rentabilidad por servicio, salud del flujo de caja, pipeline de ventas, reseñas pendientes, cartera de clientes, gastos vs. ingresos y próximos pasos priorizados. Cuando algo se ve mal (margen negativo, cliente inactivo con saldo pendiente), decílo directo y proponé UNA acción concreta, no solo el diagnóstico. Priorizá: mejor 1-3 acciones claras que una lista larga. Cuando la acción corresponda a una de tus herramientas (guardar_en_memoria, crear_tarea, registrar_gasto, registrar_horas), EJECUTALA en vez de solo prometerla; solo no prometas acciones que NO podés hacer con tus herramientas.
 
 CONTEXTO ACTUAL DEL NEGOCIO:
 ${context}`,
@@ -287,6 +287,31 @@ ${context}`,
               moneda: moneda === "USD" ? "USD" : "COP",
             });
             return error ? { ok: false, message: error.message } : { ok: true, creado: "egreso" };
+          },
+        }),
+        registrar_horas: tool({
+          description: "Registra horas de trabajo REALES en Finanzas (registro de horas). Úsala cuando la persona diga cuánto tiempo dedicó a algo ('trabajé 2 horas en...', 'registra 90 minutos', 'dediqué media hora a...'). Las horas alimentan la rentabilidad por servicio y cliente. El cliente es opcional: si no se menciona, registrá igual las horas sin cliente. No la uses para estimaciones ni para tiempo planeado, solo para tiempo ya trabajado.",
+          inputSchema: jsonSchema<{ horas: number; descripcion?: string; fecha?: string }>({
+            type: "object",
+            additionalProperties: false,
+            required: ["horas"],
+            properties: {
+              horas: { type: "number", description: "Cantidad de horas en decimal (90 min = 1.5; media hora = 0.5). Debe ser mayor a cero." },
+              descripcion: { type: "string", description: "En qué se trabajó (ej. 'Reunión con cliente X', 'Diseño de propuesta')." },
+              fecha: { type: "string", description: "Fecha YYYY-MM-DD; si no se dice, hoy." },
+            },
+          }),
+          execute: async ({ horas, descripcion, fecha }) => {
+            if (!(horas > 0)) return { ok: false, message: "Las horas deben ser mayores a cero." };
+            const hoy = new Date().toISOString().slice(0, 10);
+            const { error } = await admin.from("finance_horas").insert({
+              id: `hr_asis_${Date.now().toString().slice(-9)}`,
+              user_id: userId,
+              fecha: fecha && /^\d{4}-\d{2}-\d{2}$/.test(fecha) ? fecha : hoy,
+              horas,
+              descripcion: descripcion || null,
+            });
+            return error ? { ok: false, message: error.message } : { ok: true, creado: "horas", horas };
           },
         }),
       },
