@@ -16,11 +16,13 @@ type ChangelogEntry = {
 const CHANGELOG: ChangelogEntry[] = [
   {
     fecha: '2026-08-12',
-    titulo: 'Transparencia y control de tus datos',
-    detalle: 'Publicamos nuestras páginas de seguridad y proveedores, y sumamos controles de exportación y cierre de cuenta.',
+    titulo: 'Transparencia, control de tus datos y más confianza',
+    detalle: 'Un paquete grande de cara al lanzamiento: páginas públicas de confianza, control total sobre tus datos y un asistente más rápido.',
     cambios: [
-      { tipo: 'nuevo', texto: 'Página pública de Seguridad con cómo protegemos tus datos.' },
-      { tipo: 'nuevo', texto: 'Lista de subencargados y política de reembolsos.' },
+      { tipo: 'nuevo', texto: 'Exporta TODOS tus datos en un clic (JSON abierto) desde Configuración.' },
+      { tipo: 'nuevo', texto: 'Elimina tu cuenta desde la app, con período de gracia para arrepentirte.' },
+      { tipo: 'nuevo', texto: 'Páginas públicas de Seguridad, Subencargados, Reembolsos y esta de Novedades.' },
+      { tipo: 'mejora', texto: 'Las reseñas detectadas de correo ahora se confirman antes de usarse (más seguridad).' },
       { tipo: 'mejora', texto: 'Asistente IA más rápido y económico gracias a mejor uso de caché.' },
     ],
   },
