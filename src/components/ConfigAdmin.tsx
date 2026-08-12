@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Config, Venta, Cliente, Hora } from '../types';
 import { convertToCop } from '../lib/calculations';
 import { fetchOfficialTrm } from '../lib/financeService';
-import { Settings, Save, RefreshCw, FolderSync, Clipboard, Landmark, Route, ShieldCheck } from 'lucide-react';
+import { Settings, Save, RefreshCw, FolderSync, Clipboard, Landmark, Route, ShieldCheck, Download } from 'lucide-react';
 import { copyText } from '../lib/clipboard';
+import { supabase } from '../lib/supabase';
 import FiscalProfileSection from './FiscalProfileSection';
 import BusinessProfileSettings from './BusinessProfileSettings';
 import CollaboratorsManager from './CollaboratorsManager';
@@ -49,6 +50,7 @@ export default function ConfigAdmin({
   const { success: toastOk, error: toastErr } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copiedStatus, setCopiedStatus] = useState<string | null>(null);
+  const [exportingAll, setExportingAll] = useState(false);
   const [sheetUrl, setSheetUrl] = useState('');
   const [isImportingUrl, setIsImportingUrl] = useState(false);
   const [fetchingTrm, setFetchingTrm] = useState(false);
@@ -190,6 +192,30 @@ export default function ConfigAdmin({
     ]);
     const body = [headers.join('\t'), ...rows.map(r => r.join('\t'))].join('\n');
     triggerCopy(body, 'Horas (TSV)');
+  };
+
+  // Portabilidad (Fase 6): descarga integral de TODOS los datos del usuario en
+  // JSON abierto, vía la edge function account-export (que ancla todo a user_id).
+  const exportAllData = async () => {
+    setExportingAll(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('account-export');
+      if (error) throw error;
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ferova-export-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toastOk('Exportación lista. Se descargó tu copia completa en JSON.');
+    } catch (e) {
+      toastErr(errMsg(e) || 'No se pudo exportar. Intenta de nuevo.');
+    } finally {
+      setExportingAll(false);
+    }
   };
 
   return (
@@ -579,6 +605,27 @@ export default function ConfigAdmin({
                   📋 Planilla de "{copiedStatus}" copiada. ¡Pégala en Excel!
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Portabilidad: exportación integral en JSON abierto */}
+          <div className="bg-white border border-slate-200 rounded-lg overflow-hidden pb-5">
+            <div className="bg-white/[0.02] border-b border-slate-200 px-5 py-3.5">
+              <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold flex items-center gap-2">
+                <Download className="w-4 h-4 text-blue-500" /> Exportar todos mis datos
+              </h3>
+            </div>
+            <div className="p-5 space-y-4 font-sans text-xs">
+              <p className="text-slate-500 leading-relaxed text-[11px]">
+                Descarga una copia completa de tu información en Ferova One (finanzas, CRM, planner, horas, memoria del negocio y más) en formato JSON abierto. Tus datos son tuyos: llévatelos cuando quieras.
+              </p>
+              <button
+                onClick={exportAllData}
+                disabled={exportingAll}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded text-xs font-mono font-semibold transition cursor-pointer"
+              >
+                {exportingAll ? 'Preparando tu copia…' : 'Descargar copia completa (JSON)'}
+              </button>
             </div>
           </div>
 
