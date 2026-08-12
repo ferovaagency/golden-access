@@ -22,6 +22,7 @@
     "@lovable.dev/cloud-auth-js": "^1.1.2",
     "@mdx-js/react": "^3.1.1",
     "@mdx-js/rollup": "^3.1.1",
+    "@sentry/react": "^10.70.0",
     "@supabase/supabase-js": "^2.110.0",
     "@tailwindcss/vite": "^4.1.14",
     "@types/qrcode": "^1.5.6",
