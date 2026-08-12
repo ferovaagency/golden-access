@@ -65,6 +65,42 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_usage_log: {
+        Row: {
+          cached_input_tokens: number | null
+          created_at: string
+          funcion: string
+          id: string
+          input_tokens: number | null
+          modelo: string
+          output_tokens: number | null
+          total_tokens: number | null
+          user_id: string | null
+        }
+        Insert: {
+          cached_input_tokens?: number | null
+          created_at?: string
+          funcion: string
+          id?: string
+          input_tokens?: number | null
+          modelo: string
+          output_tokens?: number | null
+          total_tokens?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          cached_input_tokens?: number | null
+          created_at?: string
+          funcion?: string
+          id?: string
+          input_tokens?: number | null
+          modelo?: string
+          output_tokens?: number | null
+          total_tokens?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action: string
