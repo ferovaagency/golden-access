@@ -3,6 +3,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, jsonSchema, stepCountIs, streamText, tool, type UIMessage } from "npm:ai";
 import { createLovableAiGatewayProvider, getLovableAiGatewayRunId, getLovableAiGatewayResponseHeaders, withLovableAiGatewayRunIdHeader } from "../_shared/ai-gateway.ts";
 import { embedText, recallKnowledge, rememberKnowledge } from "../_shared/brain.ts";
+import { logAiUsage } from "../_shared/ai-usage.ts";
 
 function textFromParts(message: UIMessage): string {
   return (message.parts || []).map((part: any) => part.type === "text" ? part.text : "").join("").trim();
@@ -316,6 +317,10 @@ ${context}`,
         }),
       },
     });
+
+    // Instrumentación de costo (Fase 4): registra los tokens al terminar la
+    // generación, sin bloquear ni afectar el stream que ve la persona.
+    result.usage.then((usage) => logAiUsage(admin, { userId, funcion: "business-assistant-chat", modelo: "openai/gpt-5", usage })).catch((e) => console.error("[ai-usage] business-assistant-chat", e));
 
     const response = result.toUIMessageStreamResponse({
       originalMessages: messages,

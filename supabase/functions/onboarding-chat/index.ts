@@ -2,6 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { convertToModelMessages, streamText, type UIMessage } from "npm:ai";
 import { createLovableAiGatewayProvider, getLovableAiGatewayRunId, getLovableAiGatewayResponseHeaders, withLovableAiGatewayRunIdHeader } from "../_shared/ai-gateway.ts";
+import { logAiUsage } from "../_shared/ai-usage.ts";
 
 // Chat guiado de bienvenida: le hace UNA pregunta a la vez al dueño del
 // negocio (sin conocimientos técnicos) para llenar business_profile. Es
@@ -128,6 +129,9 @@ Campos que todavía faltan por preguntar: ${missingFieldsLabel(profileAfterExtra
 Si no falta nada, felicitalo brevemente y decile que ya puede entrar a su panel. Si falta algo, hacé SOLO la siguiente pregunta pendiente (no las hagas todas juntas), de forma breve y amigable.`,
       messages: await convertToModelMessages(messages),
     });
+
+    // Instrumentación de costo (Fase 4): tokens al terminar, sin tocar el stream.
+    result.usage.then((usage) => logAiUsage(admin, { userId, funcion: "onboarding-chat", modelo: "openai/gpt-5", usage })).catch((e) => console.error("[ai-usage] onboarding-chat", e));
 
     const response = result.toUIMessageStreamResponse({
       originalMessages: messages,
