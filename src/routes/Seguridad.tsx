@@ -62,6 +62,11 @@ export default function Seguridad() {
             <p>Ferova es operada por un equipo pequeño. No tenemos, a la fecha, certificaciones formales como SOC 2 o ISO 27001; cuando un requisito de negocio concreto lo justifique, lo abordaremos. Preferimos decirte con claridad qué hacemos hoy antes que prometer sellos que aún no tenemos.</p>
           </Section>
 
+          <Section title="Soporte y respuesta">
+            <p>Canal de soporte: <strong>gerencia@seoparaecommerce.co</strong>. Horario de atención: lunes a viernes, 9:00–18:00 (hora Colombia). Nos comprometemos a una primera respuesta en un día hábil.</p>
+            <p>Ante un incidente que afecte el servicio, comunicamos el estado de forma proactiva hasta resolverlo.</p>
+          </Section>
+
           <Section title="Reportar un problema de seguridad">
             <p>Si encuentras una posible vulnerabilidad, escríbenos a <strong>gerencia@seoparaecommerce.co</strong> con el asunto «Seguridad». Respondemos con prioridad y agradecemos el reporte responsable. Por favor no divulgues públicamente el hallazgo hasta que lo hayamos resuelto.</p>
           </Section>

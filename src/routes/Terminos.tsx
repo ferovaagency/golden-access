@@ -34,11 +34,13 @@ export default function Terminos() {
           <Section title="3. Suscripciones y pagos">
             <p>Las suscripciones se procesan a través de Paddle, que actúa como comerciante registrado (Merchant of Record) de la transacción: Paddle es el vendedor frente al cliente y gestiona el cobro recurrente, la facturación, los impuestos aplicables, los reembolsos y las disputas de pago según sus propios términos.</p>
             <p>Ferova no almacena datos de tarjetas ni otros medios de pago. La activación depende de la confirmación de suscripción recibida de Paddle. Los precios y condiciones vigentes se muestran antes de contratar.</p>
+            <p><strong>Cambios de precio.</strong> Podemos ajustar el precio de la suscripción avisando con al menos 30 días de anticipación por correo; el nuevo precio aplica desde el siguiente período de facturación. Los suscriptores fundadores conservan su precio de lanzamiento durante 12 meses desde su contratación; pasado ese plazo pasan al precio de lista vigente con el mismo preaviso.</p>
           </Section>
 
           <Section title="4. Inteligencia artificial">
             <p>Las funciones de IA generan sugerencias, clasificaciones, reportes, planes y simulaciones. Son probabilísticas y pueden ser inexactas, incompletas o incorrectas.</p>
             <p>No constituyen asesoría contable, tributaria, financiera, jurídica ni de inversión. Debes verificar cifras y recomendaciones antes de actuar; toda decisión de negocio es exclusivamente tuya y ninguna función ejecuta automáticamente decisiones con efectos jurídicos o económicos.</p>
+            <p><strong>Uso justo del asistente.</strong> El uso del asistente de IA está sujeto a un uso razonable, acorde a la operación normal de un negocio. Nos reservamos el derecho de contactar y acordar condiciones con las cuentas cuyo consumo se desvíe de forma extraordinaria de ese uso razonable.</p>
           </Section>
 
           <Section title="5. Datos de terceros">
