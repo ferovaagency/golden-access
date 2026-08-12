@@ -26,6 +26,12 @@ Deno.serve(async (req) => {
     const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: authHeader } } });
     const { data: { user }, error: userErr } = await userClient.auth.getUser();
     if (userErr || !user?.email) return new Response(JSON.stringify({ ok: false, message: "No autenticado" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    // Esta función lee el Google Calendar COMPARTIDO de Ferova y escribe en el
+    // CRM interno (crm_oportunidades / crm_citas_diagnostico). Solo el equipo de
+    // Ferova puede usarla; sin este candado, cualquier cliente autenticado vería
+    // asistentes del calendario de Ferova. Igual que calendar-book / calendar-cancel.
+    const { data: team } = await userClient.from('crm_team_members').select('email').eq('email', user.email).maybeSingle();
+    if (!team) return new Response(JSON.stringify({ ok: false, message: "No autorizado" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     const { data: profile } = await userClient.from('business_profile').select('booking_calendar_url').eq('user_id', user.id).maybeSingle();
     const bookingLink = String(profile?.booking_calendar_url || '').trim();
     if (!bookingLink) return new Response(JSON.stringify({ ok: false, message: 'Guarda primero tu link público de reservas en CRM y Ventas → Citas.' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

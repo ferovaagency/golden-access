@@ -34,7 +34,12 @@ export interface BIContext {
   };
 }
 
-export async function loadBIContext(admin: SupabaseClient, userId: string): Promise<BIContext> {
+// `isTeam` gates Ferova's INTERNAL shared CRM (crm_oportunidades / crm_resenas
+// have no user_id — they are Ferova's own pipeline, not per-tenant data). For a
+// paying client (not a Ferova team member) these MUST stay empty, or Ferova's
+// prospects/reviews would bleed into that client's reports. Mirrors the guard in
+// business-assistant-chat. Defaults to false so any caller is safe by default.
+export async function loadBIContext(admin: SupabaseClient, userId: string, isTeam = false): Promise<BIContext> {
   const today = new Date();
   const since = new Date(today.getTime() - 90 * MS_DAY).toISOString();
 
@@ -52,8 +57,12 @@ export async function loadBIContext(admin: SupabaseClient, userId: string): Prom
     admin.from("finance_debt_payments").select("fecha, monto, finance_debts(moneda)").eq("user_id", userId).gte("fecha", since.slice(0, 10)),
     admin.from("finance_receivables").select("valor, moneda, estado").eq("user_id", userId),
     admin.from("finance_payables").select("valor, monto_pagado, moneda, estado").eq("user_id", userId),
-    admin.from("crm_oportunidades").select("id, nombre_contacto, empresa, canal_origen, estado, valor_estimado, moneda, siguiente_accion, updated_at").order("updated_at", { ascending: false }).limit(50),
-    admin.from("crm_resenas").select("id, plataforma, calificacion, respondida, detectada_en").order("detectada_en", { ascending: false }).limit(30),
+    isTeam
+      ? admin.from("crm_oportunidades").select("id, nombre_contacto, empresa, canal_origen, estado, valor_estimado, moneda, siguiente_accion, updated_at").order("updated_at", { ascending: false }).limit(50)
+      : Promise.resolve({ data: [], error: null }),
+    isTeam
+      ? admin.from("crm_resenas").select("id, plataforma, calificacion, respondida, detectada_en").order("detectada_en", { ascending: false }).limit(30)
+      : Promise.resolve({ data: [], error: null }),
     admin.from("planner_tasks").select("id, title, status, priority, deadline, scheduled_for, postponed_count, completed_at, created_at").eq("user_id", userId).gte("created_at", since),
     admin.from("finance_config").select("trm, horas_objetivo_mes, meta_ventas_mensual, salario_propuesto").eq("user_id", userId).maybeSingle(),
   ]);

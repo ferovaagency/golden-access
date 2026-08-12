@@ -116,7 +116,8 @@ Deno.serve(async (req) => {
     const question: string = String(body.question || "").slice(0, 500);
     const inputs: Inputs = body.inputs || {};
 
-    const ctx = await loadBIContext(admin, userId);
+    const { data: teamRow } = await admin.from("crm_team_members").select("email").eq("email", userData.user.email).maybeSingle();
+    const ctx = await loadBIContext(admin, userId, !!teamRow);
     const trm = ctx.meta.trm;
     const days = 30;
     const now = new Date(ctx.today);

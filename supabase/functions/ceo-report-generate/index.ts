@@ -69,7 +69,8 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const period: Period = (body.period === "daily" || body.period === "weekly" || body.period === "monthly") ? body.period : "weekly";
 
-    const ctx = await loadBIContext(admin, userId);
+    const { data: teamRow } = await admin.from("crm_team_members").select("email").eq("email", userData.user.email).maybeSingle();
+    const ctx = await loadBIContext(admin, userId, !!teamRow);
     const today = new Date(ctx.today);
     const { start, end, prevStart, prevEnd } = periodWindow(period, today);
     const trm = ctx.meta.trm;

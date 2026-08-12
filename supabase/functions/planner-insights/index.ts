@@ -77,10 +77,17 @@ Deno.serve(async (req) => {
     const kind = (body?.kind as string) || "insights";
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    // crm_oportunidades es el pipeline INTERNO de Ferova (sin user_id): solo el
+    // equipo lo ve, nunca un cliente que paga. Sin esto, prospectos de Ferova se
+    // filtran en los insights de cualquier tenant.
+    const { data: teamRow } = await admin.from("crm_team_members").select("email").eq("email", userData.user.email).maybeSingle();
+    const isTeam = !!teamRow;
     const [{ data: overview }, { data: services }, { data: opps }, { data: tasks }, { data: blocks }] = await Promise.all([
       admin.from("business_overview").select("*").eq("user_id", userId).maybeSingle(),
       admin.from("finance_service_profitability").select("servicio_nombre, ingresos_brutos, margen_bruto").eq("user_id", userId).order("margen_bruto", { ascending: true }).limit(10),
-      admin.from("crm_oportunidades").select("nombre_contacto,empresa,estado,valor_estimado,siguiente_accion,updated_at").order("updated_at", { ascending: false }).limit(15),
+      isTeam
+        ? admin.from("crm_oportunidades").select("nombre_contacto,empresa,estado,valor_estimado,siguiente_accion,updated_at").order("updated_at", { ascending: false }).limit(15)
+        : Promise.resolve({ data: [] }),
       admin.from("planner_tasks").select("id,title,category,priority,estimated_minutes,deadline,status,postponed_count").eq("user_id", userId).in("status", ["backlog","scheduled","postponed"]).limit(40),
       admin.from("planner_blocks").select("title,category,starts_at,ends_at").eq("user_id", userId).gte("starts_at", new Date().toISOString().slice(0, 10) + "T00:00:00").limit(30),
     ]);

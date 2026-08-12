@@ -274,7 +274,8 @@ Deno.serve(async (req) => {
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const userId = userData.user.id;
 
-    const ctx = await loadBIContext(admin, userId);
+    const { data: teamRow } = await admin.from("crm_team_members").select("email").eq("email", userData.user.email).maybeSingle();
+    const ctx = await loadBIContext(admin, userId, !!teamRow);
     const findings = detect(ctx);
     const foundFingerprints = new Set(findings.map((f) => f.fingerprint));
 
