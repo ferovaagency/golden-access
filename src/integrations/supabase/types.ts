@@ -3133,6 +3133,7 @@ export type Database = {
     Functions: {
       complete_past_crm_citas: { Args: never; Returns: undefined }
       founder_slots_taken: { Args: never; Returns: number }
+      is_collaborator_of: { Args: { owner: string }; Returns: boolean }
       is_team_member: { Args: never; Returns: boolean }
       roll_forward_missed_planner_tasks: { Args: never; Returns: undefined }
     }
