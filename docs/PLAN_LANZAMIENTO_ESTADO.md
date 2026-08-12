@@ -20,7 +20,7 @@ a producción vía Lovable).
 | 2 Organizaciones (multi-tenant) | **No iniciada.** Diseño abajo. La migración más grande y riesgosa: requiere staging. |
 | 3 Recuperar módulos | Hecho, salvo pegar `APOLLO_API_KEY` (panel). Fix de caché aplicado. |
 | 4 Costo por usuario | Instrumentación + p95 + enrutado listos. Falta ampliar cobertura de logging (abajo). |
-| 5 Legal / cobrar | Términos + Privacidad + Reembolsos + Subencargados listos. Pasarela = PayPal (no Paddle). |
+| 5 Legal / cobrar | Términos + Privacidad + Reembolsos + Subencargados listos, con pasarela = **Paddle** (según el documento). El código actual tiene PayPal: hay que migrarlo a Paddle (Merchant of Record). Ver prompt para Lovable. |
 | 6 Confianza | /seguridad + export integral listos. Borrado self-service y taint: diseñados abajo. |
 | 7 Precio | Página + planes existen. Trial/fee/grandfathering = decisión tuya (borradores abajo). |
 | 8 Vender | Changelog + evento de activación listos. Faltan E2E de pago y proceso de incidentes. |

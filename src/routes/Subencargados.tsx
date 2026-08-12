@@ -38,10 +38,10 @@ const SUBPROCESSORS: Subprocessor[] = [
     rol: 'Encargado',
   },
   {
-    nombre: 'PayPal',
-    proposito: 'Procesamiento de la suscripción, facturación, reembolsos y disputas.',
+    nombre: 'Paddle',
+    proposito: 'Comerciante registrado (Merchant of Record): cobro de la suscripción, facturación, impuestos, reembolsos y disputas.',
     datos: 'Correo y estado de pago. Ferova no almacena datos de tarjetas.',
-    ubicacion: 'Estados Unidos y jurisdicciones donde opere',
+    ubicacion: 'Reino Unido / Estados Unidos y jurisdicciones donde opere',
     rol: 'Responsable independiente',
   },
   {
@@ -105,7 +105,7 @@ export default function Subencargados() {
           </section>
 
           <Section title="Roles y garantías">
-            <p>Ferova actúa como Encargado del Tratamiento de los datos que cargas y como Responsable de los datos de tu cuenta. Los subencargados marcados como «Encargado» tratan datos únicamente para prestar el servicio, bajo compromisos de seguridad y confidencialidad. PayPal actúa como responsable independiente de la transacción de pago.</p>
+            <p>Ferova actúa como Encargado del Tratamiento de los datos que cargas y como Responsable de los datos de tu cuenta. Los subencargados marcados como «Encargado» tratan datos únicamente para prestar el servicio, bajo compromisos de seguridad y confidencialidad. Paddle actúa como comerciante registrado (Merchant of Record) y responsable independiente de la transacción de pago.</p>
             <p>Las transferencias internacionales se detallan en la <Link className="font-semibold text-blue-700 underline" to="/privacidad">Política de Tratamiento de Datos</Link>. Para un Acuerdo de Tratamiento de Datos (DPA) formal, escríbenos a gerencia@seoparaecommerce.co.</p>
           </Section>
 

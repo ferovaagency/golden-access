@@ -32,8 +32,8 @@ export default function Terminos() {
           </Section>
 
           <Section title="3. Suscripciones y pagos">
-            <p>Las suscripciones se procesan a través de PayPal. PayPal gestiona el cobro recurrente, la facturación, los reembolsos y las disputas de pago según sus propios términos.</p>
-            <p>Ferova no almacena datos de tarjetas ni otros medios de pago. La activación depende de la confirmación de suscripción recibida del procesador de pagos. Los precios y condiciones vigentes se muestran antes de contratar.</p>
+            <p>Las suscripciones se procesan a través de Paddle, que actúa como comerciante registrado (Merchant of Record) de la transacción: Paddle es el vendedor frente al cliente y gestiona el cobro recurrente, la facturación, los impuestos aplicables, los reembolsos y las disputas de pago según sus propios términos.</p>
+            <p>Ferova no almacena datos de tarjetas ni otros medios de pago. La activación depende de la confirmación de suscripción recibida de Paddle. Los precios y condiciones vigentes se muestran antes de contratar.</p>
           </Section>
 
           <Section title="4. Inteligencia artificial">
