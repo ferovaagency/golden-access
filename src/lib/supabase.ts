@@ -175,13 +175,13 @@ export const logout = async () => {
 };
 
 // ============================================================
-// Suscripciones (Paywall PayPal)
+// Suscripciones (Paywall Paddle — Merchant of Record)
 // ============================================================
 export interface UserSubscription {
   id: string;
   user_id: string;
   status: 'active' | 'cancelled' | 'pending';
-  provider: 'paypal' | string;
+  provider: 'paddle' | string;
   provider_order_id: string | null;
   amount_usd: number | null;
   created_at: string;

@@ -10,7 +10,10 @@ import '@fontsource/figtree/600.css';
 import '@fontsource/figtree/700.css';
 import Router from './router';
 import { ToastProvider } from './components/ui/toast';
+import { initObservability } from './lib/observability';
 import './index.css';
+
+initObservability();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

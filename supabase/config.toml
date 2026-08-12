@@ -3,5 +3,8 @@
 # externo Ferova.com.co.
 project_id = "izkhdzzyqfopjveaagwk"
 
-[functions.paypal-webhook]
+[functions.paddle-webhook]
+verify_jwt = false
+
+[functions.purge-deleted-accounts]
 verify_jwt = false

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Loader2, ShieldCheck, LogOut } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { logout, checkSubscription } from '../lib/supabase';
-import { getPaypalStatus, loadPaypal, confirmPaypalSubscription, PAYPAL_PLAN_ID } from '../lib/paymentProvider';
+import { getPaddleStatus, openPaddleCheckout, PADDLE_LIST_PRICE_USD } from '../lib/paddle';
 
 interface PaywallProps {
   user: User;
@@ -13,39 +13,46 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
-  const paypalStatus = getPaypalStatus();
-  const buttonContainerRef = useRef<HTMLDivElement>(null);
+  const paddleStatus = getPaddleStatus();
+  const pollRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    if (paypalStatus !== 'ready' || !buttonContainerRef.current) return;
-    let cancelled = false;
-    loadPaypal()
-      .then((paypal) => {
-        if (cancelled || !buttonContainerRef.current) return;
-        paypal.Buttons({
-          style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'subscribe' },
-          createSubscription: (_data, actions) =>
-            actions.subscription.create({ plan_id: PAYPAL_PLAN_ID, custom_id: user.id }),
-          onApprove: async (data) => {
-            if (!data.subscriptionID) return;
-            setConfirming(true);
-            setError(null);
-            const result = await confirmPaypalSubscription(data.subscriptionID);
-            setConfirming(false);
-            if (result.status === 'ready') onPaid();
-            else setError(result.message || 'No fue posible confirmar la suscripcion.');
-          },
-          onError: (err) => {
-            console.error('[Paywall] PayPal Buttons error:', err);
-            setError('Ocurrio un error con PayPal. Intenta de nuevo.');
-          },
-        }).render(buttonContainerRef.current);
-      })
-      .catch((err) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'No fue posible cargar PayPal.');
+  useEffect(() => () => { if (pollRef.current) window.clearInterval(pollRef.current); }, []);
+
+  // Tras completar el checkout, Paddle notifica a la edge function por webhook.
+  // Aquí solo esperamos a que la suscripción quede activa en la base.
+  const waitForActivation = () => {
+    setConfirming(true);
+    setError(null);
+    let attempts = 0;
+    pollRef.current = window.setInterval(async () => {
+      attempts += 1;
+      const paid = await checkSubscription(user.id).catch(() => false);
+      if (paid) {
+        if (pollRef.current) window.clearInterval(pollRef.current);
+        setConfirming(false);
+        onPaid();
+      } else if (attempts >= 20) {
+        if (pollRef.current) window.clearInterval(pollRef.current);
+        setConfirming(false);
+        setError('Paddle recibió el pago pero la activación aún no llega. Se activará en unos segundos; puedes usar "Ya me suscribí, verificar acceso".');
+      }
+    }, 3000);
+  };
+
+  const handleSubscribe = async () => {
+    setError(null);
+    try {
+      await openPaddleCheckout({
+        userId: user.id,
+        email: user.email ?? undefined,
+        onEvent: (event) => {
+          if (event.name === 'checkout.completed') waitForActivation();
+        },
       });
-    return () => { cancelled = true; };
-  }, [paypalStatus, user.id]);
+    } catch (caught: unknown) {
+      setError(caught instanceof Error ? caught.message : 'No fue posible abrir el checkout de Paddle.');
+    }
+  };
 
   const handleCheckPayment = async () => {
     setChecking(true);
@@ -53,7 +60,7 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
     try {
       const paid = await checkSubscription(user.id);
       if (paid) onPaid();
-      else setError('Todavía no vemos una suscripción confirmada. Cuando PayPal confirme el pago, tu acceso se activará automáticamente.');
+      else setError('Todavía no vemos una suscripción confirmada. Cuando Paddle confirme el pago, tu acceso se activará automáticamente.');
     } catch (caught: unknown) {
       setError(`Error verificando el pago: ${caught instanceof Error ? caught.message : String(caught)}`);
     } finally {
@@ -74,7 +81,9 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
         </div>
 
         <div className="border-t border-b border-[#2a2620] py-5 space-y-3">
-          <p className="text-center text-sm font-semibold text-white">El precio y los impuestos se muestran de forma segura en PayPal.</p>
+          <p className="text-center text-sm font-semibold text-white">
+            USD ${PADDLE_LIST_PRICE_USD} / mes · impuestos calculados por Paddle en el checkout.
+          </p>
           <ul className="text-xs text-[#a39d8e] space-y-1.5 pl-4">
             <li>• Dashboard ejecutivo + KPIs en tiempo real</li>
             <li>• Sincronización con Google Sheets / Drive</li>
@@ -87,21 +96,18 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
           {error && <p className="text-xs text-red-400 bg-red-950/30 border border-red-900/50 rounded p-2">{error}</p>}
           {confirming && (
             <p className="text-xs text-blue-500 flex items-center justify-center gap-2">
-              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Confirmando suscripción con PayPal…
+              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Confirmando suscripción con Paddle…
             </p>
           )}
-          {paypalStatus === 'ready' ? (
-            <div ref={buttonContainerRef} />
-          ) : (
-            <button
-              disabled
-              className="w-full flex items-center justify-center gap-2 bg-blue-500 text-black font-semibold font-display py-2.5 rounded transition cursor-not-allowed opacity-50"
-            >
-              PayPal pendiente de configuración
-            </button>
-          )}
+          <button
+            onClick={handleSubscribe}
+            disabled={paddleStatus !== 'ready' || confirming}
+            className="w-full flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-400 text-black font-semibold font-display py-2.5 rounded transition disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {paddleStatus === 'ready' ? 'Suscribirme con Paddle' : 'Paddle pendiente de configuración'}
+          </button>
           <p className="text-[10px] text-[#8a8377] font-mono text-center leading-relaxed">
-            PayPal procesa la suscripción, factura y calcula los impuestos aplicables. Ferova One no recibe ni almacena datos de pago. Al continuar aceptas los <a href="/terminos" className="underline hover:text-white">Términos</a> y la <a href="/privacidad" className="underline hover:text-white">Política de Privacidad</a>.
+            Paddle actúa como comerciante registrado (Merchant of Record): procesa la suscripción, emite la factura y calcula los impuestos aplicables. Ferova One no recibe ni almacena datos de pago. Al continuar aceptas los <a href="/terminos" className="underline hover:text-white">Términos</a> y la <a href="/privacidad" className="underline hover:text-white">Política de Privacidad</a>.
           </p>
           <button
             onClick={handleCheckPayment}
