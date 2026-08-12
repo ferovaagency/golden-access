@@ -1975,7 +1975,6 @@ export type Database = {
       }
       google_workspace_connections: {
         Row: {
-          access_token: string | null
           connected: boolean
           connected_email: string | null
           created_at: string
@@ -1986,7 +1985,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          access_token?: string | null
           connected?: boolean
           connected_email?: string | null
           created_at?: string
@@ -1997,7 +1995,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          access_token?: string | null
           connected?: boolean
           connected_email?: string | null
           created_at?: string
