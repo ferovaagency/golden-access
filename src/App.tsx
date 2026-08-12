@@ -732,9 +732,9 @@ function AppInner() {
         {isReady && metrics && appData && (
           <Suspense fallback={<LoadingState label="Cargando módulo…" />}>
             {activeTab === 'planner' && <SmartPlanner />}
-            {activeTab === 'reports' && user && <ReportsView user={effectiveUser} />}
-            {activeTab === 'finops' && <FinanceOperativa user={effectiveUser} appData={appData} formatCop={formatCop} />}
-            {activeTab === 'marketingRoi' && <MarketingROI user={effectiveUser} ventas={appData.ventas} config={appData.config} formatCop={formatCop} />}
+            {activeTab === 'reports' && effectiveUser && <ReportsView user={effectiveUser} />}
+            {activeTab === 'finops' && effectiveUser && <FinanceOperativa user={effectiveUser} appData={appData} formatCop={formatCop} />}
+            {activeTab === 'marketingRoi' && effectiveUser && <MarketingROI user={effectiveUser} ventas={appData.ventas} config={appData.config} formatCop={formatCop} />}
             {activeTab === 'dashboard' && (
               <Home
                 data={appData}
