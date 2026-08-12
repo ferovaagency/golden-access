@@ -25,7 +25,7 @@ const FEATURES = [
 
 const FAQ = [
   { q: '¿Hay permanencia mínima?', a: 'No. Podés cancelar cuando quieras, sin penalidades.' },
-  { q: '¿El precio incluye impuestos?', a: 'El precio mostrado es antes de impuestos aplicables según tu ubicación; PayPal calcula el total exacto en el checkout.' },
+  { q: '¿El precio incluye impuestos?', a: 'El precio mostrado es antes de impuestos aplicables según tu ubicación; Paddle, como comerciante registrado (Merchant of Record), calcula el total exacto en el checkout.' },
   { q: '¿Puedo probarlo antes de pagar?', a: 'Podés crear una cuenta y explorar el demo del Executive Control Center antes de decidir.' },
   { q: '¿Qué pasa si cancelo?', a: 'Tu acceso se mantiene hasta el fin del período ya pagado. Tus datos siguen siendo tuyos.' },
 ];

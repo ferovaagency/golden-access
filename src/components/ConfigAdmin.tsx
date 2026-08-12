@@ -688,7 +688,7 @@ export default function ConfigAdmin({
               ) : (
                 <>
                   <p className="text-slate-500 leading-relaxed text-[11px]">
-                    Solicita eliminar tu cuenta y tus datos. Tienes un período de gracia de {ACCOUNT_DELETION_GRACE_DAYS} días para arrepentirte; después, la eliminación es definitiva. Si tienes una suscripción activa, recuerda cancelarla en PayPal. Considera <strong>exportar tus datos</strong> antes.
+                    Solicita eliminar tu cuenta y tus datos. Tienes un período de gracia de {ACCOUNT_DELETION_GRACE_DAYS} días para arrepentirte; después, la eliminación es definitiva. Si tienes una suscripción activa, recuerda cancelarla en Paddle. Considera <strong>exportar tus datos</strong> antes.
                   </p>
                   {confirmingDeletion ? (
                     <div className="flex flex-col gap-2 sm:flex-row">
