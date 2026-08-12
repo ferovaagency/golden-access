@@ -12,6 +12,9 @@ interface AnyUsage {
   inputTokens?: number; outputTokens?: number; totalTokens?: number;
   promptTokens?: number; completionTokens?: number;
   cachedInputTokens?: number; cached_input_tokens?: number;
+  // Formato OpenAI/gateway crudo (respuestas por fetch directo): snake_case.
+  prompt_tokens?: number; completion_tokens?: number; total_tokens?: number;
+  prompt_tokens_details?: { cached_tokens?: number };
   [k: string]: unknown;
 }
 
@@ -34,10 +37,10 @@ export async function logAiUsage(
       ? await (params.usage as Promise<AnyUsage>)
       : params.usage) as AnyUsage | null | undefined;
     if (!usage) return;
-    const input = pickNumber(usage.inputTokens, usage.promptTokens);
-    const output = pickNumber(usage.outputTokens, usage.completionTokens);
-    const cached = pickNumber(usage.cachedInputTokens, usage.cached_input_tokens);
-    const total = pickNumber(usage.totalTokens) ?? ((input ?? 0) + (output ?? 0) || null);
+    const input = pickNumber(usage.inputTokens, usage.promptTokens, usage.prompt_tokens);
+    const output = pickNumber(usage.outputTokens, usage.completionTokens, usage.completion_tokens);
+    const cached = pickNumber(usage.cachedInputTokens, usage.cached_input_tokens, usage.prompt_tokens_details?.cached_tokens);
+    const total = pickNumber(usage.totalTokens, usage.total_tokens) ?? ((input ?? 0) + (output ?? 0) || null);
     await admin.from("ai_usage_log").insert({
       user_id: params.userId,
       funcion: params.funcion,

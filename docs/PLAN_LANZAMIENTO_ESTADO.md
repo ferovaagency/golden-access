@@ -154,19 +154,23 @@ correo. Mitigación:
    las apruebe. Regla general: si el razonamiento pasó por contenido externo, la
    escritura material exige confirmación.
 
-### E. Cobertura de logging de costo (Fase 4)
+### E. Cobertura de logging de costo (Fase 4) — parcialmente hecho
 
-Hoy solo `business-assistant-chat` y `onboarding-chat` registran tokens (usan el
-AI SDK con `result.usage`). Las ~9 funciones que llaman al gateway por `fetch`
-directo (apollo-enrich, ceo-report, decision-simulate, linkedin-analyze,
-reviews-scan, sortlist-leads-scan, whatsapp-webhook, planner-classify,
-planner-insights, whatsapp-bot-assist) no lo hacen → el costo real está
-subcontabilizado. Para instrumentarlas: tras parsear la respuesta del gateway
-(formato OpenAI: `usage.prompt_tokens`, `completion_tokens`,
-`prompt_tokens_details.cached_tokens`), llamar `logAiUsage`. Requiere que
-`_shared/ai-usage.ts` también lea esas claves snake_case (hoy lee
-`inputTokens`/`promptTokens`). Es mecánico pero toca muchas funciones; lo dejé
-documentado para hacerlo con calma (fire-and-forget, bajo riesgo).
+Hecho en esta sesión:
+- `_shared/ai-usage.ts` ahora lee también el formato crudo del gateway
+  (`prompt_tokens`, `completion_tokens`, `total_tokens`,
+  `prompt_tokens_details.cached_tokens`), además del del AI SDK.
+- `planner-insights` (insights + briefing) ya llama `logAiUsage`.
+- Cubiertos desde antes: `business-assistant-chat` y `onboarding-chat` (los
+  únicos con gpt-5, el modelo caro).
+
+Pendiente (bajo valor: todas usan gemini-flash barato, y es mecánico): instrumentar
+`ceo-report-generate` y `decision-simulate` (la llamada IA vive en un helper sin
+`admin`/`userId` — hay que pasarlos o devolver el `usage` y loguear en el handler);
+`planner-classify` (hace hasta 20 llamadas por invocación — conviene agregar los
+tokens y loguear una vez, no 20 filas); y `apollo-enrich`, `linkedin-analyze`,
+`reviews-scan`, `sortlist-leads-scan`, `whatsapp-*`. Patrón: tras obtener el
+`usage` de la respuesta, `logAiUsage(admin, { userId, funcion, modelo, usage })`.
 
 ### F. Cláusulas legales pendientes (Fase 7) — borradores para `Terminos.tsx`
 

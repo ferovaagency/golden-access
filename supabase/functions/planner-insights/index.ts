@@ -7,6 +7,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { generateText, Output } from "npm:ai";
 import { z } from "npm:zod";
 import { createLovableAiGatewayProvider } from "../_shared/ai-gateway.ts";
+import { logAiUsage } from "../_shared/ai-usage.ts";
 
 const InsightsSchema = z.object({
   insights: z.array(z.object({
@@ -100,13 +101,14 @@ Deno.serve(async (req) => {
       let items = deterministicInsights(overview, services || [], opps || [], tasks || []);
       if (gateway) {
         try {
-          const { output } = await generateText({
+          const result = await generateText({
             model: gateway("google/gemini-2.5-flash"),
             output: Output.object({ schema: InsightsSchema }),
             system: "You are the executive insights engine for Ferova OS. Detect: cash-flow risk, late follow-ups, projects over budget/hours, inactive clients, upcoming deadlines, overload, too many meetings, lack of deep work, revenue concentration, growth opportunities. Only use the provided context. Spanish. Each insight is 1-2 short sentences. action_route uses the tab slug: home, planner, ventas, gastos, pagosEgresos, proyectos, clientes, crm_pipeline, crm_reviews.",
             prompt: `Business context JSON:\n${context}\n\nReturn max 6 concise insights, prioritized.`,
           });
-          items = (output as any)?.insights || items;
+          logAiUsage(admin, { userId, funcion: "planner-insights", modelo: "google/gemini-2.5-flash", usage: result.usage }).catch((e) => console.error("[ai-usage] planner-insights", e));
+          items = (result.output as any)?.insights || items;
         } catch (error) {
           console.warn('[planner-insights] AI no disponible; se usaron insights deterministas.', error);
         }
@@ -127,13 +129,14 @@ Deno.serve(async (req) => {
     let payload: any = deterministicBriefing(briefingKind, tasks || [], blocks || []);
     if (gateway) {
       try {
-        const { output } = await generateText({
+        const result = await generateText({
           model: gateway("google/gemini-2.5-flash"),
           output: Output.object({ schema: BriefingSchema }),
           system: sys,
           prompt: `Context:\n${context}\n\nDate: ${new Date().toISOString().slice(0, 10)}`,
         });
-        payload = output as any;
+        logAiUsage(admin, { userId, funcion: "planner-insights-briefing", modelo: "google/gemini-2.5-flash", usage: result.usage }).catch((e) => console.error("[ai-usage] planner-insights-briefing", e));
+        payload = result.output as any;
       } catch (error) {
         console.warn('[planner-insights] AI no disponible; se usó briefing determinista.', error);
       }
