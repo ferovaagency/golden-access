@@ -5,6 +5,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { loadBIContext, toCop } from "../_shared/bi-context.ts";
+import { logAiUsage } from "../_shared/ai-usage.ts";
 
 type Scenario = "hire" | "price_change" | "invest" | "cut_cost" | "promo" | "custom";
 
@@ -77,7 +78,7 @@ function simulate(scenario: Scenario, inputs: Inputs, baseline: { avgMonthlyReve
   }
 }
 
-async function aiRecommendation(question: string, scenario: Scenario, inputs: Inputs, result: any, ctxSummary: any): Promise<string | null> {
+async function aiRecommendation(question: string, scenario: Scenario, inputs: Inputs, result: any, ctxSummary: any, admin: any, userId: string): Promise<string | null> {
   const key = Deno.env.get("LOVABLE_API_KEY");
   if (!key) return null;
   try {
@@ -94,6 +95,7 @@ async function aiRecommendation(question: string, scenario: Scenario, inputs: In
     });
     if (!res.ok) { console.error("[decision-simulate AI]", res.status, await res.text()); return null; }
     const j = await res.json();
+    logAiUsage(admin, { userId, funcion: "decision-simulate", modelo: "google/gemini-2.5-flash", usage: j?.usage }).catch((e) => console.error("[ai-usage] decision-simulate", e));
     return j?.choices?.[0]?.message?.content || null;
   } catch (err) { console.error("[decision-simulate AI]", err); return null; }
 }
@@ -130,7 +132,7 @@ Deno.serve(async (req) => {
     const baseline = { avgMonthlyRevenue: revenue, avgMonthlyExpense: expenses, avgHourlyRate: hoursTotal > 0 ? revenue / hoursTotal : 0 };
 
     const result = simulate(scenario, inputs, baseline);
-    const recommendation = await aiRecommendation(question, scenario, inputs, result, { baseline, health_hint: ctx.overview });
+    const recommendation = await aiRecommendation(question, scenario, inputs, result, { baseline, health_hint: ctx.overview }, admin, userId);
 
     const { data: saved, error: saveErr } = await admin
       .from("decision_simulations")

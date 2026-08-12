@@ -4,6 +4,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { loadBIContext, toCop, daysBetween } from "../_shared/bi-context.ts";
+import { logAiUsage } from "../_shared/ai-usage.ts";
 
 type Period = "daily" | "weekly" | "monthly";
 
@@ -24,7 +25,7 @@ function inRange(dateStr: string, start: Date, end: Date): boolean {
   return d >= start && d <= new Date(end.getTime() + 86400000 - 1);
 }
 
-async function generateNarrative(payload: any, period: Period): Promise<{ headline: string; summary_md: string; wins: string[]; risks: string[]; priorities: string[] } | null> {
+async function generateNarrative(payload: any, period: Period): Promise<{ headline: string; summary_md: string; wins: string[]; risks: string[]; priorities: string[]; usage: any } | null> {
   const key = Deno.env.get("LOVABLE_API_KEY");
   if (!key) return null;
   const label = period === "daily" ? "hoy" : period === "weekly" ? "esta semana" : "este mes";
@@ -49,6 +50,7 @@ async function generateNarrative(payload: any, period: Period): Promise<{ headli
       wins: Array.isArray(parsed.wins) ? parsed.wins.slice(0, 5).map(String) : [],
       risks: Array.isArray(parsed.risks) ? parsed.risks.slice(0, 5).map(String) : [],
       priorities: Array.isArray(parsed.priorities) ? parsed.priorities.slice(0, 5).map(String) : [],
+      usage: j?.usage ?? null,
     };
   } catch (err) { console.error("[ceo-report narrative]", err); return null; }
 }
@@ -164,6 +166,7 @@ Deno.serve(async (req) => {
       health_score: healthRow?.score ?? null,
     };
     const narrative = await generateNarrative(aiPayload, period);
+    if (narrative?.usage) logAiUsage(admin, { userId, funcion: "ceo-report-generate", modelo: "google/gemini-2.5-flash", usage: narrative.usage }).catch((e) => console.error("[ai-usage] ceo-report-generate", e));
 
     const record = {
       user_id: userId,

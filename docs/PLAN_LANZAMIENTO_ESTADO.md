@@ -160,13 +160,12 @@ Hecho en esta sesión:
 - `_shared/ai-usage.ts` ahora lee también el formato crudo del gateway
   (`prompt_tokens`, `completion_tokens`, `total_tokens`,
   `prompt_tokens_details.cached_tokens`), además del del AI SDK.
-- `planner-insights` (insights + briefing) ya llama `logAiUsage`.
+- `planner-insights` (insights + briefing), `ceo-report-generate` y
+  `decision-simulate` ya llaman `logAiUsage`.
 - Cubiertos desde antes: `business-assistant-chat` y `onboarding-chat` (los
   únicos con gpt-5, el modelo caro).
 
-Pendiente (bajo valor: todas usan gemini-flash barato, y es mecánico): instrumentar
-`ceo-report-generate` y `decision-simulate` (la llamada IA vive en un helper sin
-`admin`/`userId` — hay que pasarlos o devolver el `usage` y loguear en el handler);
+Pendiente (bajo valor: todas usan gemini-flash barato, y es mecánico):
 `planner-classify` (hace hasta 20 llamadas por invocación — conviene agregar los
 tokens y loguear una vez, no 20 filas); y `apollo-enrich`, `linkedin-analyze`,
 `reviews-scan`, `sortlist-leads-scan`, `whatsapp-*`. Patrón: tras obtener el
