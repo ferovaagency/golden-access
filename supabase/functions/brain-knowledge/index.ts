@@ -1,6 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
-import { embedText } from "../_shared/brain.ts";
+import { embedAndStoreChunks } from "../_shared/brain.ts";
 
 // CRUD de la memoria del negocio (cerebro) para la pantalla de Memoria.
 // Reglas: el cerebro GLOBAL (owner_user_id null) solo lo administra un admin
@@ -16,12 +16,8 @@ function json(body: unknown, status = 200) {
 }
 
 async function reembed(admin: any, knowledgeId: string, content: string) {
-  await admin.from("ferova_knowledge_embeddings").delete().eq("knowledge_id", knowledgeId);
-  const emb = await embedText(content, LOVABLE_API_KEY);
-  if (emb) {
-    const { error } = await admin.from("ferova_knowledge_embeddings").insert({ knowledge_id: knowledgeId, content_chunk: content, embedding: emb });
-    if (error) console.error("[brain-knowledge] embed insert error", error);
-  }
+  // Trocea el contenido (varios embeddings por nota) y reemplaza los previos.
+  await embedAndStoreChunks(admin, knowledgeId, content, LOVABLE_API_KEY, { replace: true });
 }
 
 Deno.serve(async (req) => {

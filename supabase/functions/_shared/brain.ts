@@ -37,6 +37,62 @@ export async function embedText(text: string, apiKey: string): Promise<number[] 
   }
 }
 
+/**
+ * Trocea contenido largo en fragmentos de ~unos cientos de tokens con
+ * solapamiento, cortando en límites naturales (párrafo/oración) cuando se puede.
+ * Contenido corto => un solo fragmento. Mejora la precisión del recall Y evita
+ * que lo que pase de 8000 caracteres se pierda en silencio (embedText corta ahí).
+ */
+export function chunkText(text: string, maxChars = 1400, overlap = 200): string[] {
+  const clean = (text || "").trim();
+  if (!clean) return [];
+  if (clean.length <= maxChars) return [clean];
+  const chunks: string[] = [];
+  let start = 0;
+  while (start < clean.length) {
+    let end = Math.min(start + maxChars, clean.length);
+    if (end < clean.length) {
+      // Corta en un límite natural hacia atrás (párrafo, oración o salto).
+      const window = clean.slice(start, end);
+      const brk = Math.max(window.lastIndexOf("\n\n"), window.lastIndexOf(". "), window.lastIndexOf("\n"));
+      if (brk > maxChars * 0.5) end = start + brk + 1;
+    }
+    const piece = clean.slice(start, end).trim();
+    if (piece) chunks.push(piece);
+    if (end >= clean.length) break;
+    start = Math.max(end - overlap, start + 1);
+  }
+  return chunks;
+}
+
+/**
+ * Genera y guarda los embeddings de un conocimiento, TROCEANDO el contenido
+ * (un embedding por fragmento). Con replace=true borra los embeddings previos
+ * antes de reindexar (para updates). Antes se guardaba un único embedding por
+ * nota y se perdía todo lo que pasara de 8000 caracteres.
+ */
+export async function embedAndStoreChunks(
+  admin: SupabaseClient<any, "public", "public", any, any>,
+  knowledgeId: string,
+  content: string,
+  apiKey: string,
+  opts: { replace?: boolean } = {},
+): Promise<void> {
+  if (opts.replace) {
+    await admin.from("ferova_knowledge_embeddings").delete().eq("knowledge_id", knowledgeId);
+  }
+  const chunks = chunkText(content);
+  const rows: Array<{ knowledge_id: string; content_chunk: string; embedding: number[] }> = [];
+  for (const chunk of chunks) {
+    const emb = await embedText(chunk, apiKey);
+    if (emb) rows.push({ knowledge_id: knowledgeId, content_chunk: chunk, embedding: emb });
+  }
+  if (rows.length) {
+    const { error } = await admin.from("ferova_knowledge_embeddings").insert(rows);
+    if (error) console.error("[brain] embed chunks insert error", error);
+  }
+}
+
 export interface RecalledKnowledge {
   knowledge_id: string;
   title: string;
@@ -97,12 +153,6 @@ export async function rememberKnowledge(
     console.error("[brain] remember insert error", error);
     return null;
   }
-  const emb = await embedText(args.content, apiKey);
-  if (emb) {
-    const { error: embErr } = await admin
-      .from("ferova_knowledge_embeddings")
-      .insert({ knowledge_id: data.id, content_chunk: args.content, embedding: emb });
-    if (embErr) console.error("[brain] remember embedding error", embErr);
-  }
+  await embedAndStoreChunks(admin, data.id as string, args.content, apiKey);
   return data.id as string;
 }
