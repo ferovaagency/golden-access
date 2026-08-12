@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Loader2, TrendingDown, AlertTriangle } from 'lucide-react';
 import { fetchDeepAnalytics, type DeepAnalyticsCustomer, type DeepAnalyticsPortfolio } from '../lib/adminService';
+import AdminAiUsage from './AdminAiUsage';
 
 const money = (n: number) => `$ ${Math.round(n).toLocaleString('es-CO')}`;
 
@@ -58,6 +59,7 @@ export default function AdminDeepAnalytics() {
 
   return (
     <div className="space-y-6">
+      <AdminAiUsage />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Stat label="Clientes activos" value={portfolio.totalCustomers} />
         <Stat label="Riesgo alto" value={portfolio.altoRiesgo} tone="danger" />
