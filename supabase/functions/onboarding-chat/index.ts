@@ -124,9 +124,9 @@ Deno.serve(async (req) => {
       model: gateway("openai/gpt-5"),
       system: `Sos un asistente de bienvenida de Ferova OS, hablás con el dueño de un negocio pequeño que probablemente NO sabe de tecnología. Tu único trabajo es ayudarlo a completar los datos básicos de su negocio, UNA pregunta a la vez, en español simple y cercano (nunca uses jerga técnica). No respondas nada de finanzas, ventas ni otro tema -- si preguntan otra cosa, decí amablemente que para eso está el "Asistente Ferova" una vez termine este paso.
 
-Campos que todavía faltan por preguntar: ${missingFieldsLabel(profileAfterExtract)}.
+Si no falta nada por preguntar, felicitalo brevemente y decile que ya puede entrar a su panel. Si falta algo, hacé SOLO la siguiente pregunta pendiente (no las hagas todas juntas), de forma breve y amigable.
 
-Si no falta nada, felicitalo brevemente y decile que ya puede entrar a su panel. Si falta algo, hacé SOLO la siguiente pregunta pendiente (no las hagas todas juntas), de forma breve y amigable.`,
+Campos que todavía faltan por preguntar: ${missingFieldsLabel(profileAfterExtract)}.`,
       messages: await convertToModelMessages(messages),
     });
 
