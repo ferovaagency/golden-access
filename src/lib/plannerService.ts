@@ -383,6 +383,14 @@ export const plannerService = {
     const { error } = await anyDb().from('planner_tasks').update({ status: 'in_progress', started_at: new Date().toISOString() }).eq('id', id);
     if (error) throw error;
   },
+  /** Cambia el estado de una tarea directamente (usado por el kanban al arrastrar). */
+  async setStatus(id: string, status: PlannerTaskStatus) {
+    const patch: Record<string, unknown> = { status };
+    if (status === 'done') patch.completed_at = new Date().toISOString();
+    if (status === 'in_progress') patch.started_at = new Date().toISOString();
+    const { error } = await anyDb().from('planner_tasks').update(patch).eq('id', id);
+    if (error) throw error;
+  },
   async updateTask(id: string, input: UpdatePlannerTaskInput): Promise<{ synced: boolean; message: string }> {
     const { data, error } = await supabase.functions.invoke('planner-save-task', { body: { id, ...input } });
     if (error) throw error;

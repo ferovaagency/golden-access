@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Sparkles, Wand2, Loader2, Check, Clock, Zap, Battery, BatteryLow, Trash2, ChevronLeft, ChevronRight, Sunrise, AlertTriangle, Lightbulb, TrendingUp, Info, Lock, Edit2, X, CalendarDays, Columns3, List, SlidersHorizontal } from 'lucide-react';
+import { Sparkles, Wand2, Loader2, Check, Clock, Zap, Battery, BatteryLow, Trash2, ChevronLeft, ChevronRight, Sunrise, AlertTriangle, Lightbulb, TrendingUp, Info, Lock, Edit2, X, CalendarDays, Columns3, List, LayoutGrid, SlidersHorizontal } from 'lucide-react';
 import { usePlanner } from '../hooks/usePlanner';
 import { plannerService, type PlannerBlock, type PlannerCategory, type PlannerDraft, type PlannerEnergy, type PlannerTask } from '../lib/plannerService';
 import { DayClientProgress } from './planner/DayClientProgress';
+import PlannerBoard from './planner/PlannerBoard';
 import { AiDisclosure } from './AiDisclosure';
+
+type PlannerViewMode = 'day' | 'week' | 'month' | 'list' | 'kanban';
 
 const categoryMeta: Record<PlannerCategory, { label: string; tone: string }> = {
   deep_work: { label: 'Deep Work', tone: 'bg-violet-50 text-violet-700 border-violet-200' },
@@ -39,7 +42,7 @@ function visiblePriorityScore(task: PlannerTask) {
 
 export default function SmartPlanner() {
   const p = usePlanner();
-  const [plannerView, setPlannerView] = useState<'day' | 'week' | 'month'>(() => (localStorage.getItem('ferova.planner.view') as 'day' | 'week' | 'month') || 'day');
+  const [plannerView, setPlannerView] = useState<PlannerViewMode>(() => (localStorage.getItem('ferova.planner.view') as PlannerViewMode) || 'day');
   const [compactCalendar, setCompactCalendar] = useState(() => localStorage.getItem('ferova.planner.compact') === '1');
   const [dump, setDump] = useState('');
   const [showBlockForm, setShowBlockForm] = useState(false);
@@ -260,19 +263,37 @@ export default function SmartPlanner() {
       <section className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-1 rounded-xl bg-slate-100 p-1" aria-label="Vista del planner">
           {([
-            ['day', 'Día', List],
+            ['day', 'Día', Sunrise],
+            ['list', 'Lista', List],
+            ['kanban', 'Kanban', LayoutGrid],
             ['week', 'Semana', Columns3],
             ['month', 'Calendario', CalendarDays],
           ] as const).map(([value, label, Icon]) => <button key={value} type="button" onClick={() => setPlannerView(value)} className={`inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-xs font-semibold ${plannerView === value ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}><Icon className="h-4 w-4" />{label}</button>)}
         </div>
-        <label className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 px-3 text-xs font-medium text-slate-600"><SlidersHorizontal className="h-4 w-4 text-slate-400" /><input type="checkbox" checked={compactCalendar} onChange={(event) => setCompactCalendar(event.target.checked)} /> Vista compacta</label>
+        {(plannerView === 'week' || plannerView === 'month') && (
+          <label className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 px-3 text-xs font-medium text-slate-600"><SlidersHorizontal className="h-4 w-4 text-slate-400" /><input type="checkbox" checked={compactCalendar} onChange={(event) => setCompactCalendar(event.target.checked)} /> Vista compacta</label>
+        )}
       </section>
 
       <AiDisclosure />
 
       {p.error && <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{p.error}</div>}
 
-      {plannerView !== 'day' && <PlannerCalendar view={plannerView} date={p.date} tasks={openTasks} clients={p.clients} compact={compactCalendar} timeZone={p.timeZone} onChangeDate={p.setDate} onSelectDate={(date) => { p.setDate(date); setPlannerView('day'); }} onEdit={openTaskEditor} />}
+      {(plannerView === 'week' || plannerView === 'month') && <PlannerCalendar view={plannerView} date={p.date} tasks={openTasks} clients={p.clients} compact={compactCalendar} timeZone={p.timeZone} onChangeDate={p.setDate} onSelectDate={(date) => { p.setDate(date); setPlannerView('day'); }} onEdit={openTaskEditor} />}
+
+      {(plannerView === 'list' || plannerView === 'kanban') && (
+        <PlannerBoard
+          mode={plannerView}
+          tasks={p.tasks}
+          clients={p.clients}
+          onEdit={openTaskEditor}
+          onStart={p.startTask}
+          onComplete={handleComplete}
+          onPostpone={p.postponeTask}
+          onDelete={p.deleteTask}
+          onSetStatus={p.setStatus}
+        />
+      )}
 
       {topTask && (
         <section className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-5 shadow-sm">
