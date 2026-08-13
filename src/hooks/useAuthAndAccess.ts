@@ -30,7 +30,11 @@ export function useAuthAndAccess() {
       // requests, except for an explicit visibility refresh.
       if (!force && loadedUserId.current === fUser.id) return;
       loadedUserId.current = fUser.id;
-      setCheckingPayment(true);
+      // El refresh en segundo plano (force, al volver a la pestaña) NO debe tapar
+      // la app con la pantalla de "verificando licencia": eso desmontaría el
+      // dashboard y borraría lo que la persona estaba haciendo. Solo mostramos el
+      // loader en la carga INICIAL; el refresh actualiza permisos en silencio.
+      if (!force) setCheckingPayment(true);
       const [access, team] = await Promise.all([
         resolveAccess(fUser.id, fUser.email || ''),
         isTeamMember(fUser.email || '').catch(() => false),
@@ -44,7 +48,7 @@ export function useAuthAndAccess() {
       setIsTeam(team);
       setModuleOverrides(Object.fromEntries(overrides.map((override) => [override.module, override.enabled])) as ModuleOverrides);
       lastAccessRefreshAt.current = Date.now();
-      setCheckingPayment(false);
+      if (!force) setCheckingPayment(false);
     };
 
     const unsubscribe = initAuth(

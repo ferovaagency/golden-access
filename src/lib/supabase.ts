@@ -70,25 +70,31 @@ export const initAuth = (
   onAuthSuccess?: (user: User, token: string) => void,
   onAuthFailure?: () => void
 ) => {
-  supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
-    const session = data.session;
-    captureGoogleProviderToken(session);
-    if (session?.user) {
-      onAuthSuccess?.(session.user, cachedAccessToken || '');
-    }
-    else onAuthFailure?.();
-  });
+  // Supabase re-emite eventos (TOKEN_REFRESHED, SIGNED_IN, INITIAL_SESSION) cada
+  // vez que la pestaña recupera el foco y refresca el token. Si re-disparáramos
+  // onAuthSuccess en cada uno, la app entera se re-inicializa (nuevo objeto user
+  // -> refetch en cascada) y se siente como una RECARGA que borra lo que estabas
+  // haciendo. Por eso solo notificamos cuando cambia la IDENTIDAD (login/logout);
+  // el token igual se refresca internamente y capturamos el de Google siempre.
+  let lastUserId: string | null = null;
 
-  const { data: sub } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
+  const handle = (session: Session | null) => {
     captureGoogleProviderToken(session);
     if (session?.user) {
-      onAuthSuccess?.(session.user, cachedAccessToken || '');
-    }
-    else {
+      if (session.user.id !== lastUserId) {
+        lastUserId = session.user.id;
+        onAuthSuccess?.(session.user, cachedAccessToken || '');
+      }
+      // Mismo usuario (refresh de token / vuelta a la pestaña): NO re-inicializar.
+    } else {
+      lastUserId = null;
       setEphemeralGoogleToken(null);
       onAuthFailure?.();
     }
-  });
+  };
+
+  supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => handle(data.session));
+  const { data: sub } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => handle(session));
 
   return () => sub.subscription.unsubscribe();
 };
