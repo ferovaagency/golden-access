@@ -20,12 +20,32 @@ plan). Falta solo configuración de paneles y una prueba. Marca cada punto.
   próximo build. Para probar, provoca un error y revisa que aparezca en Sentry.
 
 ## 3. Purga de cuentas: programar el cron
-- La función `purge-deleted-accounts` ya existe y usa `CRON_SECRET`.
-- Programa un job diario (Supabase Scheduled Functions o pg_cron + pg_net) que haga
-  POST a
-  `https://izkhdzzyqfopjveaagwk.supabase.co/functions/v1/purge-deleted-accounts`
-  con la cabecera `x-cron-secret: <CRON_SECRET>`.
-- Sin el cron, las cuentas quedan marcadas para borrar pero no se purgan solas.
+- La función `purge-deleted-accounts` (verify_jwt=false) usa `CRON_SECRET`.
+- `pg_cron` y `pg_net` ya están habilitados en la base.
+- Falta un paso manual (el secreto no puede exponerse): en el **SQL Editor de
+  Supabase**, ejecuta una vez, reemplazando el valor por tu `CRON_SECRET`:
+
+```sql
+select vault.create_secret('EL_VALOR_DE_TU_CRON_SECRET', 'purge_cron_secret');
+
+select cron.schedule(
+  'purge-deleted-accounts-daily',
+  '0 3 * * *',
+  $$
+  select net.http_post(
+    url := 'https://izkhdzzyqfopjveaagwk.supabase.co/functions/v1/purge-deleted-accounts',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'x-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'purge_cron_secret')
+    ),
+    body := '{}'::jsonb
+  );
+  $$
+);
+```
+
+- Sin el cron, las cuentas quedan marcadas para borrar pero no se purgan solas
+  (un owner igual puede invocar la función manualmente).
 
 ## 4. Prueba del flujo de dinero (en SANDBOX, no en producción)
 1. Pon temporalmente `VITE_PADDLE_ENV=sandbox` con un token y price de sandbox.
