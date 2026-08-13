@@ -8,3 +8,8 @@ verify_jwt = false
 
 [functions.purge-deleted-accounts]
 verify_jwt = false
+
+# Evolution API no envía JWT de Supabase; la función valida un token compartido
+# en la query string. Sin esto, la plataforma rechaza el webhook con 401.
+[functions.whatsapp-webhook]
+verify_jwt = false

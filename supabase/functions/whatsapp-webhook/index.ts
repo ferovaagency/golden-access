@@ -220,14 +220,19 @@ Deno.serve(async (req: Request) => {
   if (!oportunidad) return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   const msgId = msg.key?.id;
-  await admin.from("crm_interacciones").insert({
+  const { error: inboundErr } = await admin.from("crm_interacciones").insert({
     oportunidad_id: oportunidad.id,
     canal: "whatsapp",
     tipo: "mensaje_entrante",
     contenido: messageText,
     whatsapp_message_id: msgId ?? null,
     metadata: { instance_name: instanceName, push_name: msg.pushName || null },
-  }); // el indice unico parcial descarta duplicados silenciosamente via error, lo ignoramos
+  });
+  // 23505 = mensaje ya procesado (Evolution reintentó el webhook). Cortamos aquí
+  // para NO volver a llamar la IA ni reenviar la respuesta (evita duplicados y costo).
+  if (inboundErr?.code === "23505") {
+    return new Response(JSON.stringify({ ok: true, duplicate: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
 
   updateOpportunityMemory(admin, oportunidad).catch(() => null);
 

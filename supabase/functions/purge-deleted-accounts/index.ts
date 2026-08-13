@@ -57,9 +57,10 @@ Deno.serve(async (req) => {
       const { data: target } = await admin.auth.admin.getUserById(userId);
       const email = target?.user?.email ?? null;
 
-      // Salvaguarda: nunca purgar a un miembro del equipo interno.
+      // Salvaguarda: nunca purgar a un miembro del equipo interno. Comparación
+      // case-insensitive (los emails del equipo se guardan en minúsculas).
       if (email) {
-        const { data: team } = await admin.from('crm_team_members').select('email').eq('email', email).maybeSingle();
+        const { data: team } = await admin.from('crm_team_members').select('email').ilike('email', email).maybeSingle();
         if (team) { failed.push({ user_id: userId, message: 'Cuenta del equipo, omitida.' }); continue; }
       }
 

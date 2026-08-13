@@ -166,7 +166,10 @@ Deno.serve(async (req) => {
       const from = headerVal(headers, 'From');
       const bodyText = extractPlainText(msg.payload).slice(0, 8000);
       const dateHdr = headerVal(headers, 'Date');
-      const detectedAt = dateHdr ? new Date(dateHdr).toISOString() : new Date().toISOString();
+      const parsedDate = dateHdr ? new Date(dateHdr) : null;
+      const detectedAt = parsedDate && !Number.isNaN(parsedDate.getTime())
+        ? parsedDate.toISOString()
+        : new Date().toISOString();
 
       // IA extracción
       const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -191,11 +194,12 @@ Si el correo NO es una notificación de reseña recibida (por ejemplo digest, ti
         }),
       });
       if (!aiRes.ok) {
+        // Un fallo puntual de IA (p. ej. 429) no debe abortar TODO el escaneo:
+        // se salta este mensaje y se sigue con los demás.
         const t = await aiRes.text();
         console.error(`[reviews-scan] ai extraction ${aiRes.status}: ${t}`);
-        return new Response(JSON.stringify({ ok: false, message: 'Error extrayendo reseñas con IA', status: aiRes.status, details: t.slice(0, 700) }), {
-          status: aiRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        skipped++;
+        continue;
       }
       const aiJson = await aiRes.json();
       const content = aiJson?.choices?.[0]?.message?.content;

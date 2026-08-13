@@ -170,11 +170,11 @@ Si no es una notificación de lead nuevo, pon es_lead=false y el resto null.` },
         }),
       });
       if (!aiRes.ok) {
+        // Un fallo puntual de IA no debe abortar todo el escaneo: se salta este lead.
         const t = await aiRes.text();
         console.error(`[sortlist-leads-scan] ai extraction ${aiRes.status}: ${t}`);
-        return new Response(JSON.stringify({ ok: false, message: 'Error extrayendo leads con IA', status: aiRes.status, details: t.slice(0, 700) }), {
-          status: aiRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        skipped++;
+        continue;
       }
       const aiJson = await aiRes.json();
       const content = aiJson?.choices?.[0]?.message?.content;

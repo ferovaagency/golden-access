@@ -43,7 +43,8 @@ Deno.serve(async (req) => {
     if (targetErr) throw targetErr;
     const targetEmail = target?.user?.email;
     if (targetEmail) {
-      const { data: targetTeam } = await admin.from('crm_team_members').select('email').eq('email', targetEmail).maybeSingle();
+      // Comparación case-insensitive: los emails del equipo se guardan en minúsculas.
+      const { data: targetTeam } = await admin.from('crm_team_members').select('email').ilike('email', targetEmail).maybeSingle();
       if (targetTeam) return json({ ok: false, message: 'Esta cuenta pertenece al equipo de Ferova y no se puede eliminar desde aquí.' }, 400);
     }
 
