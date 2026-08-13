@@ -3164,6 +3164,7 @@ export type Database = {
       }
     }
     Functions: {
+      admin_ai_usage_overview: { Args: { p_days?: number }; Returns: Json }
       admin_subscriptions_overview: { Args: never; Returns: Json }
       complete_past_crm_citas: { Args: never; Returns: undefined }
       founder_slots_taken: { Args: never; Returns: number }
