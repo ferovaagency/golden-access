@@ -5,6 +5,7 @@ import * as financeService from './lib/financeService';
 import { useAuthAndAccess } from './hooks/useAuthAndAccess';
 import { getBusinessProfile, BusinessProfile } from './lib/businessProfileService';
 import { getMyCollaboratorContext, type CollaboratorContext } from './lib/collaboratorsService';
+import { trackActivationOnce } from './lib/analytics';
 import PlanOnboarding from './components/PlanOnboarding';
 import ProductTour from './components/ProductTour';
 import FeedbackWidget from './components/FeedbackWidget';
@@ -406,6 +407,9 @@ function AppInner() {
     try {
       await financeService.saveVentas(accountId, updatedVentas);
       setAppData({ ...appData, ventas: updatedVentas });
+      // Momento de valor (Fase 8): registrar la primera venta real = ver la
+      // verdad del negocio en números. Se dispara una sola vez.
+      if (updatedVentas.length > 0) trackActivationOnce('primera_venta');
     } catch (err: any) {
       toastErr(`Error guardando ventas: ${errMsg(err)}`);
     } finally {
