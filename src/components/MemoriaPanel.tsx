@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
-import { Brain, Globe, Lock, Plus, Trash2, Pencil, Check, X, Loader2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Brain, Globe, Lock, Plus, Trash2, Pencil, Check, X, Loader2, RefreshCw } from 'lucide-react';
 import { useToast, errMsg } from './ui/toast';
-import { listMemoria, createMemoria, updateMemoria, deleteMemoria, type BrainItem, type BrainScope } from '../lib/brainService';
+import { listMemoria, createMemoria, updateMemoria, deleteMemoria, syncMemoria, type BrainItem, type BrainScope } from '../lib/brainService';
 
 // Pantalla de Memoria (cerebro del negocio), admin-only.
 // Global = conocimiento del equipo; Privado = solo de quien lo escribe.
@@ -16,6 +16,8 @@ export default function MemoriaPanel() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<BrainScope>('global');
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const autoSynced = useRef(false);
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -25,21 +27,52 @@ export default function MemoriaPanel() {
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
 
-  async function load() {
+  async function load(): Promise<BrainItem[]> {
     setLoading(true);
     try {
       const { items, isAdmin } = await listMemoria();
       setItems(items);
       setIsAdmin(isAdmin);
       if (!isAdmin) { setFilter('privado'); setScope('privado'); }
+      return items;
     } catch (e) {
       toastErr(errMsg(e));
+      return [];
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(() => { load(); }, []);
+  // Construye/actualiza el cerebro desde los datos reales del negocio.
+  async function runSync(silent = false) {
+    setSyncing(true);
+    try {
+      const res = await syncMemoria();
+      const items = await load();
+      if (res.creados > 0) setFilter('privado'); // el auto-conocimiento es privado del usuario
+      if (!silent) {
+        success(res.creados || res.actualizados
+          ? `Cerebro actualizado: ${res.creados} nuevos, ${res.actualizados} al día.`
+          : (items.length ? 'El cerebro ya estaba al día.' : 'Aún no hay datos de negocio para recordar. Registra clientes o completa tu perfil.'));
+      }
+    } catch (e) {
+      if (!silent) toastErr(errMsg(e));
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  useEffect(() => {
+    (async () => {
+      const initial = await load();
+      // Primera vez con el cerebro vacío: lo construimos solo, en silencio.
+      if (!autoSynced.current && initial.length === 0) {
+        autoSynced.current = true;
+        await runSync(true);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleCreate() {
     if (!title.trim() || !content.trim()) { toastErr('Escribe un título y un contenido.'); return; }
@@ -100,12 +133,23 @@ export default function MemoriaPanel() {
   return (
     <div className="max-w-4xl mx-auto">
       <header className="mb-6">
-        <div className="flex items-center gap-2 text-slate-900">
-          <Brain size={22} className="text-blue-500" />
-          <h1 className="text-xl font-semibold">Memoria del negocio</h1>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-slate-900">
+            <Brain size={22} className="text-blue-500" />
+            <h1 className="text-xl font-semibold">Memoria del negocio</h1>
+          </div>
+          <button
+            onClick={() => runSync(false)}
+            disabled={syncing}
+            title="Genera memoria automáticamente desde tu perfil y tus clientes"
+            className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-100 disabled:opacity-60"
+          >
+            {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+            {syncing ? 'Sincronizando…' : 'Actualizar desde mi negocio'}
+          </button>
         </div>
         <p className="text-sm text-slate-500 mt-1">
-          El cerebro que usa el asistente para responder. Lo <strong>global</strong> lo ve todo el equipo; lo <strong>privado</strong> solo tú.
+          El cerebro que usa el asistente para responder. Lo <strong>global</strong> lo ve todo el equipo; lo <strong>privado</strong> solo tú. Con “Actualizar desde mi negocio” se construye solo desde tus clientes y tu perfil.
         </p>
       </header>
 

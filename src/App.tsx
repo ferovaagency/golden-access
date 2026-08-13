@@ -6,6 +6,7 @@ import { useAuthAndAccess } from './hooks/useAuthAndAccess';
 import { getBusinessProfile, BusinessProfile } from './lib/businessProfileService';
 import { getMyCollaboratorContext, type CollaboratorContext } from './lib/collaboratorsService';
 import { trackActivationOnce } from './lib/analytics';
+import { syncMemoria } from './lib/brainService';
 import PlanOnboarding from './components/PlanOnboarding';
 import ProductTour from './components/ProductTour';
 import IntegracionesView from './components/IntegracionesView';
@@ -203,6 +204,18 @@ function AppInner() {
     if (user && hasPaid && appData === null && collabResolved && accountId) bootstrapFinanceData(accountId);
     if (!user) setAppData(null);
   }, [user, hasPaid, collabResolved, accountId]);
+
+  // Cerebro que se construye SOLO: una vez al día, sincroniza la memoria del
+  // negocio desde los datos reales (perfil + clientes) en segundo plano, para
+  // que el asistente recuerde el contexto aunque nadie abra la Memoria.
+  useEffect(() => {
+    if (!appData || !user) return;
+    const key = `ferova.brainSync.${user.id}`;
+    const last = Number(localStorage.getItem(key) || 0);
+    if (Date.now() - last < 86_400_000) return;
+    localStorage.setItem(key, String(Date.now()));
+    syncMemoria().catch(() => { /* no bloquea; el asistente igual funciona */ });
+  }, [appData, user]);
 
   // Si el cliente no tiene el módulo Financiero (plan solo "CRM y Ventas"),
   // ninguna de estas pestañas existe para él -- redirige a su módulo real.

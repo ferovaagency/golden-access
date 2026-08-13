@@ -41,3 +41,12 @@ export async function updateMemoria(input: { id: string; title?: string; content
 export async function deleteMemoria(id: string): Promise<void> {
   await callBrain({ action: 'delete', id });
 }
+
+/** Construye/actualiza el cerebro automáticamente desde los datos del negocio
+ *  (perfil + clientes). Devuelve cuántas entradas creó/actualizó. */
+export async function syncMemoria(): Promise<{ creados: number; actualizados: number; total: number }> {
+  const { data, error } = await supabase.functions.invoke('brain-sync', { body: {} });
+  if (error) throw new Error(error.message || 'No se pudo sincronizar el cerebro');
+  if (data && data.ok === false) throw new Error(data.message || 'No se pudo sincronizar el cerebro');
+  return { creados: data?.creados ?? 0, actualizados: data?.actualizados ?? 0, total: data?.total ?? 0 };
+}
