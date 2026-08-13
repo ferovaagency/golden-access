@@ -8,6 +8,7 @@ import { getMyCollaboratorContext, type CollaboratorContext } from './lib/collab
 import { trackActivationOnce } from './lib/analytics';
 import PlanOnboarding from './components/PlanOnboarding';
 import ProductTour from './components/ProductTour';
+import IntegracionesView from './components/IntegracionesView';
 import FeedbackWidget from './components/FeedbackWidget';
 import { Config, AppData, Cliente, Servicio, Herramienta, OtroGasto, Venta, Hora, PagoEgreso } from './types';
 import { calcularMétricasFinancieras } from './lib/calculations';
@@ -134,6 +135,7 @@ function AppInner() {
   // localStorage -- previously it was only in-memory React state, so the
   // link the user just imported/backed up from disappeared on every reload.
   const [isBackingUpToSheets, setIsBackingUpToSheets] = useState(false);
+  const [connectingGoogle, setConnectingGoogle] = useState(false);
   const [lastSheetBackupLink, setLastSheetBackupLinkState] = useState<string | null>(null);
   useEffect(() => {
     if (!user) { setLastSheetBackupLinkState(null); return; }
@@ -243,6 +245,19 @@ function AppInner() {
       setErrorMsg(`Error al cargar tus datos financieros: ${errMsg(err)}`);
     } finally {
       setSheetsLoading(false);
+    }
+  };
+
+  // Conecta Google Workspace (scopes de Calendar/Sheets/Drive/Gmail). El OAuth
+  // redirige la página; al volver, guardamos la pestaña para regresar aquí.
+  const handleConnectGoogle = async () => {
+    setConnectingGoogle(true);
+    try {
+      saveGoogleLinkReturnTab('integraciones');
+      await linkGoogleIdentity();
+    } catch (err: any) {
+      toastErr(`No se pudo conectar Google: ${errMsg(err)}`);
+      setConnectingGoogle(false);
     }
   };
 
@@ -565,6 +580,7 @@ function AppInner() {
       ...CRM_GROWTH_TABS,
     ] },
     { id: 'settings', label: 'Configuración', icon: Settings, items: [
+      { id: 'integraciones', label: 'Integraciones', hint: 'Google, WhatsApp, Apollo' },
       ...(modules.financiero ? [{ id: 'ajustes', label: 'Configuración', hint: 'Datos y Google Sheets' }] : []),
       ...(isTeam ? [{ id: 'memoria', label: 'Memoria', hint: 'Cerebro del negocio: conocimiento global y privado' }] : []),
       ...(isTeam ? [{ id: 'admin', label: 'Administración Ferova', hint: 'Usuarios, planes, feedback y operaciones' }] : []),
@@ -782,6 +798,15 @@ function AppInner() {
               <ConfigAdmin userId={accountId} businessProfile={businessProfile} onBusinessProfileUpdated={setBusinessProfile} config={appData.config} ventas={appData.ventas} clientes={appData.clientes} horas={appData.horas} hasGoogleToken={!!getAccessToken()} lastSheetBackupLink={lastSheetBackupLink} isBackingUpToSheets={isBackingUpToSheets} onSaveConfig={handleSaveConfig} onBackupToSheets={handleBackupToSheets} onImportFromSheets={handleImportFromSheets} onImportFromSheetsUrl={handleImportFromSheetsUrl} formatCop={formatCop} />
             )}
             {activeTab === 'ventas-crm' && modules.crm_ventas && <CustomerCRM user={user} />}
+            {activeTab === 'integraciones' && (
+              <IntegracionesView
+                hasGoogleToken={!!getAccessToken()}
+                connectingGoogle={connectingGoogle}
+                isTeam={isTeam}
+                onConnectGoogle={handleConnectGoogle}
+                onNavigate={handleNavigate}
+              />
+            )}
             {activeTab === 'memoria' && isTeam && <MemoriaPanel />}
             {modules.crm_ventas && activeTab.startsWith('crm-') && (
               // Las pestañas de crecimiento (Pipeline, Citas, LinkedIn+Reddit,
