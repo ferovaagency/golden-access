@@ -49,6 +49,8 @@ export default function SmartPlanner() {
   const [blockTitle, setBlockTitle] = useState('');
   const [blockStart, setBlockStart] = useState('09:00');
   const [blockEnd, setBlockEnd] = useState('10:00');
+  const [blockRepeatDays, setBlockRepeatDays] = useState<number[]>([]);
+  const [blockRepeatUntil, setBlockRepeatUntil] = useState('');
   const [editingTask, setEditingTask] = useState<PlannerTask | null>(null);
   const [taskTitle, setTaskTitle] = useState('');
   const [taskDescription, setTaskDescription] = useState('');
@@ -124,8 +126,12 @@ export default function SmartPlanner() {
       ends_at: `${p.date}T${blockEnd}:00`,
       category: 'meetings',
       protected: true,
+      recurrence_days: blockRepeatDays,
+      recurrence_until: blockRepeatDays.length ? (blockRepeatUntil || null) : null,
     });
     setBlockTitle('');
+    setBlockRepeatDays([]);
+    setBlockRepeatUntil('');
     setShowBlockForm(false);
   };
 
@@ -454,6 +460,28 @@ export default function SmartPlanner() {
             <label className="text-xs text-slate-600">Fin
               <input type="time" value={blockEnd} onChange={(event) => setBlockEnd(event.target.value)} required className="mt-1 block rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500" />
             </label>
+            <fieldset className="sm:col-span-4 rounded-lg border border-blue-200 bg-white p-3">
+              <legend className="px-1 text-xs text-slate-600">Repetir</legend>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[11px] text-slate-500">Días:</span>
+                {[['D', 0], ['L', 1], ['M', 2], ['X', 3], ['J', 4], ['V', 5], ['S', 6]].map(([label, day]) => (
+                  <button
+                    type="button"
+                    key={String(day)}
+                    onClick={() => setBlockRepeatDays((prev) => prev.includes(Number(day)) ? prev.filter((v) => v !== Number(day)) : [...prev, Number(day)].sort())}
+                    className={`h-8 w-8 rounded-full text-xs font-semibold ${blockRepeatDays.includes(Number(day)) ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}`}
+                  >{label}</button>
+                ))}
+                <label className="ml-2 text-xs text-slate-600">Hasta
+                  <input type="date" disabled={!blockRepeatDays.length} value={blockRepeatUntil} onChange={(event) => setBlockRepeatUntil(event.target.value)} className="ml-2 rounded border border-blue-200 px-2 py-1 disabled:opacity-50" />
+                </label>
+              </div>
+              <p className="mt-2 text-[10px] text-slate-500">
+                {blockRepeatDays.length
+                  ? `Se crea el bloque cada semana en los días elegidos, a la misma hora, ${blockRepeatUntil ? `hasta ${blockRepeatUntil}` : 'por los próximos 90 días'}.`
+                  : 'Sin días marcados = bloque único para el día seleccionado.'}
+              </p>
+            </fieldset>
             <button type="submit" disabled={p.busy === 'block' || blockEnd <= blockStart} className="rounded-lg bg-blue-700 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-50">{p.busy === 'block' ? 'Guardando…' : 'Proteger'}</button>
             <p className="sm:col-span-4 text-[11px] text-blue-800">Este bloque queda protegido: el planificador no lo moverá al reorganizar tu día.</p>
           </form>

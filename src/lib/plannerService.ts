@@ -149,6 +149,10 @@ export interface CreatePlannerBlockInput {
   category?: PlannerCategory;
   protected?: boolean;
   notes?: string | null;
+  /** 0=domingo..6=sábado. Vacío = bloque único (sin repetición). */
+  recurrence_days?: number[];
+  /** Fecha final de la repetición (YYYY-MM-DD). Null = horizonte por defecto (90 días). */
+  recurrence_until?: string | null;
 }
 
 export interface UpdatePlannerTaskInput {
@@ -268,16 +272,41 @@ export const plannerService = {
     if (!user) throw new Error('Debes iniciar sesión para crear un bloque.');
 
     const timeZone = await this.getTimeZone();
-    const { error } = await anyDb().from('planner_blocks').insert({
+    const days = (input.recurrence_days || []).filter((d) => d >= 0 && d <= 6);
+    const [startDate, startTime = '09:00:00'] = input.starts_at.split('T');
+    const endTime = input.ends_at.split('T')[1] || '10:00:00';
+
+    // Fechas concretas donde cae el bloque. Sin recurrencia: solo la fecha dada.
+    const dates: string[] = [];
+    if (!days.length) {
+      dates.push(startDate);
+    } else {
+      const horizon = input.recurrence_until
+        ? new Date(`${input.recurrence_until}T12:00:00`)
+        : new Date(`${startDate}T12:00:00`);
+      if (!input.recurrence_until) horizon.setDate(horizon.getDate() + 90);
+      const cursor = new Date(`${startDate}T12:00:00`);
+      // Tope de seguridad para no generar miles de filas por error.
+      for (let guard = 0; cursor <= horizon && guard < 400; guard++) {
+        if (days.includes(cursor.getDay())) dates.push(cursor.toISOString().slice(0, 10));
+        cursor.setDate(cursor.getDate() + 1);
+      }
+    }
+    if (!dates.length) return;
+
+    const rows = dates.map((d) => ({
       user_id: user.id,
       title: input.title.trim(),
-      starts_at: localPlannerTimeToIso(input.starts_at, timeZone),
-      ends_at: localPlannerTimeToIso(input.ends_at, timeZone),
+      starts_at: localPlannerTimeToIso(`${d}T${startTime}`, timeZone),
+      ends_at: localPlannerTimeToIso(`${d}T${endTime}`, timeZone),
       category: input.category ?? 'meetings',
       protected: input.protected ?? true,
       notes: input.notes?.trim() || null,
       source: 'manual',
-    });
+      recurrence_days: days,
+      recurrence_until: input.recurrence_until || null,
+    }));
+    const { error } = await anyDb().from('planner_blocks').insert(rows);
     if (error) throw error;
   },
   async listInsights(): Promise<PlannerInsight[]> {
