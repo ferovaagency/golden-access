@@ -13,6 +13,16 @@ plan). Falta solo configuración de paneles y una prueba. Marca cada punto.
 4. Guárdala como **secreto de Supabase** (backend, no VITE_): `PADDLE_WEBHOOK_SECRET`.
    - Si falta, el webhook responde 503 y ninguna compra activa la cuenta.
 
+## 1b. Paddle: activar la prueba de 14 días
+- En el **price** de Paddle (el `pri_...` de `VITE_PADDLE_PRICE_ID`), configura un
+  **trial period de 14 días**. Paddle es quien lo aplica: cobra la tarjeta pero
+  difiere el primer cargo 14 días; si cancelan antes, no se cobra.
+- El código ya está listo: el Paywall y `/precios` muestran la prueba, y el webhook
+  da acceso al iniciar el trial (`subscription.activated`/`trialing`).
+- Si el trial en Paddle NO es de 14 días, ajusta `VITE_PADDLE_TRIAL_DAYS` en `.env`
+  para que el texto coincida. Si pones `VITE_PADDLE_TRIAL_DAYS=0`, la UI vuelve al
+  modo "suscripción directa sin prueba".
+
 ## 2. Sentry: DSN
 - Agrega a `.env` (junto a las VITE_PADDLE_*):
   `VITE_SENTRY_DSN=https://6286193aab6e053e9f0afa885af5c376@o4511900282191872.ingest.us.sentry.io/4511900299493376`

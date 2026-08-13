@@ -15,6 +15,15 @@ type ChangelogEntry = {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    fecha: '2026-08-13',
+    titulo: 'Prueba gratis de 14 días',
+    detalle: 'Ahora puedes probar Ferova One completo por 14 días antes de tu primer pago.',
+    cambios: [
+      { tipo: 'nuevo', texto: 'Prueba de 14 días con acceso total; cancela antes y no pagas nada.' },
+      { tipo: 'mejora', texto: 'Suscripciones y MRR ahora visibles en el panel de administración.' },
+    ],
+  },
+  {
     fecha: '2026-08-12',
     titulo: 'Transparencia, control de tus datos y más confianza',
     detalle: 'Un paquete grande de cara al lanzamiento: páginas públicas de confianza, control total sobre tus datos y un asistente más rápido.',

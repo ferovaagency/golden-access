@@ -13,7 +13,8 @@ import { trackEvent } from '../../lib/analytics';
 // LandingV2, paywall). Manual_Landing_Blog_SEO sec. 2/14: de todos modos
 // reconfirmar precio, moneda y mercado antes de invertir en promocionar
 // especificamente esta pagina.
-const PRICE_USD = '50';
+const PRICE_USD = '52.50';
+const TRIAL_DAYS = 14;
 
 const FEATURES = [
   'Todos los módulos incluidos',
@@ -24,9 +25,9 @@ const FEATURES = [
 ];
 
 const FAQ = [
+  { q: '¿Cómo funciona la prueba gratis?', a: `Tenés ${TRIAL_DAYS} días de prueba con acceso completo. Se pide tarjeta, pero no se cobra durante la prueba: si cancelás antes de que termine, no pagás nada.` },
   { q: '¿Hay permanencia mínima?', a: 'No. Podés cancelar cuando quieras, sin penalidades.' },
   { q: '¿El precio incluye impuestos?', a: 'El precio mostrado es antes de impuestos aplicables según tu ubicación; Paddle, como comerciante registrado (Merchant of Record), calcula el total exacto en el checkout.' },
-  { q: '¿Puedo probarlo antes de pagar?', a: 'Podés crear una cuenta y explorar el demo del Executive Control Center antes de decidir.' },
   { q: '¿Qué pasa si cancelo?', a: 'Tu acceso se mantiene hasta el fin del período ya pagado. Tus datos siguen siendo tuyos.' },
 ];
 
@@ -59,7 +60,7 @@ export default function PricingPage() {
               <span className="font-display text-5xl text-[#1f1b16]">USD {PRICE_USD}</span>
               <span className="text-[#8a8377]">/ mes</span>
             </div>
-            <p className="mt-1 text-sm text-[#8a8377]">Facturado mensualmente. Cancelás cuando quieras.</p>
+            <p className="mt-1 text-sm text-[#8a8377]">{TRIAL_DAYS} días gratis, luego facturado mensualmente. Cancelás cuando quieras.</p>
             <ul className="mt-6 space-y-2">
               {FEATURES.map((f) => (
                 <li key={f} className="flex items-start gap-2 text-sm text-[#1f1b16]">
@@ -68,7 +69,7 @@ export default function PricingPage() {
               ))}
             </ul>
             <Link to="/app" onClick={() => trackEvent('pricing_cta', { path: '/precios' })} className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-[var(--ferova-radius-pill)] bg-[var(--ferova-brand)] px-6 py-3 font-medium font-display text-white hover:bg-[var(--ferova-brand-2)]">
-              Empezar ahora <ArrowRight className="h-4 w-4" />
+              Empezar prueba de {TRIAL_DAYS} días <ArrowRight className="h-4 w-4" />
             </Link>
           </AnimatedCard>
         </Reveal>

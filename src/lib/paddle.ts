@@ -9,6 +9,10 @@ const PADDLE_ENV = (import.meta.env.VITE_PADDLE_ENV?.trim() || 'production') as 
 /** Precio de lista en USD: incluye el ~5% de Paddle (no se absorbe). */
 export const PADDLE_LIST_PRICE_USD = import.meta.env.VITE_PAYWALL_PRICE_USD?.trim() || '52.50';
 
+/** Días de prueba con tarjeta requerida. DEBE coincidir con el trial period
+ *  configurado en el price de Paddle; Paddle es quien lo aplica realmente. */
+export const PADDLE_TRIAL_DAYS = Number(import.meta.env.VITE_PADDLE_TRIAL_DAYS?.trim() || '14');
+
 export type PaymentProviderStatus = 'ready' | 'awaiting_configuration' | 'unavailable';
 
 interface PaddleEvent {

@@ -55,7 +55,9 @@ async function verifySignature(header: string | null, rawBody: string): Promise<
 type Mapped = { status: 'active' | 'cancelled'; };
 
 function statusForEvent(eventType: string): Mapped['status'] | null {
-  if (['transaction.completed', 'subscription.activated', 'subscription.resumed'].includes(eventType)) return 'active';
+  // 'trialing' también da acceso: durante la prueba de 14 días Paddle no cobra
+  // (no hay transaction.completed) pero sí activa la suscripción.
+  if (['transaction.completed', 'subscription.activated', 'subscription.resumed', 'subscription.trialing'].includes(eventType)) return 'active';
   if (['subscription.canceled', 'subscription.cancelled', 'subscription.paused'].includes(eventType)) return 'cancelled';
   return null;
 }

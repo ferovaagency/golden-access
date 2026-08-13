@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Loader2, ShieldCheck, LogOut } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { logout, checkSubscription } from '../lib/supabase';
-import { getPaddleStatus, openPaddleCheckout, PADDLE_LIST_PRICE_USD } from '../lib/paddle';
+import { getPaddleStatus, openPaddleCheckout, PADDLE_LIST_PRICE_USD, PADDLE_TRIAL_DAYS } from '../lib/paddle';
 
 interface PaywallProps {
   user: User;
@@ -76,14 +76,23 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
           <div className="w-12 h-12 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center mx-auto">
             <ShieldCheck className="w-6 h-6 text-blue-500" />
           </div>
-          <h1 className="text-2xl font-bold font-display tracking-tight text-blue-500">Activa tu Licencia</h1>
+          <h1 className="text-2xl font-bold font-display tracking-tight text-blue-500">
+            {PADDLE_TRIAL_DAYS > 0 ? `Prueba ${PADDLE_TRIAL_DAYS} días gratis` : 'Activa tu Licencia'}
+          </h1>
           <p className="text-xs text-[#a39d8e] font-mono uppercase tracking-wider">Acceso a Ferova One</p>
         </div>
 
         <div className="border-t border-b border-[#2a2620] py-5 space-y-3">
           <p className="text-center text-sm font-semibold text-white">
-            USD ${PADDLE_LIST_PRICE_USD} / mes · impuestos calculados por Paddle en el checkout.
+            {PADDLE_TRIAL_DAYS > 0
+              ? `${PADDLE_TRIAL_DAYS} días gratis, luego USD $${PADDLE_LIST_PRICE_USD} / mes.`
+              : `USD $${PADDLE_LIST_PRICE_USD} / mes · impuestos calculados por Paddle en el checkout.`}
           </p>
+          {PADDLE_TRIAL_DAYS > 0 && (
+            <p className="text-center text-[11px] text-[#a39d8e]">
+              Requiere tarjeta. No se cobra durante la prueba; cancela cuando quieras antes de que termine y no pagas nada.
+            </p>
+          )}
           <ul className="text-xs text-[#a39d8e] space-y-1.5 pl-4">
             <li>• Dashboard ejecutivo + KPIs en tiempo real</li>
             <li>• Sincronización con Google Sheets / Drive</li>
@@ -104,7 +113,9 @@ export default function Paywall({ user, onPaid }: PaywallProps) {
             disabled={paddleStatus !== 'ready' || confirming}
             className="w-full flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-400 text-black font-semibold font-display py-2.5 rounded transition disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {paddleStatus === 'ready' ? 'Suscribirme con Paddle' : 'Paddle pendiente de configuración'}
+            {paddleStatus !== 'ready'
+              ? 'Paddle pendiente de configuración'
+              : PADDLE_TRIAL_DAYS > 0 ? `Empezar prueba de ${PADDLE_TRIAL_DAYS} días` : 'Suscribirme con Paddle'}
           </button>
           <p className="text-[10px] text-[#8a8377] font-mono text-center leading-relaxed">
             Paddle actúa como comerciante registrado (Merchant of Record): procesa la suscripción, emite la factura y calcula los impuestos aplicables. Ferova One no recibe ni almacena datos de pago. Al continuar aceptas los <a href="/terminos" className="underline hover:text-white">Términos</a> y la <a href="/privacidad" className="underline hover:text-white">Política de Privacidad</a>.
