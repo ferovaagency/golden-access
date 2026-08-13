@@ -31,6 +31,23 @@ function money(value: unknown) {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(Number(value || 0));
 }
 
+// Convierte una hora de pared local (YYYY-MM-DDTHH:mm:ss) en la zona dada a un
+// instante UTC ISO. Misma lógica que el front (plannerService), para que los
+// bloques que crea el asistente caigan a la hora correcta del usuario.
+function wallClockToUtcIso(local: string, timeZone: string): string {
+  const [datePart, timePart = "00:00:00"] = local.split("T");
+  const [y, m, d] = datePart.split("-").map(Number);
+  const [hh, mm, ss = 0] = timePart.split(":").map(Number);
+  const asUtc = Date.UTC(y, m - 1, d, hh, mm, ss);
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone, hour12: false, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" })
+    .formatToParts(new Date(asUtc))
+    .reduce<Record<string, string>>((acc, part) => { acc[part.type] = part.value; return acc; }, {});
+  let hour = Number(parts.hour);
+  if (hour === 24) hour = 0; // algunos entornos devuelven '24' para medianoche
+  const asTz = Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day), hour, Number(parts.minute), Number(parts.second));
+  return new Date(asUtc - (asTz - asUtc)).toISOString();
+}
+
 function deterministicReply(input: {
   question: string;
   overview: any;
@@ -114,7 +131,7 @@ Deno.serve(async (req) => {
     try { const mh = req.headers.get("X-Ferova-Metrics"); if (mh) finanzasCalculadas = JSON.parse(mh); } catch { /* header inválido, se ignora */ }
     const [{ data: isTeam }, { data: businessProfile }, { data: overview }, { data: services }, { data: growth }, { data: reviews }, { data: opportunities }, { data: clients }, { data: hours }, { data: tasks }, { data: integrations }] = await Promise.all([
       admin.from("crm_team_members").select("email, rol").eq("email", userEmail).maybeSingle(),
-      admin.from("business_profile").select("nombre_negocio, industria, tipo_negocio, tamano_equipo, ciudad").eq("user_id", userId).maybeSingle(),
+      admin.from("business_profile").select("nombre_negocio, industria, tipo_negocio, tamano_equipo, ciudad, zona_horaria").eq("user_id", userId).maybeSingle(),
       admin.from("business_overview").select("*").eq("user_id", userId).maybeSingle(),
       admin.from("finance_service_profitability").select("servicio_nombre, ingresos_brutos, costos_directos, margen_bruto, ventas_count, horas_registradas").eq("user_id", userId).order("margen_bruto", { ascending: false }).limit(12),
       admin.from("crm_growth_overview").select("*").maybeSingle(),
@@ -214,7 +231,7 @@ Sos responsable de mantener vivo el cerebro del negocio. Llamá a guardar_en_mem
 Reglas al guardar: respetá el ALCANCE DE MEMORIA permitido que se indica al final del contexto. Cuando puedas elegir, usá "global" si le sirve a todo el equipo y "privado" si es personal de quien te habla. Escribí el contenido claro y autocontenido (que se entienda sin este chat). Tras guardar, confirmá en UNA línea qué recordaste. NO guardes preguntas, cálculos ni charla pasajera, y no guardes dos veces lo mismo.
 
 ## CREAR DATOS REALES (herramientas de escritura)
-Además de recordar, PODÉS registrar cosas por la persona: usá crear_tarea para pendientes accionables del Planner, registrar_gasto para pagos/egresos reales del negocio (solo si es admin), y registrar_horas para el tiempo real trabajado (alimenta la rentabilidad por servicio y cliente). Antes de registrar un gasto, confirmá monto, concepto y categoría en tu respuesta; no inventes cifras ni categorías — si falta un dato clave, preguntalo. Tras crear algo, confirmá en UNA línea qué registraste.
+Además de recordar, PODÉS registrar cosas por la persona: usá crear_tarea para pendientes accionables del Planner, registrar_gasto para pagos/egresos reales del negocio (solo si es admin), registrar_horas para el tiempo real trabajado (alimenta la rentabilidad por servicio y cliente), y crear_bloque_protegido para reservar tiempo en el Planner (bloques que no se mueven; interpretá días de la semana, hora de inicio/fin y si se repite, ej. "bloquea lunes y miércoles de 9 a 11 para deep work"). Antes de registrar un gasto, confirmá monto, concepto y categoría en tu respuesta; no inventes cifras ni categorías — si falta un dato clave, preguntalo. Tras crear algo, confirmá en UNA línea qué registraste.
 
 ## CÓMO ASESORÁS
 Das asesoría sobre rentabilidad por servicio, salud del flujo de caja, pipeline de ventas, reseñas pendientes, cartera de clientes, gastos vs. ingresos y próximos pasos priorizados. Cuando algo se ve mal (margen negativo, cliente inactivo con saldo pendiente), decílo directo y proponé UNA acción concreta, no solo el diagnóstico. Priorizá: mejor 1-3 acciones claras que una lista larga. Cuando la acción corresponda a una de tus herramientas (guardar_en_memoria, crear_tarea, registrar_gasto, registrar_horas), EJECUTALA en vez de solo prometerla; solo no prometas acciones que NO podés hacer con tus herramientas.
@@ -319,6 +336,60 @@ ${context}`,
               descripcion: descripcion || null,
             });
             return error ? { ok: false, message: error.message } : { ok: true, creado: "horas", horas };
+          },
+        }),
+        crear_bloque_protegido: tool({
+          description: "Crea uno o más bloques protegidos (tiempo reservado que el planificador NO moverá) en el Planner. Úsala cuando la persona quiera reservar/bloquear tiempo, sea recurrente o puntual: 'bloquea todos los lunes y miércoles de 9 a 11 para deep work', 'resérvame de 3 a 4 los viernes para el gym', 'bloquéame mañana de 2 a 3'. Interpretá del texto los días de la semana, la hora de inicio y fin, y hasta cuándo se repite.",
+          inputSchema: jsonSchema<{ titulo: string; hora_inicio: string; hora_fin: string; dias?: number[]; fecha?: string; hasta?: string }>({
+            type: "object",
+            additionalProperties: false,
+            required: ["titulo", "hora_inicio", "hora_fin"],
+            properties: {
+              titulo: { type: "string", description: "Qué se reserva (ej. 'Deep work', 'Gym', 'Reunión')." },
+              hora_inicio: { type: "string", description: "Hora de inicio en formato 24h HH:mm, ej. '09:00'." },
+              hora_fin: { type: "string", description: "Hora de fin en formato 24h HH:mm, ej. '11:00'. Debe ser mayor que la de inicio." },
+              dias: { type: "array", items: { type: "number" }, description: "Días de la semana a repetir: 0=domingo, 1=lunes, 2=martes, 3=miércoles, 4=jueves, 5=viernes, 6=sábado. Omitir o vacío = bloque único para 'fecha' (o hoy)." },
+              fecha: { type: "string", description: "Fecha YYYY-MM-DD para un bloque único; si se omite y no hay días, es hoy." },
+              hasta: { type: "string", description: "Fecha final YYYY-MM-DD de la repetición (opcional; por defecto 90 días)." },
+            },
+          }),
+          execute: async ({ titulo, hora_inicio, hora_fin, dias, fecha, hasta }) => {
+            const tz = businessProfile?.zona_horaria || "America/Bogota";
+            if (!/^\d{2}:\d{2}$/.test(hora_inicio) || !/^\d{2}:\d{2}$/.test(hora_fin) || hora_fin <= hora_inicio) {
+              return { ok: false, message: "Horas inválidas: usá HH:mm 24h y que el fin sea mayor que el inicio." };
+            }
+            const today = new Date().toISOString().slice(0, 10);
+            const startDate = fecha && /^\d{4}-\d{2}-\d{2}$/.test(fecha) ? fecha : today;
+            const days = Array.isArray(dias) ? dias.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6) : [];
+            const validUntil = hasta && /^\d{4}-\d{2}-\d{2}$/.test(hasta) ? hasta : null;
+
+            const dates: string[] = [];
+            if (!days.length) {
+              dates.push(startDate);
+            } else {
+              const horizon = new Date(`${validUntil || startDate}T12:00:00Z`);
+              if (!validUntil) horizon.setUTCDate(horizon.getUTCDate() + 90);
+              const cursor = new Date(`${startDate}T12:00:00Z`);
+              for (let guard = 0; cursor <= horizon && guard < 400; guard++) {
+                if (days.includes(cursor.getUTCDay())) dates.push(cursor.toISOString().slice(0, 10));
+                cursor.setUTCDate(cursor.getUTCDate() + 1);
+              }
+            }
+            if (!dates.length) return { ok: false, message: "No hay fechas que coincidan con los días indicados." };
+
+            const rows = dates.map((d) => ({
+              user_id: userId,
+              title: titulo,
+              starts_at: wallClockToUtcIso(`${d}T${hora_inicio}:00`, tz),
+              ends_at: wallClockToUtcIso(`${d}T${hora_fin}:00`, tz),
+              category: "meetings",
+              protected: true,
+              source: "assistant",
+              recurrence_days: days,
+              recurrence_until: validUntil,
+            }));
+            const { error } = await admin.from("planner_blocks").insert(rows);
+            return error ? { ok: false, message: error.message } : { ok: true, creado: "bloque_protegido", cantidad: rows.length };
           },
         }),
       },
