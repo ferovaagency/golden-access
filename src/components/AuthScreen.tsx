@@ -48,13 +48,14 @@ export default function AuthScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--ferova-canvas)] bg-[radial-gradient(circle_at_12%_8%,#f3e6dd_0,transparent_32%),radial-gradient(circle_at_88%_6%,#ece9ff_0,transparent_28%)] flex flex-col justify-center items-center p-4 text-slate-900 font-sans">
-      <div className="max-w-md w-full bg-[var(--ferova-surface)] border border-[var(--ferova-line)] rounded-[28px] p-8 space-y-6 shadow-2xl shadow-[#541014]/10 relative overflow-hidden">
-        <div className="absolute top-0 inset-x-0 h-1.5 bg-[var(--ferova-brand)]" />
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--fv-canvas)] p-4 font-sans text-[var(--fv-ink)] sm:p-6">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,.12),transparent_70%)]" />
+      <div className="relative w-full max-w-md space-y-6 rounded-[var(--fv-radius-xl)] border border-[var(--fv-line)] bg-[var(--fv-surface)] p-6 shadow-[var(--fv-shadow-lg)] sm:p-8">
+        <div className="absolute inset-x-0 top-0 h-1 rounded-t-[var(--fv-radius-xl)] bg-[var(--fv-brand)]" />
 
         <div className="space-y-2.5 text-center">
           <span className="mx-auto grid h-11 w-11 place-items-center rounded-2xl bg-[var(--ferova-brand)] font-display text-lg font-bold text-white shadow-sm">F</span>
-          <h1 className="text-2xl font-bold font-display tracking-tight text-[#1f1b16]">
+          <h1 className="text-balance text-2xl font-bold font-display tracking-tight text-[var(--fv-ink)]">
             Ferova One
           </h1>
           <p className="text-sm text-slate-500">
@@ -64,7 +65,7 @@ export default function AuthScreen() {
 
         <button
           onClick={handleGoogle}
-          className="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 font-semibold font-sans py-3 rounded-2xl transition cursor-pointer shadow-sm"
+          className="flex w-full items-center justify-center gap-3 rounded-[var(--fv-radius-md)] border border-[var(--fv-line)] bg-[var(--fv-surface)] py-3 font-sans font-semibold text-[var(--fv-ink)] shadow-sm transition-colors hover:border-blue-200 hover:bg-[var(--fv-tint)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fv-brand)] focus-visible:ring-offset-2"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path fill="#EA4335" d="M12 5.04c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24.5 12 .5c-4.7 0-8.75 2.69-10.72 6.61l3.99 3.09C6.21 7.15 8.87 5.04 12 5.04z" />
@@ -79,32 +80,45 @@ export default function AuthScreen() {
           <div className="flex-1 h-px bg-slate-200" />o<div className="flex-1 h-px bg-slate-200" />
         </div>
 
-        <form onSubmit={handleEmail} className="space-y-3">
-          <input
+        <form onSubmit={handleEmail} className="space-y-4">
+          <div className="space-y-1.5">
+            <label htmlFor="auth-email" className="text-xs font-semibold text-[var(--fv-ink-2)]">Correo de trabajo</label>
+            <input
+            id="auth-email"
+            name="email"
             type="email"
             required
+            autoComplete="email"
+            spellCheck={false}
             placeholder="correo@empresa.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-white border border-[var(--ferova-line)] rounded-2xl px-3 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[var(--ferova-brand)]"
+            className="w-full rounded-[var(--fv-radius-md)] border border-[var(--fv-line)] bg-[var(--fv-surface)] px-3 py-3 text-sm text-[var(--fv-ink)] placeholder:text-[var(--fv-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fv-brand)] focus-visible:ring-offset-1"
           />
-          <input
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="auth-password" className="text-xs font-semibold text-[var(--fv-ink-2)]">Contraseña</label>
+            <input
+            id="auth-password"
+            name="password"
             type="password"
             required
             minLength={6}
+            autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
             placeholder="Contraseña"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-white border border-[var(--ferova-line)] rounded-2xl px-3 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[var(--ferova-brand)]"
+            className="w-full rounded-[var(--fv-radius-md)] border border-[var(--fv-line)] bg-[var(--fv-surface)] px-3 py-3 text-sm text-[var(--fv-ink)] placeholder:text-[var(--fv-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fv-brand)] focus-visible:ring-offset-1"
           />
+          </div>
 
           {error && (
-            <p className="text-xs text-red-400 bg-red-950/30 border border-red-900/50 rounded p-2">
+            <p role="alert" className="rounded-[var(--fv-radius-xs)] border border-red-200 bg-[var(--fv-danger-soft)] p-2.5 text-xs text-[var(--fv-danger)]">
               {error}
             </p>
           )}
           {info && (
-            <p className="text-xs text-emerald-400 bg-emerald-950/30 border border-emerald-900/50 rounded p-2">
+            <p role="status" aria-live="polite" className="rounded-[var(--fv-radius-xs)] border border-emerald-200 bg-[var(--fv-success-soft)] p-2.5 text-xs text-[var(--fv-success)]">
               {info}
             </p>
           )}
@@ -112,7 +126,7 @@ export default function AuthScreen() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-[var(--ferova-brand)] hover:bg-[var(--ferova-brand-2)] text-white font-semibold py-3 rounded-2xl transition disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-[var(--fv-radius-md)] bg-[var(--fv-brand)] py-3 font-semibold text-white transition-colors hover:bg-[var(--fv-brand-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fv-brand)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
             {mode === 'signin' ? 'Iniciar sesión' : 'Crear cuenta'}
@@ -125,7 +139,7 @@ export default function AuthScreen() {
             setError(null);
             setInfo(null);
           }}
-          className="w-full text-sm text-slate-500 hover:text-[var(--ferova-brand)]"
+          className="w-full rounded-[var(--fv-radius-xs)] py-1 text-sm text-[var(--fv-muted)] transition-colors hover:text-[var(--fv-brand)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fv-brand)]"
         >
           {mode === 'signin'
             ? '¿No tienes cuenta? Regístrate'
@@ -137,6 +151,6 @@ export default function AuthScreen() {
           Mafe © 2026 · Bogotá D.C., Colombia
         </p>
       </div>
-    </div>
+    </main>
   );
 }

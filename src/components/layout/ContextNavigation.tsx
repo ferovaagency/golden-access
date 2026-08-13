@@ -25,7 +25,7 @@ export function ContextNavigation({ items, activeTab, onSelectItem, className = 
         return (
           <Fragment key={item.id}>
             {showGroupLabel && (
-              <span className={variant === 'vertical' ? 'block px-3 pb-1 pt-3 text-[9px] font-bold uppercase tracking-[0.16em] text-[#aaa49c]' : 'ml-2 mr-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#a39a8a] first:ml-0'}>
+              <span className={variant === 'vertical' ? 'block px-3 pb-1 pt-3 text-[9px] font-bold uppercase tracking-[0.16em] text-[var(--fv-subtle)]' : 'ml-2 mr-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--fv-subtle)] first:ml-0'}>
                 {item.group}
               </span>
             )}
@@ -36,7 +36,7 @@ export function ContextNavigation({ items, activeTab, onSelectItem, className = 
               className={`${variant === 'vertical' ? 'flex w-full items-center rounded-lg px-3 py-2 text-left text-xs font-medium' : 'rounded-[var(--ferova-radius-pill)] px-3.5 py-1.5 text-xs font-semibold font-display'} transition-colors ${
                 isActive
                   ? 'bg-blue-600 text-white shadow-sm'
-                  : variant === 'vertical' ? 'text-[#68625b] hover:bg-[var(--ferova-soft)] hover:text-[#1f1b16]' : 'bg-[var(--ferova-surface)] text-[#57524a] border border-[var(--ferova-line)] hover:border-[var(--ferova-brand)]/40 hover:text-[#1f1b16]'
+                : variant === 'vertical' ? 'text-[var(--fv-ink-2)] hover:bg-[var(--fv-soft)] hover:text-[var(--fv-ink)]' : 'bg-[var(--fv-surface)] text-[var(--fv-ink-2)] border border-[var(--fv-line)] hover:border-[var(--fv-brand)]/40 hover:text-[var(--fv-ink)]'
               }`}
             >
               {item.label}

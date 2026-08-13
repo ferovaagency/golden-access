@@ -30,7 +30,7 @@ export function PrimaryNavigation({ sections, activeSectionId, onSelectSection, 
             className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs font-semibold transition-colors ${
               isActive
                 ? 'bg-[var(--ferova-brand)] text-white shadow-sm'
-                : 'text-[#57524a] hover:bg-[var(--ferova-soft)] hover:text-[#1f1b16]'
+                : 'text-[var(--fv-ink-2)] hover:bg-[var(--fv-soft)] hover:text-[var(--fv-ink)]'
             }`}
           >
             <Icon className="h-4 w-4 shrink-0" />

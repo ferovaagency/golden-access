@@ -26,8 +26,8 @@ export function WorkspaceHeader({ user, onSignOut, mobileMenuOpen, onToggleMobil
             F
           </div>
           <div className="min-w-0">
-            <h1 className="truncate font-display text-base font-bold tracking-tight text-[#1f1b16]">Ferova One</h1>
-            <span className="hidden text-xs text-[#8a8377] sm:block">Tu sistema operativo de negocio</span>
+            <h1 className="truncate font-display text-base font-bold tracking-tight text-[var(--fv-ink)]">Ferova One</h1>
+            <span className="hidden text-xs text-[var(--fv-muted)] sm:block">Tu sistema operativo de negocio</span>
           </div>
         </div>
 
@@ -39,13 +39,14 @@ export function WorkspaceHeader({ user, onSignOut, mobileMenuOpen, onToggleMobil
               <UserIcon className="h-3.5 w-3.5 text-[var(--ferova-brand)]" />
             </div>
             <div className="hidden text-left text-[10px] leading-tight md:block">
-              <span className="block font-semibold text-[#1f1b16]">{displayName}</span>
-              <span className="block max-w-40 truncate font-mono text-[9px] text-[#a39a8a]">{user.email}</span>
+              <span className="block font-semibold text-[var(--fv-ink)]">{displayName}</span>
+              <span className="block max-w-40 truncate font-mono text-[9px] text-[var(--fv-subtle)]">{user.email}</span>
             </div>
             <button
               onClick={onSignOut}
               title="Cerrar sesión"
-              className="ml-1 rounded border border-[var(--ferova-line)] bg-[var(--ferova-soft)]/60 p-1.5 text-[#a39a8a] transition hover:text-[var(--ferova-brand)]"
+              aria-label="Cerrar sesión"
+              className="ml-1 rounded-[var(--fv-radius-xs)] border border-[var(--fv-line)] bg-[var(--fv-soft)]/60 p-1.5 text-[var(--fv-subtle)] transition-colors hover:text-[var(--fv-brand)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fv-brand)]"
             >
               <LogOut className="h-3.5 w-3.5" />
             </button>
@@ -53,7 +54,7 @@ export function WorkspaceHeader({ user, onSignOut, mobileMenuOpen, onToggleMobil
 
           <button
             onClick={onToggleMobileMenu}
-            className="rounded border border-[var(--ferova-line)] bg-[var(--ferova-surface)] p-2 text-[#8a8377] lg:hidden"
+            className="rounded-[var(--fv-radius-xs)] border border-[var(--fv-line)] bg-[var(--fv-surface)] p-2 text-[var(--fv-muted)] transition-colors hover:bg-[var(--fv-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fv-brand)] lg:hidden"
             aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}

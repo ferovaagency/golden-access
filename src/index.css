@@ -85,10 +85,13 @@
 
 body {
   font-family: var(--font-sans);
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: var(--fv-canvas);
+  color: var(--fv-ink);
   min-height: 100vh;
+  -webkit-tap-highlight-color: color-mix(in srgb, var(--fv-brand) 16%, transparent);
 }
+
+html { color-scheme: light; }
 
 * {
   box-sizing: border-box;
@@ -341,7 +344,7 @@ pre {
 
 /* Custom transitions */
 .transition-all-custom {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ============================================================
@@ -363,9 +366,9 @@ pre {
   --ferova-soft: var(--fv-soft);
   --ferova-line: var(--fv-line);
   --ferova-ai: var(--fv-ai);
-  --ferova-positive: #E3F4EB;
-  --ferova-warning: #F3EAD6;
-  --ferova-danger: #F7E3E4;
+  --ferova-positive: var(--fv-success-soft);
+  --ferova-warning: var(--fv-warning-soft);
+  --ferova-danger: var(--fv-danger-soft);
 
   --ferova-radius-control: var(--fv-radius-md);
   --ferova-radius-card: var(--fv-radius-lg);
@@ -419,8 +422,8 @@ pre {
    cuando VITE_FEROVA_UI_V2 esta encendido.
    ============================================================ */
 .ferova-v2-theme {
-  --ferova-ink: #1f1b16;
-  --ferova-ink-2: #3a352e;
+  --ferova-ink: var(--fv-ink);
+  --ferova-ink-2: var(--fv-ink-2);
 }
 
 .ferova-v2-theme .bg-white,
@@ -437,10 +440,10 @@ pre {
 .ferova-v2-theme .text-slate-900,
 .ferova-v2-theme .text-slate-800 { color: var(--ferova-ink) !important; }
 .ferova-v2-theme .text-slate-700 { color: var(--ferova-ink-2) !important; }
-.ferova-v2-theme .text-slate-600 { color: #57524a !important; }
-.ferova-v2-theme .text-slate-500 { color: #8a8377 !important; }
+.ferova-v2-theme .text-slate-600 { color: var(--fv-ink-2) !important; }
+.ferova-v2-theme .text-slate-500 { color: var(--fv-muted) !important; }
 .ferova-v2-theme .text-slate-400,
-.ferova-v2-theme .text-slate-300 { color: #a39a8a !important; }
+.ferova-v2-theme .text-slate-300 { color: var(--fv-subtle) !important; }
 .ferova-v2-theme .hover\:text-slate-900:hover { color: var(--ferova-ink) !important; }
 
 /* Insignias de IA (icono Sparkles/Bot sobre fondo claro): gold sobre lavanda, no borgona -- manual sec. 2. */
@@ -487,7 +490,7 @@ pre {
 }
 
 .ferova-v2-theme input::placeholder,
-.ferova-v2-theme textarea::placeholder { color: #8a8377; }
+.ferova-v2-theme textarea::placeholder { color: var(--fv-subtle); }
 
 .ferova-v2-theme table {
   border-collapse: separate;
@@ -499,7 +502,7 @@ pre {
 }
 
 .ferova-v2-theme th {
-  color: #6d665d;
+  color: var(--fv-muted);
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: .07em;
@@ -535,12 +538,17 @@ pre {
 .ferova-v2-theme .bg-\[\#181312\] { background-color: var(--ferova-surface) !important; }
 .ferova-v2-theme .border-\[\#2a2620\] { border-color: var(--ferova-line) !important; }
 .ferova-v2-theme .text-\[\#e8e3d8\],
-.ferova-v2-theme .text-white { color: var(--ferova-ink) !important; }
+.ferova-v2-theme .text-\[\#e8e3d8\] { color: var(--ferova-ink) !important; }
 .ferova-v2-theme .text-\[\#a39d8e\],
 .ferova-v2-theme .text-\[\#8a8377\] { color: var(--ferova-muted) !important; }
 .ferova-v2-theme .text-\[\#c9a961\] { color: var(--ferova-brand) !important; }
 .ferova-v2-theme .bg-\[\#c9a961\] { background-color: var(--ferova-brand) !important; }
 .ferova-v2-theme .hover\:bg-\[\#b09252\]:hover { background-color: var(--ferova-brand-2) !important; }
+
+.ferova-v2-theme :is([class*="bg-[#161412]"], [class*="bg-[#0f0e0c]"], [class*="bg-[#1c1916]"], [class*="bg-[#141812]"], [class*="bg-[#181312]"]) :is(.text-white, .text-\[\#e8e3d8\]),
+.ferova-v2-theme :is([class*="bg-[#161412]"], [class*="bg-[#0f0e0c]"], [class*="bg-[#1c1916]"], [class*="bg-[#141812]"], [class*="bg-[#181312]"]).text-white {
+  color: var(--fv-ink) !important;
+}
 
 @media (max-width: 640px) {
   .ferova-v2-theme :is(th, td) { padding: .625rem .75rem; }
