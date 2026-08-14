@@ -1,12 +1,31 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Loader2, Check } from 'lucide-react';
-import { listKpiEntries, upsertKpiEntry, type KpiEntry } from '../lib/projectKpisService';
 
 // Registro diario + cumplimiento POR PROYECTO. TOMA los KPIs que se crean en la
 // sección "KPIs" del proyecto (no los crea aquí); registra el valor diario y
-// recalcula solo semana/mes/año. Reemplaza al tablero global de Seguimiento.
+// recalcula solo semana/mes/año.
+//
+// POR QUÉ NO USA `project_kpi_entries`
+// Había dos sistemas de KPI que no se hablaban. Los KPIs del proyecto viven
+// como JSON dentro del cliente (`finance_clientes.kpis`), con ids tipo
+// `kpi_1784441708777` y su propio `historial` de fechas — que es de donde salen
+// la meta y el "actual" que se ven en las tarjetas. Este componente escribía en
+// las tablas `project_kpis`/`project_kpi_entries`, donde `kpi_id` es un UUID:
+// mandar `kpi_1784…` reventaba la escritura Y la lectura, así que el registro
+// diario no se guardaba nunca y el cumplimiento salía siempre vacío. Esas
+// tablas estaban en cero, sin usar.
+//
+// Ahora se escribe donde ya viven los datos: el `historial` del KPI. Un solo
+// sitio, y lo que registras aquí alimenta el "actual" y las tarjetas de arriba.
 
-export interface DailyKpiInput { id: string; nombre: string; meta: string; cadencia?: string }
+export interface DailyKpiHistorial { fecha: string; valor: number }
+export interface DailyKpiInput {
+  id: string;
+  nombre: string;
+  meta: string;
+  cadencia?: string;
+  historial?: DailyKpiHistorial[];
+}
 
 function isoDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -17,25 +36,29 @@ function startOfWeek(d: Date): Date {
 }
 const toNum = (s: string) => { const n = Number(String(s).replace(/[^0-9.-]/g, '')); return Number.isFinite(n) ? n : 0; };
 
-export default function ProjectDailyKpis({ clienteId, kpis }: { clienteId: string; kpis: DailyKpiInput[] }) {
-  const [entries, setEntries] = useState<KpiEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function ProjectDailyKpis({
+  kpis,
+  onRegistrar,
+}: {
+  kpis: DailyKpiInput[];
+  /** Guarda el valor del día en el historial del KPI (y con él, el "actual"). */
+  onRegistrar: (kpiId: string, fecha: string, valor: number) => Promise<void> | void;
+}) {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const loading = false;
 
   const today = isoDate(new Date());
   const yearStart = `${new Date().getFullYear()}-01-01`;
-  const kpiIds = kpis.map((k) => k.id);
-  const kpiIdsKey = kpiIds.join(',');
 
-  const reload = async () => {
-    setLoading(true);
-    try { setEntries(await listKpiEntries(kpiIds, yearStart)); }
-    catch { setEntries([]); }
-    finally { setLoading(false); }
-  };
-  // Recarga cuando cambia el proyecto o el conjunto de KPIs.
-  useEffect(() => { if (clienteId && kpiIds.length) void reload(); else { setEntries([]); setLoading(false); } /* eslint-disable-next-line */ }, [clienteId, kpiIdsKey]);
+  // Los registros salen del historial del propio KPI: misma fuente que la
+  // tarjeta de arriba, así que lo que se ve aquí y allí siempre coincide.
+  const entries = useMemo(
+    () => kpis.flatMap((k) => (k.historial || [])
+      .filter((h) => h.fecha >= yearStart)
+      .map((h) => ({ kpi_id: k.id, fecha: h.fecha, valor: Number(h.valor) || 0 }))),
+    [kpis, yearStart],
+  );
 
   const weekStart = useMemo(() => isoDate(startOfWeek(new Date())), []);
   const monthStart = useMemo(() => `${today.slice(0, 7)}-01`, [today]);
@@ -71,8 +94,8 @@ export default function ProjectDailyKpis({ clienteId, kpis }: { clienteId: strin
     const raw = drafts[kpiId];
     if (raw === undefined || raw === '') return;
     setSavingId(kpiId);
-    try { await upsertKpiEntry(kpiId, today, Number(raw)); await reload(); setDrafts((d) => ({ ...d, [kpiId]: '' })); }
-    catch { /* noop */ } finally { setSavingId(null); }
+    try { await onRegistrar(kpiId, today, Number(raw)); setDrafts((d) => ({ ...d, [kpiId]: '' })); }
+    catch { /* el aviso lo da la pantalla del proyecto */ } finally { setSavingId(null); }
   };
 
   return (

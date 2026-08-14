@@ -206,6 +206,42 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
     }));
   };
 
+  /**
+   * Registro del día: escribe el valor en el historial del KPI y GUARDA de
+   * inmediato.
+   *
+   * El resto de la pantalla se guarda al pulsar "Guardar y Sincronizar", pero un
+   * registro diario que se queda en memoria hasta que alguien se acuerde de
+   * pulsar un botón es un registro perdido — y era justo lo que pasaba.
+   */
+  const registrarKpiDelDia = async (kpiId: string, fecha: string, valor: number) => {
+    if (!selectedClientId) return;
+    const nextKpis = kpis.map((kpi) => {
+      if (kpi.id !== kpiId) return kpi;
+      const historial = (kpi.historial || []).filter((h) => h.fecha !== fecha);
+      const previo = (kpi.historial || []).filter((h) => h.fecha !== fecha).slice(-1)[0]?.valor;
+      const tendencia: ProjectKpi['tendencia'] = previo == null || valor === previo ? 'Estable' : valor > previo ? 'Subiendo' : 'Bajando';
+      // Un valor por día: volver a registrar hoy corrige, no duplica.
+      return { ...kpi, actual: String(valor), historial: [...historial, { fecha, valor }].slice(-24), tendencia };
+    });
+    setKpis(nextKpis);
+    try {
+      const updated = updateProjectClient(projectData.clientes, selectedClientId, {
+        marcaInfo: marcaConcepto,
+        responsable,
+        progreso: Number(progreso),
+        objectives,
+        kpis: nextKpis,
+        deliverables,
+      });
+      await onSaveClientes(updated);
+      setSuccessMsg('Registro del día guardado.');
+      setTimeout(() => setSuccessMsg(''), 2500);
+    } catch (err: any) {
+      toastErr(`No se pudo guardar el registro: ${errMsg(err)}`);
+    }
+  };
+
   // 3. Deliverables (Cumplimiento de Servicio)
   const addDeliverable = () => {
     if (!newDeliverableNombre.trim()) return;
@@ -278,7 +314,12 @@ export default function ProyectosAdmin({ projectData, onSaveClientes }: Proyecto
         </div>
       )}
 
-      {selectedClient && <ProjectDailyKpis clienteId={selectedClient.id} kpis={kpis} />}
+      {selectedClient && (
+        <ProjectDailyKpis
+          kpis={kpis}
+          onRegistrar={registrarKpiDelDia}
+        />
+      )}
 
       {selectedClient && <section className="rounded-lg border border-slate-200 bg-white p-4">
         <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-[10px] font-mono uppercase tracking-wider text-slate-500">Seguimiento operativo</p><p className="mt-1 text-sm font-semibold text-slate-900">Indicadores de {selectedClient.nombre}</p></div><span className="rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-semibold text-blue-700">{kpis.length} KPI{kpis.length === 1 ? '' : 's'} configurado{kpis.length === 1 ? '' : 's'}</span></div>
