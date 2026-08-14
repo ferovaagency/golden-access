@@ -448,6 +448,19 @@ export default function SmartPlanner() {
           className="mt-3 block w-full resize-none rounded-xl border border-[var(--line)] bg-slate-50 px-3 py-3 text-sm outline-none focus:border-blue-300 focus:bg-white min-h-28"
         />
         {importInfo && <p className="mt-2 text-[11px] text-blue-700">{importInfo}</p>}
+
+        <details className="mt-3 rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs text-slate-600">
+          <summary className="cursor-pointer font-semibold text-slate-700">¿Cómo traer mis tareas de Notion? (paso a paso)</summary>
+          <ol className="mt-2 list-decimal space-y-1 pl-4 leading-5">
+            <li>En Notion, abre tu base de datos de tareas.</li>
+            <li>Arriba a la derecha, menú <strong>···</strong> → <strong>Export</strong> (Exportar).</li>
+            <li>En “Export format” elige <strong>Markdown &amp; CSV</strong> (recomendado) o <strong>HTML</strong>. En “Include content” deja el default.</li>
+            <li>Descarga el archivo. Si viene en <strong>.zip</strong>, ábrelo: usa el archivo <strong>.csv</strong> o <strong>.md</strong> (Markdown &amp; CSV) o el <strong>.html</strong>.</li>
+            <li>Aquí pulsa <strong>“Subir archivo de Notion”</strong> y elige ese archivo. O abre el archivo, copia el texto y <strong>pégalo</strong> en el cuadro.</li>
+            <li>Pulsa <strong>Interpretar</strong>, revisa los borradores (corrige cliente, fecha o duración si hace falta) y confirma. ¡Listo!</li>
+          </ol>
+          <p className="mt-2 text-[11px] text-slate-400">Tip: no exportes como PDF para bases de datos — pierde la estructura. Markdown/CSV o HTML funcionan mejor.</p>
+        </details>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">
