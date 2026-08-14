@@ -195,6 +195,10 @@ Si no es una notificación de lead nuevo, pon es_lead=false y el resto null.` },
         fuente_url: parsed.link || null,
         notas: [parsed.resumen, parsed.ubicacion].filter(Boolean).join(' · ') || null,
         email_message_id: m.id,
+        // Taint: lo escribió la IA leyendo un correo (contenido no confiable).
+        // No se propaga a métricas ni al asistente hasta que un humano confirme.
+        origen: 'ia_email',
+        confirmada: false,
       }).select('*').single();
       if (insErr) { console.error('[sortlist-leads-scan] insert error', insErr); skipped++; continue; }
       inserted.push(ins);

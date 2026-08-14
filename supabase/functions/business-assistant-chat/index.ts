@@ -141,7 +141,9 @@ Deno.serve(async (req) => {
       admin.from("finance_service_profitability").select("servicio_nombre, ingresos_brutos, costos_directos, margen_bruto, ventas_count, horas_registradas").eq("user_id", accountId).order("margen_bruto", { ascending: false }).limit(12),
       admin.from("crm_growth_overview").select("*").maybeSingle(),
       admin.from("crm_resenas").select("plataforma, calificacion, resenador, respondida, detectada_en").eq("confirmada", true).order("detectada_en", { ascending: false }).limit(10),
-      admin.from("crm_oportunidades").select("nombre_contacto, empresa, canal_origen, estado, valor_estimado, moneda, siguiente_accion, memoria_resumen, memoria_updated_at").order("updated_at", { ascending: false }).limit(15),
+      // Sólo las confirmadas: una oportunidad que escribió la IA leyendo un
+      // correo no debe influir en el consejo hasta que un humano la valide.
+      admin.from("crm_oportunidades").select("nombre_contacto, empresa, canal_origen, estado, valor_estimado, moneda, siguiente_accion, memoria_resumen, memoria_updated_at").eq("confirmada", true).order("updated_at", { ascending: false }).limit(15),
       admin.from("finance_clientes").select("nombre, tipo, activo, progreso, responsable, objetivos, kpis, entregables").eq("user_id", accountId).order("nombre").limit(20),
       admin.from("finance_horas").select("fecha, cliente_id, servicio_id, horas, descripcion").eq("user_id", accountId).order("fecha", { ascending: false }).limit(30),
       admin.from("planner_tasks").select("title, priority, category, status, deadline, scheduled_for, client_ref, project_ref").eq("user_id", accountId).in("status", ["backlog", "scheduled", "postponed"]).order("deadline", { ascending: true, nullsFirst: false }).limit(30),
@@ -151,6 +153,25 @@ Deno.serve(async (req) => {
     ]);
 
     const isAdmin = !!isTeam && ["owner", "admin"].includes((isTeam as { rol?: string }).rol || "");
+
+    // Registro del agente: cada escritura que hace el asistente por su cuenta
+    // queda en audit_log. Sin esto, un gasto o una tarea aparecen en los datos
+    // sin que nadie pueda saber después si los escribió una persona o la IA —
+    // y esa duda es justamente la que hace que un dueño no confíe en el sistema.
+    const registrarAccion = (accion: string, entidad: string, descripcion: string, valor: unknown) => {
+      admin.from("audit_log").insert({
+        user_id: accountId,
+        entity_type: entidad,
+        actor: "asistente",
+        action: accion,
+        description: descripcion,
+        new_value: valor as Record<string, unknown>,
+        status: "aplicado",
+        resolved_at: new Date().toISOString(),
+      }).then(({ error }: { error: unknown }) => {
+        if (error) console.error("[business-assistant] audit_log", error);
+      });
+    };
     const memoriaScopeNote = isAdmin
       ? "Podés guardar en memoria 'global' (equipo) o 'privado' (solo esta persona)."
       : "IMPORTANTE: esta persona es colaboradora — SOLO podés guardar en su memoria PRIVADA (alcance 'privado'); nunca en la global.";
@@ -281,6 +302,7 @@ ${context}`,
             // Los colaboradores solo pueden escribir en su memoria privada.
             const finalScope = isAdmin ? scope : "privado";
             const id = await rememberKnowledge(admin, { title, content, scope: finalScope, userId, orgId }, apiKey);
+            if (id) registrarAccion("guardar_en_memoria", "ferova_knowledge", `El asistente guardó en memoria (${finalScope}) "${title}".`, { title, scope: finalScope });
             return id ? { ok: true, alcance: finalScope } : { ok: false, message: "No se pudo guardar en la memoria." };
           },
         }),
@@ -301,6 +323,7 @@ ${context}`,
             if (priority) row.priority = priority;
             if (typeof estimated_minutes === "number" && estimated_minutes > 0) row.estimated_minutes = Math.round(estimated_minutes);
             const { error } = await admin.from("planner_tasks").insert(row);
+            if (!error) registrarAccion("crear_tarea", "planner_task", `El asistente creó la tarea "${title}".`, row);
             return error ? { ok: false, message: error.message } : { ok: true, creado: "tarea" };
           },
         }),
@@ -331,6 +354,7 @@ ${context}`,
               monto,
               moneda: moneda === "USD" ? "USD" : "COP",
             });
+            if (!error) registrarAccion("registrar_gasto", "finance_pago_egreso", `El asistente registró un egreso de ${monto} ${moneda === "USD" ? "USD" : "COP"} por "${concepto}".`, { concepto, monto, categoria, moneda, fecha });
             return error ? { ok: false, message: error.message } : { ok: true, creado: "egreso" };
           },
         }),
@@ -356,6 +380,7 @@ ${context}`,
               horas,
               descripcion: descripcion || null,
             });
+            if (!error) registrarAccion("registrar_horas", "finance_horas", `El asistente registró ${horas} h${descripcion ? ` en "${descripcion}"` : ""}.`, { horas, descripcion, fecha });
             return error ? { ok: false, message: error.message } : { ok: true, creado: "horas", horas };
           },
         }),
@@ -410,6 +435,7 @@ ${context}`,
               recurrence_until: validUntil,
             }));
             const { error } = await admin.from("planner_blocks").insert(rows);
+            if (!error) registrarAccion("crear_bloque_protegido", "planner_block", `El asistente reservó ${rows.length} bloque(s) de "${titulo}" (${hora_inicio}-${hora_fin}).`, { titulo, hora_inicio, hora_fin, dias, fechas: rows.length });
             return error ? { ok: false, message: error.message } : { ok: true, creado: "bloque_protegido", cantidad: rows.length };
           },
         }),

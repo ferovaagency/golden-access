@@ -54,6 +54,11 @@ export interface Oportunidad {
   playbook_generated_at?: string | null;
   memoria_resumen?: string | null;
   memoria_updated_at?: string | null;
+  /** De dónde salió la fila. `ia_email` = la escribió la IA leyendo un correo. */
+  origen?: 'manual' | 'ia_email' | 'whatsapp' | null;
+  /** false = derivada de contenido externo, pendiente de que un humano la
+   *  valide. Hasta entonces no alimenta métricas ni al asistente. */
+  confirmada?: boolean | null;
 }
 
 export interface Interaccion {
@@ -588,6 +593,11 @@ export async function scanSortlistLeads(days = 30): Promise<{ inserted: number; 
   if (error) throw error;
   if (!data?.ok) throw new Error(data?.message || 'No se pudo escanear.');
   return data;
+}
+
+export async function confirmarOportunidad(id: string): Promise<void> {
+  const { error } = await db('crm_oportunidades').update({ confirmada: true }).eq('id', id);
+  if (error) throw new Error(`[crmService] confirmarOportunidad: ${error.message}`);
 }
 
 export async function confirmarResena(id: string): Promise<void> {

@@ -50,6 +50,7 @@ import {
   scanResenas,
   markResenaRespondida,
   confirmarResena,
+  confirmarOportunidad,
   Resena,
   listReviewSources,
   upsertReviewSource,
@@ -916,6 +917,15 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
     }
   };
 
+  const handleConfirmarOportunidad = async (o: Oportunidad) => {
+    try {
+      await confirmarOportunidad(o.id);
+      setOportunidades(oportunidades.map((x) => (x.id === o.id ? { ...x, confirmada: true } : x)));
+    } catch (err: any) {
+      toastErr(`Error confirmando: ${errMsg(err)}`);
+    }
+  };
+
   const handleConfirmarResena = async (r: Resena) => {
     try {
       await confirmarResena(r.id);
@@ -1402,6 +1412,19 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                         <div className="text-[#8a8377] font-mono text-[10px]">
                           {o.empresa || 'Sin empresa'} · {o.canal_origen}{o.telefono ? ` · ${o.telefono}` : ''}
                         </div>
+                        {o.confirmada === false && (
+                          <div className="mt-1.5 space-y-1.5">
+                            <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1.5 leading-snug">
+                              Extraída por IA de un correo. Verifica que sea real antes de confirmarla; hasta entonces no se usa en métricas ni en el asistente.
+                            </p>
+                            <button
+                              onClick={() => handleConfirmarOportunidad(o)}
+                              className="text-[10px] font-mono px-2 py-1 rounded border flex items-center gap-1 text-amber-700 border-amber-500/40 hover:bg-amber-500/10"
+                            >
+                              <CheckCircle2 className="w-3 h-3" /> Confirmar oportunidad
+                            </button>
+                          </div>
+                        )}
                         {(srv || valor != null) && (
                           <div className="text-slate-500 font-mono text-[10px] mt-1">
                             {srv && <span className="text-blue-600">{srv.nombre}</span>}

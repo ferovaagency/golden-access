@@ -57,11 +57,13 @@ export async function loadBIContext(admin: SupabaseClient, userId: string, isTea
     admin.from("finance_debt_payments").select("fecha, monto, finance_debts(moneda)").eq("user_id", userId).gte("fecha", since.slice(0, 10)),
     admin.from("finance_receivables").select("valor, moneda, estado").eq("user_id", userId),
     admin.from("finance_payables").select("valor, monto_pagado, moneda, estado").eq("user_id", userId),
+    // `confirmada`: lo que la IA dedujo de un correo no entra en las métricas
+    // hasta que un humano lo valide (mismo criterio en oportunidades y reseñas).
     isTeam
-      ? admin.from("crm_oportunidades").select("id, nombre_contacto, empresa, canal_origen, estado, valor_estimado, moneda, siguiente_accion, updated_at").order("updated_at", { ascending: false }).limit(50)
+      ? admin.from("crm_oportunidades").select("id, nombre_contacto, empresa, canal_origen, estado, valor_estimado, moneda, siguiente_accion, updated_at").eq("confirmada", true).order("updated_at", { ascending: false }).limit(50)
       : Promise.resolve({ data: [], error: null }),
     isTeam
-      ? admin.from("crm_resenas").select("id, plataforma, calificacion, respondida, detectada_en").order("detectada_en", { ascending: false }).limit(30)
+      ? admin.from("crm_resenas").select("id, plataforma, calificacion, respondida, detectada_en").eq("confirmada", true).order("detectada_en", { ascending: false }).limit(30)
       : Promise.resolve({ data: [], error: null }),
     admin.from("planner_tasks").select("id, title, status, priority, deadline, scheduled_for, postponed_count, completed_at, created_at").eq("user_id", userId).gte("created_at", since),
     admin.from("finance_config").select("trm, horas_objetivo_mes, meta_ventas_mensual, salario_propuesto").eq("user_id", userId).maybeSingle(),
