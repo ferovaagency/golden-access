@@ -358,6 +358,8 @@ export type Database = {
           booking_calendar_url: string | null
           ciudad: string | null
           created_at: string
+          deletion_requested_at: string | null
+          deletion_scheduled_for: string | null
           dias_laborales: number[]
           horario_fin: string
           horario_inicio: string
@@ -375,6 +377,8 @@ export type Database = {
           booking_calendar_url?: string | null
           ciudad?: string | null
           created_at?: string
+          deletion_requested_at?: string | null
+          deletion_scheduled_for?: string | null
           dias_laborales?: number[]
           horario_fin?: string
           horario_inicio?: string
@@ -392,6 +396,8 @@ export type Database = {
           booking_calendar_url?: string | null
           ciudad?: string | null
           created_at?: string
+          deletion_requested_at?: string | null
+          deletion_scheduled_for?: string | null
           dias_laborales?: number[]
           horario_fin?: string
           horario_inicio?: string
@@ -888,6 +894,7 @@ export type Database = {
       crm_resenas: {
         Row: {
           calificacion: number | null
+          confirmada: boolean
           created_at: string
           detectada_en: string
           email_from: string | null
@@ -895,6 +902,7 @@ export type Database = {
           email_subject: string | null
           id: string
           link: string | null
+          origen: string
           plataforma: string
           resenador: string | null
           respondida: boolean
@@ -903,6 +911,7 @@ export type Database = {
         }
         Insert: {
           calificacion?: number | null
+          confirmada?: boolean
           created_at?: string
           detectada_en?: string
           email_from?: string | null
@@ -910,6 +919,7 @@ export type Database = {
           email_subject?: string | null
           id?: string
           link?: string | null
+          origen?: string
           plataforma: string
           resenador?: string | null
           respondida?: boolean
@@ -918,6 +928,7 @@ export type Database = {
         }
         Update: {
           calificacion?: number | null
+          confirmada?: boolean
           created_at?: string
           detectada_en?: string
           email_from?: string | null
@@ -925,6 +936,7 @@ export type Database = {
           email_subject?: string | null
           id?: string
           link?: string | null
+          origen?: string
           plataforma?: string
           resenador?: string | null
           respondida?: boolean
@@ -2248,6 +2260,76 @@ export type Database = {
         }
         Relationships: []
       }
+      organization_members: {
+        Row: {
+          created_at: string
+          org_id: string
+          rol: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          org_id: string
+          rol?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          org_id?: string
+          rol?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          comparte_por_defecto: boolean
+          created_at: string
+          created_by: string | null
+          data_user_id: string | null
+          id: string
+          invite_email: string | null
+          nombre: string
+          parent_org_id: string | null
+        }
+        Insert: {
+          comparte_por_defecto?: boolean
+          created_at?: string
+          created_by?: string | null
+          data_user_id?: string | null
+          id?: string
+          invite_email?: string | null
+          nombre: string
+          parent_org_id?: string | null
+        }
+        Update: {
+          comparte_por_defecto?: boolean
+          created_at?: string
+          created_by?: string | null
+          data_user_id?: string | null
+          id?: string
+          invite_email?: string | null
+          nombre?: string
+          parent_org_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organizations_parent_org_id_fkey"
+            columns: ["parent_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       paddle_webhook_events: {
         Row: {
           event_id: string
@@ -3015,6 +3097,32 @@ export type Database = {
         }
         Relationships: []
       }
+      user_active_org: {
+        Row: {
+          org_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          org_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          org_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_active_org_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_fiscal_profile: {
         Row: {
           country: string
@@ -3193,7 +3301,19 @@ export type Database = {
     Functions: {
       admin_ai_usage_overview: { Args: { p_days?: number }; Returns: Json }
       admin_subscriptions_overview: { Args: never; Returns: Json }
+      can_access_account: { Args: { owner: string }; Returns: boolean }
+      can_admin_org: { Args: { target: string }; Returns: boolean }
       complete_past_crm_citas: { Args: never; Returns: undefined }
+      create_organization: {
+        Args: {
+          p_comparte_por_defecto?: boolean
+          p_invite_email?: string
+          p_nombre: string
+          p_parent_org_id?: string
+          p_vincular_mi_cuenta?: boolean
+        }
+        Returns: string
+      }
       founder_slots_taken: { Args: never; Returns: number }
       is_collaborator_of: { Args: { owner: string }; Returns: boolean }
       is_team_member: { Args: never; Returns: boolean }
@@ -3211,6 +3331,18 @@ export type Database = {
           similarity: number
           source: string
           title: string
+        }[]
+      }
+      my_accessible_org_ids: {
+        Args: never
+        Returns: {
+          id: string
+        }[]
+      }
+      org_descendants: {
+        Args: { root: string }
+        Returns: {
+          id: string
         }[]
       }
       roll_forward_missed_planner_tasks: { Args: never; Returns: undefined }
