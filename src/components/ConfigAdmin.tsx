@@ -4,6 +4,7 @@ import { convertToCop } from '../lib/calculations';
 import { fetchOfficialTrm } from '../lib/financeService';
 import { Settings, Save, RefreshCw, FolderSync, Clipboard, Landmark, Route, ShieldCheck, Download, AlertTriangle } from 'lucide-react';
 import { copyText } from '../lib/clipboard';
+import { downloadPlantillaCargaInicial } from '../lib/plantillaCargaInicial';
 import { supabase } from '../lib/supabase';
 import { requestAccountDeletion, cancelAccountDeletion, ACCOUNT_DELETION_GRACE_DAYS } from '../lib/businessProfileService';
 import FiscalProfileSection from './FiscalProfileSection';
@@ -641,6 +642,29 @@ export default function ConfigAdmin({
                   📋 Planilla de "{copiedStatus}" copiada. ¡Pégala en Excel!
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Carga inicial: montar un negocio nuevo de una sentada */}
+          <div className="bg-white border border-slate-200 rounded-lg overflow-hidden pb-5">
+            <div className="bg-white/[0.02] border-b border-slate-200 px-5 py-3.5">
+              <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold flex items-center gap-2">
+                <Download className="w-4 h-4 text-blue-500" /> Plantilla de carga inicial
+              </h3>
+            </div>
+            <div className="px-5 pt-4">
+              <p className="text-xs text-slate-600 leading-relaxed mb-3">
+                Un libro de Excel con una hoja por cosa —clientes, productos y servicios— con los
+                encabezados que el sistema espera y una explicación de qué va en cada columna. Se llena
+                una vez, se guarda cada hoja como CSV y se sube en su pestaña.
+              </p>
+              <button
+                type="button"
+                onClick={downloadPlantillaCargaInicial}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                <Download className="w-3.5 h-3.5" /> Descargar plantilla (Excel)
+              </button>
             </div>
           </div>
 
