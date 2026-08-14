@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Building2, Loader2, Network, Plus, Share2 } from 'lucide-react';
+import { Building2, Loader2, Network, Plus, Share2, UserPlus, X } from 'lucide-react';
 import {
   listMyOrganizations, createOrganization, setOrganizationSharing,
-  type Organization,
+  listOrganizationMembers, shareOrganization, revokeOrganizationMember, cancelOrganizationInvite,
+  type Organization, type OrganizationMember,
 } from '../lib/organizationsService';
 import { useToast, errMsg } from './ui/toast';
 
@@ -73,6 +74,40 @@ export default function OrganizationsManager() {
       toastOk('Empresa añadida. Se enlazará cuando su fundador se registre con ese correo.');
       reload();
     } catch (e: any) { toastErr(`No se pudo añadir: ${errMsg(e)}`); } finally { setSaving(false); }
+  };
+
+  // --- Personas con acceso a una empresa ---
+  const [gestionando, setGestionando] = useState<Organization | null>(null);
+  const [miembros, setMiembros] = useState<OrganizationMember[] | null>(null);
+  const [nuevoEmail, setNuevoEmail] = useState('');
+  const [nuevoRol, setNuevoRol] = useState<'admin' | 'colaborador'>('colaborador');
+
+  const abrirPersonas = async (org: Organization) => {
+    setGestionando(org); setMiembros(null); setNuevoEmail('');
+    try { setMiembros(await listOrganizationMembers(org.id)); }
+    catch (e: any) { toastErr(`No se pudo cargar quién tiene acceso: ${errMsg(e)}`); }
+  };
+
+  const compartir = async () => {
+    if (!gestionando || !nuevoEmail.trim()) { toastErr('Escribe el correo de la persona.'); return; }
+    setSaving(true);
+    try {
+      const resultado = await shareOrganization(gestionando.id, nuevoEmail, nuevoRol);
+      toastOk(resultado === 'agregado'
+        ? 'Listo: ya puede entrar a esta empresa desde su selector.'
+        : 'Invitación guardada: entrará sola cuando se registre con ese correo.');
+      setNuevoEmail('');
+      setMiembros(await listOrganizationMembers(gestionando.id));
+    } catch (e: any) { toastErr(`No se pudo compartir: ${errMsg(e)}`); } finally { setSaving(false); }
+  };
+
+  const quitarAcceso = async (m: OrganizationMember) => {
+    if (!gestionando) return;
+    try {
+      if (m.userId) await revokeOrganizationMember(gestionando.id, m.userId);
+      else await cancelOrganizationInvite(gestionando.id, m.email);
+      setMiembros(await listOrganizationMembers(gestionando.id));
+    } catch (e: any) { toastErr(`No se pudo quitar: ${errMsg(e)}`); }
   };
 
   const toggleCompartir = async (org: Organization) => {
@@ -151,6 +186,13 @@ export default function OrganizationsManager() {
                   </span>
                 </span>
                 <button
+                  onClick={() => abrirPersonas(o)}
+                  title="Dar acceso a esta empresa a otras personas"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1 text-[10px] font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+                >
+                  <UserPlus className="h-3 w-3" /> Personas
+                </button>
+                <button
                   onClick={() => toggleCompartir(o)}
                   title="Si está activo, lo que se escriba en esta empresa alimenta el cerebro del holding por defecto"
                   className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2 py-1 text-[10px] font-medium transition ${
@@ -191,9 +233,88 @@ export default function OrganizationsManager() {
           </button>
 
           <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-            El fundador de cada empresa entra con su propio correo y sólo ve lo suyo. No lo agregues al
-            equipo interno de Ferova: eso le daría acceso al CRM comercial y a la memoria compartida.
+            El fundador de cada empresa entra con su propio correo y sólo ve lo suyo. Con "Personas" le
+            das acceso a alguien más. No lo agregues al equipo interno de Ferova: eso le daría acceso al
+            CRM comercial y a la memoria compartida.
           </p>
+
+          {gestionando && (
+            <div
+              className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/40 p-3"
+              role="dialog" aria-modal="true" aria-label={`Personas con acceso a ${gestionando.nombre}`}
+              onClick={(e) => { if (e.target === e.currentTarget) setGestionando(null); }}
+            >
+              <div className="my-8 w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl">
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Quién puede entrar a {gestionando.nombre}</p>
+                    <p className="text-[11px] text-slate-500">
+                      Estas personas verán esta empresa en su selector, con sus datos. No verán las demás
+                      empresas del holding.
+                    </p>
+                  </div>
+                  <button type="button" onClick={() => setGestionando(null)} aria-label="Cerrar" className="text-slate-500 hover:text-slate-900"><X className="h-4 w-4" /></button>
+                </div>
+
+                {miembros === null ? (
+                  <div className="flex items-center gap-2 py-4 text-xs text-slate-500"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Cargando…</div>
+                ) : (
+                  <ul className="mb-3 divide-y divide-slate-100 rounded-lg border border-slate-200">
+                    {miembros.length === 0 && <li className="px-3 py-3 text-xs text-slate-500">Todavía nadie más.</li>}
+                    {miembros.map((m) => (
+                      <li key={`${m.email}-${m.estado}`} className="flex items-center gap-2 px-3 py-2">
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-xs text-slate-800">{m.email}</span>
+                          <span className="block text-[10px] text-slate-400">
+                            {m.rol === 'owner' ? 'Dueño' : m.rol === 'admin' ? 'Administra la empresa' : 'Ve y trabaja en la empresa'}
+                            {m.estado === 'invitado' && ' · pendiente de registrarse'}
+                          </span>
+                        </span>
+                        {m.rol !== 'owner' && (
+                          <button
+                            onClick={() => quitarAcceso(m)}
+                            className="shrink-0 rounded-lg border border-slate-200 px-2 py-1 text-[10px] font-medium text-slate-600 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                          >
+                            Quitar
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
+                  <input
+                    value={nuevoEmail}
+                    onChange={(e) => setNuevoEmail(e.target.value)}
+                    placeholder="Correo de la persona"
+                    type="email"
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-xs"
+                  />
+                  <select
+                    value={nuevoRol}
+                    onChange={(e) => setNuevoRol(e.target.value as 'admin' | 'colaborador')}
+                    aria-label="Rol"
+                    className="rounded-lg border border-slate-200 px-2 py-2 text-xs text-slate-700"
+                  >
+                    <option value="colaborador">Trabaja en la empresa</option>
+                    <option value="admin">La administra</option>
+                  </select>
+                  <button
+                    onClick={compartir}
+                    disabled={saving}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                  >
+                    {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UserPlus className="h-3.5 w-3.5" />} Dar acceso
+                  </button>
+                </div>
+                <p className="mt-2 text-[10px] leading-relaxed text-slate-500">
+                  Si la persona todavía no tiene cuenta, queda invitada y entra sola al registrarse con ese
+                  correo. "La administra" además le deja dar acceso a otros.
+                </p>
+              </div>
+            </div>
+          )}
         </>
       )}
     </section>

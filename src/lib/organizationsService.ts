@@ -79,6 +79,57 @@ export async function createOrganization(input: {
   return data;
 }
 
+// --- Personas con acceso a una organización ---------------------------------
+
+export interface OrganizationMember {
+  userId: string | null;
+  email: string;
+  rol: 'owner' | 'admin' | 'colaborador';
+  /** `invitado` = todavía no tiene cuenta; entra sola al registrarse. */
+  estado: 'activo' | 'invitado';
+}
+
+/** Cliente tipado laxo para las RPC: los tipos generados no conocen estas
+ *  funciones hasta que Lovable los regenera. Se invoca como método sobre el
+ *  cliente a propósito (extraer `supabase.rpc` pierde el `this`). */
+function rpc<T>(fn: string, args: Record<string, unknown>) {
+  const client = supabase as unknown as {
+    rpc: (name: string, params: Record<string, unknown>) => PromiseLike<{ data: T | null; error: { message: string } | null }>;
+  };
+  return client.rpc(fn, args);
+}
+
+export async function listOrganizationMembers(orgId: string): Promise<OrganizationMember[]> {
+  const { data, error } = await rpc<Array<{ user_id: string | null; email: string; rol: string; estado: string }>>(
+    'list_organization_members', { p_org_id: orgId },
+  );
+  if (error) throw new Error(`[organizationsService] miembros: ${error.message}`);
+  return (data ?? []).map((r) => ({
+    userId: r.user_id,
+    email: r.email,
+    rol: r.rol as OrganizationMember['rol'],
+    estado: r.estado as OrganizationMember['estado'],
+  }));
+}
+
+/** Da acceso a una persona. Si ya tiene cuenta entra de inmediato; si no, queda
+ *  invitada y entra sola cuando se registre con ese correo. */
+export async function shareOrganization(orgId: string, email: string, rol: 'admin' | 'colaborador'): Promise<'agregado' | 'invitado'> {
+  const { data, error } = await rpc<string>('share_organization', { p_org_id: orgId, p_email: email, p_rol: rol });
+  if (error) throw new Error(error.message);
+  return (data as 'agregado' | 'invitado') ?? 'invitado';
+}
+
+export async function revokeOrganizationMember(orgId: string, userId: string): Promise<void> {
+  const { error } = await rpc<null>('revoke_organization_member', { p_org_id: orgId, p_user_id: userId });
+  if (error) throw new Error(error.message);
+}
+
+export async function cancelOrganizationInvite(orgId: string, email: string): Promise<void> {
+  const { error } = await db('organization_invites').delete().eq('org_id', orgId).eq('email', email.toLowerCase());
+  if (error) throw new Error(`[organizationsService] invitación: ${error.message}`);
+}
+
 export async function setOrganizationSharing(orgId: string, comparte: boolean): Promise<void> {
   const { error } = await db('organizations')
     .update({ comparte_por_defecto: comparte })
