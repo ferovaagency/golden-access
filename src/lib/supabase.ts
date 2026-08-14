@@ -12,6 +12,7 @@ import { supabase } from '../integrations/supabase/client';
 import { lovable } from '../integrations/lovable/index';
 import type { PlanId } from './planService';
 import { db } from './db';
+import { subscriptionGrantsAccess } from './accessRules';
 
 export { supabase };
 export type AuthUser = User;
@@ -221,8 +222,8 @@ export const resolveAccess = async (userId: string, email: string): Promise<{ ha
     .limit(1)
     .maybeSingle();
   if (subError) console.error('[supabase] resolveAccess subscription error:', subError);
-  if (sub && !(sub.expires_at && new Date(sub.expires_at) < new Date())) {
-    return { hasPaid: true, plan: (sub.plan || 'financiero') as PlanId };
+  if (subscriptionGrantsAccess(sub)) {
+    return { hasPaid: true, plan: (sub!.plan || 'financiero') as PlanId };
   }
 
   if (email) {

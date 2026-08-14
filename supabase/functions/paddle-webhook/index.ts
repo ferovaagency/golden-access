@@ -122,9 +122,17 @@ Deno.serve(async (req) => {
     return json({ ok: true, status: 'active' });
   }
 
-  // Cancelación: acota por la suscripción concreta y, si no viene, por el usuario.
+  // Cancelación: se cancela por la suscripción Y por el usuario cuando ambos
+  // vienen, no sólo por la primera que aparezca.
+  //
+  // Por qué: un mismo usuario puede acabar con DOS filas activas, porque
+  // `transaction.completed` guarda el id de la transacción en provider_order_id
+  // y `subscription.activated` guarda el de la suscripción. Si al cancelar sólo
+  // se busca por el id de la suscripción, la fila creada por la transacción se
+  // queda en 'active' — y la persona conserva el acceso después de cancelar.
   let query = admin.from('user_subscriptions').update({ status: 'cancelled' }).eq('provider', 'paddle');
-  if (subscriptionId) query = query.eq('provider_order_id', subscriptionId);
+  if (subscriptionId && userId) query = query.or(`provider_order_id.eq.${subscriptionId},user_id.eq.${userId}`);
+  else if (subscriptionId) query = query.eq('provider_order_id', subscriptionId);
   else if (userId) query = query.eq('user_id', userId);
   else return await fail('Evento de cancelacion sin identificadores.', 400);
   const { error: updateError } = await query;
