@@ -8,7 +8,7 @@ import { db } from '../lib/db';
 import { trackActivationOnce } from '../lib/analytics';
 import type { FinancialMetrics } from '../lib/calculations';
 import { getSupabaseFunctionUrl, SUPABASE_PUBLISHABLE_KEY } from '../integrations/supabase/client';
-import { Conversation, ConversationContent } from './ai-elements/conversation';
+import { Conversation, ConversationContent, ConversationScrollButton } from './ai-elements/conversation';
 import { Message, MessageContent, MessageResponse } from './ai-elements/message';
 import { PromptInput, PromptInputFooter, PromptInputSubmit, PromptInputTextarea } from './ai-elements/prompt-input';
 import { Shimmer } from './ai-elements/shimmer';
@@ -231,6 +231,7 @@ export default function AISidebar({ user, collapsed, onToggle, width, onResize, 
             {status === 'submitted' && <Shimmer>Pensando con datos del negocio…</Shimmer>}
             {error && <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error.message}</p>}
           </ConversationContent>
+          <ConversationScrollButton />
         </Conversation>
 
         <div className="pb-3">
