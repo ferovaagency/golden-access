@@ -97,9 +97,32 @@ export interface PlannerTask {
   recurrence_until: string | null;
   sync_to_google_calendar: boolean;
   google_calendar_event_id: string | null;
+  /** Quién debe hacerla, entre las personas con acceso a esta cuenta. */
+  responsable_user_id: string | null;
+  /** Quién la creó. Lo llena la base en el INSERT. */
+  created_by: string | null;
 }
 
 export interface PlannerClient { id: string; nombre: string; }
+
+/** Persona con acceso a la cuenta activa: sirve para elegir responsable. */
+export interface AccountPerson { user_id: string; email: string; rol: string; }
+
+/** Tarea abierta de cualquiera de las empresas alcanzables, con su empresa. */
+export interface TareaDeEmpresa {
+  id: string;
+  account_id: string;
+  empresa: string;
+  title: string;
+  status: PlannerTaskStatus;
+  priority: PlannerPriority;
+  category: PlannerCategory;
+  deadline: string | null;
+  scheduled_for: string | null;
+  estimated_minutes: number | null;
+  responsable_user_id: string | null;
+  responsable_email: string | null;
+}
 export interface PlannerServiceOption { id: string; nombre: string; }
 
 export interface PlannerBlock {
@@ -443,6 +466,27 @@ export const plannerService = {
       .update({ actual_minutes: acumulado + enCurso, started_at: null })
       .eq('id', id);
     if (error) throw error;
+  },
+  /** Personas con acceso a la cuenta activa (para asignar responsable). */
+  async listAccountPeople(): Promise<AccountPerson[]> {
+    const { data, error } = await (supabase as any).rpc('list_account_people');
+    if (error) { log.error(error); return []; }
+    return (data || []) as AccountPerson[];
+  },
+  async setResponsable(id: string, responsableUserId: string | null) {
+    const { error } = await anyDb().from('planner_tasks').update({ responsable_user_id: responsableUserId }).eq('id', id);
+    if (error) throw error;
+  },
+  /**
+   * Tareas abiertas de TODAS las empresas alcanzables, con el nombre de cada
+   * una. Va por función de base a propósito: desde el navegador la RLS devuelve
+   * sólo la cuenta activa —el resto de la aplicación cuenta con eso— y ésta es
+   * la excepción explícita y acotada para la vista del holding.
+   */
+  async listTasksAllCompanies(): Promise<TareaDeEmpresa[]> {
+    const { data, error } = await (supabase as any).rpc('planner_tasks_todas_las_empresas');
+    if (error) { log.error(error); return []; }
+    return (data || []) as TareaDeEmpresa[];
   },
   /** Cambia el estado de una tarea directamente (usado por el kanban al arrastrar). */
   async setStatus(id: string, status: PlannerTaskStatus) {

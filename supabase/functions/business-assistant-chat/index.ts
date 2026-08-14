@@ -319,7 +319,11 @@ ${context}`,
             },
           }),
           execute: async ({ title, priority, estimated_minutes }) => {
-            const row: Record<string, unknown> = { user_id: accountId, title };
+            // `created_by` explícito: la base lo llenaría con auth.uid(), que
+            // aquí es nulo porque las edge functions usan service_role. Se
+            // guarda quién PIDIÓ la tarea, que es la respuesta útil a "¿quién
+            // creó esto?".
+            const row: Record<string, unknown> = { user_id: accountId, title, created_by: userId };
             if (priority) row.priority = priority;
             if (typeof estimated_minutes === "number" && estimated_minutes > 0) row.estimated_minutes = Math.round(estimated_minutes);
             const { error } = await admin.from("planner_tasks").insert(row);
