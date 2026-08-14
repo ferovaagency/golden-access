@@ -22,7 +22,7 @@ export type AuthUser = User;
 // se lee desde la base de datos; hacerlo convertiría un XSS en acceso a Drive,
 // Gmail, Calendar y Sheets. La persistencia segura se hará desde Edge Functions.
 // ============================================================
-const GOOGLE_SCOPES = [
+export const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/spreadsheets',
   'https://www.googleapis.com/auth/drive.file',
   'https://www.googleapis.com/auth/gmail.readonly',
@@ -51,8 +51,21 @@ const setEphemeralGoogleToken = (token: string | null) => {
   cachedAccessToken = token;
 };
 
+let conexionGoogleRegistrada = false;
+
 const captureGoogleProviderToken = (session: Session | null) => {
-  if (session?.provider_token) setEphemeralGoogleToken(session.provider_token);
+  if (!session?.provider_token) return;
+  setEphemeralGoogleToken(session.provider_token);
+  // Dejar constancia de que la conexión ocurrió. El token sigue viviendo SÓLO
+  // en memoria, pero sin este registro la aplicación olvidaba en cada recarga
+  // que habías conectado y mostraba "sin conectar" para siempre.
+  // Import diferido: googleConnectionService importa de aquí (los scopes) y
+  // hacerlo arriba crearía un ciclo entre los dos módulos.
+  if (conexionGoogleRegistrada) return;
+  conexionGoogleRegistrada = true;
+  import('./googleConnectionService')
+    .then((m) => m.recordGoogleConnected(session.user?.email ?? null))
+    .catch(() => { conexionGoogleRegistrada = false; });
 };
 
 export const getAccessToken = (): string | null => cachedAccessToken;

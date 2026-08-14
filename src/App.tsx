@@ -618,12 +618,14 @@ function AppInner() {
       { id: 'equilibrioServicio', label: 'Por servicio', hint: 'Margen unitario', group: 'Finanzas' as const },
       { id: 'iva', label: 'IVA', hint: 'Control tributario', group: 'Finanzas' as const },
       { id: 'alertas', label: 'Alertas', hint: 'Riesgos y topes', group: 'Finanzas' as const },
+      // Metas de MRR y pasarelas con sus comisiones: es dinero, no pipeline.
+      // Estuvo en Ventas y ahí no era su sitio.
+      { id: 'kpisOperativos', label: 'Seguimiento', hint: 'Metas de MRR, prospección y pasarelas', group: 'Finanzas' as const },
       ] : []),
     ] },
     { id: 'sales', label: 'Ventas', icon: Grid2X2, items: [
       ...(modules.crm_ventas ? [{ id: 'ventas-crm', label: 'CRM', hint: 'Pipeline y oportunidades' }] : []),
       ...(modules.marketing_roi ? [{ id: 'marketingRoi', label: 'Marketing ROI', hint: 'Campañas y calculadora' }] : []),
-      { id: 'kpisOperativos', label: 'Seguimiento', hint: 'Metas de prospección, MRR y pasarelas' },
       ...CRM_GROWTH_TABS,
     ] },
     { id: 'settings', label: 'Configuración', icon: Settings, items: [

@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { fetchGoogleConnection, type GoogleConnection } from '../lib/googleConnectionService';
 import { Calendar, FileSpreadsheet, Mail, MessageSquare, Sparkles, CheckCircle2, ArrowRight, Loader2 } from 'lucide-react';
 
 interface Props {
@@ -26,6 +28,14 @@ function StatusPill({ on, labelOn = 'Conectado', labelOff = 'Sin conectar' }: { 
 }
 
 export default function IntegracionesView({ hasGoogleToken, connectingGoogle, isTeam, onConnectGoogle, onNavigate }: Props) {
+  // La conexión guardada: `hasGoogleToken` sólo es cierto mientras dura el token
+  // en memoria, así que al recargar la página la pantalla decía "sin conectar"
+  // aunque la persona hubiera conectado hace un minuto.
+  const [conexion, setConexion] = useState<GoogleConnection | null>(null);
+  useEffect(() => { fetchGoogleConnection().then(setConexion).catch(() => setConexion(null)); }, [hasGoogleToken]);
+  const conectadoAlgunaVez = !!conexion?.connected;
+  const necesitaReconectar = conectadoAlgunaVez && !hasGoogleToken;
+
   return (
     <div className="mx-auto max-w-3xl space-y-6 text-slate-900">
       <header className="space-y-1">
@@ -43,8 +53,15 @@ export default function IntegracionesView({ hasGoogleToken, connectingGoogle, is
               <p className="text-xs text-slate-500">Calendar, Sheets, Drive y Gmail — una sola conexión.</p>
             </div>
           </div>
-          <StatusPill on={hasGoogleToken} />
+          <StatusPill on={hasGoogleToken || conectadoAlgunaVez} />
         </div>
+        {necesitaReconectar && (
+          <p className="border-b border-slate-100 bg-amber-50 px-5 py-2.5 text-xs leading-relaxed text-amber-800">
+            Conectado como <strong>{conexion?.connected_email || 'tu cuenta de Google'}</strong>. Por seguridad no
+            guardamos el token, así que al volver a entrar hay que autorizar de nuevo para hacer operaciones
+            (una vez por sesión).
+          </p>
+        )}
 
         <div className="grid gap-3 p-5 sm:grid-cols-2">
           <Feature icon={<Calendar className="h-4 w-4 text-blue-600" />} title="Calendar" desc="Agenda diagnósticos y citas; se sincronizan a tu calendario." />
