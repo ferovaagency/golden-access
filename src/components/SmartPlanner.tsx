@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Sparkles, Wand2, Loader2, Check, Play, Clock, Trash2, ChevronLeft, ChevronRight, Sunrise, AlertTriangle, Lightbulb, TrendingUp, Info, Lock, Edit2, X, CalendarDays, Columns3, List, LayoutGrid, SlidersHorizontal } from 'lucide-react';
+import { Sparkles, Wand2, Loader2, Check, Play, Pause, Clock, Trash2, ChevronLeft, ChevronRight, Sunrise, AlertTriangle, Lightbulb, TrendingUp, Info, Lock, Edit2, X, CalendarDays, Columns3, List, LayoutGrid, SlidersHorizontal } from 'lucide-react';
 import { usePlanner } from '../hooks/usePlanner';
 import { plannerService, type PlannerBlock, type PlannerCategory, type PlannerDraft, type PlannerEnergy, type PlannerTask } from '../lib/plannerService';
 import { DayClientProgress } from './planner/DayClientProgress';
@@ -401,11 +401,16 @@ export default function SmartPlanner() {
             <div className="shrink-0">
               {topTask.status === 'in_progress' && topTask.started_at ? (
                 <div className="flex items-center gap-2">
-                  <LiveTimer startedAt={topTask.started_at} estimatedMinutes={topTask.estimated_minutes} />
+                  <LiveTimer startedAt={topTask.started_at} estimatedMinutes={topTask.estimated_minutes} acumuladoMin={topTask.actual_minutes} />
+                  <button onClick={() => p.pauseTask(topTask.id)} className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">Pausar</button>
                   <button onClick={() => handleComplete(topTask.id)} className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">Finalizar</button>
                 </div>
               ) : (
-                <button onClick={() => p.startTask(topTask.id)} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">▶ Iniciar ahora</button>
+                <button onClick={() => p.startTask(topTask.id)} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+                  {/* Con tiempo acumulado no es "iniciar": es continuar donde se
+                      dejó, y decirlo evita el miedo a perder lo ya trabajado. */}
+                  ▶ {topTask.status === 'in_progress' && (topTask.actual_minutes ?? 0) > 0 ? `Continuar (${topTask.actual_minutes} min)` : 'Iniciar ahora'}
+                </button>
               )}
             </div>
           </div>
@@ -610,8 +615,14 @@ export default function SmartPlanner() {
             {/* Acciones rápidas */}
             <div className="mb-3 flex flex-wrap items-center gap-2">
               {editingTask.status === 'in_progress' && editingTask.started_at
-                ? <><LiveTimer startedAt={editingTask.started_at} estimatedMinutes={editingTask.estimated_minutes} /><button type="button" onClick={async () => { await handleComplete(editingTask.id); setEditingTask(null); }} className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700">Finalizar y registrar tiempo</button></>
-                : <button type="button" onClick={async () => { await p.startTask(editingTask.id); setEditingTask(null); }} className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700">▶ Iniciar ahora</button>}
+                ? <>
+                    <LiveTimer startedAt={editingTask.started_at} estimatedMinutes={editingTask.estimated_minutes} acumuladoMin={editingTask.actual_minutes} />
+                    <button type="button" onClick={async () => { await p.pauseTask(editingTask.id); setEditingTask(null); }} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Pausar</button>
+                    <button type="button" onClick={async () => { await handleComplete(editingTask.id); setEditingTask(null); }} className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700">Finalizar y registrar tiempo</button>
+                  </>
+                : <button type="button" onClick={async () => { await p.startTask(editingTask.id); setEditingTask(null); }} className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700">
+                    ▶ {editingTask.status === 'in_progress' && (editingTask.actual_minutes ?? 0) > 0 ? `Continuar (llevas ${editingTask.actual_minutes} min)` : 'Iniciar ahora'}
+                  </button>}
               <button type="button" onClick={async () => { await p.postponeTask(editingTask.id); setEditingTask(null); }} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Posponer a mañana</button>
               {/* El estado sólo se podía cambiar arrastrando en el kanban, que
                   no existe en pantalla táctil. Aquí es un control normal. */}
@@ -658,7 +669,7 @@ export default function SmartPlanner() {
           <p className="text-xs text-slate-400 italic">Bandeja vacía.</p>
         ) : (
           <ul className="space-y-1.5">
-            {rankedTasks.map((t) => <TaskRow key={t.id} task={t} clientName={p.clients.find((client) => client.id === t.client_ref)?.nombre} isProtected={p.blocks.some((block) => block.task_ids?.includes(t.id) && block.protected)} onEdit={openTaskEditor} onStart={p.startTask} onComplete={handleComplete} onPostpone={async (id) => { await p.postponeTask(id); setTaskSaveNotice('Tarea reprogramada para mañana.'); setTimeout(() => setTaskSaveNotice(null), 2500); }} onDelete={p.deleteTask} />)}
+            {rankedTasks.map((t) => <TaskRow key={t.id} task={t} clientName={p.clients.find((client) => client.id === t.client_ref)?.nombre} isProtected={p.blocks.some((block) => block.task_ids?.includes(t.id) && block.protected)} onEdit={openTaskEditor} onStart={p.startTask} onPause={p.pauseTask} onComplete={handleComplete} onPostpone={async (id) => { await p.postponeTask(id); setTaskSaveNotice('Tarea reprogramada para mañana.'); setTimeout(() => setTaskSaveNotice(null), 2500); }} onDelete={p.deleteTask} />)}
           </ul>
         )}
       </section>
@@ -806,13 +817,16 @@ function BlockRow({ block, tasks, clients, timeZone, onComplete, onEdit }: { blo
  * Cronómetro real de la tarea en curso. Antes sólo se mostraba la hora de
  * inicio, así que el tiempo transcurrido había que calcularlo mentalmente.
  */
-function LiveTimer({ startedAt, estimatedMinutes }: { startedAt: string; estimatedMinutes: number }) {
+function LiveTimer({ startedAt, estimatedMinutes, acumuladoMin }: { startedAt: string; estimatedMinutes: number; acumuladoMin?: number | null }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
-  const elapsedSeconds = Math.max(0, Math.floor((now - new Date(startedAt).getTime()) / 1000));
+  // El cronómetro muestra el TOTAL de la tarea (tramos anteriores + el actual),
+  // que es el número que la persona espera después de una pausa.
+  const elapsedSeconds = Math.max(0, Math.floor((now - new Date(startedAt).getTime()) / 1000))
+    + Math.max(0, Math.round((acumuladoMin ?? 0) * 60));
   const hh = Math.floor(elapsedSeconds / 3600);
   const mm = Math.floor((elapsedSeconds % 3600) / 60);
   const ss = elapsedSeconds % 60;
@@ -829,7 +843,7 @@ function LiveTimer({ startedAt, estimatedMinutes }: { startedAt: string; estimat
   );
 }
 
-function TaskRow({ task, clientName, isProtected, onEdit, onStart, onComplete, onPostpone, onDelete }: { task: PlannerTask; clientName?: string; isProtected: boolean; onEdit: (task: PlannerTask) => void; onStart: (id: string) => void; onComplete: (id: string) => void; onPostpone: (id: string) => void | Promise<void>; onDelete: (id: string) => void }) {
+function TaskRow({ task, clientName, isProtected, onEdit, onStart, onPause, onComplete, onPostpone, onDelete }: { task: PlannerTask; clientName?: string; isProtected: boolean; onEdit: (task: PlannerTask) => void; onStart: (id: string) => void; onPause: (id: string) => void; onComplete: (id: string) => void; onPostpone: (id: string) => void | Promise<void>; onDelete: (id: string) => void }) {
   // Fila mínima: título + cliente + iniciar/finalizar + editar/eliminar. El
   // resto (prioridad, score, categoría, contexto para la IA) vive en el popup.
   //
@@ -837,6 +851,8 @@ function TaskRow({ task, clientName, isProtected, onEdit, onStart, onComplete, o
   // esto" muestra una sola tarea, así que en cuanto había una en curso no
   // quedaba forma visible de arrancar la segunda sin abrir cada tarea.
   const running = task.status === 'in_progress' && task.started_at;
+  // Empezada pero detenida: el tiempo trabajado sigue guardado en actual_minutes.
+  const enPausa = task.status === 'in_progress' && !task.started_at && (task.actual_minutes ?? 0) > 0;
   void isProtected; void onPostpone;
   return (
     <li className="group flex items-center gap-2 rounded-xl border border-[var(--line)] bg-white px-3 py-2">
@@ -845,11 +861,19 @@ function TaskRow({ task, clientName, isProtected, onEdit, onStart, onComplete, o
         <span className="truncate text-sm text-slate-800">{task.title}</span>
         {clientName && <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${clientTone(task.client_ref)}`}>● {clientName}</span>}
       </button>
-      {task.started_at && running && <LiveTimer startedAt={task.started_at} estimatedMinutes={task.estimated_minutes} />}
+      {task.started_at && running && <LiveTimer startedAt={task.started_at} estimatedMinutes={task.estimated_minutes} acumuladoMin={task.actual_minutes} />}
+      {enPausa && (
+        <span title="En pausa: el tiempo trabajado está guardado" className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 font-mono text-[10px] font-semibold text-slate-600">
+          <Pause className="h-3 w-3" aria-hidden /> {task.actual_minutes}m
+        </span>
+      )}
       <div className="flex shrink-0 items-center gap-1 sm:opacity-70 sm:group-hover:opacity-100 transition-opacity">
+        {task.status !== 'done' && running && (
+          <button onClick={() => onPause(task.id)} aria-label={`Pausar ${task.title}`} title="Pausar (el tiempo se guarda)" className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900"><Pause className="h-3.5 w-3.5" /></button>
+        )}
         {task.status !== 'done' && (running
           ? <button onClick={() => onComplete(task.id)} aria-label={`Finalizar ${task.title}`} title="Finalizar y registrar tiempo" className="grid h-8 w-8 place-items-center rounded-lg text-emerald-600 hover:bg-emerald-50"><Check className="h-3.5 w-3.5" /></button>
-          : <button onClick={() => onStart(task.id)} aria-label={`Iniciar ${task.title}`} title="Iniciar" className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-blue-50 hover:text-blue-700"><Play className="h-3.5 w-3.5" /></button>)}
+          : <button onClick={() => onStart(task.id)} aria-label={`${enPausa ? 'Continuar' : 'Iniciar'} ${task.title}`} title={enPausa ? 'Continuar donde se dejó' : 'Iniciar'} className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-blue-50 hover:text-blue-700"><Play className="h-3.5 w-3.5" /></button>)}
         <button onClick={() => onEdit(task)} aria-label="Abrir / editar tarea" title="Abrir / editar" className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-blue-700"><Edit2 className="h-3.5 w-3.5" /></button>
         <button onClick={() => onDelete(task.id)} aria-label="Eliminar tarea" title="Eliminar tarea" className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-red-50 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
       </div>

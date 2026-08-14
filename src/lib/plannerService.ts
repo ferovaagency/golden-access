@@ -329,12 +329,17 @@ export const plannerService = {
   async completeTask(id: string, actualMinutes?: number): Promise<CompleteTaskResult> {
     const { data: task, error: readError } = await anyDb().from('planner_tasks').select('*').eq('id', id).single();
     if (readError) throw readError;
-    const elapsedMinutes = task?.started_at
+    // Tiempo medido = lo acumulado en tramos anteriores (pausas) MÁS lo que
+    // lleve corriendo el tramo actual. Antes se tomaba sólo el tramo actual,
+    // así que pausar y continuar perdía todo lo trabajado antes de la pausa.
+    const acumulado = Number(task?.actual_minutes ?? 0);
+    const enCurso = task?.started_at
       ? Math.max(1, Math.round((Date.now() - new Date(task.started_at).getTime()) / 60_000))
-      : null;
+      : 0;
+    const medido = acumulado + enCurso;
     // Si no se cronometró (no hubo "Iniciar") ni se pasó tiempo manual, cae al
     // estimado — así completar una tarea SIEMPRE registra algo en Horas (editable).
-    const finalMinutes = actualMinutes ?? elapsedMinutes ?? task?.actual_minutes ?? task?.estimated_minutes ?? null;
+    const finalMinutes = actualMinutes ?? (medido > 0 ? medido : task?.estimated_minutes ?? null);
     const { error: taskError } = await anyDb()
       .from('planner_tasks')
       .update({ status: 'done', completed_at: new Date().toISOString(), actual_minutes: finalMinutes })
@@ -415,8 +420,28 @@ export const plannerService = {
     if (error) { log.error(error); return []; }
     return data || [];
   },
+  // El cronómetro se guarda en dos campos que ya existían, sin columna nueva:
+  //   · `actual_minutes` acumula el tiempo de los tramos ya cerrados;
+  //   · `started_at` marca desde cuándo corre el tramo actual.
+  // De ahí sale el estado: en curso = in_progress CON started_at; en pausa =
+  // in_progress SIN started_at. La interfaz ya distinguía así lo que corre, de
+  // modo que una tarea en pausa aparece sola con su botón de reanudar.
   async startTask(id: string) {
     const { error } = await anyDb().from('planner_tasks').update({ status: 'in_progress', started_at: new Date().toISOString() }).eq('id', id);
+    if (error) throw error;
+  },
+  /** Detiene el cronómetro guardando lo corrido. Reanudar es `startTask`. */
+  async pauseTask(id: string) {
+    const { data: task, error: readError } = await anyDb().from('planner_tasks').select('actual_minutes, started_at').eq('id', id).single();
+    if (readError) throw readError;
+    const acumulado = Number(task?.actual_minutes ?? 0);
+    const enCurso = task?.started_at
+      ? Math.max(1, Math.round((Date.now() - new Date(task.started_at).getTime()) / 60_000))
+      : 0;
+    const { error } = await anyDb()
+      .from('planner_tasks')
+      .update({ actual_minutes: acumulado + enCurso, started_at: null })
+      .eq('id', id);
     if (error) throw error;
   },
   /** Cambia el estado de una tarea directamente (usado por el kanban al arrastrar). */

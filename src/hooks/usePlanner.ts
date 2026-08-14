@@ -191,6 +191,12 @@ export function usePlanner() {
     catch (err: any) { setError(err.message || 'No fue posible iniciar la tarea.'); throw err; }
     finally { setBusy(null); }
   }, [refresh]);
+  const pauseTask = useCallback(async (id: string) => {
+    setBusy('task'); setError(null);
+    try { await plannerService.pauseTask(id); await refresh(); }
+    catch (err: any) { setError(err.message || 'No fue posible pausar la tarea.'); throw err; }
+    finally { setBusy(null); }
+  }, [refresh]);
   const updateTask = useCallback(async (id: string, input: UpdatePlannerTaskInput) => {
     setBusy('task'); setError(null);
     try { const result = await plannerService.updateTask(id, input); await refresh(); return result; }
@@ -232,6 +238,6 @@ export function usePlanner() {
     inbox, tasks, clients, services, blocks, insights, briefing, rescheduledCount, planNotice,
     loading, busy, error, date, setDate, timeZone,
     refresh, classify, previewCapture, commitCapture, planDay, regenerateInsights, regenerateBriefing,
-    completeTask, startTask, setStatus, updateTask, updateTaskDescription, postponeTask, deleteTask, createBlock, dismissInsight,
+    completeTask, startTask, pauseTask, setStatus, updateTask, updateTaskDescription, postponeTask, deleteTask, createBlock, dismissInsight,
   };
 }
