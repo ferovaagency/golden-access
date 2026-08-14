@@ -3333,6 +3333,12 @@ export type Database = {
           title: string
         }[]
       }
+      my_accessible_account_ids: {
+        Args: never
+        Returns: {
+          account_id: string
+        }[]
+      }
       my_accessible_org_ids: {
         Args: never
         Returns: {
