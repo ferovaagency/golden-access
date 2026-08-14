@@ -124,9 +124,10 @@ export async function resolveWorkspaceContext(): Promise<WorkspaceContext | null
   const user = userData?.user;
   if (!user) return null;
 
-  const [orgs, colabs] = await Promise.all([
+  const [orgs, colabs, enServidor] = await Promise.all([
     listMyOrganizations(),
     listMyCollaborations(),
+    readActiveWorkspace(),
   ]);
 
   const options: WorkspaceOption[] = [];
@@ -169,8 +170,28 @@ export async function resolveWorkspaceContext(): Promise<WorkspaceContext | null
     });
   }
 
+  // Reconciliación entre el navegador y el servidor. Hacen falta las dos
+  // fuentes y pueden discrepar: `localStorage` es de ESTE dispositivo y
+  // `user_active_org` es lo que ve el asistente. Sin este paso, al recargar la
+  // página la interfaz mostraba la empresa guardada aquí mientras el asistente
+  // seguía respondiendo sobre la cuenta propia — la peor forma de fallar,
+  // porque nada parece roto.
   const stored = typeof localStorage !== 'undefined' ? localStorage.getItem(ACTIVE_KEY) : null;
-  const active = options.find((o) => o.key === stored) ?? options[0];
+  const active =
+    options.find((o) => o.key === stored)
+    // Sin preferencia en este dispositivo, manda la del servidor: así entrar
+    // desde otro navegador continúa en la misma empresa.
+    ?? (enServidor.accountId ? options.find((o) => o.accountId === enServidor.accountId) : undefined)
+    ?? options[0];
+
+  if (stored !== active.key) {
+    try { localStorage.setItem(ACTIVE_KEY, active.key); } catch { /* almacenamiento no disponible */ }
+  }
+  // Sólo se escribe si difiere: recargar la página no debe generar escrituras.
+  const cuentaEnServidor = enServidor.accountId ?? user.id;
+  if (cuentaEnServidor !== active.accountId) {
+    void persistActiveWorkspace(active.orgId ?? null, active.accountId);
+  }
 
   const holdings = orgs.filter((o) => !o.dataUserId && orgs.some((h) => h.parentOrgId === o.id));
   const empresas = orgs.filter((o) => o.parentOrgId && holdings.some((h) => h.id === o.parentOrgId));
@@ -188,22 +209,37 @@ export async function resolveWorkspaceContext(): Promise<WorkspaceContext | null
  *   qué cuenta consultar —sería dejar que el cliente declare a qué datos
  *   accede—, así que lo leen de esta tabla vía `active_context_for_user`.
  */
-export function rememberActiveWorkspace(key: string, orgId?: string | null): void {
+export function rememberActiveWorkspace(key: string, orgId: string | null, accountId: string): void {
   try { localStorage.setItem(ACTIVE_KEY, key); } catch { /* almacenamiento no disponible */ }
-  void persistActiveOrg(orgId ?? null);
+  void persistActiveWorkspace(orgId, accountId);
 }
 
-async function persistActiveOrg(orgId: string | null): Promise<void> {
+/** El espacio de trabajo activo según el SERVIDOR: lo que decide qué filas
+ *  devuelve la RLS y sobre qué responde el asistente. */
+async function readActiveWorkspace(): Promise<{ orgId: string | null; accountId: string | null }> {
+  const { data, error } = await db<{ org_id: string | null; account_user_id: string | null }>('user_active_org')
+    .select('org_id, account_user_id')
+    .maybeSingle();
+  // La RLS ya acota la fila a quien consulta; un error aquí (tabla ausente en
+  // un despliegue viejo) no debe impedir que la aplicación arranque.
+  if (error) return { orgId: null, accountId: null };
+  return { orgId: data?.org_id ?? null, accountId: data?.account_user_id ?? null };
+}
+
+async function persistActiveWorkspace(orgId: string | null, accountId: string): Promise<void> {
   const { data: userData } = await supabase.auth.getUser();
   const uid = userData?.user?.id;
   if (!uid) return;
-  // Sin organización (la cuenta propia) se borra la fila: el servidor vuelve a
-  // resolver la cuenta propia, que es su valor por defecto.
-  const { error } = orgId
-    ? await db('user_active_org').upsert({ user_id: uid, org_id: orgId, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
+  // Trabajando en la cuenta propia se borra la fila: sin fila, el servidor
+  // resuelve la cuenta propia, que es su valor por defecto.
+  const { error } = accountId && accountId !== uid
+    ? await db('user_active_org').upsert(
+        { user_id: uid, org_id: orgId, account_user_id: accountId, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id' },
+      )
     : await db('user_active_org').delete().eq('user_id', uid);
-  // Que falle no debe impedir cambiar de empresa en la interfaz: el peor caso
-  // es que el asistente siga respondiendo sobre la empresa anterior.
+  // Que falle no debe romper el selector, pero sí hay que verlo: mientras no se
+  // guarde, la interfaz muestra una empresa y el asistente responde por otra.
   if (error) console.error('[organizationsService] user_active_org', error.message);
 }
 

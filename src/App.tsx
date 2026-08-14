@@ -142,7 +142,7 @@ function AppInner() {
     if (!workspace || key === workspace.active.key) return;
     const next = workspace.options.find((o) => o.key === key);
     if (!next) return;
-    rememberActiveWorkspace(key, next.orgId);
+    rememberActiveWorkspace(key, next.orgId, next.accountId);
     setAppData(null);
     setWorkspace({ ...workspace, active: next });
   };

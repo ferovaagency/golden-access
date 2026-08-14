@@ -84,3 +84,38 @@ hijas con `create_organization()`, cada hija enlazada a la cuenta de su fundador
 (`data_user_id`) o invitándolo por correo (`invite_email`), y el holding con la
 persona que manda como `owner`. Desde ese momento —y sólo desde ese momento— el
 holding ve a sus empresas.
+
+---
+
+## Corrección del 14 ago (tarde): la RLS devuelve la cuenta ACTIVA, no la unión
+
+La primera versión dejó la regla como la UNIÓN de las cuentas accesibles. Eso
+rompía una suposición que atraviesa la aplicación: el código asume que la RLS ya
+devuelve "mis filas", y por eso muchas consultas no filtran por `user_id`
+(`plannerService` hace 35 consultas y ninguna filtra). Con la unión, en cuanto
+existiera el árbol del holding, `business_profile … maybeSingle()` fallaría y las
+listas del planner mezclarían empresas.
+
+La regla quedó en `user_id = (select public.current_account_id())`:
+
+- `current_account_id()` = la cuenta sobre la que se está trabajando, validada
+  contra `my_accessible_account_ids()`.
+- El conjunto accesible pasa a ser lo que debía ser: la autorización de QUÉ
+  puedes activar, no lo que ves de golpe.
+- Cambiar de empresa en el selector cambia lo que ve toda la aplicación, en un
+  solo sitio, sin tocar una consulta.
+- La vista consolidada (varias empresas a la vez) no se hace desde el navegador:
+  para eso está `holding-overview`, que usa service_role y autoriza explícito.
+
+`user_active_org` guarda ahora la CUENTA activa (`account_user_id`), no sólo la
+organización: un colaborador invitado a otro negocio no tiene organización, y su
+espacio de trabajo es directamente una cuenta.
+
+**Probado contra el árbol real del holding (Natan Holding + Ferova + Netpower IT
++ Natan Comercial), dentro de una transacción que se deshace:**
+
+1. La dueña sin cambiar de empresa ve sus 12 ventas; tiene derecho a 3 cuentas.
+2. Entrando a Natan Comercial opera sobre la cuenta del socio: 1 perfil (no 2 —
+   es lo que `maybeSingle()` necesita) y 0 ventas.
+3. El socio ve sólo lo suyo y tiene derecho a 1 cuenta: los fundadores no se ven
+   entre sí.
