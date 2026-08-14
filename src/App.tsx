@@ -6,6 +6,7 @@ import { useAuthAndAccess } from './hooks/useAuthAndAccess';
 import { getBusinessProfile, BusinessProfile } from './lib/businessProfileService';
 import { resolveWorkspaceContext, rememberActiveWorkspace, type WorkspaceContext } from './lib/organizationsService';
 import WorkspaceSwitcher from './components/WorkspaceSwitcher';
+import HoldingOverview from './components/HoldingOverview';
 import { trackActivationOnce } from './lib/analytics';
 import { syncMemoria } from './lib/brainService';
 import PlanOnboarding from './components/PlanOnboarding';
@@ -579,7 +580,11 @@ function AppInner() {
   };
 
   const NAVIGATION_SECTIONS: NavigationSection[] = [
-    { id: 'home', label: 'Inicio', icon: LayoutDashboard, items: [{ id: 'dashboard', label: 'Resumen', hint: 'Salud, prioridades y actividad' }] },
+    { id: 'home', label: 'Inicio', icon: LayoutDashboard, items: [
+      { id: 'dashboard', label: 'Resumen', hint: 'Salud, prioridades y actividad' },
+      // Sólo para quien administra un holding con empresas debajo.
+      ...(workspace?.holdings.length ? [{ id: 'holding', label: 'Holding', hint: 'Las empresas del grupo, consolidadas' }] : []),
+    ] },
     { id: 'projects', label: 'Proyectos', icon: FolderKanban, items: modules.core_projects || modules.planner ? [
       { id: 'clientes', label: 'Clientes', hint: 'Cuentas activas' },
       { id: 'servicios', label: 'Servicios', hint: 'Catálogo y costos' },
@@ -782,6 +787,7 @@ function AppInner() {
         {isReady && metrics && appData && (
           <Suspense fallback={<LoadingState label="Cargando módulo…" />}>
             {activeTab === 'planner' && <SmartPlanner />}
+            {activeTab === 'holding' && <HoldingOverview formatCop={formatCop} />}
             {activeTab === 'reports' && effectiveUser && <ReportsView user={effectiveUser} />}
             {activeTab === 'finops' && effectiveUser && <FinanceOperativa user={effectiveUser} appData={appData} formatCop={formatCop} />}
             {activeTab === 'marketingRoi' && effectiveUser && <MarketingROI user={effectiveUser} ventas={appData.ventas} config={appData.config} formatCop={formatCop} />}

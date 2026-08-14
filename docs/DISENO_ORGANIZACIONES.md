@@ -197,8 +197,15 @@ las filas, a conciencia y de a una.
    `accountId` en `App.tsx:129`. Requiere sustituir `getMyCollaboratorContext`
    por una versión que devuelva **la lista** de cuentas accesibles (adiós
    `maybeSingle`) y resuelva la activa.
-4. Vista consolidada del holding: pantalla que suma las 4 empresas. Lee cada una
-   con el `accountId` correspondiente, sin SQL nuevo.
+4. Vista consolidada del holding: pantalla que suma las empresas.
+
+   Corrección sobre la primera versión de este documento: **no** puede leerse
+   desde el navegador cambiando de `accountId`. Las tablas de negocio siguen
+   aisladas por `user_id = auth.uid()`, así que la RLS bloquea al holding igual
+   que a cualquiera — y abrirla es justamente la Fase 7. La salida sin tocar
+   ninguna política es una edge function (`holding-overview`) que usa
+   `service_role` y hace la autorización explícita: sólo devuelve cuentas de
+   organizaciones donde quien pregunta es `owner`/`admin`.
 
 Con esto los 3 socios ya operan aislados y tú ves el conjunto.
 
