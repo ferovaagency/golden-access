@@ -791,6 +791,7 @@ export type Database = {
           closed_at: string | null
           comision_porcentaje: number | null
           comision_valor: number | null
+          confirmada: boolean
           created_at: string
           email: string | null
           email_message_id: string | null
@@ -804,6 +805,7 @@ export type Database = {
           moneda: string | null
           nombre_contacto: string
           notas: string | null
+          origen: string
           playbook_email: string | null
           playbook_generated_at: string | null
           playbook_linkedin_conectar: boolean | null
@@ -826,6 +828,7 @@ export type Database = {
           closed_at?: string | null
           comision_porcentaje?: number | null
           comision_valor?: number | null
+          confirmada?: boolean
           created_at?: string
           email?: string | null
           email_message_id?: string | null
@@ -839,6 +842,7 @@ export type Database = {
           moneda?: string | null
           nombre_contacto: string
           notas?: string | null
+          origen?: string
           playbook_email?: string | null
           playbook_generated_at?: string | null
           playbook_linkedin_conectar?: boolean | null
@@ -861,6 +865,7 @@ export type Database = {
           closed_at?: string | null
           comision_porcentaje?: number | null
           comision_valor?: number | null
+          confirmada?: boolean
           created_at?: string
           email?: string | null
           email_message_id?: string | null
@@ -874,6 +879,7 @@ export type Database = {
           moneda?: string | null
           nombre_contacto?: string
           notas?: string | null
+          origen?: string
           playbook_email?: string | null
           playbook_generated_at?: string | null
           playbook_linkedin_conectar?: boolean | null
@@ -1082,39 +1088,56 @@ export type Database = {
       }
       ferova_knowledge: {
         Row: {
+          compartir_arriba: boolean
           content: string
           created_at: string
           created_by: string | null
           id: string
+          org_id: string | null
           owner_user_id: string | null
+          publicar_abajo: boolean
           source: string | null
           tags: string[]
           title: string
           updated_at: string
         }
         Insert: {
+          compartir_arriba?: boolean
           content: string
           created_at?: string
           created_by?: string | null
           id?: string
+          org_id?: string | null
           owner_user_id?: string | null
+          publicar_abajo?: boolean
           source?: string | null
           tags?: string[]
           title: string
           updated_at?: string
         }
         Update: {
+          compartir_arriba?: boolean
           content?: string
           created_at?: string
           created_by?: string | null
           id?: string
+          org_id?: string | null
           owner_user_id?: string | null
+          publicar_abajo?: boolean
           source?: string | null
           tags?: string[]
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ferova_knowledge_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ferova_knowledge_embeddings: {
         Row: {
@@ -1620,6 +1643,8 @@ export type Database = {
           moneda: string
           monto: number
           notas: string | null
+          origen: string
+          origen_ref: string | null
           retencion: number
           user_id: string
         }
@@ -1636,6 +1661,8 @@ export type Database = {
           moneda?: string
           monto?: number
           notas?: string | null
+          origen?: string
+          origen_ref?: string | null
           retencion?: number
           user_id: string
         }
@@ -1652,6 +1679,8 @@ export type Database = {
           moneda?: string
           monto?: number
           notas?: string | null
+          origen?: string
+          origen_ref?: string | null
           retencion?: number
           user_id?: string
         }
@@ -1898,6 +1927,7 @@ export type Database = {
           precio_habitual: number | null
           precio_habitual_moneda: string
           precio_ofrecido: number | null
+          tipo: string
           user_id: string
         }
         Insert: {
@@ -1914,6 +1944,7 @@ export type Database = {
           precio_habitual?: number | null
           precio_habitual_moneda?: string
           precio_ofrecido?: number | null
+          tipo?: string
           user_id: string
         }
         Update: {
@@ -1930,6 +1961,7 @@ export type Database = {
           precio_habitual?: number | null
           precio_habitual_moneda?: string
           precio_ofrecido?: number | null
+          tipo?: string
           user_id?: string
         }
         Relationships: []
@@ -1944,12 +1976,14 @@ export type Database = {
           comision_pasarela_porcentaje: number
           comision_retiro: number
           costo_unitario: number
+          created_by: string | null
           estado_pago: string
           fecha: string
           id: string
           iva: number
           moneda: string
           notas: string | null
+          numero_factura: string | null
           pasarela_pago: string | null
           precio_venta_unitario: number
           retencion: number
@@ -1967,12 +2001,14 @@ export type Database = {
           comision_pasarela_porcentaje?: number
           comision_retiro?: number
           costo_unitario?: number
+          created_by?: string | null
           estado_pago?: string
           fecha: string
           id: string
           iva?: number
           moneda?: string
           notas?: string | null
+          numero_factura?: string | null
           pasarela_pago?: string | null
           precio_venta_unitario?: number
           retencion?: number
@@ -1990,12 +2026,14 @@ export type Database = {
           comision_pasarela_porcentaje?: number
           comision_retiro?: number
           costo_unitario?: number
+          created_by?: string | null
           estado_pago?: string
           fecha?: string
           id?: string
           iva?: number
           moneda?: string
           notas?: string | null
+          numero_factura?: string | null
           pasarela_pago?: string | null
           precio_venta_unitario?: number
           retencion?: number
@@ -2260,22 +2298,60 @@ export type Database = {
         }
         Relationships: []
       }
+      organization_invites: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          email: string
+          org_id: string
+          permisos: Json
+          rol: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          email: string
+          org_id: string
+          permisos?: Json
+          rol?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          org_id?: string
+          permisos?: Json
+          rol?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_invites_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_members: {
         Row: {
           created_at: string
           org_id: string
+          permisos: Json
           rol: string
           user_id: string
         }
         Insert: {
           created_at?: string
           org_id: string
+          permisos?: Json
           rol?: string
           user_id: string
         }
         Update: {
           created_at?: string
           org_id?: string
+          permisos?: Json
           rol?: string
           user_id?: string
         }
@@ -2756,6 +2832,7 @@ export type Database = {
           client_ref: string | null
           completed_at: string | null
           created_at: string
+          created_by: string | null
           deadline: string | null
           dependency_task_ids: string[]
           description: string | null
@@ -2771,6 +2848,7 @@ export type Database = {
           project_ref: string | null
           recurrence_days: number[]
           recurrence_until: string | null
+          responsable_user_id: string | null
           risk_score: number
           scheduled_for: string | null
           service_ref: string | null
@@ -2790,6 +2868,7 @@ export type Database = {
           client_ref?: string | null
           completed_at?: string | null
           created_at?: string
+          created_by?: string | null
           deadline?: string | null
           dependency_task_ids?: string[]
           description?: string | null
@@ -2805,6 +2884,7 @@ export type Database = {
           project_ref?: string | null
           recurrence_days?: number[]
           recurrence_until?: string | null
+          responsable_user_id?: string | null
           risk_score?: number
           scheduled_for?: string | null
           service_ref?: string | null
@@ -2824,6 +2904,7 @@ export type Database = {
           client_ref?: string | null
           completed_at?: string | null
           created_at?: string
+          created_by?: string | null
           deadline?: string | null
           dependency_task_ids?: string[]
           description?: string | null
@@ -2839,6 +2920,7 @@ export type Database = {
           project_ref?: string | null
           recurrence_days?: number[]
           recurrence_until?: string | null
+          responsable_user_id?: string | null
           risk_score?: number
           scheduled_for?: string | null
           service_ref?: string | null
@@ -3099,17 +3181,20 @@ export type Database = {
       }
       user_active_org: {
         Row: {
-          org_id: string
+          account_user_id: string | null
+          org_id: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
-          org_id: string
+          account_user_id?: string | null
+          org_id?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
-          org_id?: string
+          account_user_id?: string | null
+          org_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -3299,6 +3384,13 @@ export type Database = {
       }
     }
     Functions: {
+      active_context_for_user: {
+        Args: { p_user: string }
+        Returns: {
+          account_id: string
+          org_id: string
+        }[]
+      }
       admin_ai_usage_overview: { Args: { p_days?: number }; Returns: Json }
       admin_subscriptions_overview: { Args: never; Returns: Json }
       can_access_account: { Args: { owner: string }; Returns: boolean }
@@ -3314,12 +3406,32 @@ export type Database = {
         }
         Returns: string
       }
+      current_account_id: { Args: never; Returns: string }
       founder_slots_taken: { Args: never; Returns: number }
       is_collaborator_of: { Args: { owner: string }; Returns: boolean }
       is_team_member: { Args: never; Returns: boolean }
+      list_account_people: {
+        Args: never
+        Returns: {
+          email: string
+          rol: string
+          user_id: string
+        }[]
+      }
+      list_organization_members: {
+        Args: { p_org_id: string }
+        Returns: {
+          email: string
+          estado: string
+          permisos: Json
+          rol: string
+          user_id: string
+        }[]
+      }
       match_ferova_knowledge: {
         Args: {
           match_count?: number
+          match_org?: string
           match_user?: string
           min_similarity?: number
           query_embedding: string
@@ -3351,7 +3463,37 @@ export type Database = {
           id: string
         }[]
       }
+      planner_tasks_todas_las_empresas: {
+        Args: never
+        Returns: {
+          account_id: string
+          category: string
+          deadline: string
+          empresa: string
+          estimated_minutes: number
+          id: string
+          priority: string
+          responsable_email: string
+          responsable_user_id: string
+          scheduled_for: string
+          status: string
+          title: string
+        }[]
+      }
+      revoke_organization_member: {
+        Args: { p_org_id: string; p_user_id: string }
+        Returns: undefined
+      }
       roll_forward_missed_planner_tasks: { Args: never; Returns: undefined }
+      share_organization: {
+        Args: {
+          p_email: string
+          p_org_id: string
+          p_permisos?: Json
+          p_rol?: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       blindspot_category:
