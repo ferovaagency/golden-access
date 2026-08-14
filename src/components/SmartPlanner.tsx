@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Sparkles, Wand2, Loader2, Check, Clock, Zap, Battery, BatteryLow, Trash2, ChevronLeft, ChevronRight, Sunrise, AlertTriangle, Lightbulb, TrendingUp, Info, Lock, Edit2, X, CalendarDays, Columns3, List, LayoutGrid, SlidersHorizontal } from 'lucide-react';
+import { Sparkles, Wand2, Loader2, Check, Clock, Trash2, ChevronLeft, ChevronRight, Sunrise, AlertTriangle, Lightbulb, TrendingUp, Info, Lock, Edit2, X, CalendarDays, Columns3, List, LayoutGrid, SlidersHorizontal } from 'lucide-react';
 import { usePlanner } from '../hooks/usePlanner';
 import { plannerService, type PlannerBlock, type PlannerCategory, type PlannerDraft, type PlannerEnergy, type PlannerTask } from '../lib/plannerService';
 import { DayClientProgress } from './planner/DayClientProgress';
@@ -20,8 +20,6 @@ const categoryMeta: Record<PlannerCategory, { label: string; tone: string }> = {
   breaks: { label: 'Descanso', tone: 'bg-neutral-100 text-neutral-600 border-neutral-200' },
 };
 
-const energyIcon: Record<PlannerEnergy, any> = { high: Zap, medium: Battery, low: BatteryLow };
-const priorityTone: Record<string, string> = { urgent: 'bg-red-100 text-red-700', high: 'bg-amber-100 text-amber-700', medium: 'bg-slate-100 text-slate-600', low: 'bg-slate-50 text-slate-500' };
 const scoreOptions = [[1, 'Muy bajo'], [2, 'Bajo'], [3, 'Medio'], [4, 'Alto'], [5, 'Muy alto']] as const;
 const clientTones = ['bg-violet-100 text-violet-700 border-violet-200', 'bg-sky-100 text-sky-700 border-sky-200', 'bg-emerald-100 text-emerald-700 border-emerald-200', 'bg-pink-100 text-pink-700 border-pink-200', 'bg-amber-100 text-amber-800 border-amber-200'];
 function clientTone(id?: string | null) { return clientTones[Math.abs(Array.from(id || '').reduce((sum, char) => sum + char.charCodeAt(0), 0)) % clientTones.length]; }

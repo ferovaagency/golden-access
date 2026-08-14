@@ -54,14 +54,7 @@ const captureGoogleProviderToken = (session: Session | null) => {
   if (session?.provider_token) setEphemeralGoogleToken(session.provider_token);
 };
 
-/** @deprecated Google credentials are no longer hydrated into the browser. */
-export const hydrateGoogleWorkspaceConnection = async (): Promise<string | null> => {
-  return cachedAccessToken;
-};
-
 export const getAccessToken = (): string | null => cachedAccessToken;
-export const hasGoogleWorkspaceConnection = (): boolean => Boolean(cachedAccessToken);
-export const setAccessTokenCustom = (token: string | null) => setEphemeralGoogleToken(token);
 
 // ============================================================
 // Bootstrap de sesión
@@ -103,7 +96,7 @@ export const initAuth = (
 // Google Sign-in (managed por Lovable Cloud)
 // Solo identidad (openid/email/profile) para que el login sea confiable.
 // Los scopes de Workspace (Sheets, Drive, Gmail, Calendar) se piden aparte
-// desde ConnectGoogleScreen para no bloquear el sign-in inicial.
+// (linkGoogleIdentity, desde Integraciones) para no bloquear el sign-in inicial.
 // ============================================================
 export const googleSignIn = async () => {
   try { sessionStorage.setItem(POST_LOGIN_RETURN_KEY, '/app'); } catch { /* storage no disponible */ }
