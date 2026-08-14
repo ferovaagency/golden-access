@@ -162,6 +162,50 @@ export default function HorasAdmin({
     setConfirmDeleteId(null);
   };
 
+  // --- Editar un registro de la bitácora ------------------------------------
+  //
+  // Se edita EN LA FILA y no subiendo al formulario de arriba: en una línea de
+  // tiempo lo normal es corregir el renglón que se está mirando (una hora mal
+  // puesta, una descripción a medias), y mandar a la persona al formulario de
+  // alta se confunde con crear un registro nuevo.
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [edicion, setEdicion] = useState<{ fecha: string; clienteId: string; servicioId: string; horas: number; descripcion: string } | null>(null);
+
+  const empezarEdicion = (h: Hora) => {
+    setConfirmDeleteId(null);
+    setEditandoId(h.id);
+    setEdicion({
+      fecha: h.fecha,
+      clienteId: h.cliente_id || '',
+      servicioId: h.servicio_id || '',
+      horas: h.horas,
+      descripcion: h.descripcion || '',
+    });
+  };
+
+  const cancelarEdicion = () => { setEditandoId(null); setEdicion(null); };
+
+  const guardarEdicion = async () => {
+    if (!editandoId || !edicion) return;
+    if (!(edicion.horas > 0)) return;
+    const cliente = clientes.find((c) => c.id === edicion.clienteId);
+    const servicio = servicios.find((s) => s.id === edicion.servicioId);
+    const updated = horas.map((h) => h.id === editandoId ? {
+      ...h,
+      fecha: edicion.fecha,
+      cliente_id: edicion.clienteId,
+      // El nombre se recalcula del catálogo: guardar el que estaba dejaría la
+      // fila mostrando un cliente y apuntando a otro.
+      cliente_nombre: cliente?.nombre || h.cliente_nombre,
+      servicio_id: edicion.servicioId,
+      servicio_nombre: servicio?.nombre || h.servicio_nombre,
+      horas: Number(edicion.horas),
+      descripcion: edicion.descripcion,
+    } : h);
+    await onSaveHoras(updated);
+    cancelarEdicion();
+  };
+
   // 2. Rentabilidad por cliente
   const appFakeData: AppData = { 
     config, 
@@ -537,7 +581,7 @@ export default function HorasAdmin({
                     <th className="px-5 py-3">Cliente</th>
                     <th className="px-5 py-3 font-mono">Horas</th>
                     <th className="px-5 py-3">Descripción de Actividad</th>
-                    <th className="px-5 py-3 text-right">Eliminar</th>
+                    <th className="px-5 py-3 text-right">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
@@ -547,6 +591,35 @@ export default function HorasAdmin({
                     </tr>
                   ) : (
                     last30Horas.map((h, idx) => (
+                      editandoId === h.id && edicion ? (
+                        <tr key={`${h.id || 'hr'}-${idx}`} className="bg-blue-50/40">
+                          <td className="px-5 py-3">
+                            <input type="date" value={edicion.fecha} onChange={(e) => setEdicion({ ...edicion, fecha: e.target.value })} aria-label="Fecha" className="w-full rounded border border-slate-200 bg-white px-2 py-1 font-mono text-[11px]" />
+                          </td>
+                          <td className="px-5 py-3">
+                            <select value={edicion.clienteId} onChange={(e) => setEdicion({ ...edicion, clienteId: e.target.value })} aria-label="Cliente" className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-[11px]">
+                              <option value="">Sin cliente</option>
+                              {clientes.map((c, i) => <option key={`${c.id}-${i}`} value={c.id}>{c.nombre}</option>)}
+                            </select>
+                            <select value={edicion.servicioId} onChange={(e) => setEdicion({ ...edicion, servicioId: e.target.value })} aria-label="Servicio" className="mt-1 w-full rounded border border-slate-200 bg-white px-2 py-1 text-[11px]">
+                              <option value="">Sin servicio</option>
+                              {servicios.map((s, i) => <option key={`${s.id}-${i}`} value={s.id}>{s.nombre}</option>)}
+                            </select>
+                          </td>
+                          <td className="px-5 py-3">
+                            <input type="number" min="0" step="0.25" value={edicion.horas} onChange={(e) => setEdicion({ ...edicion, horas: Number(e.target.value) })} aria-label="Horas" className="w-20 rounded border border-slate-200 bg-white px-2 py-1 font-mono text-[11px]" />
+                          </td>
+                          <td className="px-5 py-3">
+                            <input value={edicion.descripcion} onChange={(e) => setEdicion({ ...edicion, descripcion: e.target.value })} aria-label="Descripción" placeholder="En qué se trabajó" className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-[11px]" />
+                          </td>
+                          <td className="px-5 py-3 text-right">
+                            <div className="flex justify-end gap-1">
+                              <button type="button" onClick={guardarEdicion} disabled={!(edicion.horas > 0)} className="rounded bg-blue-600 px-2 py-1 text-[10px] font-semibold text-white hover:bg-blue-700 disabled:opacity-50">Guardar</button>
+                              <button type="button" onClick={cancelarEdicion} className="rounded border border-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-600 hover:bg-slate-50">Cancelar</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : (
                       <tr key={`${h.id || 'hr'}-${idx}`} className="hover:bg-slate-50 transition">
                         <td className="px-5 py-3 font-mono text-slate-500">{h.fecha}</td>
                         <td className="px-5 py-3 font-medium text-slate-900">
@@ -556,15 +629,27 @@ export default function HorasAdmin({
                         <td className="px-5 py-3 font-mono text-blue-700 font-semibold">{formatHours(h.horas)}</td>
                         <td className="px-5 py-3 text-slate-500 max-w-xs truncate">{h.descripcion}</td>
                         <td className="px-5 py-3 text-right">
-                          <InlineDeleteConfirm
-                            confirming={confirmDeleteId === h.id}
-                            onRequestConfirm={() => setConfirmDeleteId(h.id)}
-                            onConfirm={() => handleDeleteHora(h.id)}
-                            onCancel={() => setConfirmDeleteId(null)}
-                            className="justify-end max-w-[70px] ml-auto"
-                          />
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => empezarEdicion(h)}
+                              title="Editar este registro"
+                              aria-label={`Editar el registro del ${h.fecha}`}
+                              className="rounded border border-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-600 hover:border-slate-300 hover:text-slate-900"
+                            >
+                              Editar
+                            </button>
+                            <InlineDeleteConfirm
+                              confirming={confirmDeleteId === h.id}
+                              onRequestConfirm={() => setConfirmDeleteId(h.id)}
+                              onConfirm={() => handleDeleteHora(h.id)}
+                              onCancel={() => setConfirmDeleteId(null)}
+                              className="justify-end max-w-[70px]"
+                            />
+                          </div>
                         </td>
                       </tr>
+                      )
                     ))
                   )}
                 </tbody>
