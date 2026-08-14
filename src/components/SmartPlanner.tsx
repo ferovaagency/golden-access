@@ -40,11 +40,62 @@ function visiblePriorityScore(task: PlannerTask) {
   return (0.30 * urgency) + (0.25 * (task.financial_impact ?? 3)) + (0.20 * (task.client_impact ?? 3)) + (0.15 * (task.risk_score ?? 3)) + (0.10 * (task.execution_ease ?? 3));
 }
 
+// --- Importación de tareas desde exports de Notion (Markdown/CSV/HTML) o pegado ---
+const HEADER_HINTS = ['name', 'nombre', 'title', 'título', 'titulo', 'task', 'tarea', 'status', 'estado', 'date', 'fecha', 'priority', 'prioridad'];
+
+function cleanImportLine(line: string): string {
+  let l = line.trim();
+  if (!l) return '';
+  // Separador de tabla markdown (|---|---|)
+  if (/^\|?[\s:|-]+$/.test(l) && /-/.test(l)) return '';
+  // Fila de tabla markdown: | col | col | -> "col — col"
+  if (l.startsWith('|')) l = l.replace(/^\|/, '').replace(/\|$/, '').split('|').map((s) => s.trim()).filter(Boolean).join(' — ');
+  // Viñetas, checkboxes, numeración
+  l = l.replace(/^[-*+]\s+/, '').replace(/^\[[ xX]\]\s+/, '').replace(/^\d+[.)]\s+/, '');
+  return l.trim();
+}
+
+function looksLikeHeader(line: string): boolean {
+  const low = line.toLowerCase();
+  return HEADER_HINTS.filter((h) => low.includes(h)).length >= 2;
+}
+
+/** Extrae líneas de tarea (una por tarea) de texto pegado o de un archivo
+ *  exportado de Notion. Soporta HTML (tabla), Markdown (tabla o lista) y CSV. */
+function extractTaskLines(raw: string, isHtml = false): string[] {
+  const looksHtml = isHtml || /<table|<\/tr>|<!doctype html|<html/i.test(raw);
+  let lines: string[] = [];
+  if (looksHtml && typeof DOMParser !== 'undefined') {
+    const doc = new DOMParser().parseFromString(raw, 'text/html');
+    const table = doc.querySelector('table');
+    if (table) {
+      lines = Array.from(table.querySelectorAll('tr')).map((tr) =>
+        Array.from(tr.querySelectorAll('td,th')).map((c) => (c.textContent || '').trim()).filter(Boolean).join(' — '),
+      );
+    } else {
+      lines = (doc.body?.textContent || raw).split(/\r?\n/);
+    }
+  } else {
+    lines = raw.split(/\r?\n/);
+  }
+  const cleaned = lines.map(cleanImportLine).filter(Boolean);
+  if (cleaned.length > 1 && looksLikeHeader(cleaned[0])) cleaned.shift();
+  return cleaned.slice(0, 120); // tope de seguridad
+}
+
+function chunk<T>(arr: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
+
 export default function SmartPlanner() {
   const p = usePlanner();
   const [plannerView, setPlannerView] = useState<PlannerViewMode>(() => (localStorage.getItem('ferova.planner.view') as PlannerViewMode) || 'day');
   const [compactCalendar, setCompactCalendar] = useState(() => localStorage.getItem('ferova.planner.compact') === '1');
   const [dump, setDump] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importInfo, setImportInfo] = useState<string | null>(null);
   const [showBlockForm, setShowBlockForm] = useState(false);
   const [blockTitle, setBlockTitle] = useState('');
   const [blockStart, setBlockStart] = useState('09:00');
@@ -81,11 +132,54 @@ export default function SmartPlanner() {
   useEffect(() => { localStorage.setItem('ferova.planner.view', plannerView); }, [plannerView]);
   useEffect(() => { localStorage.setItem('ferova.planner.compact', compactCalendar ? '1' : '0'); }, [compactCalendar]);
 
+  // Interpreta texto (pegado o de archivo) en tandas de 18 para no toparse con
+  // el límite del clasificador, acumulando los borradores para confirmar.
+  const runBulkImport = async (raw: string, isHtml = false) => {
+    const lines = extractTaskLines(raw, isHtml);
+    if (!lines.length) { setImportInfo('No encontré tareas en el contenido.'); setTimeout(() => setImportInfo(null), 3000); return; }
+    setImporting(true);
+    setDrafts(null);
+    setImportInfo(null);
+    try {
+      const batches = chunk(lines, 18);
+      const all: PlannerDraft[] = [];
+      for (let i = 0; i < batches.length; i++) {
+        if (batches.length > 1) setImportInfo(`Interpretando ${Math.min((i + 1) * 18, lines.length)} de ${lines.length}…`);
+        const detected = await p.previewCapture(batches[i].join('\n'));
+        all.push(...detected);
+      }
+      setImportInfo(null);
+      if (all.length) setDrafts(all);
+    } catch (err: any) {
+      setImportInfo(`No se pudo interpretar: ${err?.message || err}`);
+      setTimeout(() => setImportInfo(null), 4000);
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const submitDump = async () => {
     const text = dump.trim();
     if (!text) return;
-    const detected = await p.previewCapture(text);
-    if (detected.length) setDrafts(detected);
+    await runBulkImport(text, false);
+  };
+
+  const handleImportFile = async (file: File | null | undefined) => {
+    if (!file) return;
+    const name = file.name.toLowerCase();
+    if (name.endsWith('.pdf')) {
+      setImportInfo('Para PDF, ábrelo, copia el texto y pégalo en el cuadro. El archivo PDF no conserva la estructura de la base.');
+      setTimeout(() => setImportInfo(null), 6000);
+      return;
+    }
+    try {
+      const text = await file.text();
+      setDump(text.length > 4000 ? `${text.slice(0, 4000)}…` : text); // muestra una vista previa en el cuadro
+      await runBulkImport(text, name.endsWith('.html') || name.endsWith('.htm'));
+    } catch (err: any) {
+      setImportInfo(`No se pudo leer el archivo: ${err?.message || err}`);
+      setTimeout(() => setImportInfo(null), 4000);
+    }
   };
 
   const patchDraft = (index: number, patch: Partial<PlannerDraft>) => {
@@ -341,26 +435,38 @@ export default function SmartPlanner() {
 
       {/* Brain Dump */}
       <section className="rounded-2xl border border-[var(--line)] bg-white p-5">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Sparkles className="h-4 w-4 text-blue-600" />
-          <h2 className="text-sm font-semibold text-slate-900">Brain dump</h2>
-          <span className="text-xs text-slate-400">El sistema detecta tipo, prioridad, energía, duración y fecha límite.</span>
+          <h2 className="text-sm font-semibold text-slate-900">Brain dump · Importar tareas</h2>
+          <span className="text-xs text-slate-400">Escribe, pega, o sube tu export de Notion. La IA detecta tipo, prioridad, duración y fecha.</span>
         </div>
         <textarea
           value={dump}
           onChange={(e) => setDump(e.target.value)}
           onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') void submitDump(); }}
-          placeholder={'Escribí lo que sea. Ej.:\n- Llamar a Juan mañana\n- Pagar impuestos el viernes\n- Crear landing para producto X\n- Reunión con cliente Y'}
+          placeholder={'Escribe, o pega tus tareas de Notion (tabla, lista o texto). Ej.:\n- Llamar a Juan mañana\n- Pagar impuestos el viernes\n- Crear landing para producto X'}
           className="mt-3 block w-full resize-none rounded-xl border border-[var(--line)] bg-slate-50 px-3 py-3 text-sm outline-none focus:border-blue-300 focus:bg-white min-h-28"
         />
-        <div className="mt-3 flex items-center justify-between gap-3">
-          <span className="text-[11px] text-slate-400">⌘/Ctrl + Enter para interpretar</span>
+        {importInfo && <p className="mt-2 text-[11px] text-blue-700">{importInfo}</p>}
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">
+              <List className="h-3.5 w-3.5" /> Subir archivo de Notion
+              <input
+                type="file"
+                accept=".md,.markdown,.csv,.txt,.html,.htm,.pdf,text/markdown,text/csv,text/html,text/plain"
+                className="hidden"
+                onChange={(e) => { void handleImportFile(e.target.files?.[0]); e.target.value = ''; }}
+              />
+            </label>
+            <span className="text-[11px] text-slate-400">Markdown, CSV o HTML. ⌘/Ctrl+Enter para interpretar.</span>
+          </div>
           <button
             onClick={submitDump}
-            disabled={!dump.trim() || p.busy === 'classify'}
+            disabled={!dump.trim() || p.busy === 'classify' || importing}
             className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {p.busy === 'classify' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            {p.busy === 'classify' || importing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
             Interpretar
           </button>
         </div>
