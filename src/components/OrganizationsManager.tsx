@@ -6,6 +6,7 @@ import {
   type Organization, type OrganizationMember,
 } from '../lib/organizationsService';
 import { useToast, errMsg } from './ui/toast';
+import { PERMISSION_MODULES, type PermisosMap } from '../lib/collaboratorsService';
 
 // Alta y gobierno del árbol de organizaciones: un holding contenedor y sus
 // empresas. Cada empresa es una cuenta aislada; el holding las ve todas.
@@ -81,6 +82,18 @@ export default function OrganizationsManager() {
   const [miembros, setMiembros] = useState<OrganizationMember[] | null>(null);
   const [nuevoEmail, setNuevoEmail] = useState('');
   const [nuevoRol, setNuevoRol] = useState<'admin' | 'colaborador'>('colaborador');
+  // Pestañas marcadas. Vacío = acceso completo, que es lo que casi siempre se
+  // quiere; recortar es la excepción y por eso está plegado.
+  const [permisos, setPermisos] = useState<PermisosMap>({});
+  const [verPermisos, setVerPermisos] = useState(false);
+  const togglePestana = (tab: string) => setPermisos((prev) => {
+    const next = { ...prev };
+    if (next[tab]?.view) delete next[tab];
+    // Ver implica poder trabajar en esa pestaña: separar ver de editar aquí
+    // daría cuatro estados por pestaña y nadie los repasaría uno a uno.
+    else next[tab] = { view: true, edit: true };
+    return next;
+  });
 
   const abrirPersonas = async (org: Organization) => {
     setGestionando(org); setMiembros(null); setNuevoEmail('');
@@ -92,11 +105,11 @@ export default function OrganizationsManager() {
     if (!gestionando || !nuevoEmail.trim()) { toastErr('Escribe el correo de la persona.'); return; }
     setSaving(true);
     try {
-      const resultado = await shareOrganization(gestionando.id, nuevoEmail, nuevoRol);
+      const resultado = await shareOrganization(gestionando.id, nuevoEmail, nuevoRol, permisos);
       toastOk(resultado === 'agregado'
         ? 'Listo: ya puede entrar a esta empresa desde su selector.'
         : 'Invitación guardada: entrará sola cuando se registre con ese correo.');
-      setNuevoEmail('');
+      setNuevoEmail(''); setPermisos({}); setVerPermisos(false);
       setMiembros(await listOrganizationMembers(gestionando.id));
     } catch (e: any) { toastErr(`No se pudo compartir: ${errMsg(e)}`); } finally { setSaving(false); }
   };
@@ -308,9 +321,51 @@ export default function OrganizationsManager() {
                     {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UserPlus className="h-3.5 w-3.5" />} Dar acceso
                   </button>
                 </div>
+                <div className="mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setVerPermisos((v) => !v)}
+                    className="text-[11px] font-semibold text-blue-700 hover:text-blue-900"
+                  >
+                    {verPermisos ? 'Ocultar permisos' : 'Elegir qué puede ver (opcional)'}
+                  </button>
+                  {verPermisos && (
+                    <div className="mt-2 max-h-52 overflow-y-auto rounded-lg border border-slate-200 p-2">
+                      <p className="mb-2 text-[10px] text-slate-500">
+                        Sin marcar nada, ve toda la empresa. Marca pestañas para recortarle el acceso.
+                      </p>
+                      {PERMISSION_MODULES.map((modulo) => (
+                        <div key={modulo.group} className="mb-2">
+                          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">{modulo.group}</p>
+                          <div className="flex flex-wrap gap-1">
+                            {modulo.tabs.map((tab) => {
+                              const activo = permisos[tab.id]?.view === true;
+                              return (
+                                <button
+                                  key={tab.id}
+                                  type="button"
+                                  onClick={() => togglePestana(tab.id)}
+                                  aria-pressed={activo}
+                                  className={`rounded-full border px-2 py-0.5 text-[10px] transition ${
+                                    activo
+                                      ? 'border-blue-200 bg-blue-50 text-blue-700'
+                                      : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                                  }`}
+                                >
+                                  {tab.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <p className="mt-2 text-[10px] leading-relaxed text-slate-500">
                   Si la persona todavía no tiene cuenta, queda invitada y entra sola al registrarse con ese
-                  correo. "La administra" además le deja dar acceso a otros.
+                  correo — y conserva los permisos que le pongas ahora. Si ya la tiene, le llega un aviso en
+                  la campana. "La administra" además le deja dar acceso a otros.
                 </p>
               </div>
             </div>

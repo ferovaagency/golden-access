@@ -87,6 +87,8 @@ export interface OrganizationMember {
   rol: 'owner' | 'admin' | 'colaborador';
   /** `invitado` = todavía no tiene cuenta; entra sola al registrarse. */
   estado: 'activo' | 'invitado';
+  /** Pestañas que puede ver. Vacío = acceso completo. */
+  permisos: PermisosMap;
 }
 
 /** Cliente tipado laxo para las RPC: los tipos generados no conocen estas
@@ -100,7 +102,7 @@ function rpc<T>(fn: string, args: Record<string, unknown>) {
 }
 
 export async function listOrganizationMembers(orgId: string): Promise<OrganizationMember[]> {
-  const { data, error } = await rpc<Array<{ user_id: string | null; email: string; rol: string; estado: string }>>(
+  const { data, error } = await rpc<Array<{ user_id: string | null; email: string; rol: string; estado: string; permisos: PermisosMap | null }>>(
     'list_organization_members', { p_org_id: orgId },
   );
   if (error) throw new Error(`[organizationsService] miembros: ${error.message}`);
@@ -109,13 +111,20 @@ export async function listOrganizationMembers(orgId: string): Promise<Organizati
     email: r.email,
     rol: r.rol as OrganizationMember['rol'],
     estado: r.estado as OrganizationMember['estado'],
+    permisos: r.permisos || {},
   }));
 }
 
-/** Da acceso a una persona. Si ya tiene cuenta entra de inmediato; si no, queda
- *  invitada y entra sola cuando se registre con ese correo. */
-export async function shareOrganization(orgId: string, email: string, rol: 'admin' | 'colaborador'): Promise<'agregado' | 'invitado'> {
-  const { data, error } = await rpc<string>('share_organization', { p_org_id: orgId, p_email: email, p_rol: rol });
+/** Da acceso a una persona. Si ya tiene cuenta entra de inmediato (y recibe un
+ *  aviso en la campana); si no, queda invitada y entra sola cuando se registre
+ *  con ese correo. `permisos` vacío = acceso completo a la empresa. */
+export async function shareOrganization(
+  orgId: string,
+  email: string,
+  rol: 'admin' | 'colaborador',
+  permisos: PermisosMap = {},
+): Promise<'agregado' | 'invitado'> {
+  const { data, error } = await rpc<string>('share_organization', { p_org_id: orgId, p_email: email, p_rol: rol, p_permisos: permisos });
   if (error) throw new Error(error.message);
   return (data as 'agregado' | 'invitado') ?? 'invitado';
 }
@@ -195,16 +204,24 @@ export async function resolveWorkspaceContext(): Promise<WorkspaceContext | null
     permisos: null,
   });
 
-  // 2. Empresas de las que manda por jerarquía (el holding sobre sus hijas).
+  // 2. Empresas a las que se llega por la organización (el holding sobre sus
+  //    hijas, o una empresa que alguien te compartió).
+  //
+  //    `permisos` sale de la membresía en ESA organización: quien te invita
+  //    puede recortarle las pestañas a la persona. Vacío = acceso completo, que
+  //    es también el caso del acceso heredado desde un ancestro (ahí no hay
+  //    fila de membresía en la hija y no se recorta nada).
+  const misMembresias = await listMyMemberships();
   for (const org of orgs) {
     if (!org.dataUserId || org.dataUserId === user.id) continue;
+    const permisos = misMembresias.get(org.id);
     options.push({
       key: `org:${org.id}`,
       nombre: org.nombre,
       accountId: org.dataUserId,
       kind: 'organizacion',
       orgId: org.id,
-      permisos: null,
+      permisos: permisos && Object.keys(permisos).length ? permisos : null,
     });
   }
 
@@ -267,6 +284,19 @@ export function rememberActiveWorkspace(key: string, orgId: string | null, accou
 
 /** El espacio de trabajo activo según el SERVIDOR: lo que decide qué filas
  *  devuelve la RLS y sobre qué responde el asistente. */
+/** Mis membresías por organización, con sus permisos. La RLS de
+ *  organization_members ya deja leer las filas propias. */
+async function listMyMemberships(): Promise<Map<string, PermisosMap>> {
+  const { data: userData } = await supabase.auth.getUser();
+  const uid = userData?.user?.id;
+  if (!uid) return new Map();
+  const { data, error } = await db<{ org_id: string; permisos: PermisosMap | null }>('organization_members')
+    .select('org_id, permisos')
+    .eq('user_id', uid);
+  if (error) return new Map();
+  return new Map((data ?? []).map((r) => [r.org_id, r.permisos || {}]));
+}
+
 async function readActiveWorkspace(): Promise<{ orgId: string | null; accountId: string | null }> {
   const { data, error } = await db<{ org_id: string | null; account_user_id: string | null }>('user_active_org')
     .select('org_id, account_user_id')
