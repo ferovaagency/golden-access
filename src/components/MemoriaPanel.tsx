@@ -4,7 +4,7 @@ import { useToast, errMsg } from './ui/toast';
 import { listMemoria, createMemoria, updateMemoria, deleteMemoria, syncMemoria, type BrainItem, type BrainScope } from '../lib/brainService';
 
 // Pantalla de Memoria (cerebro del negocio), admin-only.
-// Global = conocimiento del equipo; Privado = solo de quien lo escribe.
+// "Del negocio" = lo ve todo el que tenga acceso a esta cuenta; Privado = solo quien lo escribe.
 
 const inputCls = 'w-full bg-slate-50/50 border border-slate-200 p-2.5 rounded text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400/40';
 const labelCls = 'font-mono uppercase text-[10px] tracking-wider text-slate-500';
@@ -33,7 +33,9 @@ export default function MemoriaPanel() {
       const { items, isAdmin } = await listMemoria();
       setItems(items);
       setIsAdmin(isAdmin);
-      if (!isAdmin) { setFilter('privado'); setScope('privado'); }
+      // Antes, a quien no fuera admin del equipo interno se le encerraba en la
+      // vista privada. Con el cerebro por negocio eso ya no aplica: cualquiera
+      // con acceso a la cuenta escribe la memoria de SU negocio.
       return items;
     } catch (e) {
       toastErr(errMsg(e));
@@ -128,7 +130,7 @@ export default function MemoriaPanel() {
   }
 
   const visible = items.filter((k) => k.alcance === filter);
-  const canWriteGlobal = isAdmin;
+  const canWriteGlobal = true; // "global" = de este negocio: lo puede escribir cualquiera con acceso a la cuenta.
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -149,7 +151,7 @@ export default function MemoriaPanel() {
           </button>
         </div>
         <p className="text-sm text-slate-500 mt-1">
-          El cerebro que usa el asistente para responder. Lo <strong>global</strong> lo ve todo el equipo; lo <strong>privado</strong> solo tú. Con “Actualizar desde mi negocio” se construye solo desde tus clientes y tu perfil.
+          El cerebro que usa el asistente para responder. Lo <strong>del negocio</strong> lo ve todo el que tenga acceso a esta cuenta; lo <strong>privado</strong> solo tú. Con “Actualizar desde mi negocio” se construye solo desde tus clientes y tu perfil.
         </p>
       </header>
 
@@ -178,7 +180,7 @@ export default function MemoriaPanel() {
                     onClick={() => setScope('global')}
                     className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-sm border transition-colors ${scope === 'global' ? 'bg-blue-500 border-blue-500 text-black' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}
                   >
-                    <Globe size={14} /> Global (equipo)
+                    <Globe size={14} /> Del negocio
                   </button>
                 )}
                 <button
@@ -212,7 +214,7 @@ export default function MemoriaPanel() {
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-sm border transition-colors ${filter === s ? 'bg-slate-900 border-slate-900 text-white' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}
           >
             {s === 'global' ? <Globe size={14} /> : <Lock size={14} />}
-            {s === 'global' ? 'Global (equipo)' : 'Privado (mío)'}
+            {s === 'global' ? 'Del negocio' : 'Privado (mío)'}
             <span className="opacity-60">{items.filter((k) => k.alcance === s).length}</span>
           </button>
         ))}

@@ -629,7 +629,7 @@ function AppInner() {
     { id: 'settings', label: 'Configuración', icon: Settings, items: [
       { id: 'integraciones', label: 'Integraciones', hint: 'Google, WhatsApp, Apollo' },
       ...(modules.financiero ? [{ id: 'ajustes', label: 'Configuración', hint: 'Datos y Google Sheets' }] : []),
-      ...(isTeam ? [{ id: 'memoria', label: 'Memoria', hint: 'Cerebro del negocio: conocimiento global y privado' }] : []),
+      { id: 'memoria', label: 'Memoria', hint: 'Cerebro del negocio: lo que sabe de ti y de tu operación' },
       ...(isTeam ? [{ id: 'admin', label: 'Administración Ferova', hint: 'Usuarios, planes, feedback y operaciones' }] : []),
     ] },
   ];
@@ -856,7 +856,7 @@ function AppInner() {
                 onNavigate={handleNavigate}
               />
             )}
-            {activeTab === 'memoria' && isTeam && <MemoriaPanel />}
+            {activeTab === 'memoria' && <MemoriaPanel />}
             {modules.crm_ventas && activeTab.startsWith('crm-') && (
               // Las pestañas de crecimiento (Pipeline, Citas, LinkedIn+Reddit,
               // Bot WhatsApp, Reseñas) son del módulo del cliente: cada cuenta

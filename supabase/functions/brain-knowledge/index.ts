@@ -1,10 +1,26 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { embedAndStoreChunks } from "../_shared/brain.ts";
+import { resolveActiveContext } from "../_shared/account.ts";
 
 // CRUD de la memoria del negocio (cerebro) para la pantalla de Memoria.
-// Reglas: el cerebro GLOBAL (owner_user_id null) solo lo administra un admin
-// (owner/admin). Cada quien administra su cerebro PRIVADO.
+//
+// QUIÉN VE QUÉ
+// Antes esta función devolvía 403 a quien no estuviera en `crm_team_members`, y
+// su listado incluía las notas con `owner_user_id IS NULL` — que son el cerebro
+// interno de FEROVA. Es decir: la Memoria era inaccesible para los clientes, y
+// abrirla sin más les habría mostrado el conocimiento interno de la agencia.
+//
+// Ahora cada negocio tiene su propio cerebro:
+//   · del negocio  → `owner_user_id = cuenta activa`; lo ve todo el que tenga
+//                    acceso a esa cuenta (socios, colaboradores).
+//   · privado      → `owner_user_id = la persona`; sólo ella.
+//   · Ferova       → las notas heredadas sin dueño NI organización. Sólo las ve
+//                    el equipo interno (crm_team_members), como siempre.
+//
+// La cuenta activa se resuelve en la base (`active_context_for_user`), no desde
+// la petición: esta función usa service_role y se salta la RLS, así que estas
+// comprobaciones SON el control de acceso.
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -37,26 +53,42 @@ Deno.serve(async (req) => {
     const email = userData.user.email;
 
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    // La pertenencia al equipo interno ya NO decide si se entra: sólo si se ve
+    // (y se administra) el cerebro heredado de Ferova.
     const { data: member } = await admin.from("crm_team_members").select("email, rol").eq("email", email).maybeSingle();
-    if (!member) return json({ ok: false, message: "No autorizado." }, 403);
-    const isAdmin = ["owner", "admin"].includes((member as { rol?: string }).rol || "");
+    const isTeam = !!member;
+    const isAdmin = isTeam && ["owner", "admin"].includes((member as { rol?: string }).rol || "");
+
+    const { accountId, orgId } = await resolveActiveContext(admin, userId);
 
     const payload = await req.json().catch(() => ({}));
     const action = payload?.action as string;
 
-    // Permiso sobre una fila: global => admin; privada => su dueño.
+    // Permiso sobre una fila:
+    //   sin dueño  => cerebro de Ferova, sólo un admin del equipo;
+    //   de la cuenta => cualquiera con acceso a esa cuenta;
+    //   privada    => su dueño y nadie más.
     const canManage = (ownerUserId: string | null) =>
-      ownerUserId === null ? isAdmin : ownerUserId === userId;
+      ownerUserId === null ? isAdmin : ownerUserId === userId || ownerUserId === accountId;
 
     if (action === "list") {
+      // Lo del negocio y lo propio. Las notas de Ferova (sin dueño) sólo entran
+      // si quien pregunta es del equipo interno.
+      const filtros = [`owner_user_id.eq.${accountId}`, `owner_user_id.eq.${userId}`];
+      if (isTeam) filtros.push("owner_user_id.is.null");
       const { data, error } = await admin
         .from("ferova_knowledge")
-        .select("id, title, content, source, tags, owner_user_id, created_at, updated_at")
-        .or(`owner_user_id.is.null,owner_user_id.eq.${userId}`)
+        .select("id, title, content, source, tags, owner_user_id, org_id, created_at, updated_at")
+        .or(filtros.join(","))
         .order("updated_at", { ascending: false })
         .limit(500);
       if (error) return json({ ok: false, message: error.message }, 500);
-      const items = (data || []).map((k: any) => ({ ...k, alcance: k.owner_user_id ? "privado" : "global" }));
+      const items = (data || []).map((k: any) => ({
+        ...k,
+        // `global` es la etiqueta que la pantalla ya entiende como "lo que ve
+        // todo el equipo de este negocio".
+        alcance: k.owner_user_id === userId && k.owner_user_id !== accountId ? "privado" : "global",
+      }));
       return json({ ok: true, items, is_admin: isAdmin });
     }
 
@@ -66,12 +98,14 @@ Deno.serve(async (req) => {
       const scope = payload.scope === "privado" ? "privado" : "global";
       const tags = Array.isArray(payload.tags) ? payload.tags.slice(0, 20) : [];
       if (!title || !content) return json({ ok: false, message: "Faltan titulo o contenido." }, 400);
-      if (scope === "global" && !isAdmin) return json({ ok: false, message: "Solo un admin puede escribir en el cerebro global." }, 403);
 
-      const owner = scope === "privado" ? userId : null;
+      // "global" ahora significa "de este negocio": se guarda a nombre de la
+      // cuenta activa, no sin dueño. Sin dueño es el cerebro de Ferova, y una
+      // nota de un cliente no puede acabar ahí por descuido.
+      const owner = scope === "privado" ? userId : accountId;
       const { data, error } = await admin
         .from("ferova_knowledge")
-        .insert({ title, content, owner_user_id: owner, source: "manual", tags, created_by: userId })
+        .insert({ title, content, owner_user_id: owner, org_id: orgId, source: "manual", tags, created_by: userId })
         .select("id")
         .single();
       if (error || !data) return json({ ok: false, message: error?.message || "No se pudo crear." }, 500);
