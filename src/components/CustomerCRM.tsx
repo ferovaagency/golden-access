@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { Plus, Loader2, Trash2, Pencil, X, Phone, Mail, Building2, Search, MessageCircle, CalendarClock } from 'lucide-react';
-import { Contacto, ContactoEstado, listContactos, upsertContacto, deleteContacto } from '../lib/bizCrmService';
+import { Plus, Loader2, Trash2, Pencil, X, Phone, Mail, Building2, Search, MessageCircle, CalendarClock, Globe, Linkedin } from 'lucide-react';
+import { Contacto, ContactoEstado, listContactos, upsertContacto, deleteContacto, CANALES_ORIGEN } from '../lib/bizCrmService';
 import { useToast, errMsg } from './ui/toast';
 
 interface Props {
@@ -17,8 +17,9 @@ const COLUMNS: { estado: ContactoEstado; label: string; accent: string }[] = [
 ];
 
 const EMPTY_FORM = {
-  nombre_contacto: '', empresa: '', telefono: '', email: '',
-  valor_estimado: '', moneda: 'COP' as 'COP' | 'USD',
+  nombre_contacto: '', empresa: '', cargo: '', telefono: '', email: '',
+  canal_origen: '', sitio_web: '', linkedin: '',
+  valor_estimado: '', moneda: 'COP' as 'COP' | 'USD', probabilidad: '',
   notas: '', proxima_accion: '', fecha_proxima_accion: '',
 };
 
@@ -91,8 +92,9 @@ export default function CustomerCRM({ user }: Props) {
   const openEdit = (c: Contacto) => {
     setEditingId(c.id);
     setForm({
-      nombre_contacto: c.nombre_contacto, empresa: c.empresa || '', telefono: c.telefono || '', email: c.email || '',
-      valor_estimado: c.valor_estimado != null ? String(c.valor_estimado) : '', moneda: c.moneda,
+      nombre_contacto: c.nombre_contacto, empresa: c.empresa || '', cargo: c.cargo || '', telefono: c.telefono || '', email: c.email || '',
+      canal_origen: c.canal_origen || '', sitio_web: c.sitio_web || '', linkedin: c.linkedin || '',
+      valor_estimado: c.valor_estimado != null ? String(c.valor_estimado) : '', moneda: c.moneda, probabilidad: c.probabilidad != null ? String(c.probabilidad) : '',
       notas: c.notas || '', proxima_accion: c.proxima_accion || '', fecha_proxima_accion: c.fecha_proxima_accion || '',
     });
     setModalOpen(true);
@@ -109,11 +111,16 @@ export default function CustomerCRM({ user }: Props) {
         id,
         nombre_contacto: form.nombre_contacto.trim(),
         empresa: form.empresa.trim() || null,
+        cargo: form.cargo.trim() || null,
         telefono: form.telefono.trim() || null,
         email: form.email.trim() || null,
+        canal_origen: form.canal_origen.trim() || null,
+        sitio_web: form.sitio_web.trim() || null,
+        linkedin: form.linkedin.trim() || null,
         estado: existing?.estado || 'nuevo',
         valor_estimado: form.valor_estimado ? Number(form.valor_estimado) : null,
         moneda: form.moneda,
+        probabilidad: form.probabilidad ? Math.max(0, Math.min(100, Number(form.probabilidad))) : null,
         notas: form.notas.trim() || null,
         proxima_accion: form.proxima_accion.trim() || null,
         fecha_proxima_accion: form.fecha_proxima_accion || null,
@@ -228,9 +235,10 @@ export default function CustomerCRM({ user }: Props) {
                           </button>
                         </div>
                       </div>
-                      {c.empresa && <div className="flex items-center gap-1 text-slate-500"><Building2 className="w-3 h-3" />{c.empresa}</div>}
+                      {(c.empresa || c.cargo) && <div className="flex items-center gap-1 text-slate-500"><Building2 className="w-3 h-3 shrink-0" /><span className="truncate">{[c.cargo, c.empresa].filter(Boolean).join(' · ')}</span></div>}
+                      {c.canal_origen && <span className="inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-semibold text-slate-500">{c.canal_origen}</span>}
                       {c.valor_estimado != null && (
-                        <div className="font-mono font-semibold text-slate-900">{formatMoney(c.valor_estimado, c.moneda)}</div>
+                        <div className="font-mono font-semibold text-slate-900">{formatMoney(c.valor_estimado, c.moneda)}{c.probabilidad != null ? <span className="ml-1 text-[10px] font-normal text-slate-400">· {c.probabilidad}%</span> : null}</div>
                       )}
                       {(c.proxima_accion || c.fecha_proxima_accion) && (
                         <div className={`flex items-center gap-1 ${overdue ? 'text-red-600' : 'text-slate-500'}`}>
@@ -240,7 +248,7 @@ export default function CustomerCRM({ user }: Props) {
                       )}
 
                       {/* Acciones rápidas */}
-                      {(c.telefono || c.email) && (
+                      {(c.telefono || c.email || c.sitio_web || c.linkedin) && (
                         <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
                           {c.telefono && (
                             <a href={`tel:${c.telefono}`} title="Llamar" className="text-slate-400 hover:text-blue-600"><Phone className="w-3.5 h-3.5" /></a>
@@ -250,6 +258,12 @@ export default function CustomerCRM({ user }: Props) {
                           )}
                           {c.email && (
                             <a href={`mailto:${c.email}`} title="Enviar correo" className="text-slate-400 hover:text-blue-600"><Mail className="w-3.5 h-3.5" /></a>
+                          )}
+                          {c.sitio_web && (
+                            <a href={c.sitio_web.startsWith('http') ? c.sitio_web : `https://${c.sitio_web}`} target="_blank" rel="noopener noreferrer" title="Sitio web" className="text-slate-400 hover:text-blue-600"><Globe className="w-3.5 h-3.5" /></a>
+                          )}
+                          {c.linkedin && (
+                            <a href={c.linkedin.startsWith('http') ? c.linkedin : `https://${c.linkedin}`} target="_blank" rel="noopener noreferrer" title="LinkedIn" className="text-slate-400 hover:text-blue-700"><Linkedin className="w-3.5 h-3.5" /></a>
                           )}
                         </div>
                       )}
@@ -286,9 +300,15 @@ export default function CustomerCRM({ user }: Props) {
               <label htmlFor="cc-nombre" className="block text-xs font-semibold text-slate-600 mb-1">Nombre *</label>
               <input id="cc-nombre" required value={form.nombre_contacto} onChange={(e) => setForm({ ...form, nombre_contacto: e.target.value })} className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-sm text-slate-900" />
             </div>
-            <div>
-              <label htmlFor="cc-empresa" className="block text-xs font-semibold text-slate-600 mb-1">Empresa</label>
-              <input id="cc-empresa" value={form.empresa} onChange={(e) => setForm({ ...form, empresa: e.target.value })} className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-sm text-slate-900" />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label htmlFor="cc-empresa" className="block text-xs font-semibold text-slate-600 mb-1">Empresa</label>
+                <input id="cc-empresa" value={form.empresa} onChange={(e) => setForm({ ...form, empresa: e.target.value })} className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-sm text-slate-900" />
+              </div>
+              <div>
+                <label htmlFor="cc-cargo" className="block text-xs font-semibold text-slate-600 mb-1">Cargo</label>
+                <input id="cc-cargo" value={form.cargo} onChange={(e) => setForm({ ...form, cargo: e.target.value })} placeholder="Ej. Gerente" className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-sm text-slate-900" />
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
@@ -298,6 +318,29 @@ export default function CustomerCRM({ user }: Props) {
               <div>
                 <label htmlFor="cc-email" className="block text-xs font-semibold text-slate-600 mb-1">Email</label>
                 <input id="cc-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-sm text-slate-900" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label htmlFor="cc-fuente" className="block text-xs font-semibold text-slate-600 mb-1">Fuente</label>
+                <select id="cc-fuente" value={form.canal_origen} onChange={(e) => setForm({ ...form, canal_origen: e.target.value })} className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-sm text-slate-900">
+                  <option value="">Sin especificar</option>
+                  {CANALES_ORIGEN.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="cc-prob" className="block text-xs font-semibold text-slate-600 mb-1">Probabilidad (%)</label>
+                <input id="cc-prob" type="number" min={0} max={100} value={form.probabilidad} onChange={(e) => setForm({ ...form, probabilidad: e.target.value })} placeholder="0-100" className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-sm text-slate-900" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label htmlFor="cc-web" className="block text-xs font-semibold text-slate-600 mb-1">Sitio web</label>
+                <input id="cc-web" value={form.sitio_web} onChange={(e) => setForm({ ...form, sitio_web: e.target.value })} placeholder="https://…" className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-sm text-slate-900" />
+              </div>
+              <div>
+                <label htmlFor="cc-linkedin" className="block text-xs font-semibold text-slate-600 mb-1">LinkedIn</label>
+                <input id="cc-linkedin" value={form.linkedin} onChange={(e) => setForm({ ...form, linkedin: e.target.value })} placeholder="linkedin.com/in/…" className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-sm text-slate-900" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">

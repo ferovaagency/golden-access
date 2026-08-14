@@ -16,9 +16,17 @@ export interface Contacto {
   notas: string | null;
   proxima_accion: string | null;
   fecha_proxima_accion: string | null;
+  canal_origen: string | null;
+  sitio_web: string | null;
+  linkedin: string | null;
+  cargo: string | null;
+  probabilidad: number | null;
   created_at: string;
   updated_at: string;
 }
+
+/** Fuentes/canales comunes de adquisición para el selector del CRM. */
+export const CANALES_ORIGEN = ['Referido', 'Sitio web', 'LinkedIn', 'Instagram', 'Facebook', 'WhatsApp', 'Evento', 'Publicidad', 'Frío', 'Otro'] as const;
 
 export async function listContactos(userId: string): Promise<Contacto[]> {
   const { data, error } = await db<Contacto>('biz_crm_contactos')
