@@ -8,6 +8,7 @@ import { resolveWorkspaceContext, rememberActiveWorkspace, type WorkspaceContext
 import WorkspaceSwitcher from './components/WorkspaceSwitcher';
 import HoldingOverview from './components/HoldingOverview';
 import { trackActivationOnce } from './lib/analytics';
+import { identifyUser, setActiveAccount } from './lib/observability';
 import { syncMemoria } from './lib/brainService';
 import PlanOnboarding from './components/PlanOnboarding';
 import ProductTour from './components/ProductTour';
@@ -131,6 +132,10 @@ function AppInner() {
   }, [user]);
 
   const activeWorkspace = workspace?.active ?? null;
+  // Quién y sobre qué empresa, para que un error de producción se pueda
+  // reproducir. No-op mientras no haya DSN de Sentry.
+  useEffect(() => { identifyUser(user ? { id: user.id, email: user.email } : null); }, [user]);
+  useEffect(() => { setActiveAccount(activeWorkspace?.orgId ?? null); }, [activeWorkspace]);
   // Cambiar de empresa recarga los datos del negocio: se limpia appData para
   // que el bootstrap vuelva a correr con la cuenta nueva.
   const switchWorkspace = (key: string) => {
