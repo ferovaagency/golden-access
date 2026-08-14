@@ -29,6 +29,13 @@ const ClassifySchema = z.object({
 
 const ACTIONABLE = new Set(["task","reminder","event","purchase","finance"]);
 
+/** Tope del modo commit: debe cubrir el import completo (src/lib/notionImport.ts). */
+const MAX_COMMIT_DRAFTS = 200;
+/** Filas persistidas en paralelo. Mantiene el emparejamiento inbox↔tarea exacto
+ *  (a diferencia de un insert masivo, cuyo orden de retorno no está garantizado)
+ *  sin que 200 tareas tarden minutos en fila india. */
+const WRITE_CONCURRENCY = 10;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
@@ -44,7 +51,10 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const raw = typeof body?.text === "string" ? body.text : "";
     const entries: string[] = Array.isArray(body?.entries) ? body.entries : raw.split("\n").map((l: string) => l.trim()).filter(Boolean);
-    if (entries.length === 0) return json({ ok: false, message: "Sin entradas" }, 400);
+    // El modo commit manda `drafts` ya confirmados y ningún texto: exigir
+    // entradas aquí rechazaba el guardado del import con 400 "Sin entradas".
+    const hasIncomingDrafts = Array.isArray(body?.drafts) && body.drafts.length > 0;
+    if (!hasIncomingDrafts && entries.length === 0) return json({ ok: false, message: "Sin entradas" }, 400);
 
     const key = Deno.env.get("LOVABLE_API_KEY");
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
@@ -121,13 +131,15 @@ Deno.serve(async (req) => {
       confidence: number;
     };
 
-    const incomingDrafts: Draft[] | null = Array.isArray(body?.drafts) && body.drafts.length ? body.drafts as Draft[] : null;
+    const incomingDrafts: Draft[] | null = hasIncomingDrafts ? body.drafts as Draft[] : null;
     const drafts: Draft[] = [];
 
     if (incomingDrafts) {
       // Confirmación del usuario: se respeta lo que él corrigió y sólo se
       // sanean los campos que la base necesita bien tipados.
-      for (const d of incomingDrafts.slice(0, 20)) {
+      // El tope aquí es el mismo del import (200): no hay llamadas a IA en
+      // este camino, así que truncar a 20 sólo perdía tareas ya revisadas.
+      for (const d of incomingDrafts.slice(0, MAX_COMMIT_DRAFTS)) {
         drafts.push({
           ...d,
           title: String(d.title || d.line || "").slice(0, 300),
@@ -200,8 +212,10 @@ Deno.serve(async (req) => {
       return json({ ok: true, preview: true, drafts, clients });
     }
 
-    const results = [] as any[];
-    for (const c of drafts) {
+    // Persiste un borrador y devuelve el par inbox↔tarea, o el motivo del fallo.
+    // Antes los errores por fila se descartaban con `continue`: el import podía
+    // guardar cero tareas y aun así responder ok, sin rastro para la persona.
+    async function persistDraft(c: Draft): Promise<{ inbox: any; task: any } | { failed: string }> {
       const { data: inboxRow, error: ierr } = await admin.from("planner_inbox").insert({
         user_id: userId,
         raw_text: c.line,
@@ -217,7 +231,10 @@ Deno.serve(async (req) => {
         ai_reasoning: c.reasoning,
         processed: ACTIONABLE.has(c.detected_type),
       }).select("*").single();
-      if (ierr) { console.error("[planner-classify] inbox insert", ierr); continue; }
+      if (ierr || !inboxRow) {
+        console.error("[planner-classify] inbox insert", ierr);
+        return { failed: `${c.title || c.line}: ${ierr?.message || "no se pudo registrar"}` };
+      }
 
       let task: any = null;
       if (ACTIONABLE.has(c.detected_type)) {
@@ -239,14 +256,36 @@ Deno.serve(async (req) => {
           source_inbox_id: inboxRow.id,
           ai_notes: c.reasoning,
         }).select("*").single();
-        if (!terr && t) {
-          task = t;
-          await admin.from("planner_inbox").update({ task_id: t.id }).eq("id", inboxRow.id);
+        if (terr || !t) {
+          console.error("[planner-classify] task insert", terr);
+          return { failed: `${c.title || c.line}: ${terr?.message || "no se pudo crear la tarea"}` };
         }
+        task = t;
+        await admin.from("planner_inbox").update({ task_id: t.id }).eq("id", inboxRow.id);
       }
-      results.push({ inbox: inboxRow, task });
+      return { inbox: inboxRow, task };
     }
-    return json({ ok: true, results });
+
+    const results = [] as any[];
+    const errors = [] as string[];
+    for (let i = 0; i < drafts.length; i += WRITE_CONCURRENCY) {
+      const settled = await Promise.all(drafts.slice(i, i + WRITE_CONCURRENCY).map(persistDraft));
+      for (const outcome of settled) {
+        if ("failed" in outcome) errors.push(outcome.failed);
+        else results.push(outcome);
+      }
+    }
+
+    // Nada guardado es un fallo, no un éxito vacío: la UI debe poder decirlo.
+    if (!results.length && errors.length) {
+      return json({ ok: false, message: `No se pudo guardar ninguna tarea. ${errors[0]}`, results, errors }, 500);
+    }
+    return json({
+      ok: true,
+      results,
+      errors,
+      message: errors.length ? `Guardé ${results.length}; fallaron ${errors.length}.` : undefined,
+    });
   } catch (err) {
     console.error("[planner-classify] error", err);
     return json({ ok: false, message: err instanceof Error ? err.message : String(err) }, 500);

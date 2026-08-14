@@ -169,6 +169,10 @@ function buildDraftsFromRows(rows: string[][], clients: ClientOption[]): { draft
       line: title,
       title: title.slice(0, 300),
       detected_deadline: deadline,
+      // La fecha del CSV es intención de agenda, igual que en la rama de IA:
+      // sin esto la revisión mostraba la fecha vacía y las tareas nacían en
+      // backlog, sin día, pese a venir fechadas desde Notion.
+      scheduled_for: deadline,
       detected_client: client?.nombre ?? null,
       client_ref: client?.id ?? null,
     });

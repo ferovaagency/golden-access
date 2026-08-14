@@ -90,20 +90,27 @@ export function usePlanner() {
     }
   }, []);
 
-  /** Paso 2: crea las tareas ya confirmadas y reorganiza el día. */
-  const commitCapture = useCallback(async (drafts: PlannerDraft[]) => {
-    if (!drafts.length) return;
+  /** Paso 2: crea las tareas ya confirmadas y reorganiza el día.
+   *  Devuelve si se guardó, para que la UI no descarte el trabajo si falló. */
+  const commitCapture = useCallback(async (drafts: PlannerDraft[]): Promise<boolean> => {
+    if (!drafts.length) return false;
     setBusy('classify'); setError(null);
     try {
-      const { error: err } = await plannerService.commitDrafts(drafts);
-      if (err) setError(err.message);
-      else {
-        const { error: planError } = await plannerService.planDay(undefined, true);
-        if (planError) setError(planError.message);
+      const { data, error: err } = await plannerService.commitDrafts(drafts);
+      if (err || !data?.ok) {
+        setError(err?.message || data?.message || 'No fue posible guardar las tareas.');
+        await refresh();
+        return false;
       }
+      // Guardado parcial: se avisa, pero las tareas que sí entraron se conservan.
+      if (data.message) setError(data.message);
+      const { error: planError } = await plannerService.planDay(undefined, true);
+      if (planError) setError(planError.message);
       await refresh();
+      return true;
     } catch (err: any) {
       setError(err?.message || 'No fue posible guardar las tareas.');
+      return false;
     } finally {
       setBusy(null);
     }

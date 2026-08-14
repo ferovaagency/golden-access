@@ -159,7 +159,10 @@ export default function SmartPlanner() {
 
   const confirmDrafts = async () => {
     if (!drafts?.length) return;
-    await p.commitCapture(drafts);
+    // Si el guardado falla, se conservan los borradores: descartarlos borraba
+    // el trabajo de revisión y dejaba la pantalla vacía sin explicación.
+    const saved = await p.commitCapture(drafts);
+    if (!saved) return;
     setDrafts(null);
     setDump('');
   };

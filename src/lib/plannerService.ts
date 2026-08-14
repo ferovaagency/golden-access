@@ -511,7 +511,10 @@ export const plannerService = {
   },
   /** Materializa los drafts ya confirmados/corregidos por la persona. */
   async commitDrafts(drafts: PlannerDraft[]) {
-    return invokeAi<{ ok: boolean; results: any[] }>({ functionName: 'planner-classify', body: { drafts } });
+    return invokeAi<{ ok: boolean; results: any[]; errors?: string[]; message?: string }>({
+      functionName: 'planner-classify',
+      body: { drafts },
+    });
   },
   async calendarBusyBlocks(date: string): Promise<PlannerBusyBlock[]> {
     const { getAccessToken } = await import('./supabase');
