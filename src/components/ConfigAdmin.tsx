@@ -9,6 +9,7 @@ import { requestAccountDeletion, cancelAccountDeletion, ACCOUNT_DELETION_GRACE_D
 import FiscalProfileSection from './FiscalProfileSection';
 import BusinessProfileSettings from './BusinessProfileSettings';
 import CollaboratorsManager from './CollaboratorsManager';
+import OrganizationsManager from './OrganizationsManager';
 import type { BusinessProfile } from '../lib/businessProfileService';
 import { useToast, errMsg } from './ui/toast';
 import { listActiveTaxRules, type TaxRule } from '../lib/taxRulesService';
@@ -262,6 +263,8 @@ export default function ConfigAdmin({
       </div>
 
       <BusinessProfileSettings userId={userId} profile={businessProfile} onUpdated={onBusinessProfileUpdated} />
+
+      <OrganizationsManager />
 
       <CollaboratorsManager />
 

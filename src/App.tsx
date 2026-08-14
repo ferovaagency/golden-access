@@ -4,7 +4,8 @@ import { backupAppDataToSheets, fetchSpreadsheetData, findSpreadsheet, importShe
 import * as financeService from './lib/financeService';
 import { useAuthAndAccess } from './hooks/useAuthAndAccess';
 import { getBusinessProfile, BusinessProfile } from './lib/businessProfileService';
-import { getMyCollaboratorContext, type CollaboratorContext } from './lib/collaboratorsService';
+import { resolveWorkspaceContext, rememberActiveWorkspace, type WorkspaceContext } from './lib/organizationsService';
+import WorkspaceSwitcher from './components/WorkspaceSwitcher';
 import { trackActivationOnce } from './lib/analytics';
 import { syncMemoria } from './lib/brainService';
 import PlanOnboarding from './components/PlanOnboarding';
@@ -112,25 +113,40 @@ function AppInner() {
   const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
   const { profile: fiscalProfile } = useFiscalProfile(user?.id);
 
-  // Colaborador: si el usuario actual es colaborador de un negocio, opera sobre
-  // los datos de ESE dueño (accountId). Para el dueño, collab=null y accountId =
-  // su propio id, así que su experiencia no cambia en absoluto.
-  const [collab, setCollab] = useState<CollaboratorContext | null>(null);
-  const [collabResolved, setCollabResolved] = useState(false);
+  // Espacio de trabajo activo: sobre los datos de qué cuenta se opera. Cubre
+  // los tres casos con la misma variable -- cuenta propia, empresa de un
+  // holding que se administra, y negocio ajeno donde se es colaborador.
+  // Ver docs/DISENO_ORGANIZACIONES.md.
+  const [workspace, setWorkspace] = useState<WorkspaceContext | null>(null);
+  const [workspaceResolved, setWorkspaceResolved] = useState(false);
   useEffect(() => {
-    if (!user) { setCollab(null); setCollabResolved(false); return; }
+    if (!user) { setWorkspace(null); setWorkspaceResolved(false); return; }
     let alive = true;
-    setCollabResolved(false);
-    getMyCollaboratorContext()
-      .then((c) => { if (alive) { setCollab(c); setCollabResolved(true); } })
-      .catch(() => { if (alive) { setCollab(null); setCollabResolved(true); } });
+    setWorkspaceResolved(false);
+    resolveWorkspaceContext()
+      .then((w) => { if (alive) { setWorkspace(w); setWorkspaceResolved(true); } })
+      .catch(() => { if (alive) { setWorkspace(null); setWorkspaceResolved(true); } });
     return () => { alive = false; };
   }, [user]);
-  const accountId = collab?.ownerUserId ?? user?.id ?? '';
-  const canView = (tab: string) => !collab || collab.permisos?.[tab]?.view === true;
+
+  const activeWorkspace = workspace?.active ?? null;
+  // Cambiar de empresa recarga los datos del negocio: se limpia appData para
+  // que el bootstrap vuelva a correr con la cuenta nueva.
+  const switchWorkspace = (key: string) => {
+    if (!workspace || key === workspace.active.key) return;
+    const next = workspace.options.find((o) => o.key === key);
+    if (!next) return;
+    rememberActiveWorkspace(key);
+    setAppData(null);
+    setWorkspace({ ...workspace, active: next });
+  };
+
+  const accountId = activeWorkspace?.accountId ?? user?.id ?? '';
+  // permisos null = dueño o administrador: ve todo.
+  const canView = (tab: string) => !activeWorkspace?.permisos || activeWorkspace.permisos[tab]?.view === true;
   // Para componentes que reciben el objeto `user` y consultan por user.id:
-  // un colaborador opera sobre los datos del dueño. Para el dueño, es su propio user.
-  const effectiveUser = (collab && user ? { ...user, id: collab.ownerUserId } : user) as typeof user;
+  // se opera sobre los datos de la cuenta activa, no siempre la propia.
+  const effectiveUser = (user && accountId && accountId !== user.id ? { ...user, id: accountId } : user) as typeof user;
 
   // Google Sheets backup (optional, manual). Persisted per user in
   // localStorage -- previously it was only in-memory React state, so the
@@ -201,9 +217,9 @@ function AppInner() {
   // logged-in user with paid access and haven't loaded it yet -- covers both
   // the initial login and the Paywall's onPaid transition uniformly.
   useEffect(() => {
-    if (user && hasPaid && appData === null && collabResolved && accountId) bootstrapFinanceData(accountId);
+    if (user && hasPaid && appData === null && workspaceResolved && accountId) bootstrapFinanceData(accountId);
     if (!user) setAppData(null);
-  }, [user, hasPaid, collabResolved, accountId]);
+  }, [user, hasPaid, workspaceResolved, accountId]);
 
   // Cerebro que se construye SOLO: una vez al día, sincroniza la memoria del
   // negocio desde los datos reales (perfil + clientes) en segundo plano, para
@@ -229,11 +245,12 @@ function AppInner() {
   // Colaborador en una pestaña sin permiso -> primera que sí puede ver.
   // Aquí (tras declarar activeTab, antes de cualquier return) para no romper hooks.
   useEffect(() => {
-    if (!collab || !collabResolved) return;
-    if (collab.permisos?.[activeTab]?.view === true) return;
-    const first = Object.keys(collab.permisos || {}).find((t) => collab.permisos[t]?.view === true);
+    const permisos = activeWorkspace?.permisos;
+    if (!permisos || !workspaceResolved) return;
+    if (permisos[activeTab]?.view === true) return;
+    const first = Object.keys(permisos).find((t) => permisos[t]?.view === true);
     if (first && first !== activeTab) setActiveTab(first);
-  }, [collab, collabResolved, activeTab]);
+  }, [activeWorkspace, workspaceResolved, activeTab]);
   useEffect(() => {
     if (!appData) return;
     if (!modules.financiero && FINANCIERO_TAB_IDS.includes(activeTab)) {
@@ -904,6 +921,14 @@ function AppInner() {
                 Tu sistema operativo de negocio
               </span>
             </div>
+
+            {workspace && (
+              <WorkspaceSwitcher
+                options={workspace.options}
+                active={workspace.active}
+                onSelect={switchWorkspace}
+              />
+            )}
           </div>
 
           <div className="flex items-center gap-4">
