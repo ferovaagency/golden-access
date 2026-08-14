@@ -762,7 +762,14 @@ function AppInner() {
     </footer>
   );
 
-  const topBarNode = <TopBar userId={user.id} onOpenPalette={() => setPaletteOpen(true)} onNavigate={handleNavigate} user={user} extras={headerExtrasNode} onSignOut={handleSignOut} onOpenAssistant={() => setAiCollapsed(false)} />;
+  // El selector de empresa vivía SÓLO en el encabezado antiguo: en la interfaz
+  // nueva (AppShell + TopBar) no se renderizaba en ninguna parte, así que quien
+  // tenía varias empresas no tenía forma de cambiar entre ellas.
+  const workspaceSwitcherNode = workspace ? (
+    <WorkspaceSwitcher options={workspace.options} active={workspace.active} onSelect={switchWorkspace} />
+  ) : null;
+
+  const topBarNode = <TopBar userId={user.id} onOpenPalette={() => setPaletteOpen(true)} onNavigate={handleNavigate} user={user} extras={headerExtrasNode} workspaceSwitcher={workspaceSwitcherNode} onSignOut={handleSignOut} onOpenAssistant={() => setAiCollapsed(false)} />;
 
   // Contenido del modulo activo: identico switch/Suspense para ambos shells,
   // asi el rediseno de layout nunca puede tocar la logica de que se renderiza.

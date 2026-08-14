@@ -9,11 +9,15 @@ type Props = {
   onNavigate: (tab: string) => void;
   user?: User;
   extras?: ReactNode;
+  /** Selector de empresa activa. Va aparte de `extras` porque NO se oculta en
+   *  pantallas pequeñas: es navegación, no un accesorio — sin él, quien tiene
+   *  varias empresas no puede llegar a las demás. */
+  workspaceSwitcher?: ReactNode;
   onSignOut?: () => void;
   onOpenAssistant?: () => void;
 };
 
-export default function TopBar({ userId, onOpenPalette, onNavigate, user, extras, onSignOut, onOpenAssistant }: Props) {
+export default function TopBar({ userId, onOpenPalette, onNavigate, user, extras, workspaceSwitcher, onSignOut, onOpenAssistant }: Props) {
   const displayName = (user?.user_metadata as any)?.full_name || (user?.user_metadata as any)?.name || user?.email?.split('@')[0] || 'Usuario';
   return (
     <div className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-xl">
@@ -28,6 +32,7 @@ export default function TopBar({ userId, onOpenPalette, onNavigate, user, extras
             <CommandIcon className="w-2.5 h-2.5" />K
           </kbd>
         </button>
+        {workspaceSwitcher && <div className="min-w-0 shrink-0">{workspaceSwitcher}</div>}
         <div className="flex min-w-0 items-center gap-2">
           {/* `2xl` (1536px) los escondía en la práctica siempre: el propio
               contenedor está limitado a 1500px, así que en cualquier portátil
