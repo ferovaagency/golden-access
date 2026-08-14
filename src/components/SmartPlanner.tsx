@@ -42,17 +42,82 @@ function visiblePriorityScore(task: PlannerTask) {
 
 // --- Importación de tareas desde exports de Notion (Markdown/CSV/HTML) o pegado ---
 const HEADER_HINTS = ['name', 'nombre', 'title', 'título', 'titulo', 'task', 'tarea', 'status', 'estado', 'date', 'fecha', 'priority', 'prioridad'];
+const MESES: Record<string, number> = { enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6, julio: 7, agosto: 8, septiembre: 9, setiembre: 9, octubre: 10, noviembre: 11, diciembre: 12 };
+// Estados de Notion que significan "ya no es accionable": no se importan como tareas activas.
+const DONE_STATES = ['listo', 'hecho', 'done', 'completa', 'completo', 'terminad', 'cancelad', 'descartad', 'archivad'];
 
-function cleanImportLine(line: string): string {
-  let l = line.trim();
-  if (!l) return '';
-  // Separador de tabla markdown (|---|---|)
-  if (/^\|?[\s:|-]+$/.test(l) && /-/.test(l)) return '';
-  // Fila de tabla markdown: | col | col | -> "col — col"
-  if (l.startsWith('|')) l = l.replace(/^\|/, '').replace(/\|$/, '').split('|').map((s) => s.trim()).filter(Boolean).join(' — ');
-  // Viñetas, checkboxes, numeración
-  l = l.replace(/^[-*+]\s+/, '').replace(/^\[[ xX]\]\s+/, '').replace(/^\d+[.)]\s+/, '');
-  return l.trim();
+const pad = (n: number) => String(n).padStart(2, '0');
+
+/** Convierte fechas comunes a ISO (YYYY-MM-DD). Soporta "2 de junio de 2026",
+ *  dd/mm/aaaa y yyyy-mm-dd. Devuelve null si no reconoce. */
+function toIsoDate(value: string): string | null {
+  const s = value.trim().toLowerCase();
+  if (!s) return null;
+  let m = s.match(/(\d{1,2})\s+de\s+([a-záéíóú]+)\s+de\s+(\d{4})/);
+  if (m && MESES[m[2]]) return `${m[3]}-${pad(MESES[m[2]])}-${pad(Number(m[1]))}`;
+  m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (m) return `${m[3]}-${pad(Number(m[2]))}-${pad(Number(m[1]))}`;
+  return null;
+}
+
+/** Parser CSV que respeta comillas (comas y saltos de línea dentro de "..."). */
+function parseCsv(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = '';
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; } else inQuotes = false;
+      } else field += c;
+    } else if (c === '"') inQuotes = true;
+    else if (c === ',') { row.push(field); field = ''; }
+    else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+    else if (c !== '\r') field += c;
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+const colIndex = (header: string[], names: string[]): number | null => {
+  const i = header.findIndex((h) => names.some((n) => h.includes(n)));
+  return i >= 0 ? i : null;
+};
+
+/** CSV de Notion -> una línea limpia por tarea, mapeando columnas por encabezado.
+ *  Omite tareas ya hechas/canceladas. Devuelve también cuántas omitió. */
+function csvToLines(raw: string): { lines: string[]; omitidas: number } {
+  const rows = parseCsv(raw).filter((r) => r.some((c) => c.trim()));
+  if (rows.length < 2) return { lines: [], omitidas: 0 };
+  const header = rows[0].map((h) => h.toLowerCase().trim());
+  const iTitle = colIndex(header, ['name', 'nombre', 'título', 'titulo', 'tarea', 'task']) ?? 0;
+  const iStatus = colIndex(header, ['status', 'estado']);
+  const iDate = colIndex(header, ['fecha', 'vence', 'due', 'date', 'límite', 'limite', 'plazo']);
+  const iClient = colIndex(header, ['cliente', 'client', 'cuenta', 'account', 'empresa']);
+  const iNotes = colIndex(header, ['nota', 'notes', 'descrip', 'detalle']);
+
+  const lines: string[] = [];
+  let omitidas = 0;
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r];
+    const title = (row[iTitle] || '').trim().replace(/\s+/g, ' ');
+    if (!title || /^https?:\/\//i.test(title)) continue;
+    const status = iStatus != null ? (row[iStatus] || '').trim().toLowerCase() : '';
+    if (status && DONE_STATES.some((d) => status.includes(d))) { omitidas++; continue; }
+    const parts = [`"${title}"`];
+    const client = iClient != null ? (row[iClient] || '').replace(/\(https?:\/\/[^)]*\)/g, '').trim() : '';
+    if (client) parts.push(`cliente: ${client}`);
+    const iso = iDate != null ? toIsoDate(row[iDate] || '') : null;
+    if (iso) parts.push(`vence: ${iso}`);
+    const notes = iNotes != null ? (row[iNotes] || '').trim().replace(/\s+/g, ' ') : '';
+    if (notes) parts.push(notes.slice(0, 140));
+    lines.push(parts.join(' — '));
+  }
+  return { lines: lines.slice(0, 120), omitidas };
 }
 
 function looksLikeHeader(line: string): boolean {
@@ -60,27 +125,43 @@ function looksLikeHeader(line: string): boolean {
   return HEADER_HINTS.filter((h) => low.includes(h)).length >= 2;
 }
 
-/** Extrae líneas de tarea (una por tarea) de texto pegado o de un archivo
- *  exportado de Notion. Soporta HTML (tabla), Markdown (tabla o lista) y CSV. */
-function extractTaskLines(raw: string, isHtml = false): string[] {
-  const looksHtml = isHtml || /<table|<\/tr>|<!doctype html|<html/i.test(raw);
-  let lines: string[] = [];
+function cleanImportLine(line: string): string {
+  let l = line.trim();
+  if (!l) return '';
+  if (/^\|?[\s:|-]+$/.test(l) && /-/.test(l)) return '';
+  if (l.startsWith('|')) l = l.replace(/^\|/, '').replace(/\|$/, '').split('|').map((s) => s.trim()).filter(Boolean).join(' — ');
+  l = l.replace(/^[-*+]\s+/, '').replace(/^\[[ xX]\]\s+/, '').replace(/^\d+[.)]\s+/, '');
+  return l.trim();
+}
+
+/** Extrae tareas (una línea limpia por tarea) de un export de Notion o texto
+ *  pegado. Detecta HTML (tabla), CSV (con mapeo por columnas) y Markdown/lista. */
+function extractTaskLines(raw: string, opts: { html?: boolean; csv?: boolean } = {}): { lines: string[]; omitidas: number } {
+  const looksHtml = opts.html || /<table|<\/tr>|<!doctype html|<html/i.test(raw);
   if (looksHtml && typeof DOMParser !== 'undefined') {
     const doc = new DOMParser().parseFromString(raw, 'text/html');
     const table = doc.querySelector('table');
     if (table) {
-      lines = Array.from(table.querySelectorAll('tr')).map((tr) =>
-        Array.from(tr.querySelectorAll('td,th')).map((c) => (c.textContent || '').trim()).filter(Boolean).join(' — '),
-      );
-    } else {
-      lines = (doc.body?.textContent || raw).split(/\r?\n/);
+      const rows = Array.from(table.querySelectorAll('tr'));
+      // Convierte la tabla HTML a CSV y reutiliza el mapeo por columnas.
+      const asCsv = rows.map((tr) => Array.from(tr.querySelectorAll('td,th'))
+        .map((c) => `"${(c.textContent || '').trim().replace(/"/g, '""')}"`).join(',')).join('\n');
+      return csvToLines(asCsv);
     }
-  } else {
-    lines = raw.split(/\r?\n/);
+    return extractTaskLines(doc.body?.textContent || raw, {});
   }
-  const cleaned = lines.map(cleanImportLine).filter(Boolean);
+
+  // Detección de CSV: por extensión, o si la 1ª línea tiene 2+ comas.
+  const firstLine = raw.split(/\r?\n/).find((l) => l.trim()) || '';
+  if (opts.csv || (firstLine.split(',').length >= 3 && !firstLine.includes('|'))) {
+    const res = csvToLines(raw);
+    if (res.lines.length) return res;
+  }
+
+  // Markdown / lista / texto plano.
+  const cleaned = raw.split(/\r?\n/).map(cleanImportLine).filter(Boolean);
   if (cleaned.length > 1 && looksLikeHeader(cleaned[0])) cleaned.shift();
-  return cleaned.slice(0, 120); // tope de seguridad
+  return { lines: cleaned.slice(0, 120), omitidas: 0 };
 }
 
 function chunk<T>(arr: T[], size: number): T[][] {
@@ -134,9 +215,9 @@ export default function SmartPlanner() {
 
   // Interpreta texto (pegado o de archivo) en tandas de 18 para no toparse con
   // el límite del clasificador, acumulando los borradores para confirmar.
-  const runBulkImport = async (raw: string, isHtml = false) => {
-    const lines = extractTaskLines(raw, isHtml);
-    if (!lines.length) { setImportInfo('No encontré tareas en el contenido.'); setTimeout(() => setImportInfo(null), 3000); return; }
+  const runBulkImport = async (raw: string, opts: { html?: boolean; csv?: boolean } = {}) => {
+    const { lines, omitidas } = extractTaskLines(raw, opts);
+    if (!lines.length) { setImportInfo('No encontré tareas por importar (quizá todas estaban hechas/canceladas).'); setTimeout(() => setImportInfo(null), 4000); return; }
     setImporting(true);
     setDrafts(null);
     setImportInfo(null);
@@ -144,11 +225,11 @@ export default function SmartPlanner() {
       const batches = chunk(lines, 18);
       const all: PlannerDraft[] = [];
       for (let i = 0; i < batches.length; i++) {
-        if (batches.length > 1) setImportInfo(`Interpretando ${Math.min((i + 1) * 18, lines.length)} de ${lines.length}…`);
+        setImportInfo(`Interpretando ${Math.min((i + 1) * 18, lines.length)} de ${lines.length}…`);
         const detected = await p.previewCapture(batches[i].join('\n'));
         all.push(...detected);
       }
-      setImportInfo(null);
+      setImportInfo(omitidas ? `Listo: ${all.length} tareas para revisar. Omití ${omitidas} ya hechas o canceladas.` : null);
       if (all.length) setDrafts(all);
     } catch (err: any) {
       setImportInfo(`No se pudo interpretar: ${err?.message || err}`);
@@ -161,7 +242,7 @@ export default function SmartPlanner() {
   const submitDump = async () => {
     const text = dump.trim();
     if (!text) return;
-    await runBulkImport(text, false);
+    await runBulkImport(text);
   };
 
   const handleImportFile = async (file: File | null | undefined) => {
@@ -174,8 +255,8 @@ export default function SmartPlanner() {
     }
     try {
       const text = await file.text();
-      setDump(text.length > 4000 ? `${text.slice(0, 4000)}…` : text); // muestra una vista previa en el cuadro
-      await runBulkImport(text, name.endsWith('.html') || name.endsWith('.htm'));
+      setDump(text.length > 4000 ? `${text.slice(0, 4000)}…` : text); // vista previa en el cuadro
+      await runBulkImport(text, { html: name.endsWith('.html') || name.endsWith('.htm'), csv: name.endsWith('.csv') });
     } catch (err: any) {
       setImportInfo(`No se pudo leer el archivo: ${err?.message || err}`);
       setTimeout(() => setImportInfo(null), 4000);
