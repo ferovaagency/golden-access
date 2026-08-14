@@ -1,12 +1,14 @@
 // Vista consolidada del holding: una fila por empresa, más el total.
 //
-// Por qué una edge function y no una consulta desde el navegador: las tablas de
-// negocio siguen aisladas por `user_id = auth.uid()`, así que el holding NO
-// puede leer los datos de sus empresas desde el cliente. Aquí se usa
-// service_role (que salta RLS) y la autorización se hace explícita: sólo se
-// devuelven las cuentas de organizaciones donde quien pregunta es owner/admin.
-// Eso evita tocar las ~55 políticas de las tablas de negocio, que es la Fase 7
-// y exige staging. Ver docs/DISENO_ORGANIZACIONES.md.
+// Por qué una edge function y no una consulta desde el navegador: la RLS
+// devuelve las filas de UNA cuenta, la activa (`current_account_id()`), y esta
+// vista necesita VARIAS a la vez. Que la regla sea de una sola cuenta es
+// deliberado: el resto de la aplicación asume que lo que llega es "lo mío", y
+// ver dos empresas mezcladas en una lista sería peor que no verlas.
+//
+// Aquí se usa service_role (que salta RLS) y la autorización se hace explícita:
+// sólo se devuelven las cuentas de organizaciones donde quien pregunta es
+// owner/admin. Ver docs/fase2/README.md y docs/DISENO_ORGANIZACIONES.md.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
