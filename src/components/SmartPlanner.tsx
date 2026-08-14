@@ -4,6 +4,7 @@ import { usePlanner } from '../hooks/usePlanner';
 import { plannerService, type PlannerBlock, type PlannerCategory, type PlannerDraft, type PlannerEnergy, type PlannerTask } from '../lib/plannerService';
 import { DayClientProgress } from './planner/DayClientProgress';
 import PlannerBoard from './planner/PlannerBoard';
+import { importFromContent } from '../lib/notionImport';
 import { AiDisclosure } from './AiDisclosure';
 
 type PlannerViewMode = 'day' | 'week' | 'month' | 'list' | 'kanban';
@@ -40,129 +41,8 @@ function visiblePriorityScore(task: PlannerTask) {
   return (0.30 * urgency) + (0.25 * (task.financial_impact ?? 3)) + (0.20 * (task.client_impact ?? 3)) + (0.15 * (task.risk_score ?? 3)) + (0.10 * (task.execution_ease ?? 3));
 }
 
-// --- Importación de tareas desde exports de Notion (Markdown/CSV/HTML) o pegado ---
-const HEADER_HINTS = ['name', 'nombre', 'title', 'título', 'titulo', 'task', 'tarea', 'status', 'estado', 'date', 'fecha', 'priority', 'prioridad'];
-const MESES: Record<string, number> = { enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6, julio: 7, agosto: 8, septiembre: 9, setiembre: 9, octubre: 10, noviembre: 11, diciembre: 12 };
-// Estados de Notion que significan "ya no es accionable": no se importan como tareas activas.
-const DONE_STATES = ['listo', 'hecho', 'done', 'completa', 'completo', 'terminad', 'cancelad', 'descartad', 'archivad'];
-
-const pad = (n: number) => String(n).padStart(2, '0');
-
-/** Convierte fechas comunes a ISO (YYYY-MM-DD). Soporta "2 de junio de 2026",
- *  dd/mm/aaaa y yyyy-mm-dd. Devuelve null si no reconoce. */
-function toIsoDate(value: string): string | null {
-  const s = value.trim().toLowerCase();
-  if (!s) return null;
-  let m = s.match(/(\d{1,2})\s+de\s+([a-záéíóú]+)\s+de\s+(\d{4})/);
-  if (m && MESES[m[2]]) return `${m[3]}-${pad(MESES[m[2]])}-${pad(Number(m[1]))}`;
-  m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
-  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  if (m) return `${m[3]}-${pad(Number(m[2]))}-${pad(Number(m[1]))}`;
-  return null;
-}
-
-/** Parser CSV que respeta comillas (comas y saltos de línea dentro de "..."). */
-function parseCsv(text: string): string[][] {
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let field = '';
-  let inQuotes = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (inQuotes) {
-      if (c === '"') {
-        if (text[i + 1] === '"') { field += '"'; i++; } else inQuotes = false;
-      } else field += c;
-    } else if (c === '"') inQuotes = true;
-    else if (c === ',') { row.push(field); field = ''; }
-    else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
-    else if (c !== '\r') field += c;
-  }
-  if (field.length || row.length) { row.push(field); rows.push(row); }
-  return rows;
-}
-
-const colIndex = (header: string[], names: string[]): number | null => {
-  const i = header.findIndex((h) => names.some((n) => h.includes(n)));
-  return i >= 0 ? i : null;
-};
-
-/** CSV de Notion -> una línea limpia por tarea, mapeando columnas por encabezado.
- *  Omite tareas ya hechas/canceladas. Devuelve también cuántas omitió. */
-function csvToLines(raw: string): { lines: string[]; omitidas: number } {
-  const rows = parseCsv(raw).filter((r) => r.some((c) => c.trim()));
-  if (rows.length < 2) return { lines: [], omitidas: 0 };
-  const header = rows[0].map((h) => h.toLowerCase().trim());
-  const iTitle = colIndex(header, ['name', 'nombre', 'título', 'titulo', 'tarea', 'task']) ?? 0;
-  const iStatus = colIndex(header, ['status', 'estado']);
-  const iDate = colIndex(header, ['fecha', 'vence', 'due', 'date', 'límite', 'limite', 'plazo']);
-  const iClient = colIndex(header, ['cliente', 'client', 'cuenta', 'account', 'empresa']);
-  const iNotes = colIndex(header, ['nota', 'notes', 'descrip', 'detalle']);
-
-  const lines: string[] = [];
-  let omitidas = 0;
-  for (let r = 1; r < rows.length; r++) {
-    const row = rows[r];
-    const title = (row[iTitle] || '').trim().replace(/\s+/g, ' ');
-    if (!title || /^https?:\/\//i.test(title)) continue;
-    const status = iStatus != null ? (row[iStatus] || '').trim().toLowerCase() : '';
-    if (status && DONE_STATES.some((d) => status.includes(d))) { omitidas++; continue; }
-    const parts = [`"${title}"`];
-    const client = iClient != null ? (row[iClient] || '').replace(/\(https?:\/\/[^)]*\)/g, '').trim() : '';
-    if (client) parts.push(`cliente: ${client}`);
-    const iso = iDate != null ? toIsoDate(row[iDate] || '') : null;
-    if (iso) parts.push(`vence: ${iso}`);
-    const notes = iNotes != null ? (row[iNotes] || '').trim().replace(/\s+/g, ' ') : '';
-    if (notes) parts.push(notes.slice(0, 140));
-    lines.push(parts.join(' — '));
-  }
-  return { lines: lines.slice(0, 120), omitidas };
-}
-
-function looksLikeHeader(line: string): boolean {
-  const low = line.toLowerCase();
-  return HEADER_HINTS.filter((h) => low.includes(h)).length >= 2;
-}
-
-function cleanImportLine(line: string): string {
-  let l = line.trim();
-  if (!l) return '';
-  if (/^\|?[\s:|-]+$/.test(l) && /-/.test(l)) return '';
-  if (l.startsWith('|')) l = l.replace(/^\|/, '').replace(/\|$/, '').split('|').map((s) => s.trim()).filter(Boolean).join(' — ');
-  l = l.replace(/^[-*+]\s+/, '').replace(/^\[[ xX]\]\s+/, '').replace(/^\d+[.)]\s+/, '');
-  return l.trim();
-}
-
-/** Extrae tareas (una línea limpia por tarea) de un export de Notion o texto
- *  pegado. Detecta HTML (tabla), CSV (con mapeo por columnas) y Markdown/lista. */
-function extractTaskLines(raw: string, opts: { html?: boolean; csv?: boolean } = {}): { lines: string[]; omitidas: number } {
-  const looksHtml = opts.html || /<table|<\/tr>|<!doctype html|<html/i.test(raw);
-  if (looksHtml && typeof DOMParser !== 'undefined') {
-    const doc = new DOMParser().parseFromString(raw, 'text/html');
-    const table = doc.querySelector('table');
-    if (table) {
-      const rows = Array.from(table.querySelectorAll('tr'));
-      // Convierte la tabla HTML a CSV y reutiliza el mapeo por columnas.
-      const asCsv = rows.map((tr) => Array.from(tr.querySelectorAll('td,th'))
-        .map((c) => `"${(c.textContent || '').trim().replace(/"/g, '""')}"`).join(',')).join('\n');
-      return csvToLines(asCsv);
-    }
-    return extractTaskLines(doc.body?.textContent || raw, {});
-  }
-
-  // Detección de CSV: por extensión, o si la 1ª línea tiene 2+ comas.
-  const firstLine = raw.split(/\r?\n/).find((l) => l.trim()) || '';
-  if (opts.csv || (firstLine.split(',').length >= 3 && !firstLine.includes('|'))) {
-    const res = csvToLines(raw);
-    if (res.lines.length) return res;
-  }
-
-  // Markdown / lista / texto plano.
-  const cleaned = raw.split(/\r?\n/).map(cleanImportLine).filter(Boolean);
-  if (cleaned.length > 1 && looksLikeHeader(cleaned[0])) cleaned.shift();
-  return { lines: cleaned.slice(0, 120), omitidas: 0 };
-}
+// La lógica de importación (parseo de CSV/HTML de Notion, mapeo de columnas por
+// datos y match difuso de clientes) vive en ../lib/notionImport.
 
 function chunk<T>(arr: T[], size: number): T[][] {
   const out: T[][] = [];
@@ -216,12 +96,24 @@ export default function SmartPlanner() {
   // Interpreta texto (pegado o de archivo) en tandas de 18 para no toparse con
   // el límite del clasificador, acumulando los borradores para confirmar.
   const runBulkImport = async (raw: string, opts: { html?: boolean; csv?: boolean } = {}) => {
-    const { lines, omitidas } = extractTaskLines(raw, opts);
-    if (!lines.length) { setImportInfo('No encontré tareas por importar (quizá todas estaban hechas/canceladas).'); setTimeout(() => setImportInfo(null), 4000); return; }
+    const result = importFromContent(raw, p.clients, opts);
     setImporting(true);
     setDrafts(null);
     setImportInfo(null);
     try {
+      // CSV/tabla: los borradores se construyen exactos (título, vencimiento y
+      // cliente) sin pasar por la IA.
+      if (result.drafts) {
+        if (!result.drafts.length) { setImportInfo('No encontré tareas por importar (quizá todas estaban hechas/canceladas).'); setTimeout(() => setImportInfo(null), 4000); return; }
+        setDrafts(result.drafts);
+        setImportInfo(result.omitidas
+          ? `Listo: ${result.drafts.length} tareas para revisar. Omití ${result.omitidas} ya hechas o canceladas.`
+          : `Listo: ${result.drafts.length} tareas para revisar.`);
+        return;
+      }
+      // Lista/markdown/texto: se interpretan con IA en tandas de 18.
+      const lines = result.lines || [];
+      if (!lines.length) { setImportInfo('No encontré tareas en el contenido.'); setTimeout(() => setImportInfo(null), 4000); return; }
       const batches = chunk(lines, 18);
       const all: PlannerDraft[] = [];
       for (let i = 0; i < batches.length; i++) {
@@ -229,7 +121,7 @@ export default function SmartPlanner() {
         const detected = await p.previewCapture(batches[i].join('\n'));
         all.push(...detected);
       }
-      setImportInfo(omitidas ? `Listo: ${all.length} tareas para revisar. Omití ${omitidas} ya hechas o canceladas.` : null);
+      setImportInfo(null);
       if (all.length) setDrafts(all);
     } catch (err: any) {
       setImportInfo(`No se pudo interpretar: ${err?.message || err}`);
