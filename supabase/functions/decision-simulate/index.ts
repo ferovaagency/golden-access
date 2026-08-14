@@ -6,6 +6,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { loadBIContext, toCop } from "../_shared/bi-context.ts";
 import { logAiUsage } from "../_shared/ai-usage.ts";
+import { resolveActiveContext } from "../_shared/account.ts";
 
 type Scenario = "hire" | "price_change" | "invest" | "cut_cost" | "promo" | "custom";
 
@@ -119,7 +120,9 @@ Deno.serve(async (req) => {
     const inputs: Inputs = body.inputs || {};
 
     const { data: teamRow } = await admin.from("crm_team_members").select("email").eq("email", userData.user.email).maybeSingle();
-    const ctx = await loadBIContext(admin, userId, !!teamRow);
+    // La simulación es sobre la EMPRESA activa.
+    const { accountId } = await resolveActiveContext(admin, userId);
+    const ctx = await loadBIContext(admin, accountId, !!teamRow);
     const trm = ctx.meta.trm;
     const days = 30;
     const now = new Date(ctx.today);
@@ -136,7 +139,7 @@ Deno.serve(async (req) => {
 
     const { data: saved, error: saveErr } = await admin
       .from("decision_simulations")
-      .insert({ user_id: userId, question: question || `Simulación ${scenario}`, scenario_type: scenario, inputs, result, recommendation })
+      .insert({ user_id: accountId, question: question || `Simulación ${scenario}`, scenario_type: scenario, inputs, result, recommendation })
       .select()
       .single();
     if (saveErr) throw saveErr;

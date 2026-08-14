@@ -105,6 +105,11 @@ export interface RecalledKnowledge {
 /**
  * Búsqueda semántica en el cerebro. Devuelve lo GLOBAL + lo PRIVADO del usuario.
  * Se llama con el cliente admin (service_role); match_user es el id ya verificado.
+ *
+ * Con `orgId` (la organización activa) el alcance pasa a ser el del holding: lo
+ * de esa empresa, lo que sus empresas hijas marcaron para compartir hacia
+ * arriba y lo que un ancestro publicó hacia abajo. Sin `orgId` se comporta
+ * exactamente como antes.
  */
 export async function recallKnowledge(
   admin: SupabaseClient<any, "public", "public", any, any>,
@@ -112,6 +117,7 @@ export async function recallKnowledge(
   userId: string,
   count = 6,
   minSimilarity = 0.25,
+  orgId: string | null = null,
 ): Promise<RecalledKnowledge[]> {
   if (!embedding) return [];
   const { data, error } = await admin.rpc("match_ferova_knowledge", {
@@ -119,6 +125,7 @@ export async function recallKnowledge(
     match_user: userId,
     match_count: count,
     min_similarity: minSimilarity,
+    match_org: orgId,
   });
   if (error) {
     console.error("[brain] recall error", error);
@@ -133,16 +140,42 @@ export async function recallKnowledge(
  */
 export async function rememberKnowledge(
   admin: SupabaseClient<any, "public", "public", any, any>,
-  args: { title: string; content: string; scope: "global" | "privado"; userId: string; source?: string; tags?: string[] },
+  args: {
+    title: string;
+    content: string;
+    scope: "global" | "privado";
+    userId: string;
+    source?: string;
+    tags?: string[];
+    /** Organización activa al escribir. La nota se queda en ella salvo que la
+     *  empresa tenga encendido `comparte_por_defecto`. */
+    orgId?: string | null;
+  },
   apiKey: string,
 ): Promise<string | null> {
   const owner = args.scope === "privado" ? args.userId : null;
+  const orgId = args.orgId ?? null;
+
+  // Si la empresa comparte por defecto, lo que se escriba en ella sube al
+  // holding sin que nadie tenga que acordarse de marcarlo.
+  let compartirArriba = false;
+  if (orgId) {
+    const { data: org } = await admin
+      .from("organizations")
+      .select("comparte_por_defecto")
+      .eq("id", orgId)
+      .maybeSingle();
+    compartirArriba = !!org?.comparte_por_defecto;
+  }
+
   const { data, error } = await admin
     .from("ferova_knowledge")
     .insert({
       title: args.title,
       content: args.content,
       owner_user_id: owner,
+      org_id: orgId,
+      compartir_arriba: compartirArriba,
       source: args.source ?? "asistente",
       tags: args.tags ?? [],
       created_by: args.userId,

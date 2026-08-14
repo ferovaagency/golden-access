@@ -5,6 +5,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { loadBIContext, toCop, daysBetween, type BIContext } from "../_shared/bi-context.ts";
+import { resolveActiveContext } from "../_shared/account.ts";
 
 type Urgency = "critical" | "high" | "medium" | "low";
 type Category =
@@ -273,9 +274,11 @@ Deno.serve(async (req) => {
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const userId = userData.user.id;
+    // Los puntos ciegos son los de la EMPRESA activa.
+    const { accountId } = await resolveActiveContext(admin, userId);
 
     const { data: teamRow } = await admin.from("crm_team_members").select("email").eq("email", userData.user.email).maybeSingle();
-    const ctx = await loadBIContext(admin, userId, !!teamRow);
+    const ctx = await loadBIContext(admin, accountId, !!teamRow);
     const findings = detect(ctx);
     const foundFingerprints = new Set(findings.map((f) => f.fingerprint));
 
@@ -283,7 +286,7 @@ Deno.serve(async (req) => {
     const { data: openExisting } = await admin
       .from("business_blindspots")
       .select("id, fingerprint")
-      .eq("user_id", userId)
+      .eq("user_id", accountId)
       .is("dismissed_at", null)
       .is("resolved_at", null);
     const toResolve = (openExisting || []).filter((r: any) => !foundFingerprints.has(r.fingerprint));
@@ -294,7 +297,7 @@ Deno.serve(async (req) => {
     // Upsert current findings
     if (findings.length > 0) {
       const rows = findings.map((f) => ({
-        user_id: userId,
+        user_id: accountId,
         fingerprint: f.fingerprint,
         category: f.category,
         urgency: f.urgency,
@@ -318,7 +321,7 @@ Deno.serve(async (req) => {
     const { data: current } = await admin
       .from("business_blindspots")
       .select("*")
-      .eq("user_id", userId)
+      .eq("user_id", accountId)
       .is("dismissed_at", null)
       .is("resolved_at", null)
       .order("urgency", { ascending: true })

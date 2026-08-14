@@ -4,6 +4,7 @@ import { convertToModelMessages, createUIMessageStream, createUIMessageStreamRes
 import { createLovableAiGatewayProvider, getLovableAiGatewayRunId, getLovableAiGatewayResponseHeaders, withLovableAiGatewayRunIdHeader } from "../_shared/ai-gateway.ts";
 import { embedText, recallKnowledge, rememberKnowledge } from "../_shared/brain.ts";
 import { logAiUsage } from "../_shared/ai-usage.ts";
+import { resolveActiveContext } from "../_shared/account.ts";
 
 function textFromParts(message: UIMessage): string {
   return (message.parts || []).map((part: any) => part.type === "text" ? part.text : "").join("").trim();
@@ -123,6 +124,10 @@ Deno.serve(async (req) => {
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const userId = userData.user.id;
     const userEmail = userData.user.email || "";
+    // Sobre qué empresa se está trabajando. `userId` sigue siendo QUIÉN pregunta
+    // (historial de conversación, permisos de equipo); `accountId` es SOBRE QUÉ
+    // datos. Coinciden salvo que el holding entre a una empresa hija.
+    const { accountId, orgId } = await resolveActiveContext(admin, userId);
     const currentArea = (req.headers.get("X-Ferova-Context-Area") || "").slice(0, 80);
     // El frontend envía las MISMAS métricas ya calculadas del dashboard (estado
     // de resultados del período), para que el asesor no dependa de una tabla
@@ -131,15 +136,17 @@ Deno.serve(async (req) => {
     try { const mh = req.headers.get("X-Ferova-Metrics"); if (mh) finanzasCalculadas = JSON.parse(mh); } catch { /* header inválido, se ignora */ }
     const [{ data: isTeam }, { data: businessProfile }, { data: overview }, { data: services }, { data: growth }, { data: reviews }, { data: opportunities }, { data: clients }, { data: hours }, { data: tasks }, { data: integrations }] = await Promise.all([
       admin.from("crm_team_members").select("email, rol").eq("email", userEmail).maybeSingle(),
-      admin.from("business_profile").select("nombre_negocio, industria, tipo_negocio, tamano_equipo, ciudad, zona_horaria").eq("user_id", userId).maybeSingle(),
-      admin.from("business_overview").select("*").eq("user_id", userId).maybeSingle(),
-      admin.from("finance_service_profitability").select("servicio_nombre, ingresos_brutos, costos_directos, margen_bruto, ventas_count, horas_registradas").eq("user_id", userId).order("margen_bruto", { ascending: false }).limit(12),
+      admin.from("business_profile").select("nombre_negocio, industria, tipo_negocio, tamano_equipo, ciudad, zona_horaria").eq("user_id", accountId).maybeSingle(),
+      admin.from("business_overview").select("*").eq("user_id", accountId).maybeSingle(),
+      admin.from("finance_service_profitability").select("servicio_nombre, ingresos_brutos, costos_directos, margen_bruto, ventas_count, horas_registradas").eq("user_id", accountId).order("margen_bruto", { ascending: false }).limit(12),
       admin.from("crm_growth_overview").select("*").maybeSingle(),
       admin.from("crm_resenas").select("plataforma, calificacion, resenador, respondida, detectada_en").eq("confirmada", true).order("detectada_en", { ascending: false }).limit(10),
       admin.from("crm_oportunidades").select("nombre_contacto, empresa, canal_origen, estado, valor_estimado, moneda, siguiente_accion, memoria_resumen, memoria_updated_at").order("updated_at", { ascending: false }).limit(15),
-      admin.from("finance_clientes").select("nombre, tipo, activo, progreso, responsable, objetivos, kpis, entregables").eq("user_id", userId).order("nombre").limit(20),
-      admin.from("finance_horas").select("fecha, cliente_id, servicio_id, horas, descripcion").eq("user_id", userId).order("fecha", { ascending: false }).limit(30),
-      admin.from("planner_tasks").select("title, priority, category, status, deadline, scheduled_for, client_ref, project_ref").eq("user_id", userId).in("status", ["backlog", "scheduled", "postponed"]).order("deadline", { ascending: true, nullsFirst: false }).limit(30),
+      admin.from("finance_clientes").select("nombre, tipo, activo, progreso, responsable, objetivos, kpis, entregables").eq("user_id", accountId).order("nombre").limit(20),
+      admin.from("finance_horas").select("fecha, cliente_id, servicio_id, horas, descripcion").eq("user_id", accountId).order("fecha", { ascending: false }).limit(30),
+      admin.from("planner_tasks").select("title, priority, category, status, deadline, scheduled_for, client_ref, project_ref").eq("user_id", accountId).in("status", ["backlog", "scheduled", "postponed"]).order("deadline", { ascending: true, nullsFirst: false }).limit(30),
+      // La conexión de Google es de la PERSONA, no del negocio: cada quien
+      // conecta su propia cuenta. Por eso sigue con userId.
       admin.from("google_workspace_connections").select("connected, connected_email, scopes, expires_at, last_error").eq("user_id", userId).maybeSingle(),
     ]);
 
@@ -181,7 +188,11 @@ Deno.serve(async (req) => {
     const question = last?.role === "user" ? textFromParts(last) : "";
     if (question) {
       const questionEmbedding = await embedText(question, apiKey);
-      const recalled = await recallKnowledge(admin, questionEmbedding, userId, 6, 0.25);
+      // match_user es la PERSONA (sus notas privadas) y match_org la EMPRESA
+      // activa (lo de la empresa y lo que viaje por el árbol): son dos ejes
+      // distintos y mezclarlos haría desaparecer las notas privadas al cambiar
+      // de empresa.
+      const recalled = await recallKnowledge(admin, questionEmbedding, userId, 6, 0.25, orgId);
       memoriaCerebro = recalled.map((m) => ({
         titulo: m.title,
         contenido: m.content,
@@ -269,7 +280,7 @@ ${context}`,
           execute: async ({ title, content, scope }) => {
             // Los colaboradores solo pueden escribir en su memoria privada.
             const finalScope = isAdmin ? scope : "privado";
-            const id = await rememberKnowledge(admin, { title, content, scope: finalScope, userId }, apiKey);
+            const id = await rememberKnowledge(admin, { title, content, scope: finalScope, userId, orgId }, apiKey);
             return id ? { ok: true, alcance: finalScope } : { ok: false, message: "No se pudo guardar en la memoria." };
           },
         }),
@@ -286,7 +297,7 @@ ${context}`,
             },
           }),
           execute: async ({ title, priority, estimated_minutes }) => {
-            const row: Record<string, unknown> = { user_id: userId, title };
+            const row: Record<string, unknown> = { user_id: accountId, title };
             if (priority) row.priority = priority;
             if (typeof estimated_minutes === "number" && estimated_minutes > 0) row.estimated_minutes = Math.round(estimated_minutes);
             const { error } = await admin.from("planner_tasks").insert(row);
@@ -313,7 +324,7 @@ ${context}`,
             const hoy = new Date().toISOString().slice(0, 10);
             const { error } = await admin.from("finance_pagos_egresos").insert({
               id: `eg_asis_${Date.now().toString().slice(-9)}`,
-              user_id: userId,
+              user_id: accountId,
               fecha: fecha && /^\d{4}-\d{2}-\d{2}$/.test(fecha) ? fecha : hoy,
               concepto,
               categoria,
@@ -340,7 +351,7 @@ ${context}`,
             const hoy = new Date().toISOString().slice(0, 10);
             const { error } = await admin.from("finance_horas").insert({
               id: `hr_asis_${Date.now().toString().slice(-9)}`,
-              user_id: userId,
+              user_id: accountId,
               fecha: fecha && /^\d{4}-\d{2}-\d{2}$/.test(fecha) ? fecha : hoy,
               horas,
               descripcion: descripcion || null,
@@ -388,7 +399,7 @@ ${context}`,
             if (!dates.length) return { ok: false, message: "No hay fechas que coincidan con los días indicados." };
 
             const rows = dates.map((d) => ({
-              user_id: userId,
+              user_id: accountId,
               title: titulo,
               starts_at: wallClockToUtcIso(`${d}T${hora_inicio}:00`, tz),
               ends_at: wallClockToUtcIso(`${d}T${hora_fin}:00`, tz),

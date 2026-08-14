@@ -178,8 +178,33 @@ export async function resolveWorkspaceContext(): Promise<WorkspaceContext | null
   return { options, active, holdings, empresas };
 }
 
-export function rememberActiveWorkspace(key: string): void {
+/**
+ * Recuerda la empresa activa en dos sitios, y los dos hacen falta:
+ *
+ * - `localStorage`: para que al recargar la página siga en la misma empresa sin
+ *   esperar a la red.
+ * - `user_active_org`: para que el SERVIDOR lo sepa. Las edge functions (el
+ *   asistente, los informes, el cerebro) no pueden creerle a la petición sobre
+ *   qué cuenta consultar —sería dejar que el cliente declare a qué datos
+ *   accede—, así que lo leen de esta tabla vía `active_context_for_user`.
+ */
+export function rememberActiveWorkspace(key: string, orgId?: string | null): void {
   try { localStorage.setItem(ACTIVE_KEY, key); } catch { /* almacenamiento no disponible */ }
+  void persistActiveOrg(orgId ?? null);
+}
+
+async function persistActiveOrg(orgId: string | null): Promise<void> {
+  const { data: userData } = await supabase.auth.getUser();
+  const uid = userData?.user?.id;
+  if (!uid) return;
+  // Sin organización (la cuenta propia) se borra la fila: el servidor vuelve a
+  // resolver la cuenta propia, que es su valor por defecto.
+  const { error } = orgId
+    ? await db('user_active_org').upsert({ user_id: uid, org_id: orgId, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
+    : await db('user_active_org').delete().eq('user_id', uid);
+  // Que falle no debe impedir cambiar de empresa en la interfaz: el peor caso
+  // es que el asistente siga respondiendo sobre la empresa anterior.
+  if (error) console.error('[organizationsService] user_active_org', error.message);
 }
 
 interface Collaboration { ownerUserId: string; nombre: string | null; permisos: PermisosMap }

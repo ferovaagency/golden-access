@@ -5,6 +5,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { loadBIContext, toCop, daysBetween } from "../_shared/bi-context.ts";
 import { logAiUsage } from "../_shared/ai-usage.ts";
+import { resolveActiveContext } from "../_shared/account.ts";
 
 type Period = "daily" | "weekly" | "monthly";
 
@@ -71,8 +72,12 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const period: Period = (body.period === "daily" || body.period === "weekly" || body.period === "monthly") ? body.period : "weekly";
 
+    // El informe es de la EMPRESA activa; el coste de la IA se le imputa a la
+    // persona que lo pidió (logAiUsage sigue con userId).
+    const { accountId } = await resolveActiveContext(admin, userId);
+
     const { data: teamRow } = await admin.from("crm_team_members").select("email").eq("email", userData.user.email).maybeSingle();
-    const ctx = await loadBIContext(admin, userId, !!teamRow);
+    const ctx = await loadBIContext(admin, accountId, !!teamRow);
     const today = new Date(ctx.today);
     const { start, end, prevStart, prevEnd } = periodWindow(period, today);
     const trm = ctx.meta.trm;
@@ -118,7 +123,7 @@ Deno.serve(async (req) => {
     const { data: healthRow } = await admin
       .from("business_health_snapshots")
       .select("score")
-      .eq("user_id", userId)
+      .eq("user_id", accountId)
       .lte("snapshot_date", ctx.today)
       .order("snapshot_date", { ascending: false })
       .limit(1)
@@ -169,7 +174,7 @@ Deno.serve(async (req) => {
     if (narrative?.usage) logAiUsage(admin, { userId, funcion: "ceo-report-generate", modelo: "google/gemini-2.5-flash", usage: narrative.usage }).catch((e) => console.error("[ai-usage] ceo-report-generate", e));
 
     const record = {
-      user_id: userId,
+      user_id: accountId,
       period,
       period_start: metrics.period_start,
       period_end: metrics.period_end,

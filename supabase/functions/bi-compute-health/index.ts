@@ -5,6 +5,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { loadBIContext, toCop, daysBetween, type BIContext } from "../_shared/bi-context.ts";
+import { resolveActiveContext } from "../_shared/account.ts";
 
 type SubScore = { label: string; score: number; weight: number; note: string };
 
@@ -107,16 +108,19 @@ Deno.serve(async (req) => {
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const userId = userData.user.id;
+    // La salud es la de la EMPRESA activa; la pertenencia al equipo interno es
+    // de la persona.
+    const { accountId } = await resolveActiveContext(admin, userId);
 
     const { data: teamRow } = await admin.from("crm_team_members").select("email").eq("email", userData.user.email).maybeSingle();
-    const ctx = await loadBIContext(admin, userId, !!teamRow);
+    const ctx = await loadBIContext(admin, accountId, !!teamRow);
     const subs = computeSubScores(ctx);
     const score = weightedScore(subs);
 
     const { data: prev } = await admin
       .from("business_health_snapshots")
       .select("score, snapshot_date")
-      .eq("user_id", userId)
+      .eq("user_id", accountId)
       .lt("snapshot_date", ctx.today)
       .order("snapshot_date", { ascending: false })
       .limit(1)
@@ -136,7 +140,7 @@ Deno.serve(async (req) => {
     const { data: saved, error: saveErr } = await admin
       .from("business_health_snapshots")
       .upsert({
-        user_id: userId,
+        user_id: accountId,
         snapshot_date: ctx.today,
         score,
         previous_score,
