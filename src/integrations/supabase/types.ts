@@ -501,6 +501,7 @@ export type Database = {
           owner_user_id: string
           permisos: Json
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           activo?: boolean
@@ -511,6 +512,7 @@ export type Database = {
           owner_user_id?: string
           permisos?: Json
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           activo?: boolean
@@ -521,6 +523,7 @@ export type Database = {
           owner_user_id?: string
           permisos?: Json
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -973,6 +976,7 @@ export type Database = {
           nombre: string | null
           rol: string
           telefono_notificaciones: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -980,6 +984,7 @@ export type Database = {
           nombre?: string | null
           rol?: string
           telefono_notificaciones?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -987,6 +992,7 @@ export type Database = {
           nombre?: string | null
           rol?: string
           telefono_notificaciones?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
