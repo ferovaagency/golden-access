@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Sparkles, Wand2, Loader2, Check, Clock, Trash2, ChevronLeft, ChevronRight, Sunrise, AlertTriangle, Lightbulb, TrendingUp, Info, Lock, Edit2, X, CalendarDays, Columns3, List, LayoutGrid, SlidersHorizontal } from 'lucide-react';
+import { Sparkles, Wand2, Loader2, Check, Play, Clock, Trash2, ChevronLeft, ChevronRight, Sunrise, AlertTriangle, Lightbulb, TrendingUp, Info, Lock, Edit2, X, CalendarDays, Columns3, List, LayoutGrid, SlidersHorizontal } from 'lucide-react';
 import { usePlanner } from '../hooks/usePlanner';
 import { plannerService, type PlannerBlock, type PlannerCategory, type PlannerDraft, type PlannerEnergy, type PlannerTask } from '../lib/plannerService';
 import { DayClientProgress } from './planner/DayClientProgress';
-import PlannerBoard from './planner/PlannerBoard';
+import PlannerBoard, { STATUS_LABEL } from './planner/PlannerBoard';
 import { importFromContent } from '../lib/notionImport';
 import { AiDisclosure } from './AiDisclosure';
 
@@ -270,8 +270,10 @@ export default function SmartPlanner() {
 
   // --- Anti-procrastinación: la tarea que más mueve la aguja hoy (Pareto) ---
   const rankedTasks = [...openTasks].sort((a, b) => visiblePriorityScore(b) - visiblePriorityScore(a));
-  const inProgressTask = openTasks.find((t) => t.status === 'in_progress');
-  const topTask = inProgressTask || rankedTasks[0] || null;
+  // Pueden ser varias: nada impide tener dos cosas en curso, y ocultarlo hacía
+  // creer que iniciar la segunda no había funcionado.
+  const inProgressTasks = openTasks.filter((t) => t.status === 'in_progress');
+  const topTask = inProgressTasks[0] || rankedTasks[0] || null;
 
   // --- Factor realidad: aprende cuánto te toman DE VERDAD las tareas, por
   // categoría, con el historial de tiempo real medido (actual_minutes). ---
@@ -373,8 +375,13 @@ export default function SmartPlanner() {
 
       {topTask && (
         <section className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-5 shadow-sm">
-          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-blue-700">
+          <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-blue-700">
             <Sparkles className="h-3.5 w-3.5" /> Empieza por esto
+            {inProgressTasks.length > 1 && (
+              <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-blue-700 ring-1 ring-blue-200">
+                {inProgressTasks.length} en curso — las demás, abajo con su cronómetro
+              </span>
+            )}
           </div>
           <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
@@ -606,6 +613,21 @@ export default function SmartPlanner() {
                 ? <><LiveTimer startedAt={editingTask.started_at} estimatedMinutes={editingTask.estimated_minutes} /><button type="button" onClick={async () => { await handleComplete(editingTask.id); setEditingTask(null); }} className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700">Finalizar y registrar tiempo</button></>
                 : <button type="button" onClick={async () => { await p.startTask(editingTask.id); setEditingTask(null); }} className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700">▶ Iniciar ahora</button>}
               <button type="button" onClick={async () => { await p.postponeTask(editingTask.id); setEditingTask(null); }} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Posponer a mañana</button>
+              {/* El estado sólo se podía cambiar arrastrando en el kanban, que
+                  no existe en pantalla táctil. Aquí es un control normal. */}
+              <label className="inline-flex items-center gap-1.5 text-xs text-slate-600">Estado
+                <select
+                  value={editingTask.status}
+                  onChange={async (event) => {
+                    const status = event.target.value as PlannerTask['status'];
+                    setEditingTask({ ...editingTask, status });
+                    await p.setStatus(editingTask.id, status);
+                  }}
+                  className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:outline-none"
+                >
+                  {Object.entries(STATUS_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+              </label>
               <button type="button" onClick={async () => { const id = editingTask.id; setEditingTask(null); await p.deleteTask(id); }} className="ml-auto rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50">Eliminar</button>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -808,11 +830,14 @@ function LiveTimer({ startedAt, estimatedMinutes }: { startedAt: string; estimat
 }
 
 function TaskRow({ task, clientName, isProtected, onEdit, onStart, onComplete, onPostpone, onDelete }: { task: PlannerTask; clientName?: string; isProtected: boolean; onEdit: (task: PlannerTask) => void; onStart: (id: string) => void; onComplete: (id: string) => void; onPostpone: (id: string) => void | Promise<void>; onDelete: (id: string) => void }) {
-  // Fila mínima: título + cliente + editar/eliminar. Todo lo demás (prioridad,
-  // score, categoría, tiempos, iniciar/finalizar, contexto para la IA) vive en
-  // el popup que se abre al hacer clic en la tarea.
+  // Fila mínima: título + cliente + iniciar/finalizar + editar/eliminar. El
+  // resto (prioridad, score, categoría, contexto para la IA) vive en el popup.
+  //
+  // Iniciar vive AQUÍ y no sólo en el popup a propósito: el panel "Empieza por
+  // esto" muestra una sola tarea, así que en cuanto había una en curso no
+  // quedaba forma visible de arrancar la segunda sin abrir cada tarea.
   const running = task.status === 'in_progress' && task.started_at;
-  void isProtected; void onStart; void onComplete; void onPostpone;
+  void isProtected; void onPostpone;
   return (
     <li className="group flex items-center gap-2 rounded-xl border border-[var(--line)] bg-white px-3 py-2">
       <button onClick={() => onEdit(task)} className="flex min-w-0 flex-1 items-center gap-2 text-left" title="Abrir tarea">
@@ -822,6 +847,9 @@ function TaskRow({ task, clientName, isProtected, onEdit, onStart, onComplete, o
       </button>
       {task.started_at && running && <LiveTimer startedAt={task.started_at} estimatedMinutes={task.estimated_minutes} />}
       <div className="flex shrink-0 items-center gap-1 sm:opacity-70 sm:group-hover:opacity-100 transition-opacity">
+        {task.status !== 'done' && (running
+          ? <button onClick={() => onComplete(task.id)} aria-label={`Finalizar ${task.title}`} title="Finalizar y registrar tiempo" className="grid h-8 w-8 place-items-center rounded-lg text-emerald-600 hover:bg-emerald-50"><Check className="h-3.5 w-3.5" /></button>
+          : <button onClick={() => onStart(task.id)} aria-label={`Iniciar ${task.title}`} title="Iniciar" className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-blue-50 hover:text-blue-700"><Play className="h-3.5 w-3.5" /></button>)}
         <button onClick={() => onEdit(task)} aria-label="Abrir / editar tarea" title="Abrir / editar" className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-blue-700"><Edit2 className="h-3.5 w-3.5" /></button>
         <button onClick={() => onDelete(task.id)} aria-label="Eliminar tarea" title="Eliminar tarea" className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-red-50 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
       </div>

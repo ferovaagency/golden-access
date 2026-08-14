@@ -14,7 +14,7 @@ const PRIORITY_TONE: Record<string, string> = {
   urgent: 'bg-red-100 text-red-700', high: 'bg-amber-100 text-amber-700',
   medium: 'bg-slate-100 text-slate-600', low: 'bg-slate-50 text-slate-500',
 };
-const STATUS_LABEL: Record<string, string> = {
+export const STATUS_LABEL: Record<string, string> = {
   backlog: 'Backlog', scheduled: 'Programadas', in_progress: 'En progreso',
   postponed: 'Pospuestas', done: 'Hechas', cancelled: 'Canceladas',
 };
@@ -101,7 +101,7 @@ export default function PlannerBoard({ mode, tasks, clients, onEdit, onStart, on
       </div>
 
       {mode === 'list' ? (
-        <ListView tasks={filtered} clientName={clientName} onEdit={onEdit} onStart={onStart} onComplete={onComplete} onPostpone={onPostpone} onDelete={onDelete} />
+        <ListView tasks={filtered} clientName={clientName} onEdit={onEdit} onStart={onStart} onComplete={onComplete} onPostpone={onPostpone} onDelete={onDelete} onSetStatus={onSetStatus} />
       ) : (
         <KanbanView
           tasks={filtered}
@@ -120,9 +120,9 @@ function Badge({ children, tone }: { children: React.ReactNode; tone?: string })
   return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${tone || 'bg-slate-100 text-slate-600'}`}>{children}</span>;
 }
 
-function ListView({ tasks, clientName, onEdit, onStart, onComplete, onPostpone, onDelete }: {
+function ListView({ tasks, clientName, onEdit, onStart, onComplete, onPostpone, onDelete, onSetStatus }: {
   tasks: PlannerTask[]; clientName: (id?: string | null) => string | undefined;
-} & Omit<PlannerBoardHandlers, 'onSetStatus'>) {
+} & PlannerBoardHandlers) {
   if (!tasks.length) return <EmptyState />;
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
@@ -149,7 +149,23 @@ function ListView({ tasks, clientName, onEdit, onStart, onComplete, onPostpone, 
                 <td className="px-3 py-2 text-slate-600">{clientName(t.client_ref) || '—'}</td>
                 <td className="px-3 py-2"><Badge>{CATEGORY_LABEL[t.category]}</Badge></td>
                 <td className="px-3 py-2"><Badge tone={PRIORITY_TONE[t.priority]}>{PRIORITY_LABEL[t.priority] || t.priority}</Badge></td>
-                <td className="px-3 py-2 text-slate-600">{STATUS_LABEL[t.status] || t.status}</td>
+                <td className="px-3 py-2">
+                  {/* Selector, no texto: arrastrar en el kanban era la ÚNICA
+                      forma de cambiar el estado, y arrastrar no existe en una
+                      pantalla táctil. */}
+                  {onSetStatus ? (
+                    <select
+                      value={t.status}
+                      onChange={(e) => onSetStatus(t.id, e.target.value)}
+                      aria-label={`Estado de ${t.title}`}
+                      className="rounded-md border border-slate-200 bg-white px-1.5 py-1 text-[11px] text-slate-700 focus:border-blue-400 focus:outline-none"
+                    >
+                      {Object.entries(STATUS_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                    </select>
+                  ) : (
+                    <span className="text-slate-600">{STATUS_LABEL[t.status] || t.status}</span>
+                  )}
+                </td>
                 <td className="px-3 py-2 text-slate-600">{fmtDate(t.deadline)}</td>
                 <td className="px-3 py-2 text-slate-500">{t.estimated_minutes ? `${t.estimated_minutes}m` : '—'}</td>
                 <td className="px-3 py-2">

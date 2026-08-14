@@ -198,7 +198,14 @@ export function usePlanner() {
     finally { setBusy(null); }
   }, [refresh]);
   const postponeTask = useCallback(async (id: string) => { await plannerService.postponeTask(id); await refresh(); }, [refresh]);
-  const setStatus = useCallback(async (id: string, status: string) => { await plannerService.setStatus(id, status as any); await refresh(); }, [refresh]);
+  // Con error visible: si la escritura falla, `refresh()` devolvía la tarea a su
+  // estado anterior y parecía que el control "no hacía nada".
+  const setStatus = useCallback(async (id: string, status: string) => {
+    setError(null);
+    try { await plannerService.setStatus(id, status as any); }
+    catch (err: any) { setError(err?.message || 'No fue posible cambiar el estado de la tarea.'); }
+    finally { await refresh(); }
+  }, [refresh]);
   const deleteTask = useCallback(async (id: string) => { await plannerService.deleteTask(id); await refresh(); }, [refresh]);
   const updateTaskDescription = useCallback(async (id: string, description: string | null) => { await plannerService.updateTaskDescription(id, description); await refresh(); }, [refresh]);
   const createBlock = useCallback(async (input: CreatePlannerBlockInput) => {
