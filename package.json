@@ -41,7 +41,7 @@
   },
   "devDependencies": {
     "@lovable.dev/vite-plugin-dev-server-bridge": "^1.0.2",
-    "@lovable.dev/vite-plugin-hmr-gate": "^1.6.0",
+    "@lovable.dev/vite-plugin-hmr-gate": "^1.6.4",
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
     "@types/react-dom": "^19.2.3",
