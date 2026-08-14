@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Venta, Cliente, Servicio, Config } from '../types';
 import { convertToCop } from '../lib/calculations';
 import { calculatePaymentFees } from '../lib/paymentFees';
+import { inPeriod, type Period } from '../lib/period';
 import { repartirAdelanto } from '../lib/invoiceLines';
 import { listPaymentGateways, type PaymentGateway } from '../lib/paymentGatewaysService';
 import { listAccounts, type FinanceAccount } from '../lib/accountsService';
@@ -23,6 +24,8 @@ interface VentasAdminProps {
   servicios: Servicio[];
   config: Config;
   onSaveVentas: (updated: Venta[]) => Promise<void>;
+  /** Periodo elegido en la cabecera. Recorta lo que se LISTA, no lo que se guarda. */
+  period: Period;
   formatCop: (val: number) => string;
   formatUsd: (val: number) => string;
 }
@@ -34,6 +37,7 @@ export default function VentasAdmin({
   servicios,
   config,
   onSaveVentas,
+  period,
   formatCop,
   formatUsd
 }: VentasAdminProps) {
@@ -561,11 +565,17 @@ export default function VentasAdmin({
   };
 
   // Feed filtration
-  const filteredVentas = ventas.filter(v => 
-    v.cliente_nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    v.servicio_nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    v.id.toLowerCase().includes(searchTerm.toLowerCase())
+  // El periodo recorta LO QUE SE MUESTRA, nunca `ventas`: esa lista completa es
+  // la que se manda a guardar, y filtrarla en origen borraría de la base todas
+  // las ventas fuera del periodo elegido.
+  const filteredVentas = ventas.filter(v =>
+    inPeriod(v.fecha, period) && (
+      v.cliente_nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      v.servicio_nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      v.id.toLowerCase().includes(searchTerm.toLowerCase())
+    )
   );
+  const ocultasPorPeriodo = ventas.length - ventas.filter((v) => inPeriod(v.fecha, period)).length;
 
   return (
     <div className="space-y-8 animate-fade-in text-slate-900">
@@ -1114,9 +1124,18 @@ export default function VentasAdmin({
         <div className="lg:col-span-8 bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col justify-between">
           <div>
             <div className="bg-white/[0.02] border-b border-slate-200 px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold">
-                Historial de Operaciones
-              </h3>
+              <div>
+                <h3 className="text-xs font-mono tracking-widest text-slate-500 uppercase font-semibold">
+                  Historial de Operaciones
+                </h3>
+                {/* Decirlo evita el susto de "me faltan ventas" al cambiar el
+                    periodo en la cabecera. */}
+                {ocultasPorPeriodo > 0 && (
+                  <p className="mt-1 text-[10px] text-slate-500">
+                    Mostrando el periodo seleccionado arriba · {ocultasPorPeriodo} venta{ocultasPorPeriodo === 1 ? '' : 's'} fuera de él
+                  </p>
+                )}
+              </div>
 
               {/* Dynamic search bar */}
               <div className="relative text-xs">

@@ -16,15 +16,18 @@ import {
 import ComprobanteUpload from './ComprobanteUpload';
 import { useToast, errMsg } from './ui/toast';
 import { usePersistentState, clearDraftNamespace } from '../lib/usePersistentState';
+import { inPeriod, type Period } from '../lib/period';
 
 interface PagosEgresosAdminProps {
   pagosEgresos: PagoEgreso[];
   config: Config;
   onSavePagosEgresos: (updated: PagoEgreso[]) => Promise<void>;
+  /** Periodo de la cabecera. Recorta lo que se lista, no lo que se guarda. */
+  period: Period;
   userId?: string;
 }
 
-export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePagosEgresos, userId }: PagosEgresosAdminProps) {
+export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePagosEgresos, userId, period }: PagosEgresosAdminProps) {
   const [accounts, setAccounts] = useState<FinanceAccount[]>([]);
   useEffect(() => { if (userId) void listAccounts(userId).then(setAccounts).catch(() => setAccounts([])); }, [userId]);
   const { error: toastErr, confirm: askConfirm } = useToast();
@@ -163,7 +166,11 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
   };
 
   // Filter payments
+  // Igual que en Ventas: el periodo recorta lo que se LISTA. La lista completa
+  // es la que se manda a guardar, y filtrarla en origen borraría de la base los
+  // egresos de otros meses.
   const filteredPagos = pagosEgresos.filter(p => {
+    if (!inPeriod(p.fecha, period)) return false;
     const term = searchTerm.toLowerCase();
     const matchesSearch = 
       p.concepto.toLowerCase().includes(term) || 
