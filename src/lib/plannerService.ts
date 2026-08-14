@@ -6,6 +6,7 @@ import { supabase } from '../integrations/supabase/client';
 import { invokeAi } from './ai/aiClient';
 import { logger } from './logger';
 import { logSuggestion } from './auditLogService';
+import { getActiveAccountId } from './activeAccount';
 import { plannerDateKey, plannerTaskAvailableDate } from './plannerScheduling';
 
 const log = logger.child('planner');
@@ -233,7 +234,8 @@ function timeToMinute(value: string | null | undefined, fallback: number) {
 
 export const plannerService = {
   async getTimeZone(): Promise<string> {
-    const { data, error } = await anyDb().from('business_profile').select('zona_horaria').maybeSingle();
+    const cuenta = await getActiveAccountId();
+    const { data, error } = await anyDb().from('business_profile').select('zona_horaria').eq('user_id', cuenta ?? '').maybeSingle();
     if (error) { log.error(error); return Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Bogota'; }
     return data?.zona_horaria || Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Bogota';
   },
@@ -267,9 +269,11 @@ export const plannerService = {
     return data || [];
   },
   async createBlock(input: CreatePlannerBlockInput): Promise<void> {
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError) throw authError;
-    if (!user) throw new Error('Debes iniciar sesión para crear un bloque.');
+    // Cuenta activa: un bloque creado dentro de una empresa del holding es de
+    // esa empresa, no de quien lo crea.
+    const cuenta = await getActiveAccountId();
+    if (!cuenta) throw new Error('Debes iniciar sesión para crear un bloque.');
+    const user = { id: cuenta };
 
     const timeZone = await this.getTimeZone();
     const days = (input.recurrence_days || []).filter((d) => d >= 0 && d <= 6);
@@ -355,11 +359,14 @@ export const plannerService = {
       // cliente asignado, queda como interno (cliente_id nulo) y se puede asignar
       // después en Horas — antes se PERDÍA el tiempo si faltaba el cliente.
       const hourDate = (task.scheduled_for as string | null) || new Date().toISOString().slice(0, 10);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+      // La cuenta ACTIVA, no la de quien está conectado: dentro de una empresa
+      // del holding, escribir con el id propio apunta a la cuenta equivocada y
+      // la RLS rechaza la fila — las horas se perdían en silencio.
+      const cuenta = await getActiveAccountId();
+      if (cuenta) {
         const { error: hourError } = await anyDb().from('finance_horas').upsert({
           id: `planner_${id}`,
-          user_id: user.id,
+          user_id: cuenta,
           fecha: hourDate,
           cliente_id: task.client_ref ?? null,
           servicio_id: task.service_ref ?? null,
@@ -481,9 +488,9 @@ export const plannerService = {
       }).eq('id', t.id)
     ));
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await Promise.all(overdue.map((t: any) => logSuggestion(user.id, {
+    const cuentaLog = await getActiveAccountId();
+    if (cuentaLog) {
+      await Promise.all(overdue.map((t: any) => logSuggestion(cuentaLog, {
         entityType: 'planner_task',
         entityId: t.id,
         actor: 'system',
@@ -534,9 +541,10 @@ export const plannerService = {
     // the same task a second time. The selected date only changes the view;
     // the rolling agenda always starts today.
     const targetDate = today;
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) return { data: null, error: authError || new Error('Debes iniciar sesión.') };
-    const { data: profile, error: profileError } = await anyDb().from('business_profile').select('horario_inicio,horario_fin,dias_laborales').maybeSingle();
+    const cuenta = await getActiveAccountId();
+    if (!cuenta) return { data: null, error: new Error('Debes iniciar sesión.') };
+    const user = { id: cuenta };
+    const { data: profile, error: profileError } = await anyDb().from('business_profile').select('horario_inicio,horario_fin,dias_laborales').eq('user_id', cuenta).maybeSingle();
     if (profileError) return { data: null, error: profileError };
     const workdays = Array.isArray(profile?.dias_laborales) && profile.dias_laborales.length ? profile.dias_laborales : [1, 2, 3, 4, 5];
     const start = timeToMinute(profile?.horario_inicio, 8 * 60);

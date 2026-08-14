@@ -155,7 +155,33 @@ Deno.serve(async (req) => {
         });
       }
     } else {
-      for (const line of entries.slice(0, 20)) {
+      // Prosa -> tareas. Hasta aquí una línea era una tarea, así que "mañana
+      // llamo a Juan y el viernes entrego la propuesta de Acme" se guardaba
+      // como UNA tarea con el párrafo entero de título. Cuando lo que llega no
+      // parece una lista (pocas líneas y texto largo), primero se le pide al
+      // modelo que separe las tareas y luego se clasifica cada una.
+      let entradas = entries;
+      const textoCompleto = entries.join("\n").trim();
+      const pareceProsa = entries.length <= 3 && textoCompleto.length > 80;
+      if (gateway && pareceProsa) {
+        try {
+          const { output, usage } = await generateText({
+            model: gateway("google/gemini-2.5-flash"),
+            output: Output.object({ schema: z.object({ tareas: z.array(z.string()).max(30) }) }),
+            system: "Extraes las tareas accionables de un texto libre y devuelves una por elemento, en el idioma original. Cada tarea debe entenderse sola, conservando su fecha, cliente o detalle si el texto los menciona. NO inventes tareas que no estén; NO partas una tarea en pasos; si el texto describe una sola cosa, devuelve un solo elemento.",
+            prompt: textoCompleto,
+          });
+          usos.push(usage);
+          const extraidas = (output as { tareas?: string[] })?.tareas?.map((t) => t.trim()).filter(Boolean) ?? [];
+          if (extraidas.length) entradas = extraidas;
+        } catch (e) {
+          // Si la extracción falla se sigue con el texto tal cual: peor
+          // resultado, pero nunca perder lo que la persona escribió.
+          console.error("[planner-classify] extracción de prosa", e);
+        }
+      }
+
+      for (const line of entradas.slice(0, 20)) {
         let extracted: z.infer<typeof ClassifySchema> | null = null;
         try {
           if (!gateway) throw new Error("AI gateway is not configured");

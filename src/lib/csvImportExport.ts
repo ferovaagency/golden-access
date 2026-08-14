@@ -59,7 +59,36 @@ function normalizedHeader(value: string) {
   return value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
 }
 
-function parseMonto(value: string): number | null {
+/** Coma o punto y coma. Excel en espa\u00f1ol guarda con `;` por defecto, as\u00ed que
+ *  dar por hecho la coma convert\u00eda la fila entera en una sola columna llamada
+ *  "nombre;tipo;declarante\u2026" y el archivo se rechazaba por "falta la columna
+ *  nombre" \u2014 sin importar c\u00f3mo lo hubieras exportado. */
+function detectarSeparador(text: string): ',' | ';' {
+  const primera = text.replace(/^\ufeff/, '').split(/\r?\n/, 1)[0] || '';
+  return (primera.match(/;/g) || []).length > (primera.match(/,/g) || []).length ? ';' : ',';
+}
+
+/**
+ * Lee una tabla y devuelve un buscador de columnas por alias, tolerante a
+ * may\u00fasculas, tildes, espacios y guiones bajos: "Nombre", "NOMBRE" y
+ * "nombre_cliente" son la misma columna.
+ */
+function leerTabla(text: string) {
+  const rows = parseCsv(text, detectarSeparador(text));
+  if (rows.length < 2) throw new Error('El archivo no tiene filas de datos (s\u00f3lo encabezado o vac\u00edo).');
+  const headers = rows[0].map(normalizedHeader);
+  const indice = (...alias: string[]) => headers.findIndex((h) => alias.includes(h));
+  const encabezadosLegibles = rows[0].map((h) => h.trim()).filter(Boolean).join(', ');
+  return { rows, indice, encabezadosLegibles };
+}
+
+/**
+ * Número escrito por una persona, en formato local. "300.000" son trescientos
+ * mil, no trescientos: `Number()` a secas se comía tres ceros de cada precio.
+ * Devuelve null si la celda está vacía o no es un número — distinto de 0, que
+ * es un valor legítimo.
+ */
+function parseNumeroLocal(value: string): number | null {
   const clean = value.trim().replace(/[^0-9,.-]/g, '');
   if (!clean) return null;
   const lastComma = clean.lastIndexOf(',');
@@ -69,11 +98,20 @@ function parseMonto(value: string): number | null {
     numeric = lastComma > lastDot ? clean.replace(/\./g, '').replace(',', '.') : clean.replace(/,/g, '');
   } else if (lastComma >= 0) {
     numeric = /,\d{1,2}$/.test(clean) ? clean.replace(/\./g, '').replace(',', '.') : clean.replace(/,/g, '');
-  } else if ((clean.match(/\./g) || []).length > 1) {
+  } else if (/^-?\d{1,3}(\.\d{3})+$/.test(clean)) {
+    // Puntos como separador de miles: "300.000" y "1.234.567". Contar puntos no
+    // bastaba — con uno solo se colaba "300.000" leído como trescientos. El
+    // patrón exige grupos de exactamente tres cifras, así que "300.00" y "1.5"
+    // siguen siendo decimales.
     numeric = clean.replace(/\./g, '');
   }
   const result = Number(numeric);
-  return Number.isFinite(result) && result > 0 ? result : null;
+  return Number.isFinite(result) ? result : null;
+}
+
+function parseMonto(value: string): number | null {
+  const numero = parseNumeroLocal(value);
+  return numero !== null && numero > 0 ? numero : null;
 }
 
 function parseFecha(value: string): string | null {
@@ -138,16 +176,23 @@ export function downloadClientesTemplate() {
 
 /** Combina lo parseado con la lista actual: mismo id = actualiza, id vacío/nuevo = crea. */
 export function parseClientesCsv(text: string, existing: Cliente[]): Cliente[] {
-  const rows = parseCsv(text);
-  if (rows.length < 2) throw new Error('El CSV no tiene filas de datos (solo encabezado o vacío).');
-  const headerIdx = Object.fromEntries(rows[0].map((h, i) => [h.trim().toLowerCase(), i]));
-  const required = ['nombre'];
-  for (const key of required) if (!(key in headerIdx)) throw new Error(`Falta la columna "${key}" en el CSV.`);
+  const { rows, indice, encabezadosLegibles } = leerTabla(text);
+  const col = {
+    id: indice('id', 'codigo', 'code'),
+    nombre: indice('nombre', 'cliente', 'nombrecliente', 'razonsocial', 'name', 'customer'),
+    tipo: indice('tipo', 'type'),
+    declarante: indice('declarante'),
+    activo: indice('activo', 'active'),
+    notas: indice('notas', 'notes', 'observaciones'),
+  };
+  if (col.nombre < 0) {
+    throw new Error(`No encontré la columna "nombre". Encabezados leídos: ${encabezadosLegibles || '(ninguno)'}. Descarga la plantilla y pega tus datos ahí.`);
+  }
 
   const byId = new Map(existing.map((c) => [c.id, c]));
   let seq = existing.length;
   for (const row of rows.slice(1)) {
-    const get = (key: string) => (headerIdx[key] !== undefined ? (row[headerIdx[key]] || '').trim() : '');
+    const get = (key: keyof typeof col) => (col[key] >= 0 ? (row[col[key]] || '').trim() : '');
     const nombre = get('nombre');
     if (!nombre) continue;
     const id = get('id') || `cli_${Date.now().toString().slice(-6)}_${++seq}`;
@@ -175,30 +220,44 @@ export function downloadServiciosTemplate() {
 }
 
 export function parseServiciosCsv(text: string, existing: Servicio[]): Servicio[] {
-  const rows = parseCsv(text);
-  if (rows.length < 2) throw new Error('El CSV no tiene filas de datos (solo encabezado o vacío).');
-  const headerIdx = Object.fromEntries(rows[0].map((h, i) => [h.trim().toLowerCase(), i]));
-  const required = ['nombre', 'costo_unitario'];
-  for (const key of required) if (!(key in headerIdx)) throw new Error(`Falta la columna "${key}" en el CSV.`);
+  const { rows, indice, encabezadosLegibles } = leerTabla(text);
+  const col = {
+    id: indice('id', 'codigo', 'code'),
+    nombre: indice('nombre', 'servicio', 'producto', 'name'),
+    costo_unitario: indice('costounitario', 'costo', 'cost', 'costounit'),
+    margen_objetivo_pct: indice('margenobjetivopct', 'margenobjetivo', 'margen', 'margenpct'),
+    precio_habitual: indice('preciohabitual', 'precio', 'price', 'precioventa'),
+    precio_habitual_moneda: indice('preciohabitualmoneda', 'moneda', 'currency'),
+  };
+  const faltan = [
+    col.nombre < 0 ? 'nombre' : null,
+    col.costo_unitario < 0 ? 'costo_unitario' : null,
+  ].filter(Boolean);
+  if (faltan.length) {
+    throw new Error(`No encontré la columna "${faltan.join('" ni "')}". Encabezados leídos: ${encabezadosLegibles || '(ninguno)'}. Descarga la plantilla y pega tus datos ahí.`);
+  }
 
   const byId = new Map(existing.map((s) => [s.id, s]));
   let seq = existing.length;
   for (const row of rows.slice(1)) {
-    const get = (key: string) => (headerIdx[key] !== undefined ? (row[headerIdx[key]] || '').trim() : '');
+    const get = (key: keyof typeof col) => (col[key] >= 0 ? (row[col[key]] || '').trim() : '');
     const nombre = get('nombre');
-    const costo = Number(get('costo_unitario'));
-    if (!nombre || !Number.isFinite(costo)) continue;
+    // Costo vacío NO es costo cero: se salta la fila. Tomarlo como 0 hacía que
+    // ese servicio apareciera con 100% de margen y ensuciaba toda la
+    // rentabilidad sin que nadie lo notara.
+    const costo = parseNumeroLocal(get('costo_unitario'));
+    if (!nombre || costo === null) continue;
     const id = get('id') || `srv_${Date.now().toString().slice(-6)}_${++seq}`;
     const existingRow = byId.get(id);
-    const margenPct = get('margen_objetivo_pct');
-    const precioHabitual = get('precio_habitual');
+    const margenPct = parseNumeroLocal(get('margen_objetivo_pct'));
+    const precioHabitual = parseNumeroLocal(get('precio_habitual'));
     byId.set(id, {
       id,
       nombre,
       costo_unitario: costo,
       descripcion: existingRow?.descripcion || `Línea de servicio general para ${nombre}`,
-      margen_objetivo: margenPct ? Number(margenPct) / 100 : existingRow?.margen_objetivo ?? null,
-      precio_habitual: precioHabitual ? Number(precioHabitual) : existingRow?.precio_habitual ?? null,
+      margen_objetivo: margenPct !== null ? margenPct / 100 : existingRow?.margen_objetivo ?? null,
+      precio_habitual: precioHabitual !== null ? precioHabitual : existingRow?.precio_habitual ?? null,
       precio_habitual_moneda: (get('precio_habitual_moneda').toUpperCase() === 'USD' ? 'USD' : 'COP'),
     });
   }

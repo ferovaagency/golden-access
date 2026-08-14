@@ -202,7 +202,13 @@ export function usePlanner() {
   // estado anterior y parecía que el control "no hacía nada".
   const setStatus = useCallback(async (id: string, status: string) => {
     setError(null);
-    try { await plannerService.setStatus(id, status as any); }
+    try {
+      // Marcar "Hecha" desde el selector o el kanban tiene que registrar el
+      // tiempo igual que el botón Finalizar. Antes sólo cambiaba el estado y la
+      // hora trabajada no llegaba nunca a Finanzas.
+      if (status === 'done') { await plannerService.completeTask(id); }
+      else await plannerService.setStatus(id, status as any);
+    }
     catch (err: any) { setError(err?.message || 'No fue posible cambiar el estado de la tarea.'); }
     finally { await refresh(); }
   }, [refresh]);

@@ -9,6 +9,7 @@ import WorkspaceSwitcher from './components/WorkspaceSwitcher';
 import HoldingOverview from './components/HoldingOverview';
 import { trackActivationOnce } from './lib/analytics';
 import { identifyUser, setActiveAccount } from './lib/observability';
+import { setActiveAccountId } from './lib/activeAccount';
 import { syncMemoria } from './lib/brainService';
 import PlanOnboarding from './components/PlanOnboarding';
 import ProductTour from './components/ProductTour';
@@ -148,6 +149,9 @@ function AppInner() {
   };
 
   const accountId = activeWorkspace?.accountId ?? user?.id ?? '';
+  // Los servicios sin props (plannerService) leen de aquí sobre qué cuenta
+  // escriben; si no, escriben con el id de quien está conectado.
+  useEffect(() => { setActiveAccountId(accountId || null); }, [accountId]);
   // permisos null = dueño o administrador: ve todo.
   const canView = (tab: string) => !activeWorkspace?.permisos || activeWorkspace.permisos[tab]?.view === true;
   // Para componentes que reciben el objeto `user` y consultan por user.id:
