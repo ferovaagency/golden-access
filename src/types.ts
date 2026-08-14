@@ -93,6 +93,12 @@ export interface PagoEgreso {
   retencion?: number;
   /** Cuenta (finance_accounts) de donde sale el dinero de este egreso. */
   account_id?: string | null;
+  /** De dónde salió este egreso. `manual` = escrito en Pagos & Egresos; los
+   *  demás los genera el pago de una deuda o de una cuenta por pagar y se
+   *  editan desde ahí, no desde esta pantalla. */
+  origen?: 'manual' | 'deuda' | 'cuenta_por_pagar';
+  /** Id del pago de deuda o de la cuenta por pagar que lo generó. */
+  origen_ref?: string | null;
 }
 
 export interface AbonoLog {
@@ -100,6 +106,13 @@ export interface AbonoLog {
   monto: number;
   tipo_pago?: string; // e.g. "Transferencia", "Efectivo", etc.
   notas?: string;
+  /** `cxc` = este abono no vive en finance_abonos sino en el cobro de una
+   *  cuenta por cobrar ligada a esta venta. Se muestra en la venta para que el
+   *  saldo sea real, pero su fuente única es cuentas por cobrar: por eso no se
+   *  reescribe al guardar ventas. */
+  origen?: 'cxc';
+  /** Id del cobro en finance_receivable_payments, cuando origen = 'cxc'. */
+  origen_ref?: string;
 }
 
 export interface Venta {

@@ -552,22 +552,40 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
                             {p.metodo_pago}
                           </td>
                           <td className="p-3 text-right pr-4">
-                            <button
-                              type="button"
-                              onClick={() => handleEditPago(p)}
-                              className="text-slate-500 hover:text-blue-700 p-1.5 transition rounded hover:bg-blue-600/5 inline-flex cursor-pointer"
-                              title="Editar este pago de egreso"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button 
-                              type="button"
-                              onClick={() => handleDeletePago(p.id)}
-                              className="text-slate-500 hover:text-rose-600 p-1.5 transition rounded hover:bg-rose-600/5 inline-flex cursor-pointer"
-                              title="Eliminar este pago de egreso"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            {/* Los egresos que genera pagar una deuda o una
+                                cuenta por pagar se editan desde donde nacieron.
+                                Dejar los botones aquí engañaría: al guardar,
+                                esta pantalla sólo gobierna lo escrito a mano, y
+                                la fila borrada reaparecería al recargar. */}
+                            {(p.origen ?? 'manual') !== 'manual' ? (
+                              <span
+                                className="inline-flex items-center rounded border border-slate-200 bg-slate-50 px-2 py-1 font-mono text-[9px] uppercase text-slate-500"
+                                title={p.origen === 'deuda'
+                                  ? 'Generado al registrar el pago de una deuda. Se edita en Deudas.'
+                                  : 'Generado al pagar una cuenta por pagar. Se edita en Cuentas por pagar.'}
+                              >
+                                {p.origen === 'deuda' ? 'Desde deuda' : 'Desde cuenta por pagar'}
+                              </span>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleEditPago(p)}
+                                  className="text-slate-500 hover:text-blue-700 p-1.5 transition rounded hover:bg-blue-600/5 inline-flex cursor-pointer"
+                                  title="Editar este pago de egreso"
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeletePago(p.id)}
+                                  className="text-slate-500 hover:text-rose-600 p-1.5 transition rounded hover:bg-rose-600/5 inline-flex cursor-pointer"
+                                  title="Eliminar este pago de egreso"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
                           </td>
                         </tr>
                       );

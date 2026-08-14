@@ -1,4 +1,5 @@
 import { db } from './db';
+import { registrarEgresoAutomatico } from './egresoAutomatico';
 
 export type PayableStatus = 'pendiente' | 'pagada' | 'vencida' | 'cancelada';
 
@@ -45,6 +46,41 @@ export async function createPayable(userId: string, input: Omit<Payable, 'id'>):
 export async function updatePayable(id: string, patch: Partial<Omit<Payable, 'id'>>): Promise<void> {
   const { error } = await db<Payable>('finance_payables').update(patch).eq('id', id);
   if (error) throw error;
+}
+
+/**
+ * Registra el pago de una cuenta por pagar y lo refleja en Pagos & Egresos.
+ *
+ * Antes esto sólo escribía `monto_pagado` y `fecha_pago_real`: el dinero salía
+ * de la cuenta del negocio y no aparecía en ningún egreso, así que el resultado
+ * real de caja seguía como si no se hubiera pagado nada.
+ *
+ * Si la cuenta ya estaba vinculada a un egreso existente (`pago_egreso_id`), no
+ * se crea otro: ese egreso ya aporta la salida y duplicarlo inflaría los gastos.
+ */
+export async function registerPayablePayment(
+  userId: string,
+  payable: Payable,
+  monto: number,
+  fecha: string,
+): Promise<void> {
+  await updatePayable(payable.id, { monto_pagado: monto, fecha_pago_real: fecha, estado: 'pagada' });
+  if (payable.pago_egreso_id) return;
+
+  const egresoId = await registrarEgresoAutomatico(userId, {
+    id: `cxp_${payable.id}`,
+    fecha,
+    concepto: `Pago a proveedor: ${payable.proveedor}${payable.factura ? ` (${payable.factura})` : ''}`,
+    categoria: 'Contratistas',
+    monto,
+    moneda: payable.moneda || 'COP',
+    origen: 'cuenta_por_pagar',
+    origen_ref: payable.id,
+    metodo_pago: payable.payment_method_id ?? null,
+    account_id: payable.account_id ?? null,
+    notas: payable.concepto ?? null,
+  });
+  if (egresoId) await updatePayable(payable.id, { pago_egreso_id: egresoId });
 }
 
 export async function deletePayable(id: string): Promise<void> {

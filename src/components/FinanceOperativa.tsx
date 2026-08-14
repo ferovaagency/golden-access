@@ -5,7 +5,7 @@ import { listPaymentMethods, createPaymentMethod, deletePaymentMethod, updatePay
 import { listAccounts, createAccount, deleteAccount, updateAccount, type FinanceAccount, type AccountType } from '../lib/accountsService';
 import { listDebts, listDebtPayments, createDebt, deleteDebt, updateDebt, addDebtPayment, debtBalance, type Debt, type DebtPayment, type DebtStatus } from '../lib/debtsService';
 import { listReceivables, listReceivablePayments, createReceivable, deleteReceivable, updateReceivable, addReceivablePayment, receivableBalance, type Receivable, type ReceivablePayment, type ReceivableStatus } from '../lib/receivablesService';
-import { listPayables, createPayable, deletePayable, updatePayable, payableDifference, type Payable, type PayableStatus } from '../lib/payablesService';
+import { listPayables, createPayable, deletePayable, updatePayable, registerPayablePayment, payableDifference, type Payable, type PayableStatus } from '../lib/payablesService';
 import { listBudget, upsertBudgetLine, deleteBudgetLine, seedBudget, type BudgetLine } from '../lib/budgetService';
 import { buildCashflow, type CashflowSnapshot } from '../lib/cashflowService';
 import { calculateWeightedReceivable } from '../lib/engine/financialEngine';
@@ -582,7 +582,10 @@ function PayablesTab({ userId, appData, formatCop }: { userId: string; appData: 
                   ) : (
                     <button onClick={async () => {
                       const monto = Number(prompt('Monto pagado:', String(p.valor)) || '0');
-                      if (monto > 0) { await updatePayable(p.id, { monto_pagado: monto, fecha_pago_real: new Date().toISOString().slice(0, 10), estado: 'pagada' }); reload(); }
+                      // Registrar el pago crea además el egreso correspondiente:
+                      // el dinero sale de verdad y el resultado de caja tiene
+                      // que verlo.
+                      if (monto > 0) { await registerPayablePayment(userId, p, monto, new Date().toISOString().slice(0, 10)); reload(); }
                     }} className="text-blue-600 text-xs font-semibold">Pagar</button>
                   )}
                   <button onClick={() => deletePayable(p.id).then(reload)} className="text-red-600"><Trash2 className="w-4 h-4 inline" /></button>

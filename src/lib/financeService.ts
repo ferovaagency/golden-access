@@ -9,6 +9,7 @@ import {
   PagoEgreso,
   Venta,
   Hora,
+  AbonoLog,
 } from '../types';
 
 /**
@@ -79,6 +80,8 @@ export async function loadFinanceData(userId: string): Promise<AppData> {
     ventasRes,
     abonosRes,
     horasRes,
+    cxcLigadasRes,
+    cxcPagosRes,
   ] = await Promise.all([
     loadConfig(userId),
     supabase.from('finance_clientes').select('*').eq('user_id', userId),
@@ -90,6 +93,10 @@ export async function loadFinanceData(userId: string): Promise<AppData> {
     supabase.from('finance_ventas').select('*').eq('user_id', userId),
     supabase.from('finance_abonos').select('*').eq('user_id', userId),
     supabase.from('finance_horas').select('*').eq('user_id', userId),
+    // Cobros de cuentas por cobrar ligadas a una venta: son abonos de esa venta
+    // aunque se registren desde otra pantalla.
+    supabase.from('finance_receivables').select('id, venta_id').eq('user_id', userId).not('venta_id', 'is', null),
+    supabase.from('finance_receivable_payments').select('*').eq('user_id', userId),
   ]);
 
   const clientesRaw = throwIfError('clientes', clientesRes as any) as any[];
@@ -101,6 +108,31 @@ export async function loadFinanceData(userId: string): Promise<AppData> {
   const ventasRaw = throwIfError('ventas', ventasRes as any) as any[];
   const abonosRaw = throwIfError('abonos', abonosRes as any) as any[];
   const horasRaw = throwIfError('horas', horasRes as any) as any[];
+
+  // Cobros de cuentas por cobrar que apuntan a una venta. Son abonos de esa
+  // venta, pero su fuente única sigue siendo cuentas por cobrar: se muestran
+  // aquí para que el saldo de la venta sea real, y `saveVentas` los excluye al
+  // reescribir finance_abonos para no duplicarlos ni pisarlos.
+  // Un fallo leyéndolos no debe tumbar la carga entera de finanzas.
+  const cxcVentaPorId = new Map<string, string>(
+    (((cxcLigadasRes as any)?.data ?? []) as Array<{ id: string; venta_id: string | null }>)
+      .filter((r) => r.venta_id)
+      .map((r) => [r.id, r.venta_id as string]),
+  );
+  const abonosCxcPorVenta = new Map<string, AbonoLog[]>();
+  for (const pago of (((cxcPagosRes as any)?.data ?? []) as Array<{ id: string; receivable_id: string; fecha: string; monto: number | string; notas: string | null }>)) {
+    const ventaId = cxcVentaPorId.get(pago.receivable_id);
+    if (!ventaId) continue;
+    const lista = abonosCxcPorVenta.get(ventaId) ?? [];
+    lista.push({
+      fecha: pago.fecha,
+      monto: Number(pago.monto),
+      notas: pago.notas ?? 'Cobro registrado en cuentas por cobrar',
+      origen: 'cxc',
+      origen_ref: pago.id,
+    });
+    abonosCxcPorVenta.set(ventaId, lista);
+  }
 
   const clienteNombreMap = new Map(clientesRaw.map((c) => [c.id, c.nombre]));
   const servicioNombreMap = new Map(serviciosRaw.map((s) => [s.id, s.nombre]));
@@ -171,6 +203,8 @@ export async function loadFinanceData(userId: string): Promise<AppData> {
     account_id: p.account_id ?? undefined,
     comprobante_url: p.comprobante_url ?? undefined,
     comprobante_nombre: p.comprobante_nombre ?? undefined,
+    origen: (p.origen ?? 'manual') as PagoEgreso['origen'],
+    origen_ref: p.origen_ref ?? undefined,
   }));
 
   const ventas: Venta[] = ventasRaw.map((v) => ({
@@ -197,14 +231,19 @@ export async function loadFinanceData(userId: string): Promise<AppData> {
     retencion: v.retencion != null ? Number(v.retencion) : 0,
     numero_factura: v.numero_factura ?? undefined,
     account_id: v.account_id ?? undefined,
-    abonos: abonosRaw
-      .filter((a) => a.venta_id === v.id)
-      .map((a) => ({
-        fecha: a.fecha,
-        monto: Number(a.monto),
-        tipo_pago: a.tipo_pago ?? undefined,
-        notas: a.notas ?? undefined,
-      })),
+    abonos: [
+      ...abonosRaw
+        .filter((a) => a.venta_id === v.id)
+        .map((a) => ({
+          fecha: a.fecha,
+          monto: Number(a.monto),
+          tipo_pago: a.tipo_pago ?? undefined,
+          notas: a.notas ?? undefined,
+        })),
+      // Cobros hechos desde cuentas por cobrar: antes la venta seguía viéndose
+      // pendiente aunque el cliente ya hubiera pagado en la otra pantalla.
+      ...(abonosCxcPorVenta.get(v.id) ?? []),
+    ].sort((a, b) => (a.fecha || '').localeCompare(b.fecha || '')),
   }));
 
   const horas: Hora[] = horasRaw.map((h) => ({
@@ -229,6 +268,25 @@ export async function loadFinanceData(userId: string): Promise<AppData> {
     respaldos: [],
     pagosEgresos,
   };
+}
+
+/** Como `overwriteTable`, pero sólo sobre los egresos escritos a mano: los que
+ *  generan las deudas y las cuentas por pagar tienen su propio dueño y no se
+ *  tocan desde la pantalla de Pagos & Egresos. */
+async function overwriteManualPagosEgresos(userId: string, rows: Record<string, any>[]) {
+  const client = supabase as any;
+  const delRes = await client.from('finance_pagos_egresos').delete().eq('user_id', userId).eq('origen', 'manual');
+  if (delRes.error) {
+    // Base sin la columna todavía: se cae al comportamiento anterior antes que
+    // dejar la pantalla sin poder guardar.
+    if (!/origen/i.test(delRes.error.message || '')) {
+      throw new Error(`[financeService] overwrite pagos_egresos (delete): ${delRes.error.message}`);
+    }
+    return overwriteTable('finance_pagos_egresos', userId, rows);
+  }
+  if (rows.length === 0) return;
+  const insRes = await client.from('finance_pagos_egresos').insert(rows.map((r) => ({ ...r, user_id: userId, origen: 'manual' })));
+  if (insRes.error) throw new Error(`[financeService] overwrite pagos_egresos (insert): ${insRes.error.message}`);
 }
 
 async function overwriteTable(table: string, userId: string, rows: Record<string, any>[]) {
@@ -318,7 +376,13 @@ export async function saveOtrosGastos(userId: string, list: OtroGasto[]) {
 }
 
 export async function savePagosEgresos(userId: string, list: PagoEgreso[]) {
-  await overwriteTable('finance_pagos_egresos', userId, list.map((p) => ({
+  // Sólo se reescribe lo escrito a mano en esta pantalla. Los egresos que
+  // genera pagar una deuda o una cuenta por pagar (`origen` distinto de
+  // `manual`) se quedan: esta pantalla los muestra pero no los gobierna, y el
+  // borrar-todo-e-insertar de abajo los habría hecho desaparecer en cuanto
+  // alguien editara cualquier otro gasto.
+  const manuales = list.filter((p) => (p.origen ?? 'manual') === 'manual');
+  await overwriteManualPagosEgresos(userId, manuales.map((p) => ({
     id: p.id,
     fecha: p.fecha,
     concepto: p.concepto,
@@ -382,8 +446,11 @@ export async function saveVentas(userId: string, list: Venta[]) {
     if (deleted.error) throw new Error(`[financeService] saveVentas delete: ${deleted.error.message}`);
   }
 
+  // Los abonos que vienen de cuentas por cobrar NO se reescriben aquí: su
+  // fuente única es `finance_receivable_payments`. Copiarlos duplicaría el
+  // cobro, y el borrar-todo-e-insertar de abajo los perdería al editar la venta.
   const abonoRows = list.flatMap((v) =>
-    (v.abonos || []).map((a) => ({
+    (v.abonos || []).filter((a) => a.origen !== 'cxc').map((a) => ({
       venta_id: v.id,
       fecha: a.fecha,
       monto: a.monto,

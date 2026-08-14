@@ -1,4 +1,5 @@
 import { db } from './db';
+import { registrarEgresoAutomatico } from './egresoAutomatico';
 
 export type DebtStatus = 'activo' | 'pagado' | 'en_mora' | 'cancelado';
 
@@ -65,10 +66,34 @@ export async function deleteDebt(id: string): Promise<void> {
   if (error) throw error;
 }
 
-export async function addDebtPayment(userId: string, input: Omit<DebtPayment, 'id'>): Promise<DebtPayment> {
+export async function addDebtPayment(userId: string, input: Omit<DebtPayment, 'id'>, debt?: Debt): Promise<DebtPayment> {
   const { data, error } = await db<DebtPayment & { user_id: string }>('finance_debt_payments').insert({ user_id: userId, ...input }).select('*').single();
   if (error) throw error;
   if (!data) throw new Error('No se pudo registrar el pago de deuda.');
+
+  // La cuota sale de la caja de verdad: se refleja en Pagos & Egresos, que es
+  // de donde salen el resultado real y el flujo. Antes se quedaba sólo en la
+  // tabla de deudas y ningún informe la veía.
+  const egresoId = await registrarEgresoAutomatico(userId, {
+    id: `deuda_${data.id}`,
+    fecha: data.fecha,
+    concepto: `Cuota de deuda${debt?.nombre ? `: ${debt.nombre}` : ''}`,
+    categoria: 'Administrativo',
+    monto: data.monto,
+    moneda: debt?.moneda || 'COP',
+    origen: 'deuda',
+    origen_ref: data.id,
+    metodo_pago: data.payment_method_id ?? null,
+    account_id: debt?.account_id ?? null,
+    notas: data.notas ?? null,
+  });
+
+  if (egresoId) {
+    // El enlace ya estaba previsto en el modelo (`pago_egreso_id`) y nadie lo
+    // llenaba: con él, el flujo de caja sabe que este pago ya está contado.
+    const { error: linkError } = await db('finance_debt_payments').update({ pago_egreso_id: egresoId }).eq('id', data.id);
+    if (linkError) console.error('[debtsService] no se pudo enlazar el egreso', linkError.message);
+  }
   return data;
 }
 
