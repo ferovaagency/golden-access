@@ -110,13 +110,15 @@ export default function SmartPlanner() {
         return;
       }
       // Lista/markdown/texto: se interpretan con IA en tandas de 18.
-      const lines = result.lines || [];
+      const lines = (result.lines || []).map((l) => l.trim()).filter(Boolean);
       if (!lines.length) { setImportInfo('No encontré tareas en el contenido.'); setTimeout(() => setImportInfo(null), 4000); return; }
       const batches = chunk(lines, 18);
       const all: PlannerDraft[] = [];
       for (let i = 0; i < batches.length; i++) {
         setImportInfo(`Interpretando ${Math.min((i + 1) * 18, lines.length)} de ${lines.length}…`);
-        const detected = await p.previewCapture(batches[i].join('\n'));
+        const text = batches[i].join('\n').trim();
+        if (!text) continue;
+        const detected = await p.previewCapture(text);
         all.push(...detected);
       }
       setImportInfo(null);
