@@ -151,48 +151,63 @@ export type Database = {
       }
       biz_crm_contactos: {
         Row: {
+          canal_origen: string | null
+          cargo: string | null
           created_at: string
           email: string | null
           empresa: string | null
           estado: string
           fecha_proxima_accion: string | null
           id: string
+          linkedin: string | null
           moneda: string
           nombre_contacto: string
           notas: string | null
+          probabilidad: number | null
           proxima_accion: string | null
+          sitio_web: string | null
           telefono: string | null
           updated_at: string
           user_id: string
           valor_estimado: number | null
         }
         Insert: {
+          canal_origen?: string | null
+          cargo?: string | null
           created_at?: string
           email?: string | null
           empresa?: string | null
           estado?: string
           fecha_proxima_accion?: string | null
           id: string
+          linkedin?: string | null
           moneda?: string
           nombre_contacto: string
           notas?: string | null
+          probabilidad?: number | null
           proxima_accion?: string | null
+          sitio_web?: string | null
           telefono?: string | null
           updated_at?: string
           user_id: string
           valor_estimado?: number | null
         }
         Update: {
+          canal_origen?: string | null
+          cargo?: string | null
           created_at?: string
           email?: string | null
           empresa?: string | null
           estado?: string
           fecha_proxima_accion?: string | null
           id?: string
+          linkedin?: string | null
           moneda?: string
           nombre_contacto?: string
           notas?: string | null
+          probabilidad?: number | null
           proxima_accion?: string | null
+          sitio_web?: string | null
           telefono?: string | null
           updated_at?: string
           user_id?: string
@@ -486,6 +501,7 @@ export type Database = {
           owner_user_id: string
           permisos: Json
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           activo?: boolean
@@ -496,6 +512,7 @@ export type Database = {
           owner_user_id?: string
           permisos?: Json
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           activo?: boolean
@@ -506,6 +523,7 @@ export type Database = {
           owner_user_id?: string
           permisos?: Json
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -958,6 +976,7 @@ export type Database = {
           nombre: string | null
           rol: string
           telefono_notificaciones: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -965,6 +984,7 @@ export type Database = {
           nombre?: string | null
           rol?: string
           telefono_notificaciones?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -972,6 +992,7 @@ export type Database = {
           nombre?: string | null
           rol?: string
           telefono_notificaciones?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -2350,6 +2371,8 @@ export type Database = {
           id: string
           notes: string | null
           protected: boolean
+          recurrence_days: number[]
+          recurrence_until: string | null
           source: string
           starts_at: string
           task_ids: string[]
@@ -2365,6 +2388,8 @@ export type Database = {
           id?: string
           notes?: string | null
           protected?: boolean
+          recurrence_days?: number[]
+          recurrence_until?: string | null
           source?: string
           starts_at: string
           task_ids?: string[]
@@ -2380,6 +2405,8 @@ export type Database = {
           id?: string
           notes?: string | null
           protected?: boolean
+          recurrence_days?: number[]
+          recurrence_until?: string | null
           source?: string
           starts_at?: string
           task_ids?: string[]
