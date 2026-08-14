@@ -60,10 +60,14 @@ export async function createOrganization(input: {
 }): Promise<string> {
   // Cast único: los tipos generados de Supabase todavía no conocen esta función
   // (se regeneran tras aplicar la migración). Igual criterio que db().
-  const rpc = (supabase as unknown as {
+  //
+  // Se invoca como método sobre el cliente a propósito: extraer `supabase.rpc`
+  // a una variable pierde el `this` y revienta dentro de supabase-js con
+  // "Cannot read properties of undefined (reading 'rest')".
+  const client = supabase as unknown as {
     rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: string | null; error: { message: string } | null }>;
-  }).rpc;
-  const { data, error } = await rpc('create_organization', {
+  };
+  const { data, error } = await client.rpc('create_organization', {
     p_nombre: input.nombre,
     p_parent_org_id: input.parentOrgId ?? null,
     p_invite_email: input.inviteEmail ?? null,

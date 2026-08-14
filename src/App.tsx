@@ -238,10 +238,12 @@ function AppInner() {
   // ninguna de estas pestañas existe para él -- redirige a su módulo real.
   // Cubre tanto el tab inicial por defecto como un cambio de plan en caliente.
   const FINANCIERO_TAB_IDS = ['dashboard', 'ventas', 'pagosEgresos', 'gastos', 'equilibrioGlobal', 'equilibrioServicio', 'iva', 'alertas', 'ajustes', 'proyectos', 'horas', 'clientes', 'servicios', 'kpisOperativos', 'seguimiento'];
-  // El seguimiento ahora vive DENTRO de cada proyecto (Proyectos). Los ids
-  // antiguos "seguimiento"/"kpisOperativos" redirigen a Proyectos.
+  // El seguimiento por cliente vive DENTRO de cada proyecto: el id antiguo
+  // "seguimiento" redirige a Proyectos. "kpisOperativos" NO: es otro módulo
+  // (metas de prospección, meta anual de MRR y pasarelas de pago con sus
+  // comisiones) y al redirigirlo quedaba inalcanzable, con los datos dentro.
   useEffect(() => {
-    if (activeTab === 'seguimiento' || activeTab === 'kpisOperativos') setActiveTab('proyectos');
+    if (activeTab === 'seguimiento') setActiveTab('kpisOperativos');
   }, [activeTab]);
   // Colaborador en una pestaña sin permiso -> primera que sí puede ver.
   // Aquí (tras declarar activeTab, antes de cualquier return) para no romper hooks.
@@ -612,6 +614,7 @@ function AppInner() {
     { id: 'sales', label: 'Ventas', icon: Grid2X2, items: [
       ...(modules.crm_ventas ? [{ id: 'ventas-crm', label: 'CRM', hint: 'Pipeline y oportunidades' }] : []),
       ...(modules.marketing_roi ? [{ id: 'marketingRoi', label: 'Marketing ROI', hint: 'Campañas y calculadora' }] : []),
+      { id: 'kpisOperativos', label: 'Seguimiento', hint: 'Metas de prospección, MRR y pasarelas' },
       ...CRM_GROWTH_TABS,
     ] },
     { id: 'settings', label: 'Configuración', icon: Settings, items: [
@@ -788,6 +791,7 @@ function AppInner() {
           <Suspense fallback={<LoadingState label="Cargando módulo…" />}>
             {activeTab === 'planner' && <SmartPlanner />}
             {activeTab === 'holding' && <HoldingOverview formatCop={formatCop} />}
+            {activeTab === 'kpisOperativos' && <OperatingKpiDashboard userId={accountId} data={appData} formatCop={formatCop} />}
             {activeTab === 'reports' && effectiveUser && <ReportsView user={effectiveUser} />}
             {activeTab === 'finops' && effectiveUser && <FinanceOperativa user={effectiveUser} appData={appData} formatCop={formatCop} />}
             {activeTab === 'marketingRoi' && effectiveUser && <MarketingROI user={effectiveUser} ventas={appData.ventas} config={appData.config} formatCop={formatCop} />}

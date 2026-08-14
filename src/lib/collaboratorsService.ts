@@ -39,6 +39,7 @@ export const PERMISSION_MODULES: Array<{ group: string; tabs: Array<{ id: string
     { id: 'crm-pipeline', label: 'Pipeline / CRM' },
     { id: 'crm-citas', label: 'Citas' },
     { id: 'ventas-crm', label: 'CRM del cliente' },
+    { id: 'kpisOperativos', label: 'Seguimiento (metas y pasarelas)' },
   ] },
   { group: 'Dirección', tabs: [
     { id: 'reports', label: 'Reportes CEO' },
