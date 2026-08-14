@@ -1,64 +1,86 @@
-# Fase 2 — Modelo de organizaciones (borrador para STAGING)
+# Fase 2 — Multi-tenant por organización
 
-> ⚠️ **NO copiar a `supabase/migrations/` todavía.** Estos scripts se prueban
-> primero en **staging** con un **respaldo verificado inmediatamente antes**.
-> Una migración de este tamaño no se deshace. Hoy el sistema es mono-tenant por
-> `user_id` y cada cliente ya está aislado; esto habilita que varias personas
-> compartan los datos de UNA organización sin verse entre organizaciones.
+Estado: **aplicado y verificado en producción el 14 ago 2026.**
 
-## Prerrequisitos
-1. Proyecto/branch de **staging** con una copia de datos reales.
-2. **Backup verificado** tomado justo antes de correr.
-3. Correr en orden: `01` → `06`. Después, `06` (pgTAP) debe pasar en verde.
+## Qué se hizo
 
-## Concepto
-Dos ejes de acceso:
-- `(org_id, owner_user_id IS NULL)` = datos/cerebro de la **organización** (los ve todo el equipo de esa org).
-- `(org_id, owner_user_id = X)` = datos/cerebro **personales** dentro de esa org.
+| Pieza | Dónde |
+|---|---|
+| Tablas `organizations` / `organization_members` / `user_active_org`, jerarquía y `create_organization()` | `supabase/migrations/20260814120000_organizations_base.sql` |
+| `my_accessible_account_ids()` + reescritura de las políticas RLS de las 44 tablas de negocio | `supabase/migrations/20260814180000_org_account_rls.sql` |
+| Vuelta atrás | `rollback_org_account_rls.sql` |
+| Verificación (3 bloques, sólo lee) | `verificacion_org_account_rls.sql` |
 
-La organización activa de quien consulta la da `current_org_id()` (tabla `user_active_org`).
-Las políticas RLS de organización se declaran **`as restrictive`**: se combinan con AND
-y actúan de red de seguridad aunque luego se agregue por error una política muy abierta.
+## La decisión de diseño, y por qué cambió
 
-## Categorización de tablas (REVISAR antes de correr)
+El borrador original (scripts `01`–`06`, borrados en este commit; están en el
+historial de git) añadía una columna `org_id` a ~44 tablas, hacía backfill y
+reescribía las políticas contra esa columna. Se descartó **después de leer el
+esquema real**:
 
-**Tenant — llevan `org_id` y RLS por organización** (datos del negocio, compartibles):
-finance_abonos, finance_accounts, finance_budget_monthly, finance_clientes,
-finance_config, finance_debt_payments, finance_debts, finance_herramienta_servicios,
-finance_herramientas, finance_horas, finance_otros_gastos, finance_pagos_egresos,
-finance_payables, finance_payment_methods, finance_receivable_payments,
-finance_receivables, finance_servicios, finance_ventas, planner_behavior,
-planner_blocks, planner_briefings, planner_goals, planner_inbox, planner_insights,
-planner_routines, planner_tasks, biz_crm_contactos, marketing_campaigns,
-marketing_campaign_metrics, project_kpis, project_kpi_entries, operating_kpi_days,
-operating_kpi_settings, ceo_reports, decision_simulations, business_blindspots,
-business_health_snapshots, calculation_runs, audit_log, business_profile,
-business_assistant_messages, onboarding_messages, ferova_knowledge.
+- 11 de esas tablas tienen **clave primaria compuesta `(user_id, id)`**. Cambiar
+  la dimensión de tenencia ahí no es añadir una columna, es reescribir claves
+  primarias sobre datos reales.
+- El puente ya existía: `organizations.data_user_id` — la cuenta cuyos datos
+  constituyen la organización. Con eso, "quién puede ver esta fila" se resuelve
+  sin tocar ni una columna de datos.
+- `org_id` como dimensión canónica sólo compra algo el día que UNA cuenta
+  necesite contener varias tenencias distintas. Hoy la relación es 1 cuenta = 1
+  empresa, así que sería trabajo caro y riesgoso a cambio de nada.
 
-**Se quedan user-scoped (NO org)** — cuenta/sistema por persona:
-user_subscriptions (facturación), user_notifications, google_workspace_connections
-(cada quien conecta su propio Google), ai_usage_log (sistema), saas_user_events
-(analítica), product_feedback, admin_module_overrides.
+La regla quedó igual en las 44 tablas:
 
-**Ambiguas — DECIDIR antes de correr** (no incluidas en los scripts hasta decidir):
-- `user_fiscal_profile`: ¿el perfil fiscal es del negocio (org) o de la persona? Probable **org**.
-- `payment_gateways`: pasarelas del negocio para SUS ventas → probable **org**.
-- `crm_whatsapp_instances`: WhatsApp del negocio → probable **org**.
-- `collaborators` (owner_user_id): es el modelo VIEJO de colaboración; queda
-  **reemplazado** por `organization_members`. Migrar sus filas y luego retirarla.
-- `business_profile`: es 1-por-usuario hoy; al pasar a org, debería ser
-  **1-por-organización**. Requiere decidir la unicidad (ver nota en `02`).
+```sql
+user_id in (select account_id from public.my_accessible_account_ids())
+```
 
-## Archivos
-- `01_core.sql` — organizations, organization_members, user_active_org, current_org_id().
-- `02_org_id_columns.sql` — agrega `org_id` a las tablas tenant.
-- `03_backfill.sql` — crea la org "Ferova", sus miembros, setea `org_id` y la org activa.
-- `04_match_ferova_knowledge_org.sql` — filtra el cerebro por `org_id`.
-- `05_rls_org_policies.sql` — política restrictiva de organización por tabla tenant.
-- `06_pgtap_isolation.sql` — pruebas de aislamiento (dos orgs no se ven).
+y ese conjunto son tres ramas: mi cuenta · las cuentas donde soy colaborador
+activo · las cuentas de las organizaciones donde mando (el holding sobre sus
+empresas, heredando hacia abajo por el árbol).
 
-## Verificación mínima tras correr
-1. `06_pgtap_isolation.sql` en verde.
-2. Con dos usuarios de orgs distintas: ninguno lee/escribe datos del otro.
-3. El asistente y `match_ferova_knowledge` solo devuelven cerebro de la org activa.
-4. La app arranca y los datos existentes aparecen bajo la org "Ferova".
+Las dos primeras ramas **son literalmente el comportamiento anterior**. Sólo la
+tercera es nueva, y no concede nada mientras `organization_members` esté vacía.
+Eso es lo que hizo seguro aplicarlo en producción sin staging: se verificó antes
+de tocar ninguna política que la función devolvía, para los 7 usuarios reales,
+exactamente una cuenta cada uno — la propia.
+
+## Verificación que se corrió (14 ago 2026)
+
+1. Las 44 tablas quedaron con 1 política permisiva + 1 restrictiva, todas con la
+   regla nueva, y RLS activa: **44/44 ok**.
+2. Haciéndose pasar por cada uno de los 7 usuarios reales (rol `authenticated` +
+   su claim `sub`, igual que el navegador): la dueña ve sus 12 ventas, 48 horas,
+   31 tareas y 116 contactos; los otros seis ven **0** filas suyas; y el total de
+   filas ajenas visibles en el sistema es **0**.
+
+Repetir el bloque 2 de `verificacion_org_account_rls.sql` después de cada
+migración que toque RLS. Es la prueba de mayor retorno del plan y corre en
+segundos.
+
+## Lo que NO entra en esta fase (y por qué)
+
+- **Las 9 tablas `crm_*` sin columna de propietario** (`crm_oportunidades`,
+  `crm_interacciones`, `crm_resenas`, `crm_bot_config`, `crm_bot_knowledge`,
+  `crm_citas_diagnostico`, `crm_contenido_potencial`, `crm_review_sources`,
+  `crm_acquisition_channels`): son el CRM comercial **interno de Ferova**,
+  protegido por `is_team_member()`. No son datos de cliente. `crm_bot_config`
+  además es un singleton (`id boolean PK check (id = true)`): multi-organización
+  obligaría a rediseñar la tabla, no a añadirle una columna. Se hace el día que
+  un cliente necesite su propio bot, no antes.
+- **Datos de la persona, no del negocio**: `user_subscriptions`,
+  `user_notifications`, `google_workspace_connections`, `ai_usage_log`,
+  `saas_user_events`, `product_feedback`, `admin_module_overrides`. La
+  facturación de un socio no la ve el holding.
+
+> **Regla operativa que no hay que romper:** no agregues a los fundadores a
+> `crm_team_members`. Ese allowlist es el equipo interno de Ferova. Un `INSERT`
+> ahí le da a esa persona el CRM comercial completo. Es una fila de distancia
+> entre "aislado" y "lo ve todo".
+
+## Cómo se enciende el holding
+
+Ver `docs/DISENO_ORGANIZACIONES.md`. Resumen: crear la organización padre y las
+hijas con `create_organization()`, cada hija enlazada a la cuenta de su fundador
+(`data_user_id`) o invitándolo por correo (`invite_email`), y el holding con la
+persona que manda como `owner`. Desde ese momento —y sólo desde ese momento— el
+holding ve a sus empresas.
