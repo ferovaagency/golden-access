@@ -156,6 +156,7 @@ export async function loadFinanceData(userId: string): Promise<AppData> {
   const servicios: Servicio[] = serviciosRaw.map((s) => ({
     id: s.id,
     nombre: s.nombre,
+    tipo: (s.tipo === 'producto' ? 'producto' : 'servicio') as Servicio['tipo'],
     costo_unitario: Number(s.costo_unitario),
     descripcion: s.descripcion ?? undefined,
     costo_entrega_estimado: s.costo_entrega_estimado != null ? Number(s.costo_entrega_estimado) : null,
@@ -331,6 +332,7 @@ export async function saveServicios(userId: string, list: Servicio[]) {
   await overwriteTable('finance_servicios', userId, list.map((s) => ({
     id: s.id,
     nombre: s.nombre,
+    tipo: s.tipo === 'producto' ? 'producto' : 'servicio',
     costo_unitario: s.costo_unitario,
     descripcion: s.descripcion || null,
     // Preservamos precios históricos y ofrecidos: solo se sobrescriben si el

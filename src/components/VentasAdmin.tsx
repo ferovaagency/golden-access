@@ -124,6 +124,15 @@ export default function VentasAdmin({
   // Cada ítem es una línea de venta con su propio precio y COSTO, y todas
   // comparten `numero_factura`. Así una factura de tres productos son tres
   // líneas que se suman, y la rentabilidad por producto sigue siendo real.
+  // Catálogo filtrado por lo que se está vendiendo. Si el negocio sólo tiene
+  // servicios (o sólo productos) el conmutador ni aparece: sería una decisión
+  // sin alternativa.
+  const hayDeLosDos = servicios.some((s) => s.tipo === 'producto') && servicios.some((s) => (s.tipo ?? 'servicio') === 'servicio');
+  const [catalogoTipo, setCatalogoTipo] = useState<'producto' | 'servicio'>(
+    servicios.some((s) => s.tipo === 'producto') && !servicios.some((s) => (s.tipo ?? 'servicio') === 'servicio') ? 'producto' : 'servicio',
+  );
+  const catalogoVisible = hayDeLosDos ? servicios.filter((s) => (s.tipo ?? 'servicio') === catalogoTipo) : servicios;
+
   interface ItemFactura { servicioId: string; cantidad: number; precio: number; costo: number }
   const [itemsExtra, setItemsExtra] = useState<ItemFactura[]>([]);
   const [numeroFacturaManual, setNumeroFacturaManual] = useState('');
@@ -646,20 +655,43 @@ export default function VentasAdmin({
               </select>
             </div>
 
-            {/* Servicio */}
+            {/* Qué se vende: producto o servicio. El catálogo es el mismo, pero
+                filtrarlo evita tener que buscar un producto entre servicios —y
+                al revés— en negocios que venden las dos cosas. */}
             <div>
-              <label className="block text-slate-500 font-semibold mb-1 uppercase tracking-wider font-mono text-[10px]">Servicio</label>
-              <select 
+              <label className="block text-slate-500 font-semibold mb-1 uppercase tracking-wider font-mono text-[10px]">
+                {catalogoTipo === 'producto' ? 'Producto' : 'Servicio'}
+              </label>
+              {hayDeLosDos && (
+                <div className="mb-1.5 inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5">
+                  {([['servicio', 'Servicios'], ['producto', 'Productos']] as const).map(([valor, etiqueta]) => (
+                    <button
+                      key={valor}
+                      type="button"
+                      onClick={() => setCatalogoTipo(valor)}
+                      className={`rounded px-2.5 py-1 text-[11px] font-semibold transition ${catalogoTipo === valor ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                    >
+                      {etiqueta}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <select
                 value={servicioId}
                 onChange={(e) => handleServiceChange(e.target.value)}
                 required
                 className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none focus:border-blue-300"
               >
-                <option value="" disabled>Selecciona servicio...</option>
-                {servicios.map((s, idx) => (
+                <option value="" disabled>Selecciona {catalogoTipo === 'producto' ? 'producto' : 'servicio'}…</option>
+                {catalogoVisible.map((s, idx) => (
                   <option key={`${s.id || 'srv'}-${idx}`} value={s.id} className="bg-white">{s.nombre}</option>
                 ))}
               </select>
+              {catalogoVisible.length === 0 && (
+                <p className="mt-1 text-[10px] text-amber-700">
+                  No hay {catalogoTipo === 'producto' ? 'productos' : 'servicios'} en el catálogo. Créalos en la pestaña Servicios.
+                </p>
+              )}
             </div>
 
             {/* Cantidad y Precio Unitario */}
@@ -707,43 +739,64 @@ export default function VentasAdmin({
                   )}
                 </div>
 
-                {itemsExtra.map((it, idx) => (
-                  <div key={idx} className="mb-2 grid grid-cols-12 gap-2">
-                    <select
-                      value={it.servicioId}
-                      onChange={(e) => cambiarItem(idx, { servicioId: e.target.value })}
-                      aria-label={`Producto del ítem ${idx + 2}`}
-                      className="col-span-5 rounded border border-slate-200 bg-white p-2 text-xs"
-                    >
-                      {servicios.map((s, i) => <option key={`${s.id}-${i}`} value={s.id}>{s.nombre}</option>)}
-                    </select>
-                    <input
-                      type="number" min="1" value={it.cantidad}
-                      onChange={(e) => cambiarItem(idx, { cantidad: Number(e.target.value) })}
-                      aria-label={`Cantidad del ítem ${idx + 2}`}
-                      className="col-span-2 rounded border border-slate-200 bg-white p-2 font-mono text-xs"
-                    />
-                    <input
-                      type="number" min="0" value={it.precio}
-                      onChange={(e) => cambiarItem(idx, { precio: Number(e.target.value) })}
-                      aria-label={`Precio del ítem ${idx + 2}`} placeholder="Precio"
-                      className="col-span-2 rounded border border-slate-200 bg-white p-2 font-mono text-xs"
-                    />
-                    <input
-                      type="number" min="0" value={it.costo}
-                      onChange={(e) => cambiarItem(idx, { costo: Number(e.target.value) })}
-                      aria-label={`Costo del ítem ${idx + 2}`} placeholder="Costo"
-                      className="col-span-2 rounded border border-slate-200 bg-white p-2 font-mono text-xs"
-                    />
-                    <button
-                      type="button" onClick={() => quitarItem(idx)}
-                      aria-label={`Quitar ítem ${idx + 2}`}
-                      className="col-span-1 rounded border border-slate-200 bg-white text-xs text-slate-500 hover:border-red-200 hover:text-red-600"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
+                {itemsExtra.map((it, idx) => {
+                  const totalItem = (it.precio || 0) * (it.cantidad || 0);
+                  return (
+                    <div key={idx} className="mb-2 rounded-lg border border-slate-200 bg-white p-2.5">
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-slate-100 font-mono text-[10px] font-bold text-slate-500">
+                          {idx + 2}
+                        </span>
+                        <select
+                          value={it.servicioId}
+                          onChange={(e) => cambiarItem(idx, { servicioId: e.target.value })}
+                          aria-label={`Qué se vende en el ítem ${idx + 2}`}
+                          className="min-w-0 flex-1 rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs"
+                        >
+                          {catalogoVisible.map((s, i) => <option key={`${s.id}-${i}`} value={s.id}>{s.nombre}</option>)}
+                        </select>
+                        <button
+                          type="button" onClick={() => quitarItem(idx)}
+                          aria-label={`Quitar ítem ${idx + 2}`} title="Quitar este ítem"
+                          className="shrink-0 rounded border border-slate-200 px-2 py-1 text-xs text-slate-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                        >
+                          Quitar
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                          Cantidad
+                          <input
+                            type="number" min="1" value={it.cantidad}
+                            onChange={(e) => cambiarItem(idx, { cantidad: Number(e.target.value) })}
+                            className="mt-0.5 w-full rounded border border-slate-200 bg-slate-50 px-2 py-1.5 font-mono text-xs font-normal text-slate-900"
+                          />
+                        </label>
+                        <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                          Precio ({moneda})
+                          <input
+                            type="number" min="0" value={it.precio}
+                            onChange={(e) => cambiarItem(idx, { precio: Number(e.target.value) })}
+                            className="mt-0.5 w-full rounded border border-slate-200 bg-slate-50 px-2 py-1.5 font-mono text-xs font-normal text-slate-900"
+                          />
+                        </label>
+                        <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                          Costo ({moneda})
+                          <input
+                            type="number" min="0" value={it.costo}
+                            onChange={(e) => cambiarItem(idx, { costo: Number(e.target.value) })}
+                            className="mt-0.5 w-full rounded border border-slate-200 bg-slate-50 px-2 py-1.5 font-mono text-xs font-normal text-slate-900"
+                          />
+                        </label>
+                      </div>
+                      {totalItem > 0 && (
+                        <p className="mt-1.5 text-right font-mono text-[10px] text-slate-500">
+                          Subtotal {moneda === 'USD' ? formatUsd(totalItem) : formatCop(totalItem)}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
 
                 <button
                   type="button" onClick={agregarItem}

@@ -53,6 +53,9 @@ export default function ServiciosAdmin({
   const [srvPrecioHabitual, setSrvPrecioHabitual] = useState(''); // vacío = no informado
   const [srvPrecioHabitualMoneda, setSrvPrecioHabitualMoneda] = useState<'COP' | 'USD'>('COP');
   const [srvAplicaIva, setSrvAplicaIva] = useState(false);
+  // Producto o servicio: el catálogo es el mismo (mismos campos), pero saberlo
+  // permite que la pantalla de ventas filtre y hable el idioma del negocio.
+  const [srvTipo, setSrvTipo] = useState<'producto' | 'servicio'>('servicio');
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [confirmDeleteSrvId, setConfirmDeleteSrvId] = useState<string | null>(null);
   const [uploadingCsv, setUploadingCsv] = useState(false);
@@ -82,6 +85,7 @@ export default function ServiciosAdmin({
     setSrvPrecioHabitual(s.precio_habitual != null ? String(s.precio_habitual) : '');
     setSrvPrecioHabitualMoneda(s.precio_habitual_moneda || 'COP');
     setSrvAplicaIva(Boolean(s.aplica_iva));
+    setSrvTipo(s.tipo === 'producto' ? 'producto' : 'servicio');
   };
 
   const handleCancelEdit = () => {
@@ -109,6 +113,7 @@ export default function ServiciosAdmin({
           return {
             ...s,
             nombre: srvNombre.trim(),
+            tipo: srvTipo,
             costo_unitario: Number(srvCostoUnitario),
             margen_objetivo: margenObjetivo,
             precio_habitual: precioHabitual,
@@ -134,6 +139,7 @@ export default function ServiciosAdmin({
       const newSrv: Servicio = {
         id: uniqueId,
         nombre: srvNombre.trim(),
+        tipo: srvTipo,
         costo_unitario: Number(srvCostoUnitario),
         margen_objetivo: margenObjetivo,
         precio_habitual: precioHabitual,
@@ -267,6 +273,22 @@ export default function ServiciosAdmin({
                 required
                 className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none focus:border-blue-300"
               />
+              {/* Producto o servicio: mismos campos, pero al vender se filtra
+                  por esto y el formulario deja de llamar "servicio" a un
+                  producto. */}
+              <div className="mt-2 inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5">
+                {([['servicio', 'Servicio'], ['producto', 'Producto']] as const).map(([valor, etiqueta]) => (
+                  <button
+                    key={valor}
+                    type="button"
+                    onClick={() => setSrvTipo(valor)}
+                    aria-pressed={srvTipo === valor}
+                    className={`rounded px-3 py-1 text-[11px] font-semibold transition ${srvTipo === valor ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                  >
+                    {etiqueta}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div>

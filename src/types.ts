@@ -40,6 +40,9 @@ export interface Cliente {
 export interface Servicio {
   id: string;
   nombre: string;
+  /** Qué es lo que se vende. Sólo cambia cómo se presenta y se filtra: un
+   *  producto y un servicio tienen exactamente los mismos campos. */
+  tipo?: 'producto' | 'servicio';
   costo_unitario: number;
   descripcion?: string;
   /** Costo total estimado para entregar una unidad del servicio (mano de obra + insumos). */
