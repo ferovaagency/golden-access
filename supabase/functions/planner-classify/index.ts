@@ -54,7 +54,11 @@ Deno.serve(async (req) => {
     // El modo commit manda `drafts` ya confirmados y ningún texto: exigir
     // entradas aquí rechazaba el guardado del import con 400 "Sin entradas".
     const hasIncomingDrafts = Array.isArray(body?.drafts) && body.drafts.length > 0;
-    if (!hasIncomingDrafts && entries.length === 0) return json({ ok: false, message: "Sin entradas" }, 400);
+    // Un lote sin líneas útiles (todo espacios/viñetas vacías) no es un error:
+    // se responde vacío para que el import siga con las demás tandas.
+    if (!hasIncomingDrafts && entries.length === 0) {
+      return json({ ok: true, results: [], drafts: [], clients: [] }, 200);
+    }
 
     const key = Deno.env.get("LOVABLE_API_KEY");
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
