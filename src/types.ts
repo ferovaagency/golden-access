@@ -132,6 +132,9 @@ export interface Venta {
   iva?: number;
   /** Retención en la fuente que el cliente te practica. En la moneda de la venta. */
   retencion?: number;
+  /** Agrupa varias líneas en una misma factura (una venta con varios ítems).
+   *  Vacío = venta de una sola línea, como siempre. */
+  numero_factura?: string;
   /** Cuenta (finance_accounts) donde entra el dinero de esta venta. */
   account_id?: string | null;
 }

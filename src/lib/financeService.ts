@@ -195,6 +195,7 @@ export async function loadFinanceData(userId: string): Promise<AppData> {
     trm_conversion: v.trm_conversion == null ? undefined : Number(v.trm_conversion),
     iva: v.iva != null ? Number(v.iva) : 0,
     retencion: v.retencion != null ? Number(v.retencion) : 0,
+    numero_factura: v.numero_factura ?? undefined,
     account_id: v.account_id ?? undefined,
     abonos: abonosRaw
       .filter((a) => a.venta_id === v.id)
@@ -350,6 +351,7 @@ export async function saveVentas(userId: string, list: Venta[]) {
     notas: v.notas || null,
     iva: v.iva ?? 0,
     retencion: v.retencion ?? 0,
+    numero_factura: v.numero_factura || null,
     account_id: v.account_id || null,
     pasarela_pago: v.pasarela_pago || null,
     comision_pasarela_porcentaje: v.comision_pasarela_porcentaje ?? 0,
@@ -363,8 +365,10 @@ export async function saveVentas(userId: string, list: Venta[]) {
   const financeClient = supabase as any;
   if (rows.length > 0) {
     let upsert = await financeClient.from('finance_ventas').upsert(rows.map((row) => ({ ...row, user_id: userId })), { onConflict: 'user_id,id' });
-    if (upsert.error && /pasarela_pago|comision_pasarela|comision_retiro|trm_conversion/i.test(upsert.error.message || '')) {
-      const legacyRows = rows.map(({ pasarela_pago: _gateway, comision_pasarela_porcentaje: _percentage, comision_pasarela_fija: _fixed, comision_retiro: _withdrawal, trm_conversion: _fx, ...row }) => ({ ...row, user_id: userId }));
+    if (upsert.error && /pasarela_pago|comision_pasarela|comision_retiro|trm_conversion|numero_factura/i.test(upsert.error.message || '')) {
+      // Mismo criterio que con las pasarelas: si la base todavía no tiene la
+      // columna, se guarda sin ella antes que perder la venta entera.
+      const legacyRows = rows.map(({ pasarela_pago: _gateway, comision_pasarela_porcentaje: _percentage, comision_pasarela_fija: _fixed, comision_retiro: _withdrawal, trm_conversion: _fx, numero_factura: _invoice, ...row }) => ({ ...row, user_id: userId }));
       upsert = await financeClient.from('finance_ventas').upsert(legacyRows, { onConflict: 'user_id,id' });
     }
     if (upsert.error) throw new Error(`[financeService] saveVentas: ${upsert.error.message}`);

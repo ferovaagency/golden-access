@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Venta, Cliente, Servicio, Config } from '../types';
 import { convertToCop } from '../lib/calculations';
 import { calculatePaymentFees } from '../lib/paymentFees';
+import { repartirAdelanto } from '../lib/invoiceLines';
 import { listPaymentGateways, type PaymentGateway } from '../lib/paymentGatewaysService';
 import { listAccounts, type FinanceAccount } from '../lib/accountsService';
 import { CsvPagoImportado, parsePagosCsv } from '../lib/csvImportExport';
@@ -117,6 +118,41 @@ export default function VentasAdmin({
       setMoneda(realMoneda);
     }
   };
+
+  // --- Factura con varios ítems -------------------------------------------
+  //
+  // Cada ítem es una línea de venta con su propio precio y COSTO, y todas
+  // comparten `numero_factura`. Así una factura de tres productos son tres
+  // líneas que se suman, y la rentabilidad por producto sigue siendo real.
+  interface ItemFactura { servicioId: string; cantidad: number; precio: number; costo: number }
+  const [itemsExtra, setItemsExtra] = useState<ItemFactura[]>([]);
+  const [numeroFacturaManual, setNumeroFacturaManual] = useState('');
+
+  const agregarItem = () => {
+    const primero = servicios[0];
+    setItemsExtra((prev) => [...prev, {
+      servicioId: primero?.id || '',
+      cantidad: 1,
+      precio: primero?.precio_habitual ?? 0,
+      costo: primero?.costo_unitario ?? 0,
+    }]);
+  };
+
+  const cambiarItem = (idx: number, patch: Partial<ItemFactura>) => {
+    setItemsExtra((prev) => prev.map((it, i) => {
+      if (i !== idx) return it;
+      const next = { ...it, ...patch };
+      // Al cambiar de producto se traen su costo y su precio habitual, igual
+      // que hace el formulario principal.
+      if (patch.servicioId !== undefined) {
+        const srv = servicios.find((s) => s.id === patch.servicioId);
+        if (srv) { next.costo = srv.costo_unitario; next.precio = srv.precio_habitual ?? next.precio; }
+      }
+      return next;
+    }));
+  };
+
+  const quitarItem = (idx: number) => setItemsExtra((prev) => prev.filter((_, i) => i !== idx));
 
   const handleServiceChange = (sId: string) => {
     setServicioId(sId);
@@ -312,8 +348,58 @@ export default function VentasAdmin({
         account_id: accountId || null,
       };
 
-      const updated = [newVenta, ...ventas];
+      // Con ítems extra, la venta pasa a ser una FACTURA: varias líneas unidas
+      // por `numero_factura`. El adelanto se reparte entre las líneas en orden
+      // hasta agotarse — si se cargara entero en la primera, cuentas por cobrar
+      // vería una línea pagada y el resto pendientes aunque la factura esté
+      // saldada. Los importes de una sola vez (IVA, retención y comisiones de
+      // la pasarela) se quedan en la primera línea para no contarlos dos veces.
+      const lineasExtra = itemsExtra.filter((it) => it.servicioId && it.cantidad > 0);
+      let ventasNuevas: Venta[] = [newVenta];
+
+      if (lineasExtra.length) {
+        const numeroFactura = numeroFacturaManual.trim() || `F-${Date.now().toString().slice(-6)}`;
+        const totales = [
+          Number(precioVentaUnitario) * Number(cantidad),
+          ...lineasExtra.map((it) => it.precio * it.cantidad),
+        ];
+        const reparto = repartirAdelanto(totales, Number(adelanto));
+        const conAbonos = (i: number) => ({
+          adelanto: reparto[i].adelanto,
+          estado_pago: reparto[i].estado_pago as Venta['estado_pago'],
+          abonos: reparto[i].adelanto > 0 ? [{ fecha, monto: reparto[i].adelanto, notas: 'Adelanto inicial' }] : [],
+        });
+
+        ventasNuevas = [{ ...newVenta, ...conAbonos(0), numero_factura: numeroFactura }];
+
+        lineasExtra.forEach((it, idx) => {
+          const srv = servicios.find((s) => s.id === it.servicioId);
+          const pago = conAbonos(idx + 1);
+          ventasNuevas.push({
+            ...newVenta,
+            id: `v_${Date.now().toString().slice(-6)}_${idx + 1}`,
+            numero_factura: numeroFactura,
+            servicio_id: it.servicioId,
+            servicio_nombre: srv?.nombre || 'Ítem',
+            cantidad: it.cantidad,
+            precio_venta_unitario: it.precio,
+            costo_unitario: it.costo,
+            ...pago,
+            // Sólo en la primera línea: si no, se cobrarían tantas veces como ítems.
+            iva: 0,
+            retencion: 0,
+            comision_pasarela_porcentaje: 0,
+            comision_pasarela_fija: 0,
+            comision_retiro: 0,
+            notas: '',
+          });
+        });
+      }
+
+      const updated = [...ventasNuevas, ...ventas];
       await onSaveVentas(updated);
+      setItemsExtra([]);
+      setNumeroFacturaManual('');
 
       // Reset simple form bits
       setCantidad(1);
@@ -602,6 +688,77 @@ export default function VentasAdmin({
                 />
               </div>
             </div>
+
+            {/* Más ítems en la misma factura. Sólo al crear: editando se toca
+                una línea a la vez, que es lo que la persona espera. */}
+            {!editingVentaId && (
+              <div className="rounded border border-slate-200 bg-slate-50/60 p-3">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    Más ítems en esta factura
+                  </span>
+                  {itemsExtra.length > 0 && (
+                    <input
+                      value={numeroFacturaManual}
+                      onChange={(e) => setNumeroFacturaManual(e.target.value)}
+                      placeholder="N.º de factura (opcional)"
+                      className="ml-auto w-40 rounded border border-slate-200 bg-white px-2 py-1 font-mono text-[11px]"
+                    />
+                  )}
+                </div>
+
+                {itemsExtra.map((it, idx) => (
+                  <div key={idx} className="mb-2 grid grid-cols-12 gap-2">
+                    <select
+                      value={it.servicioId}
+                      onChange={(e) => cambiarItem(idx, { servicioId: e.target.value })}
+                      aria-label={`Producto del ítem ${idx + 2}`}
+                      className="col-span-5 rounded border border-slate-200 bg-white p-2 text-xs"
+                    >
+                      {servicios.map((s, i) => <option key={`${s.id}-${i}`} value={s.id}>{s.nombre}</option>)}
+                    </select>
+                    <input
+                      type="number" min="1" value={it.cantidad}
+                      onChange={(e) => cambiarItem(idx, { cantidad: Number(e.target.value) })}
+                      aria-label={`Cantidad del ítem ${idx + 2}`}
+                      className="col-span-2 rounded border border-slate-200 bg-white p-2 font-mono text-xs"
+                    />
+                    <input
+                      type="number" min="0" value={it.precio}
+                      onChange={(e) => cambiarItem(idx, { precio: Number(e.target.value) })}
+                      aria-label={`Precio del ítem ${idx + 2}`} placeholder="Precio"
+                      className="col-span-2 rounded border border-slate-200 bg-white p-2 font-mono text-xs"
+                    />
+                    <input
+                      type="number" min="0" value={it.costo}
+                      onChange={(e) => cambiarItem(idx, { costo: Number(e.target.value) })}
+                      aria-label={`Costo del ítem ${idx + 2}`} placeholder="Costo"
+                      className="col-span-2 rounded border border-slate-200 bg-white p-2 font-mono text-xs"
+                    />
+                    <button
+                      type="button" onClick={() => quitarItem(idx)}
+                      aria-label={`Quitar ítem ${idx + 2}`}
+                      className="col-span-1 rounded border border-slate-200 bg-white text-xs text-slate-500 hover:border-red-200 hover:text-red-600"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+
+                <button
+                  type="button" onClick={agregarItem}
+                  disabled={servicios.length === 0}
+                  className="rounded border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 hover:border-slate-300 disabled:opacity-50"
+                >
+                  + Añadir ítem
+                </button>
+                <p className="mt-2 text-[10px] leading-relaxed text-slate-500">
+                  {itemsExtra.length === 0
+                    ? 'Deja esto vacío para una venta de una sola línea, como siempre.'
+                    : 'Cada ítem guarda su precio y su costo. El adelanto se reparte entre las líneas en orden, así cuentas por cobrar cuadra.'}
+                </p>
+              </div>
+            )}
 
             {/* Costo unitario (auto-filled) & Moneda */}
             <div className="grid grid-cols-2 gap-3">
@@ -965,6 +1122,18 @@ export default function VentasAdmin({
                              <span>{v.servicio_nombre}</span>
                             {v.cantidad > 1 && (
                               <span className="text-[10px] font-mono text-slate-400 block mt-0.5">({v.cantidad} x {v.moneda === 'USD' ? formatUsd(v.precio_venta_unitario) : formatCop(v.precio_venta_unitario)})</span>
+                            )}
+                            {/* Qué factura la contiene y cuántas líneas tiene:
+                                sin esto, tres ítems de una misma venta parecen
+                                tres ventas sueltas. */}
+                            {v.numero_factura && (
+                              <span className="mt-1 inline-flex items-center gap-1 rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[9px] font-mono uppercase text-slate-500">
+                                {v.numero_factura}
+                                {(() => {
+                                  const lineas = ventas.filter((o) => o.numero_factura === v.numero_factura).length;
+                                  return lineas > 1 ? ` · ${lineas} ítems` : '';
+                                })()}
+                              </span>
                             )}
                           </td>
                           <td className="px-5 py-4 font-mono font-semibold">
