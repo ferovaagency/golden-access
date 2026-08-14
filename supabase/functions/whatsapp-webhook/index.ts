@@ -1,5 +1,6 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { logAiUsage, usageClient } from "../_shared/ai-usage.ts";
 
 // Recibe eventos messages.upsert de Evolution API para la instancia de WhatsApp
 // de Ferova Agency. Registra todo en el CRM (crm_oportunidades/crm_interacciones)
@@ -65,6 +66,10 @@ async function embed(text: string): Promise<number[] | null> {
       return null;
     }
     const data = await res.json();
+    // userId null: es un webhook, el mensaje lo escribe un desconocido desde
+    // WhatsApp. El costo existe igual y hay que verlo.
+    logAiUsage(usageClient(), { userId: null, funcion: "whatsapp-webhook:embed", modelo: EMBED_MODEL, usage: data?.usage })
+      .catch((e) => console.error("[ai-usage] whatsapp-webhook embed", e));
     const vec = data?.data?.[0]?.embedding ?? null;
     if (!Array.isArray(vec) || vec.length !== 768) {
       console.warn("[whatsapp-webhook] unexpected embedding shape/length:", vec?.length);
@@ -89,6 +94,8 @@ async function generateReply(systemPrompt: string, history: { role: string; cont
   });
   if (!res.ok) throw new Error(`Lovable AI Gateway error ${res.status}: ${await res.text()}`);
   const data = await res.json();
+  logAiUsage(usageClient(), { userId: null, funcion: "whatsapp-webhook:reply", modelo: CHAT_MODEL, usage: data?.usage })
+    .catch((e) => console.error("[ai-usage] whatsapp-webhook reply", e));
   return data?.choices?.[0]?.message?.content || "Gracias por tu mensaje, en breve te respondemos.";
 }
 
@@ -121,6 +128,8 @@ async function updateOpportunityMemory(admin: any, oportunidad: any) {
     });
     if (!res.ok) return;
     const data = await res.json();
+    logAiUsage(admin, { userId: null, funcion: "whatsapp-webhook:memoria", modelo: CHAT_MODEL, usage: data?.usage })
+      .catch((e: unknown) => console.error("[ai-usage] whatsapp-webhook memoria", e));
     const memory = data?.choices?.[0]?.message?.content?.trim();
     if (!memory) return;
     await admin.from("crm_oportunidades").update({ memoria_resumen: memory, memoria_updated_at: new Date().toISOString() }).eq("id", oportunidad.id);

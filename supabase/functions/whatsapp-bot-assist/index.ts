@@ -6,6 +6,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { generateText } from "npm:ai";
 import { createLovableAiGatewayProvider } from "../_shared/ai-gateway.ts";
+import { logAiUsage, usageClient } from "../_shared/ai-usage.ts";
 
 const PROMPT_SYSTEM = `Eres un experto en diseñar prompts para bots de ventas de WhatsApp.
 Recibes una idea suelta (o un prompt existente a mejorar) de la dueña de una agencia y devuelves
@@ -41,11 +42,13 @@ Deno.serve(async (req) => {
     if (!key) return json({ ok: false, message: "La IA todavía no está configurada en este despliegue." }, 500);
     const gateway = createLovableAiGatewayProvider(key);
 
-    const { text } = await generateText({
+    const { text, usage } = await generateText({
       model: gateway("google/gemini-2.5-flash"),
       system: mode === "prompt" ? PROMPT_SYSTEM : KNOWLEDGE_SYSTEM,
       prompt: draft,
     });
+    logAiUsage(usageClient(), { userId: userData.user.id, funcion: "whatsapp-bot-assist", modelo: "google/gemini-2.5-flash", usage })
+      .catch((e) => console.error("[ai-usage] whatsapp-bot-assist", e));
 
     return json({ ok: true, result: text.trim() });
   } catch (err) {

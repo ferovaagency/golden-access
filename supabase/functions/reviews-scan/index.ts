@@ -7,6 +7,7 @@
 // Body: { access_token: string, days?: number }
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { logAiUsage, sumUsage, usageClient } from '../_shared/ai-usage.ts';
 
 interface Body {
   access_token?: string;
@@ -154,6 +155,7 @@ Deno.serve(async (req) => {
 
     const inserted: any[] = [];
     let skipped = 0;
+    const usos: any[] = [];
 
     for (const m of pending) {
       const msgRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=full`, {
@@ -202,6 +204,7 @@ Si el correo NO es una notificación de reseña recibida (por ejemplo digest, ti
         continue;
       }
       const aiJson = await aiRes.json();
+      usos.push(aiJson?.usage);
       const content = aiJson?.choices?.[0]?.message?.content;
       let parsed: any = {};
       try { parsed = JSON.parse(content); } catch { skipped++; continue; }
@@ -225,6 +228,11 @@ Si el correo NO es una notificación de reseña recibida (por ejemplo digest, ti
       if (insErr) { console.error('[reviews-scan] insert error', insErr); skipped++; continue; }
       inserted.push(ins);
     }
+
+    // Una fila por escaneo, no una por correo: el escaneo es la unidad de
+    // trabajo, y 30 filas idénticas distorsionarían el percentil por invocación.
+    logAiUsage(usageClient(), { userId: user.id, funcion: 'reviews-scan', modelo: 'google/gemini-2.5-flash', usage: sumUsage(usos) })
+      .catch((e) => console.error('[ai-usage] reviews-scan', e));
 
     if ((sources || []).length) {
       await supabase

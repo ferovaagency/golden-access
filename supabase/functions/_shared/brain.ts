@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
+import { logAiUsage } from "./ai-usage.ts";
 
 // Segundo cerebro de Ferova: helpers de memoria semántica.
 // Embeddings vía Lovable AI Gateway (mismo modelo que el bot de WhatsApp).
@@ -6,8 +7,16 @@ import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 export const BRAIN_EMBED_MODEL = "google/gemini-embedding-001";
 const GATEWAY_EMBEDDINGS_URL = "https://ai.gateway.lovable.dev/v1/embeddings";
 
-/** Genera el embedding (768 dims) de un texto. Devuelve null si falla o falta la key. */
-export async function embedText(text: string, apiKey: string): Promise<number[] | null> {
+/** Genera el embedding (768 dims) de un texto. Devuelve null si falla o falta la key.
+ *
+ *  `atribucion` es opcional a propósito: los embeddings salen baratos pero no
+ *  son gratis, y quien tenga a mano el usuario y un cliente admin puede dejar
+ *  registro del costo sin obligar a todos los llamadores a hacerlo. */
+export async function embedText(
+  text: string,
+  apiKey: string,
+  atribucion?: { admin: SupabaseClient<any, "public", "public", any, any>; userId: string | null; funcion: string },
+): Promise<number[] | null> {
   const clean = (text || "").trim();
   if (!apiKey || !clean) return null;
   try {
@@ -25,6 +34,10 @@ export async function embedText(text: string, apiKey: string): Promise<number[] 
       return null;
     }
     const data = await res.json();
+    if (atribucion) {
+      logAiUsage(atribucion.admin, { userId: atribucion.userId, funcion: atribucion.funcion, modelo: BRAIN_EMBED_MODEL, usage: data?.usage })
+        .catch((e) => console.error("[ai-usage] embedText", e));
+    }
     const emb = data?.data?.[0]?.embedding;
     if (!Array.isArray(emb) || emb.length !== 768) {
       console.error("[brain] embedding con dimensiones inesperadas:", Array.isArray(emb) ? emb.length : "forma desconocida");
@@ -76,7 +89,7 @@ export async function embedAndStoreChunks(
   knowledgeId: string,
   content: string,
   apiKey: string,
-  opts: { replace?: boolean } = {},
+  opts: { replace?: boolean; userId?: string | null } = {},
 ): Promise<void> {
   if (opts.replace) {
     await admin.from("ferova_knowledge_embeddings").delete().eq("knowledge_id", knowledgeId);
@@ -84,7 +97,7 @@ export async function embedAndStoreChunks(
   const chunks = chunkText(content);
   const rows: Array<{ knowledge_id: string; content_chunk: string; embedding: number[] }> = [];
   for (const chunk of chunks) {
-    const emb = await embedText(chunk, apiKey);
+    const emb = await embedText(chunk, apiKey, { admin, userId: opts.userId ?? null, funcion: "brain:indexar" });
     if (emb) rows.push({ knowledge_id: knowledgeId, content_chunk: chunk, embedding: emb });
   }
   if (rows.length) {
@@ -186,6 +199,6 @@ export async function rememberKnowledge(
     console.error("[brain] remember insert error", error);
     return null;
   }
-  await embedAndStoreChunks(admin, data.id as string, args.content, apiKey);
+  await embedAndStoreChunks(admin, data.id as string, args.content, apiKey, { userId: args.userId });
   return data.id as string;
 }

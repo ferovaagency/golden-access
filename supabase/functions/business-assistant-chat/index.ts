@@ -187,7 +187,7 @@ Deno.serve(async (req) => {
     let memoriaCerebro: Array<{ titulo: string; contenido: string; alcance: string; fuente: string | null }> = [];
     const question = last?.role === "user" ? textFromParts(last) : "";
     if (question) {
-      const questionEmbedding = await embedText(question, apiKey);
+      const questionEmbedding = await embedText(question, apiKey, { admin, userId, funcion: "business-assistant-chat:embed" });
       // match_user es la PERSONA (sus notas privadas) y match_org la EMPRESA
       // activa (lo de la empresa y lo que viaje por el árbol): son dos ejes
       // distintos y mezclarlos haría desaparecer las notas privadas al cambiar

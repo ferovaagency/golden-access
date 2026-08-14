@@ -6,6 +6,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { z } from 'npm:zod';
 import { notifyHotLeadWhatsapp } from '../_shared/notify-team.ts';
+import { logAiUsage, usageClient } from '../_shared/ai-usage.ts';
 
 // Umbral "Hot" del mismo marco Hot/Warm/Cold que ya usa el badge del Pipeline
 // (AdminCRM.tsx) -- se repite aca como constante en vez de importarla porque
@@ -141,6 +142,8 @@ ${body.texto.slice(0, 6000)}
         });
         if (aiRes.ok) {
           const aiJson = await aiRes.json();
+          logAiUsage(usageClient(), { userId: user.id, funcion: 'linkedin-analyze', modelo: 'google/gemini-2.5-flash', usage: aiJson?.usage })
+            .catch((e) => console.error('[ai-usage] linkedin-analyze', e));
           const content = aiJson?.choices?.[0]?.message?.content;
           if (content) parsed = { ...JSON.parse(content), analysis_mode: 'ai' };
         } else {

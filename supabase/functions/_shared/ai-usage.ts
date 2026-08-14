@@ -4,7 +4,41 @@
 // (percentil 95, no promedio) antes de fijar precio. Guardamos tokens crudos y
 // el modelo; el costo en dinero se deriva después con las tarifas de cada modelo.
 
-import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
+
+/**
+ * Cliente para registrar el uso. `ai_usage_log` tiene RLS y ninguna política:
+ * sólo service_role escribe ahí. Varias funciones sólo tienen el cliente del
+ * usuario (clave anon), y con ese el registro fallaría en silencio — de ahí
+ * este atajo.
+ */
+export function usageClient(): SupabaseClient {
+  return createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+}
+
+/**
+ * Suma los `usage` de varias llamadas al modelo para dejar UNA fila por
+ * invocación. `planner-classify` puede hacer 20 llamadas seguidas: 20 filas
+ * dirían lo mismo y ensuciarían el percentil por invocación.
+ */
+export function sumUsage(usages: Array<AnyUsage | null | undefined>): AnyUsage | null {
+  let input = 0, output = 0, cached = 0, total = 0, vistas = 0;
+  for (const u of usages) {
+    if (!u) continue;
+    vistas++;
+    input  += pickNumber(u.inputTokens, u.promptTokens, u.prompt_tokens) ?? 0;
+    output += pickNumber(u.outputTokens, u.completionTokens, u.completion_tokens) ?? 0;
+    cached += pickNumber(u.cachedInputTokens, u.cached_input_tokens, u.prompt_tokens_details?.cached_tokens) ?? 0;
+    total  += pickNumber(u.totalTokens, u.total_tokens) ?? 0;
+  }
+  if (!vistas) return null;
+  return {
+    inputTokens: input,
+    outputTokens: output,
+    cachedInputTokens: cached,
+    totalTokens: total || input + output,
+  };
+}
 
 // La forma de `usage` cambió entre versiones del AI SDK (promptTokens vs
 // inputTokens, etc.). Leemos defensivamente para no depender de una versión.

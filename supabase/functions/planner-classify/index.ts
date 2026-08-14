@@ -8,6 +8,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { generateText, Output } from "npm:ai";
 import { z } from "npm:zod";
 import { createLovableAiGatewayProvider } from "../_shared/ai-gateway.ts";
+import { logAiUsage, sumUsage } from "../_shared/ai-usage.ts";
 
 const ClassifySchema = z.object({
   detected_type: z.enum(["task","reminder","project","idea","note","purchase","event","client","finance","unknown"]),
@@ -137,6 +138,7 @@ Deno.serve(async (req) => {
 
     const incomingDrafts: Draft[] | null = hasIncomingDrafts ? body.drafts as Draft[] : null;
     const drafts: Draft[] = [];
+    const usos: any[] = [];
 
     if (incomingDrafts) {
       // Confirmación del usuario: se respeta lo que él corrigió y sólo se
@@ -157,13 +159,14 @@ Deno.serve(async (req) => {
         let extracted: z.infer<typeof ClassifySchema> | null = null;
         try {
           if (!gateway) throw new Error("AI gateway is not configured");
-          const { output } = await generateText({
+          const { output, usage } = await generateText({
             model: gateway("google/gemini-2.5-flash"),
             output: Output.object({ schema: ClassifySchema }),
             system: `You are an executive assistant that classifies brain-dump lines from a business owner. Respond in the same language as the input. Estimate a realistic duration (5-240 min). Set priority=urgent only for explicit deadlines <48h or 'urgent/asap'. Detect deadline as ISO if the text mentions a date/time. Extract client/project names if mentioned. Category deep_work=focus/writing/design, admin=paperwork/taxes/emails, calls=phone/whatsapp/meet, creative=ideas/content, learning=read/study, personal=life. Confidence 0-1. Score financial_impact, client_impact, risk_score and execution_ease from 1 (low) to 5 (high) only from explicit evidence in the text; use 3 when evidence is missing. These are editable suggestions, not facts.\n${clientsContext}\n${durationContext}\n${clientDurationContext}`,
             prompt: `Line: """${line}"""\nToday: ${new Date().toISOString()}`,
           });
           extracted = output as any;
+          usos.push(usage);
         } catch (e) {
           console.error("[planner-classify] model error", e);
         }
@@ -209,6 +212,11 @@ Deno.serve(async (req) => {
         });
       }
     }
+
+    // Una fila por invocación, con los tokens de las hasta 20 líneas sumados:
+    // 20 filas idénticas dirían lo mismo y romperían el percentil por llamada.
+    logAiUsage(admin, { userId, funcion: "planner-classify", modelo: "google/gemini-2.5-flash", usage: sumUsage(usos) })
+      .catch((e) => console.error("[ai-usage] planner-classify", e));
 
     // Modo preview: se devuelve la interpretación sin escribir absolutamente
     // nada, junto con los clientes reales para que la UI ofrezca el selector.

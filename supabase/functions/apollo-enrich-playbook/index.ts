@@ -19,6 +19,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { z } from 'npm:zod';
 import { fetchWithRetry } from '../_shared/fetch-retry.ts';
+import { logAiUsage, usageClient } from '../_shared/ai-usage.ts';
 
 // Nota: linkedin_url/fuente_url/email se dejan como string libre (no .url()/.email()
 // estrictos) a propósito -- el formulario manual de "Enrich" en el pipeline permite
@@ -320,6 +321,8 @@ Servicios de Ferova a mencionar solo si son relevantes al dolor detectado: SEO, 
       });
     }
     const aiJson = await aiRes.json();
+    logAiUsage(usageClient(), { userId: user.id, funcion: 'apollo-enrich-playbook', modelo: 'google/gemini-2.5-flash', usage: aiJson?.usage })
+      .catch((e) => console.error('[ai-usage] apollo-enrich-playbook', e));
     const content = aiJson?.choices?.[0]?.message?.content;
     playbook = {};
     try { playbook = JSON.parse(content); } catch {

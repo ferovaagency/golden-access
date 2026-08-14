@@ -1,5 +1,6 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { logAiUsage } from "../_shared/ai-usage.ts";
 
 // Agrega un fragmento de conocimiento (con su embedding, via el AI Gateway de
 // Lovable) para entrenar al bot de WhatsApp. Solo miembros del equipo Ferova.
@@ -45,6 +46,8 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({ ok: false, message: `Error generando embedding (${embedRes.status}): ${await embedRes.text()}` }), { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     const embedData = await embedRes.json();
+    logAiUsage(admin, { userId: userData.user.id, funcion: "bot-knowledge-upsert", modelo: EMBED_MODEL, usage: embedData?.usage })
+      .catch((e) => console.error("[ai-usage] bot-knowledge-upsert", e));
     const embedding = embedData?.data?.[0]?.embedding;
     if (!Array.isArray(embedding) || embedding.length !== 768) {
       return new Response(
