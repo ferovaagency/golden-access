@@ -22,12 +22,23 @@ export type AuthUser = User;
 // se lee desde la base de datos; hacerlo convertiría un XSS en acceso a Drive,
 // Gmail, Calendar y Sheets. La persistencia segura se hará desde Edge Functions.
 // ============================================================
-export const GOOGLE_SCOPES = [
+// Permisos base: los que necesita el trabajo normal (respaldo en Sheets,
+// archivos propios en Drive, agendar citas en Calendar).
+export const GOOGLE_SCOPES_BASE = [
   'https://www.googleapis.com/auth/spreadsheets',
   'https://www.googleapis.com/auth/drive.file',
-  'https://www.googleapis.com/auth/gmail.readonly',
   'https://www.googleapis.com/auth/calendar.events',
 ];
+
+// Gmail va APARTE porque Google lo clasifica como permiso RESTRINGIDO: pedirlo
+// obliga a que la aplicación pase su verificación, y si no la ha pasado, Google
+// bloquea la pantalla de consentimiento ENTERA. Pedirlo junto con los demás
+// hacía que no se pudiera conectar nada — ni Sheets ni Calendar— aunque esas
+// tres sí estén permitidas. Se pide sólo desde el escaneo de reseñas, que es lo
+// único que lee correo.
+export const GOOGLE_SCOPE_GMAIL = 'https://www.googleapis.com/auth/gmail.readonly';
+
+export const GOOGLE_SCOPES = [...GOOGLE_SCOPES_BASE, GOOGLE_SCOPE_GMAIL];
 
 // Lovable/Auth should return directly to /app. This small marker is a
 // defensive fallback for an OAuth provider configuration that sends the
@@ -148,18 +159,44 @@ export function consumeGoogleLinkReturnTab(): string | null {
 // actual (no solo el origin) para que, tras el ida y vuelta por Google, el
 // usuario vuelva a la pantalla desde la que pidió reconectar (ej. /admin) en
 // vez de aterrizar siempre en el dashboard del cliente.
-export const linkGoogleIdentity = async () => {
+export const linkGoogleIdentity = async (scopes: string[] = GOOGLE_SCOPES_BASE) => {
   const result = await lovable.auth.signInWithOAuth('google', {
     redirect_uri: window.location.origin + window.location.pathname,
     extraParams: {
       access_type: 'offline',
       prompt: 'consent',
-      scope: `openid email profile ${GOOGLE_SCOPES.join(' ')}`,
+      scope: `openid email profile ${scopes.join(' ')}`,
     },
   });
   if (result.error) throw result.error;
   return result;
 };
+
+/**
+ * El error con el que Google devuelve al usuario, si lo hubo.
+ *
+ * OAuth informa de los fallos en la propia URL de vuelta (`?error=` o
+ * `#error=`), y la aplicación los ignoraba: si Google rechazaba la
+ * autorización, la persona volvía a la pantalla sin token, sin mensaje y sin
+ * saber por qué — literalmente "no pasa nada". Se lee UNA vez y se limpia la
+ * URL para que no reaparezca al navegar.
+ */
+export function consumeOAuthError(): { code: string; description: string } | null {
+  try {
+    const query = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const code = query.get('error') || hash.get('error');
+    if (!code) return null;
+    const description = query.get('error_description') || hash.get('error_description') || '';
+    const limpia = new URL(window.location.href);
+    ['error', 'error_description', 'error_code'].forEach((k) => limpia.searchParams.delete(k));
+    limpia.hash = '';
+    window.history.replaceState({}, '', limpia.toString());
+    return { code, description: decodeURIComponent(description.replace(/\+/g, ' ')) };
+  } catch {
+    return null;
+  }
+}
 
 // ============================================================
 // Email / Password

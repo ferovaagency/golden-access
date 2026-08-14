@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
-import { linkGoogleIdentity, getAccessToken, saveGoogleLinkReturnTab, consumeGoogleLinkReturnTab } from './lib/supabase';
+import { linkGoogleIdentity, getAccessToken, saveGoogleLinkReturnTab, consumeGoogleLinkReturnTab, consumeOAuthError } from './lib/supabase';
 import { backupAppDataToSheets, fetchSpreadsheetData, findSpreadsheet, importSheetByUrl, syncExpenseDocumentsToSheets } from './lib/sheetsService';
 import * as financeService from './lib/financeService';
 import { useAuthAndAccess } from './hooks/useAuthAndAccess';
@@ -302,6 +302,17 @@ function AppInner() {
       setConnectingGoogle(false);
     }
   };
+
+  // Si Google rechazó la autorización, vuelve con el motivo en la URL. Antes se
+  // ignoraba: la persona aterrizaba sin token, sin mensaje y sin forma de saber
+  // qué falló. Ahora se muestra tal cual lo dice Google, que es lo único que
+  // permite arreglarlo (permiso restringido, redirect no autorizado, etc.).
+  useEffect(() => {
+    const fallo = consumeOAuthError();
+    if (!fallo) return;
+    setConnectingGoogle(false);
+    toastErr(`Google no autorizó la conexión (${fallo.code}). ${fallo.description || 'Sin detalle. Si dice que la app no está verificada, es la verificación de Google, no la aplicación.'}`);
+  }, []);
 
   // Optional manual backup to the user's own Google Sheet
   const handleBackupToSheets = async () => {
