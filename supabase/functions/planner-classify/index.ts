@@ -9,6 +9,7 @@ import { generateText, Output } from "npm:ai";
 import { z } from "npm:zod";
 import { createLovableAiGatewayProvider } from "../_shared/ai-gateway.ts";
 import { logAiUsage, sumUsage } from "../_shared/ai-usage.ts";
+import { financialImpactForClient, loadClientRevenueScores } from "../_shared/client-revenue.ts";
 
 const ClassifySchema = z.object({
   detected_type: z.enum(["task","reminder","project","idea","note","purchase","event","client","finance","unknown"]),
@@ -74,9 +75,11 @@ Deno.serve(async (req) => {
     // - Duración histórica real por categoría, para anclar la estimación de
     //   tiempo a lo que de verdad se demora esta persona, no a un promedio
     //   genérico.
-    const [{ data: clientRows }, { data: doneTasks }] = await Promise.all([
+    const [{ data: clientRows }, { data: doneTasks }, revenueScores] = await Promise.all([
       admin.from("finance_clientes").select("id,nombre").eq("user_id", userId),
       admin.from("planner_tasks").select("category,client_ref,actual_minutes").eq("user_id", userId).eq("status", "done").not("actual_minutes", "is", null).limit(300),
+      // Pareto real: impacto financiero por cliente según ventas de los últimos 90 días.
+      loadClientRevenueScores(admin, userId),
     ]);
     const clients = (clientRows || []) as { id: string; nombre: string }[];
     const avgByCategory: Record<string, number> = {};
@@ -146,8 +149,13 @@ Deno.serve(async (req) => {
       // El tope aquí es el mismo del import (200): no hay llamadas a IA en
       // este camino, así que truncar a 20 sólo perdía tareas ya revisadas.
       for (const d of incomingDrafts.slice(0, MAX_COMMIT_DRAFTS)) {
+        // Si la persona cambió el cliente en la revisión (o vino del import de
+        // Notion con el 3 neutro), el impacto financiero sale de las ventas.
+        const revenueImpact = financialImpactForClient(revenueScores, d.client_ref || null);
+        const financialImpact = revenueImpact !== null && (Number(d.financial_impact) || 3) === 3 ? revenueImpact : (Number(d.financial_impact) || 3);
         drafts.push({
           ...d,
+          financial_impact: financialImpact,
           title: String(d.title || d.line || "").slice(0, 300),
           detected_duration_min: Math.min(600, Math.max(5, Number(d.detected_duration_min) || 30)),
           client_ref: d.client_ref || null,
@@ -214,6 +222,11 @@ Deno.serve(async (req) => {
           confidence: 0.3,
         };
         const c = extracted ?? fallback;
+        const clientRef = resolveClientRef(c.detected_client);
+        // Dinero real manda sobre la adivinanza del texto. La IA sólo conserva
+        // su 5 cuando el texto lo dice explícitamente (cobrar, cerrar, cotizar).
+        const revenueImpact = financialImpactForClient(revenueScores, clientRef);
+        const financialImpact = revenueImpact === null ? c.financial_impact : Math.max(revenueImpact, c.financial_impact >= 5 ? 5 : 1);
         drafts.push({
           line,
           title: c.title || line,
@@ -222,14 +235,14 @@ Deno.serve(async (req) => {
           detected_energy: c.detected_energy,
           detected_category: c.detected_category,
           detected_duration_min: c.detected_duration_min,
-          financial_impact: c.financial_impact,
+          financial_impact: financialImpact,
           client_impact: c.client_impact,
           risk_score: c.risk_score,
           execution_ease: c.execution_ease,
           detected_deadline: c.detected_deadline,
           detected_client: c.detected_client,
           detected_project: c.detected_project,
-          client_ref: resolveClientRef(c.detected_client),
+          client_ref: clientRef,
           // Una fecha detectada es una intención de agenda, no sólo una fecha
           // límite: así “el próximo viernes” queda programado de inmediato.
           scheduled_for: c.detected_deadline ? c.detected_deadline.slice(0, 10) : null,

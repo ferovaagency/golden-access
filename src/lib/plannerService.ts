@@ -7,7 +7,7 @@ import { invokeAi } from './ai/aiClient';
 import { logger } from './logger';
 import { logSuggestion } from './auditLogService';
 import { getActiveAccountId } from './activeAccount';
-import { plannerDateKey, plannerTaskAvailableDate } from './plannerScheduling';
+import { comparePlannerTasks, plannerDateKey, plannerPriorityScore, plannerTaskAvailableDate } from './plannerScheduling';
 
 const log = logger.child('planner');
 
@@ -101,6 +101,8 @@ export interface PlannerTask {
   responsable_user_id: string | null;
   /** Quién la creó. Lo llena la base en el INSERT. */
   created_by: string | null;
+  /** Fila espejo en la base `Pendientes` de Notion, si ya se publicó. */
+  notion_page_id: string | null;
 }
 
 export interface PlannerClient { id: string; nombre: string; }
@@ -431,6 +433,7 @@ export const plannerService = {
       return anyDb().from('planner_blocks').update({ task_ids: remainingTaskIds }).eq('id', block.id);
     }));
 
+    void this.pushToNotion([id]);
     return result;
   },
   async listClients(): Promise<PlannerClient[]> {
@@ -452,6 +455,7 @@ export const plannerService = {
   async startTask(id: string) {
     const { error } = await anyDb().from('planner_tasks').update({ status: 'in_progress', started_at: new Date().toISOString() }).eq('id', id);
     if (error) throw error;
+    void this.pushToNotion([id]);
   },
   /** Detiene el cronómetro guardando lo corrido. Reanudar es `startTask`. */
   async pauseTask(id: string) {
@@ -495,19 +499,54 @@ export const plannerService = {
     if (status === 'in_progress') patch.started_at = new Date().toISOString();
     const { error } = await anyDb().from('planner_tasks').update(patch).eq('id', id);
     if (error) throw error;
+    void this.pushToNotion([id]);
   },
   async updateTask(id: string, input: UpdatePlannerTaskInput): Promise<{ synced: boolean; message: string }> {
     const { data, error } = await supabase.functions.invoke('planner-save-task', { body: { id, ...input } });
     if (error) throw error;
     if (!data?.ok) throw new Error(data?.message || 'No fue posible guardar la tarea.');
+    void this.pushToNotion([id]);
     return data.calendar || { synced: false, message: 'Tarea guardada.' };
   },
   async postponeTask(id: string) {
     const { data } = await anyDb().from('planner_tasks').select('postponed_count').eq('id', id).maybeSingle();
     const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
     await anyDb().from('planner_tasks').update({ status: 'postponed', scheduled_for: tomorrow.toISOString().slice(0, 10), postponed_count: (data?.postponed_count ?? 0) + 1 }).eq('id', id);
+    void this.pushToNotion([id]);
   },
-  async deleteTask(id: string) { await anyDb().from('planner_tasks').delete().eq('id', id); },
+  async deleteTask(id: string) {
+    // La fila en Notion se archiva antes de borrar aquí: después de borrar ya
+    // no queda de dónde leer el `notion_page_id`.
+    const { data } = await anyDb().from('planner_tasks').select('notion_page_id').eq('id', id).maybeSingle();
+    if (data?.notion_page_id) await this.pushToNotion([], 'archive', [data.notion_page_id]);
+    await anyDb().from('planner_tasks').delete().eq('id', id);
+  },
+  /**
+   * Espejo en Notion (base `Pendientes`). Ferova One es la fuente de verdad:
+   * aquí se captura, se prioriza y se agenda; Notion recibe nombre, proyecto,
+   * fecha de entrega, score y estado. Nunca bloquea la operación local: si la
+   * integración no está configurada o Notion falla, se registra y se sigue.
+   */
+  async pushToNotion(taskIds: string[], action: 'upsert' | 'archive' = 'upsert', notionPageIds: string[] = []): Promise<void> {
+    const ids = Array.from(new Set(taskIds.filter(Boolean)));
+    if (!ids.length && !notionPageIds.length) return;
+    try {
+      const scores: Record<string, number> = {};
+      if (action === 'upsert' && ids.length) {
+        const timeZone = await this.getTimeZone();
+        const today = zonedDate(new Date(), timeZone);
+        const { data } = await anyDb().from('planner_tasks')
+          .select('id,deadline,financial_impact,client_impact,risk_score,execution_ease,postponed_count')
+          .in('id', ids);
+        for (const task of (data || []) as PlannerTask[]) scores[task.id] = plannerPriorityScore(task, today);
+      }
+      const { data, error } = await supabase.functions.invoke('notion-push-task', { body: { task_ids: ids, action, scores, notion_page_ids: notionPageIds } });
+      if (error) log.error(error);
+      else if (data && data.ok === false && !data.skipped) log.error(new Error(data.message || 'Notion no respondió.'));
+    } catch (error) {
+      log.error(error as Error);
+    }
+  },
   /** Guarda los detalles/contexto de la tarea (para que la IA tenga más información). */
   async updateTaskDescription(id: string, description: string | null) {
     await anyDb().from('planner_tasks').update({ description: description || null }).eq('id', id);
@@ -571,7 +610,9 @@ export const plannerService = {
       })));
     }
 
-    return overdue.map((t: any) => t.id as string);
+    const overdueIdList = overdue.map((t: any) => t.id as string);
+    void this.pushToNotion(overdueIdList);
+    return overdueIdList;
   },
   async deleteInboxEntry(id: string) { await anyDb().from('planner_inbox').delete().eq('id', id); },
 
@@ -623,11 +664,13 @@ export const plannerService = {
     const maxPlanningDays = 90;
     let rangeEnd = targetDate;
     for (let index = 0; index < maxPlanningDays; index++) rangeEnd = nextDate(rangeEnd);
-    const [{ data: tasks, error: tasksError }, existingBlocks] = await Promise.all([
+    const [{ data: tasks, error: tasksError }, { data: doneTasks }, existingBlocks] = await Promise.all([
       anyDb().from('planner_tasks').select('*').in('status', ['backlog', 'scheduled', 'postponed']).order('deadline', { ascending: true, nullsFirst: false }).limit(200),
+      anyDb().from('planner_tasks').select('id').eq('status', 'done').limit(1000),
       this.listBlocksRange(targetDate, rangeEnd),
     ]);
     if (tasksError) return { data: null, error: tasksError };
+    const completedIds = new Set<string>((doneTasks || []).map((task: { id: string }) => task.id));
     const fixedTaskIds = new Set((existingBlocks || [])
       .filter((block: PlannerBlock) => ['task', 'recurrence'].includes(block.source))
       .flatMap((block: PlannerBlock) => block.task_ids || []));
@@ -638,7 +681,15 @@ export const plannerService = {
       // A recurring task already materializes protected instances, and a task
       // with a manual time must never receive a second automatic block.
       .filter((task: PlannerTask) => !(task.recurrence_days || []).length && !fixedTaskIds.has(task.id))
-      .sort((a: PlannerTask, b: PlannerTask) => ({ urgent: 0, high: 1, medium: 2, low: 3 }[a.priority] - ({ urgent: 0, high: 1, medium: 2, low: 3 }[b.priority])));
+      // Una tarea con dependencias abiertas no entra a la agenda: se agenda
+      // sola cuando lo que la bloquea quede "Hecha".
+      .filter((task: PlannerTask) => (task.dependency_task_ids || []).every((id) => completedIds.has(id)))
+      // Pareto 80/20: el orden de ataque es el Priority Score (urgencia por
+      // fecha de entrega, dinero, cliente, riesgo, facilidad, veces pospuesta).
+      // Antes se ordenaba sólo por la prioridad manual y la agenda contradecía
+      // la lista de prioridades.
+      .sort((a: PlannerTask, b: PlannerTask) => comparePlannerTasks(a, b, targetDate));
+    const blockedByDependencies = (tasks || []).filter((task: PlannerTask) => !(task.dependency_task_ids || []).every((id) => completedIds.has(id))).length;
     const availableFromByTask = new Map(ordered.map((task: PlannerTask) => [task.id, plannerTaskAvailableDate({
       today: targetDate,
       scheduledFor: task.scheduled_for,
@@ -694,7 +745,7 @@ export const plannerService = {
           if (cursor + duration > end) break;
           const startsAt = localPlannerTimeToIso(`${planningDate}T${String(Math.floor(cursor / 60)).padStart(2, '0')}:${String(cursor % 60).padStart(2, '0')}:00`, timeZone);
           const endsAt = localPlannerTimeToIso(`${planningDate}T${String(Math.floor((cursor + duration) / 60)).padStart(2, '0')}:${String((cursor + duration) % 60).padStart(2, '0')}:00`, timeZone);
-          planned.push({ user_id: user.id, title: task.title, category: task.category, starts_at: startsAt, ends_at: endsAt, task_ids: [task.id], source: 'planner-rules', notes: 'Programado automáticamente según horario laboral, zona horaria y espacios libres.', protected: false });
+          planned.push({ user_id: user.id, title: task.title, category: task.category, starts_at: startsAt, ends_at: endsAt, task_ids: [task.id], source: 'planner-rules', notes: `Priority Score ${plannerPriorityScore(task, targetDate).toFixed(2)} · orden Pareto por fecha de entrega, impacto y veces pospuesta; respeta horario laboral, zona horaria y bloques protegidos.`, protected: false });
           busy.push([cursor, cursor + duration]);
           cursor += duration;
           remaining.splice(index, 1);
@@ -749,7 +800,12 @@ export const plannerService = {
     }
     const endLabel = planned.length ? zonedDate(new Date(planned[planned.length - 1].starts_at), timeZone) : targetDate;
     const overflow = remaining.length ? ` ${remaining.length} tarea(s) no cupieron en los próximos ${maxPlanningDays} días.` : '';
-    return { data: { ok: true, preview: !apply, blocks: planned, summary: `${planned.length} bloque(s) programados desde ${targetDate} hasta ${endLabel}.${overflow}` }, error: null };
+    const waiting = blockedByDependencies ? ` ${blockedByDependencies} tarea(s) esperan dependencias.` : '';
+    if (apply && planned.length) {
+      // Ferova One manda: el score calculado aquí es el que se publica en Notion.
+      void this.pushToNotion(planned.map((block) => block.task_ids[0]));
+    }
+    return { data: { ok: true, preview: !apply, blocks: planned, summary: `${planned.length} bloque(s) programados desde ${targetDate} hasta ${endLabel}.${overflow}${waiting}` }, error: null };
   },
   async regenerateInsights() {
     return invokeAi<{ ok: boolean; insights: any[] }>({ functionName: 'planner-insights', body: { kind: 'insights' } });

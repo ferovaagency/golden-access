@@ -5,6 +5,7 @@ import { plannerService, type PlannerBlock, type PlannerCategory, type PlannerDr
 import { DayClientProgress } from './planner/DayClientProgress';
 import PlannerBoard, { STATUS_LABEL } from './planner/PlannerBoard';
 import { importFromContent } from '../lib/notionImport';
+import { comparePlannerTasks, plannerDaysToDeadline, plannerPriorityScore } from '../lib/plannerScheduling';
 import { AiDisclosure } from './AiDisclosure';
 
 type PlannerViewMode = 'day' | 'week' | 'month' | 'list' | 'kanban' | 'empresas';
@@ -33,11 +34,6 @@ function isoDateInTimeZone(iso: string, timeZone: string) {
   return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
-function visiblePriorityScore(task: PlannerTask) {
-  const days = task.deadline ? Math.ceil((new Date(task.deadline).getTime() - Date.now()) / 86_400_000) : Number.POSITIVE_INFINITY;
-  const urgency = !task.deadline ? 1 : days <= 1 ? 5 : days <= 3 ? 4 : days <= 7 ? 3 : 2;
-  return (0.30 * urgency) + (0.25 * (task.financial_impact ?? 3)) + (0.20 * (task.client_impact ?? 3)) + (0.15 * (task.risk_score ?? 3)) + (0.10 * (task.execution_ease ?? 3));
-}
 
 // La lógica de importación (parseo de CSV/HTML de Notion, mapeo de columnas por
 // datos y match difuso de clientes) vive en ../lib/notionImport.
@@ -282,7 +278,10 @@ export default function SmartPlanner() {
   const openTasks = p.tasks.filter((t) => t.status !== 'done' && t.status !== 'cancelled');
 
   // --- Anti-procrastinación: la tarea que más mueve la aguja hoy (Pareto) ---
-  const rankedTasks = [...openTasks].sort((a, b) => visiblePriorityScore(b) - visiblePriorityScore(a));
+  // Mismo orden que la agenda automática: una sola fórmula (plannerScheduling),
+  // calculada contra HOY (no contra el día que se esté mirando en el calendario).
+  const hoy = isoDateInTimeZone(new Date().toISOString(), p.timeZone);
+  const rankedTasks = [...openTasks].sort((a, b) => comparePlannerTasks(a, b, hoy));
   // Pueden ser varias: nada impide tener dos cosas en curso, y ocultarlo hacía
   // creer que iniciar la segunda no había funcionado.
   const inProgressTasks = openTasks.filter((t) => t.status === 'in_progress');
@@ -712,7 +711,7 @@ export default function SmartPlanner() {
           <p className="text-xs text-slate-400 italic">Bandeja vacía.</p>
         ) : (
           <ul className="space-y-1.5">
-            {rankedTasks.map((t) => <TaskRow key={t.id} task={t} clientName={p.clients.find((client) => client.id === t.client_ref)?.nombre} isProtected={p.blocks.some((block) => block.task_ids?.includes(t.id) && block.protected)} onEdit={openTaskEditor} onStart={p.startTask} onPause={p.pauseTask} onComplete={handleComplete} onPostpone={async (id) => { await p.postponeTask(id); setTaskSaveNotice('Tarea reprogramada para mañana.'); setTimeout(() => setTaskSaveNotice(null), 2500); }} onDelete={p.deleteTask} />)}
+            {rankedTasks.map((t) => <TaskRow key={t.id} task={t} today={hoy} clientName={p.clients.find((client) => client.id === t.client_ref)?.nombre} isProtected={p.blocks.some((block) => block.task_ids?.includes(t.id) && block.protected)} onEdit={openTaskEditor} onStart={p.startTask} onPause={p.pauseTask} onComplete={handleComplete} onPostpone={async (id) => { await p.postponeTask(id); setTaskSaveNotice('Tarea reprogramada para mañana.'); setTimeout(() => setTaskSaveNotice(null), 2500); }} onDelete={p.deleteTask} />)}
           </ul>
         )}
       </section>
@@ -950,7 +949,7 @@ function PlannerTodasLasEmpresas() {
   );
 }
 
-function TaskRow({ task, clientName, isProtected, onEdit, onStart, onPause, onComplete, onPostpone, onDelete }: { task: PlannerTask; clientName?: string; isProtected: boolean; onEdit: (task: PlannerTask) => void; onStart: (id: string) => void; onPause: (id: string) => void; onComplete: (id: string) => void; onPostpone: (id: string) => void | Promise<void>; onDelete: (id: string) => void }) {
+function TaskRow({ task, clientName, isProtected, today, onEdit, onStart, onPause, onComplete, onPostpone, onDelete }: { task: PlannerTask; clientName?: string; isProtected: boolean; today: string; onEdit: (task: PlannerTask) => void; onStart: (id: string) => void; onPause: (id: string) => void; onComplete: (id: string) => void; onPostpone: (id: string) => void | Promise<void>; onDelete: (id: string) => void }) {
   // Fila mínima: título + cliente + iniciar/finalizar + editar/eliminar. El
   // resto (prioridad, score, categoría, contexto para la IA) vive en el popup.
   //
@@ -967,6 +966,19 @@ function TaskRow({ task, clientName, isProtected, onEdit, onStart, onPause, onCo
         <span className={`h-2 w-2 shrink-0 rounded-full ${running ? 'bg-emerald-500 animate-pulse' : task.deadline ? 'bg-amber-400' : 'bg-slate-300'}`} aria-hidden />
         <span className="truncate text-sm text-slate-800">{task.title}</span>
         {clientName && <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${clientTone(task.client_ref)}`}>● {clientName}</span>}
+        {/* Señales anti-procrastinación: entrega cercana/vencida y cuántas veces
+            se ha pospuesto. Lo que se evita tiene que verse, no esconderse. */}
+        {(() => {
+          const days = plannerDaysToDeadline(task.deadline, today);
+          if (days === null) return null;
+          const label = days < 0 ? `vencida hace ${-days} d` : days === 0 ? 'hoy' : days === 1 ? 'mañana' : `en ${days} d`;
+          const tone = days <= 1 ? 'border-red-200 bg-red-50 text-red-700' : days <= 3 ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-slate-200 bg-slate-50 text-slate-600';
+          return <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${tone}`} title={`Fecha de entrega: ${task.deadline?.slice(0, 10)}`}>{label}</span>;
+        })()}
+        {(task.postponed_count ?? 0) > 0 && (
+          <span className="shrink-0 rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[10px] font-semibold text-orange-700" title="Cada vez que la pospones sube en la lista">pospuesta ×{task.postponed_count}</span>
+        )}
+        <span className="hidden shrink-0 font-mono text-[10px] text-slate-400 sm:inline" title="Priority Score (Pareto): urgencia, dinero, cliente, riesgo, facilidad y veces pospuesta">{plannerPriorityScore(task, today).toFixed(1)}</span>
       </button>
       {task.started_at && running && <LiveTimer startedAt={task.started_at} estimatedMinutes={task.estimated_minutes} acumuladoMin={task.actual_minutes} />}
       {enPausa && (

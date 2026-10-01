@@ -104,6 +104,8 @@ export function usePlanner() {
       }
       // Guardado parcial: se avisa, pero las tareas que sí entraron se conservan.
       if (data.message) setError(data.message);
+      // Cada tarea nueva nace también en la base `Pendientes` de Notion.
+      void plannerService.pushToNotion((data.results || []).map((row: any) => row?.task?.id).filter(Boolean));
       const { error: planError } = await plannerService.planDay(undefined, true);
       if (planError) setError(planError.message);
       await refresh();
@@ -120,8 +122,9 @@ export function usePlanner() {
     if (!text.trim()) return;
     setBusy('classify'); setError(null);
     try {
-      const { error: err } = await plannerService.classify(text);
+      const { data: classified, error: err } = await plannerService.classify(text);
       if (err) setError(err.message);
+      else void plannerService.pushToNotion((classified?.results || []).map((row: any) => row?.task?.id).filter(Boolean));
       // A brain dump is an instruction to free mental space: once its tasks
       // exist, propose the day immediately. Google events are supplied as busy
       // intervals when the user has authorized Calendar; no token is persisted.
