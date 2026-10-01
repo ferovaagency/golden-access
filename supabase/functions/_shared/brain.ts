@@ -163,10 +163,17 @@ export async function rememberKnowledge(
     /** Organización activa al escribir. La nota se queda en ella salvo que la
      *  empresa tenga encendido `comparte_por_defecto`. */
     orgId?: string | null;
+    /** Clasificación del sistema documental; por defecto Nota sin área. */
+    tipo?: string | null;
+    area?: string | null;
+    /** Cuenta activa. Con ella, "global" = del negocio (misma regla que la
+     *  pantalla de Memoria). Sin ella se conserva la regla vieja (sin dueño =
+     *  cerebro de Ferova), por compatibilidad con quien no la pase. */
+    accountId?: string | null;
   },
   apiKey: string,
 ): Promise<string | null> {
-  const owner = args.scope === "privado" ? args.userId : null;
+  const owner = args.scope === "privado" ? args.userId : (args.accountId ?? null);
   const orgId = args.orgId ?? null;
 
   // Si la empresa comparte por defecto, lo que se escriba en ella sube al
@@ -192,6 +199,13 @@ export async function rememberKnowledge(
       source: args.source ?? "asistente",
       tags: args.tags ?? [],
       created_by: args.userId,
+      // Sistema documental: lo que escribe una IA entra "Por revisar" y el
+      // asistente no lo usa para responder hasta que una persona lo apruebe
+      // en la Memoria.
+      estado: "Por revisar",
+      tipo: args.tipo && ["Nota", "Decisión", "Proceso", "Documento", "Idea", "Investigación"].includes(args.tipo) ? args.tipo : "Nota",
+      area: args.area && ["Clientes", "Proyectos", "Operaciones", "Ventas", "Desarrollo", "Administración"].includes(args.area) ? args.area : null,
+      bitacora: [{ at: new Date().toISOString(), by: args.userId, accion: "creada por el asistente", nota: null }],
     })
     .select("id")
     .single();

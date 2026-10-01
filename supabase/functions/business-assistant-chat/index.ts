@@ -281,22 +281,28 @@ ${context}`,
       tools: {
         guardar_en_memoria: tool({
           description: "Guarda en la memoria permanente del negocio (el 'segundo cerebro') un dato, decisión, preferencia, política, precio, proceso, hecho o aprendizaje que deba recordarse en el futuro. Úsala cuando la persona pida recordar algo ('recuerda que...', 'anota que...', 'no se te olvide...') o comparta información duradera importante. NO la uses para preguntas, cálculos ni charla pasajera.",
-          inputSchema: jsonSchema<{ title: string; content: string; scope: "global" | "privado" }>({
+          inputSchema: jsonSchema<{ title: string; content: string; scope: "global" | "privado"; tipo?: string; area?: string }>({
             type: "object",
             additionalProperties: false,
             required: ["title", "content", "scope"],
             properties: {
               title: { type: "string", description: "Título corto y descriptivo de lo que se recuerda." },
-              content: { type: "string", description: "El dato completo, claro y autocontenido (que se entienda sin ver este chat)." },
+              content: { type: "string", description: "El dato completo, claro y autocontenido (que se entienda sin ver este chat). Si es un aprendizaje: qué cambió, qué funcionó o no, por qué importa y el siguiente paso." },
               scope: { type: "string", enum: ["global", "privado"], description: "'global' = todo el equipo lo verá (lo normal para cosas del negocio); 'privado' = solo esta persona." },
+              tipo: { type: "string", enum: ["Nota", "Decisión", "Proceso", "Documento", "Idea", "Investigación"], description: "Qué clase de conocimiento es." },
+              area: { type: "string", enum: ["Clientes", "Proyectos", "Operaciones", "Ventas", "Desarrollo", "Administración"], description: "Área del negocio a la que pertenece." },
             },
           }),
-          execute: async ({ title, content, scope }) => {
+          execute: async ({ title, content, scope, tipo, area }) => {
             // Los colaboradores solo pueden escribir en su memoria privada.
             const finalScope = isAdmin ? scope : "privado";
-            const id = await rememberKnowledge(admin, { title, content, scope: finalScope, userId, orgId }, apiKey);
-            if (id) registrarAccion("guardar_en_memoria", "ferova_knowledge", `El asistente guardó en memoria (${finalScope}) "${title}".`, { title, scope: finalScope });
-            return id ? { ok: true, alcance: finalScope } : { ok: false, message: "No se pudo guardar en la memoria." };
+            const id = await // Con accountId, "global" es del negocio activo (antes caía sin dueño: en el
+            // cerebro interno de Ferova, invisible para un cliente en su Memoria).
+            rememberKnowledge(admin, { title, content, scope: finalScope, userId, orgId, tipo, area, accountId }, apiKey);
+            if (id) registrarAccion("guardar_en_memoria", "ferova_knowledge", `El asistente guardó en memoria (${finalScope}) "${title}" — queda Por revisar.`, { title, scope: finalScope });
+            // Sistema documental: lo guardado por la IA entra "Por revisar" y no
+            // se usa para responder hasta que la persona lo apruebe en Memoria.
+            return id ? { ok: true, alcance: finalScope, estado: "Por revisar", nota: "Quedó en la bandeja Por revisar de la Memoria; se usará para responder cuando lo apruebes." } : { ok: false, message: "No se pudo guardar en la memoria." };
           },
         }),
         crear_tarea: tool({

@@ -31,6 +31,35 @@ function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 }
 
+const TIPOS = ["Nota", "Decisión", "Proceso", "Documento", "Idea", "Investigación"];
+const AREAS = ["Clientes", "Proyectos", "Operaciones", "Ventas", "Desarrollo", "Administración"];
+const ESTADOS = ["Por revisar", "Aprobado", "Requiere decisión", "Archivado"];
+
+const pickTipo = (value: unknown) => (typeof value === "string" && TIPOS.includes(value) ? value : null);
+const pickArea = (value: unknown) => (typeof value === "string" && AREAS.includes(value) ? value : null);
+const pickEstado = (value: unknown) => (typeof value === "string" && ESTADOS.includes(value) ? value : null);
+
+type BitacoraEntry = { at: string; by: string; accion: string; nota: string | null };
+const entrada = (by: string, accion: string, nota?: string | null): BitacoraEntry => ({ at: new Date().toISOString(), by, accion, nota: nota?.trim() || null });
+
+/**
+ * Entradas sin embeddings (p. ej. las sembradas por migración) se indexan al
+ * abrir la Memoria, de a pocas, para que el asistente las encuentre sin que
+ * nadie tenga que reeditarlas.
+ */
+async function ensureEmbeddings(admin: any, ids: string[]) {
+  if (!LOVABLE_API_KEY || !ids.length) return;
+  const { data: embedded } = await admin.from("ferova_knowledge_embeddings").select("knowledge_id").in("knowledge_id", ids);
+  const done = new Set((embedded || []).map((row: { knowledge_id: string }) => row.knowledge_id));
+  const missing = ids.filter((id) => !done.has(id)).slice(0, 5);
+  if (!missing.length) return;
+  const { data: rows } = await admin.from("ferova_knowledge").select("id, content").in("id", missing);
+  for (const row of rows || []) {
+    try { await embedAndStoreChunks(admin, row.id, row.content, LOVABLE_API_KEY); }
+    catch (e) { console.error("[brain-knowledge] ensureEmbeddings", e); }
+  }
+}
+
 async function reembed(admin: any, knowledgeId: string, content: string) {
   // Trocea el contenido (varios embeddings por nota) y reemplaza los previos.
   await embedAndStoreChunks(admin, knowledgeId, content, LOVABLE_API_KEY, { replace: true });
@@ -78,11 +107,12 @@ Deno.serve(async (req) => {
       if (isTeam) filtros.push("owner_user_id.is.null");
       const { data, error } = await admin
         .from("ferova_knowledge")
-        .select("id, title, content, source, tags, owner_user_id, org_id, created_at, updated_at")
+        .select("id, title, content, source, tags, owner_user_id, org_id, created_at, updated_at, tipo, area, estado, enlace_origen, fecha_revision, bitacora")
         .or(filtros.join(","))
         .order("updated_at", { ascending: false })
         .limit(500);
       if (error) return json({ ok: false, message: error.message }, 500);
+      await ensureEmbeddings(admin, (data || []).map((k: any) => k.id));
       const items = (data || []).map((k: any) => ({
         ...k,
         // `global` es la etiqueta que la pantalla ya entiende como "lo que ve
@@ -98,6 +128,14 @@ Deno.serve(async (req) => {
       const scope = payload.scope === "privado" ? "privado" : "global";
       const tags = Array.isArray(payload.tags) ? payload.tags.slice(0, 20) : [];
       if (!title || !content) return json({ ok: false, message: "Faltan titulo o contenido." }, 400);
+      // Sistema documental: lo que una persona escribe a mano queda Aprobado
+      // (ella es la revisora), salvo que elija dejarlo "Por revisar" o
+      // "Requiere decisión". Lo que escribe una IA entra siempre "Por revisar"
+      // (ver rememberKnowledge en _shared/brain.ts).
+      const tipo = pickTipo(payload.tipo) || "Nota";
+      const area = pickArea(payload.area);
+      const estado = pickEstado(payload.estado) || "Aprobado";
+      const enlace = typeof payload.enlace_origen === "string" ? payload.enlace_origen.trim().slice(0, 500) || null : null;
 
       // "global" ahora significa "de este negocio": se guarda a nombre de la
       // cuenta activa, no sin dueño. Sin dueño es el cerebro de Ferova, y una
@@ -105,7 +143,13 @@ Deno.serve(async (req) => {
       const owner = scope === "privado" ? userId : accountId;
       const { data, error } = await admin
         .from("ferova_knowledge")
-        .insert({ title, content, owner_user_id: owner, org_id: orgId, source: "manual", tags, created_by: userId })
+        .insert({
+          title, content, owner_user_id: owner, org_id: orgId, source: "manual", tags, created_by: userId,
+          tipo, area, estado, enlace_origen: enlace,
+          fecha_revision: estado === "Aprobado" ? new Date().toISOString().slice(0, 10) : null,
+          revisado_por: estado === "Aprobado" ? userId : null,
+          bitacora: [entrada(userId, "creada", payload.cambio)],
+        })
         .select("id")
         .single();
       if (error || !data) return json({ ok: false, message: error?.message || "No se pudo crear." }, 500);
@@ -116,7 +160,7 @@ Deno.serve(async (req) => {
     if (action === "update") {
       const id = (payload.id || "").toString();
       if (!id) return json({ ok: false, message: "Falta id." }, 400);
-      const { data: row } = await admin.from("ferova_knowledge").select("owner_user_id, content").eq("id", id).maybeSingle();
+      const { data: row } = await admin.from("ferova_knowledge").select("owner_user_id, content, bitacora").eq("id", id).maybeSingle();
       if (!row) return json({ ok: false, message: "No existe." }, 404);
       if (!canManage(row.owner_user_id)) return json({ ok: false, message: "Sin permiso." }, 403);
 
@@ -124,11 +168,38 @@ Deno.serve(async (req) => {
       if (typeof payload.title === "string") patch.title = payload.title.trim();
       if (typeof payload.content === "string") patch.content = payload.content.trim();
       if (Array.isArray(payload.tags)) patch.tags = payload.tags.slice(0, 20);
+      if (pickTipo(payload.tipo)) patch.tipo = payload.tipo;
+      if (payload.area === null || pickArea(payload.area)) patch.area = payload.area;
+      if (typeof payload.enlace_origen === "string") patch.enlace_origen = payload.enlace_origen.trim().slice(0, 500) || null;
       if (Object.keys(patch).length === 0) return json({ ok: false, message: "Nada que actualizar." }, 400);
+      // Un tema = una página viva: cada edición deja qué cambió.
+      patch.bitacora = [...(Array.isArray(row.bitacora) ? row.bitacora : []), entrada(userId, "editada", payload.cambio)].slice(-100);
 
       const { error } = await admin.from("ferova_knowledge").update(patch).eq("id", id);
       if (error) return json({ ok: false, message: error.message }, 500);
       if (typeof patch.content === "string" && patch.content !== row.content) await reembed(admin, id, patch.content as string);
+      return json({ ok: true });
+    }
+
+    // Revisión: Por revisar → Aprobado | Requiere decisión | Archivado.
+    // Archivar exige nota de cierre (qué era, qué se aprendió, dónde quedó):
+    // el método no borra conocimiento, lo cierra con rastro.
+    if (action === "revisar") {
+      const id = (payload.id || "").toString();
+      const estado = pickEstado(payload.estado);
+      const nota = typeof payload.nota === "string" ? payload.nota.trim() : "";
+      if (!id || !estado) return json({ ok: false, message: "Faltan id o estado válido." }, 400);
+      if (estado === "Archivado" && !nota) return json({ ok: false, message: "Para archivar escribe la nota de cierre: qué era, qué se aprendió y dónde quedó." }, 400);
+      const { data: row } = await admin.from("ferova_knowledge").select("owner_user_id, bitacora").eq("id", id).maybeSingle();
+      if (!row) return json({ ok: false, message: "No existe." }, 404);
+      if (!canManage(row.owner_user_id)) return json({ ok: false, message: "Sin permiso." }, 403);
+      const { error } = await admin.from("ferova_knowledge").update({
+        estado,
+        fecha_revision: new Date().toISOString().slice(0, 10),
+        revisado_por: userId,
+        bitacora: [...(Array.isArray(row.bitacora) ? row.bitacora : []), entrada(userId, `estado:${estado}`, nota)].slice(-100),
+      }).eq("id", id);
+      if (error) return json({ ok: false, message: error.message }, 500);
       return json({ ok: true });
     }
 

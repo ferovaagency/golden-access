@@ -97,7 +97,12 @@ Deno.serve(async (req) => {
       } else {
         const { data: ins, error: insErr } = await admin
           .from("ferova_knowledge")
-          .insert({ title: e.title, content: e.content, owner_user_id: userId, source: e.source, tags: ["auto"], created_by: userId })
+          .insert({
+            title: e.title, content: e.content, owner_user_id: userId, source: e.source, tags: ["auto"], created_by: userId,
+            // Sale de los datos reales del negocio (no de una IA): queda Aprobado.
+            tipo: "Documento", area: e.source.startsWith("auto:cliente:") ? "Clientes" : "Administración", estado: "Aprobado",
+            bitacora: [{ at: new Date().toISOString(), by: userId, accion: "creada por sincronización", nota: null }],
+          })
           .select("id")
           .single();
         if (insErr || !ins) { console.error("[brain-sync] insert error", insErr); continue; }
