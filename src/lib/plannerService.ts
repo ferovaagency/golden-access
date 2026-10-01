@@ -138,6 +138,8 @@ export interface PlannerBlock {
   protected: boolean;
   source: string;
   notes: string | null;
+  /** 0=domingo..6=sábado. Vacío = bloque único. */
+  recurrence_days?: number[] | null;
 }
 
 export interface PlannerInsight {
@@ -337,6 +339,50 @@ export const plannerService = {
     }));
     const { error } = await anyDb().from('planner_blocks').insert(rows);
     if (error) throw error;
+  },
+  /**
+   * Edita un bloque manual (protegido o no) en su fecha: título, hora y si
+   * sigue protegido. Sólo esa ocurrencia; la serie no se toca.
+   */
+  async updateBlock(id: string, input: { title: string; date: string; start_time: string; end_time: string; protected: boolean; notes?: string | null }): Promise<void> {
+    const timeZone = await this.getTimeZone();
+    const { error } = await anyDb().from('planner_blocks').update({
+      title: input.title.trim(),
+      starts_at: localPlannerTimeToIso(`${input.date}T${input.start_time}:00`, timeZone),
+      ends_at: localPlannerTimeToIso(`${input.date}T${input.end_time}:00`, timeZone),
+      protected: input.protected,
+      notes: input.notes?.trim() || null,
+    }).eq('id', id);
+    if (error) throw error;
+  },
+  /**
+   * Elimina un bloque manual. `series` borra también las repeticiones futuras
+   * de la misma serie (mismo título, mismos días de repetición, desde esta
+   * fecha). Antes un bloque protegido sólo se podía crear: una reunión
+   * cancelada se quedaba estorbando en la agenda para siempre.
+   */
+  async deleteBlock(id: string, scope: 'one' | 'series' = 'one'): Promise<number> {
+    const { data: block, error: readError } = await anyDb().from('planner_blocks').select('id,title,source,starts_at,recurrence_days').eq('id', id).maybeSingle();
+    if (readError) throw readError;
+    if (!block) return 0;
+    const days: number[] = block.recurrence_days || [];
+    if (scope === 'series' && days.length) {
+      const { data: siblings, error: siblingsError } = await anyDb().from('planner_blocks')
+        .select('id,recurrence_days')
+        .eq('source', block.source)
+        .eq('title', block.title)
+        .gte('starts_at', block.starts_at);
+      if (siblingsError) throw siblingsError;
+      const sameSeries = (siblings || [])
+        .filter((row: { id: string; recurrence_days: number[] | null }) => JSON.stringify(row.recurrence_days || []) === JSON.stringify(days))
+        .map((row: { id: string }) => row.id);
+      const { error } = await anyDb().from('planner_blocks').delete().in('id', sameSeries);
+      if (error) throw error;
+      return sameSeries.length;
+    }
+    const { error } = await anyDb().from('planner_blocks').delete().eq('id', id);
+    if (error) throw error;
+    return 1;
   },
   async listInsights(): Promise<PlannerInsight[]> {
     const { data, error } = await anyDb().from('planner_insights').select('*').eq('dismissed', false).order('created_at', { ascending: false });

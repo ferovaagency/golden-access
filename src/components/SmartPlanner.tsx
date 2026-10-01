@@ -27,6 +27,13 @@ function clientTone(id?: string | null) { return clientTones[Math.abs(Array.from
 
 function fmtTime(iso: string, timeZone?: string) { return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', ...(timeZone ? { timeZone } : {}) }); }
 
+function localHm(iso: string, timeZone: string) {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone, hourCycle: 'h23', hour: '2-digit', minute: '2-digit' })
+    .formatToParts(new Date(iso))
+    .reduce<Record<string, string>>((result, part) => ({ ...result, [part.type]: part.value }), {});
+  return `${parts.hour}:${parts.minute}`;
+}
+
 function isoDateInTimeZone(iso: string, timeZone: string) {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' })
     .formatToParts(new Date(iso))
@@ -144,24 +151,6 @@ export default function SmartPlanner() {
     const text = dump.trim();
     if (!text) return;
     await runBulkImport(text);
-  };
-
-  const handleImportFile = async (file: File | null | undefined) => {
-    if (!file) return;
-    const name = file.name.toLowerCase();
-    if (name.endsWith('.pdf')) {
-      setImportInfo('Para PDF, ábrelo, copia el texto y pégalo en el cuadro. El archivo PDF no conserva la estructura de la base.');
-      setTimeout(() => setImportInfo(null), 6000);
-      return;
-    }
-    try {
-      const text = await file.text();
-      setDump(text.length > 4000 ? `${text.slice(0, 4000)}…` : text); // vista previa en el cuadro
-      await runBulkImport(text, { html: name.endsWith('.html') || name.endsWith('.htm'), csv: name.endsWith('.csv') });
-    } catch (err: any) {
-      setImportInfo(`No se pudo leer el archivo: ${err?.message || err}`);
-      setTimeout(() => setImportInfo(null), 4000);
-    }
   };
 
   const patchDraft = (index: number, patch: Partial<PlannerDraft>) => {
@@ -436,49 +425,26 @@ export default function SmartPlanner() {
 
       {plannerView === 'day' && <DayClientProgress tasks={p.tasks} clients={p.clients} date={p.date} />}
 
-      {plannerView === 'day' && <DayAgendaSummary blocks={p.blocks} tasks={p.tasks} clients={p.clients} timeZone={p.timeZone} onComplete={handleComplete} onEdit={openTaskEditor} />}
+      {plannerView === 'day' && <DayAgendaSummary blocks={p.blocks} tasks={p.tasks} clients={p.clients} timeZone={p.timeZone} onComplete={handleComplete} onEdit={openTaskEditor} onEditBlock={p.updateBlock} onDeleteBlock={p.deleteBlock} />}
 
       {/* Brain Dump */}
       <section className="rounded-2xl border border-[var(--line)] bg-white p-5">
         <div className="flex flex-wrap items-center gap-2">
           <Sparkles className="h-4 w-4 text-blue-600" />
-          <h2 className="text-sm font-semibold text-slate-900">Brain dump · Importar tareas</h2>
-          <span className="text-xs text-slate-400">Escribe, pega, o sube tu export de Notion. La IA detecta tipo, prioridad, duración y fecha.</span>
+          <h2 className="text-sm font-semibold text-slate-900">Brain dump</h2>
+          <span className="text-xs text-slate-400">Escribe o pega lo que tengas que hacer. La IA detecta cliente, fecha, duración y prioridad, y cada tarea queda también en tu base de Notion.</span>
         </div>
         <textarea
           value={dump}
           onChange={(e) => setDump(e.target.value)}
           onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') void submitDump(); }}
-          placeholder={'Escribe, o pega tus tareas de Notion (tabla, lista o texto). Ej.:\n- Llamar a Juan mañana\n- Pagar impuestos el viernes\n- Crear landing para producto X'}
+          placeholder={'Una tarea por línea, o un párrafo. Ej.:\n- Llamar a Juan mañana\n- Pagar impuestos el viernes\n- Crear landing para producto X'}
           className="mt-3 block w-full resize-none rounded-xl border border-[var(--line)] bg-slate-50 px-3 py-3 text-sm outline-none focus:border-blue-300 focus:bg-white min-h-28"
         />
         {importInfo && <p className="mt-2 text-[11px] text-blue-700">{importInfo}</p>}
 
-        <details className="mt-3 rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs text-slate-600">
-          <summary className="cursor-pointer font-semibold text-slate-700">¿Cómo traer mis tareas de Notion? (paso a paso)</summary>
-          <ol className="mt-2 list-decimal space-y-1 pl-4 leading-5">
-            <li>En Notion, abre tu base de datos de tareas.</li>
-            <li>Arriba a la derecha, menú <strong>···</strong> → <strong>Export</strong> (Exportar).</li>
-            <li>En “Export format” elige <strong>Markdown &amp; CSV</strong> (recomendado) o <strong>HTML</strong>. En “Include content” deja el default.</li>
-            <li>Descarga el archivo. Si viene en <strong>.zip</strong>, ábrelo: usa el archivo <strong>.csv</strong> o <strong>.md</strong> (Markdown &amp; CSV) o el <strong>.html</strong>.</li>
-            <li>Aquí pulsa <strong>“Subir archivo de Notion”</strong> y elige ese archivo. O abre el archivo, copia el texto y <strong>pégalo</strong> en el cuadro.</li>
-            <li>Pulsa <strong>Interpretar</strong>, revisa los borradores (corrige cliente, fecha o duración si hace falta) y confirma. ¡Listo!</li>
-          </ol>
-          <p className="mt-2 text-[11px] text-slate-400">Tip: no exportes como PDF para bases de datos — pierde la estructura. Markdown/CSV o HTML funcionan mejor.</p>
-        </details>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">
-              <List className="h-3.5 w-3.5" /> Subir archivo de Notion
-              <input
-                type="file"
-                accept=".md,.markdown,.csv,.txt,.html,.htm,.pdf,text/markdown,text/csv,text/html,text/plain"
-                className="hidden"
-                onChange={(e) => { void handleImportFile(e.target.files?.[0]); e.target.value = ''; }}
-              />
-            </label>
-            <span className="text-[11px] text-slate-400">Markdown, CSV o HTML. ⌘/Ctrl+Enter para interpretar.</span>
-          </div>
+          <span className="text-[11px] text-slate-400">⌘/Ctrl+Enter para interpretar.</span>
           <button
             onClick={submitDump}
             disabled={!dump.trim() || p.busy === 'classify' || importing}
@@ -616,7 +582,7 @@ export default function SmartPlanner() {
           </div>
         ) : (
           <ul className="space-y-2">
-            {p.blocks.map((b) => <BlockRow key={b.id} block={b} tasks={p.tasks} clients={p.clients} timeZone={p.timeZone} onComplete={handleComplete} onEdit={openTaskEditor} />)}
+            {p.blocks.map((b) => <BlockRow key={b.id} block={b} tasks={p.tasks} clients={p.clients} timeZone={p.timeZone} onComplete={handleComplete} onEdit={openTaskEditor} onEditBlock={p.updateBlock} onDeleteBlock={p.deleteBlock} />)}
           </ul>
         )}
       </section>}
@@ -746,10 +712,10 @@ function addDays(date: Date, days: number) {
   return next;
 }
 
-function DayAgendaSummary({ blocks, tasks, clients, timeZone, onComplete, onEdit }: { blocks: PlannerBlock[]; tasks: PlannerTask[]; clients: Array<{ id: string; nombre: string }>; timeZone: string; onComplete: (id: string) => void; onEdit?: (task: PlannerTask) => void }) {
+function DayAgendaSummary({ blocks, tasks, clients, timeZone, onComplete, onEdit, onEditBlock, onDeleteBlock }: { blocks: PlannerBlock[]; tasks: PlannerTask[]; clients: Array<{ id: string; nombre: string }>; timeZone: string; onComplete: (id: string) => void; onEdit?: (task: PlannerTask) => void; onEditBlock?: (id: string, input: BlockEditInput) => Promise<void>; onDeleteBlock?: (id: string, scope: 'one' | 'series') => Promise<unknown> }) {
   return <section className="rounded-2xl border border-blue-200 bg-blue-50/60 p-4">
     <div className="flex items-center justify-between gap-3"><div><h2 className="text-sm font-semibold text-blue-950">Agenda de hoy</h2><p className="mt-0.5 text-[11px] text-blue-800">Tus tareas ya asignadas aparecen aquí en su hora; el detalle completo continúa más abajo.</p></div><span className="rounded-full bg-white px-2 py-1 text-xs font-semibold text-blue-700">{blocks.length} bloques</span></div>
-    {blocks.length ? <ul className="mt-3 space-y-2">{blocks.map((block) => <BlockRow key={block.id} block={block} tasks={tasks} clients={clients} timeZone={timeZone} onComplete={onComplete} onEdit={onEdit} />)}</ul> : <p className="mt-3 rounded-xl border border-dashed border-blue-200 bg-white px-3 py-3 text-xs text-slate-500">Aún no hay tareas con horario. Usa “Reorganizar mi día” para asignarlas.</p>}
+    {blocks.length ? <ul className="mt-3 space-y-2">{blocks.map((block) => <BlockRow key={block.id} block={block} tasks={tasks} clients={clients} timeZone={timeZone} onComplete={onComplete} onEdit={onEdit} onEditBlock={onEditBlock} onDeleteBlock={onDeleteBlock} />)}</ul> : <p className="mt-3 rounded-xl border border-dashed border-blue-200 bg-white px-3 py-3 text-xs text-slate-500">Aún no hay tareas con horario. Usa “Reorganizar mi día” para asignarlas.</p>}
   </section>;
 }
 
@@ -814,11 +780,54 @@ function PlannerCalendar({ view, date, tasks, clients, compact, timeZone, onChan
   </section>;
 }
 
-function BlockRow({ block, tasks, clients, timeZone, onComplete, onEdit }: { block: PlannerBlock; tasks: PlannerTask[]; clients: Array<{ id: string; nombre: string }>; timeZone?: string; onComplete: (id: string) => void; onEdit?: (task: PlannerTask) => void }) {
+type BlockEditInput = { title: string; date: string; start_time: string; end_time: string; protected: boolean; notes?: string | null };
+
+function BlockRow({ block, tasks, clients, timeZone, onComplete, onEdit, onEditBlock, onDeleteBlock }: { block: PlannerBlock; tasks: PlannerTask[]; clients: Array<{ id: string; nombre: string }>; timeZone?: string; onComplete: (id: string) => void; onEdit?: (task: PlannerTask) => void; onEditBlock?: (id: string, input: BlockEditInput) => Promise<void>; onDeleteBlock?: (id: string, scope: 'one' | 'series') => Promise<unknown> }) {
   const meta = categoryMeta[block.category];
   const linked = tasks.filter((t) => block.task_ids?.includes(t.id));
+  // Sólo los bloques creados a mano (reuniones, horas protegidas) se editan o
+  // borran aquí. Los bloques de tareas se manejan desde la tarea; los de
+  // Google Calendar, desde Google.
+  const editable = block.source === 'manual' && !!onEditBlock && !!onDeleteBlock;
+  const zone = timeZone || 'America/Bogota';
+  const isRecurring = (block.recurrence_days?.length ?? 0) > 0;
+  const [editing, setEditing] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [title, setTitle] = useState(block.title);
+  const [start, setStart] = useState(() => localHm(block.starts_at, zone));
+  const [end, setEnd] = useState(() => localHm(block.ends_at, zone));
+  const [isProtected, setIsProtected] = useState(block.protected);
+  const [saving, setSaving] = useState(false);
+  const save = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!title.trim() || end <= start || !onEditBlock) return;
+    setSaving(true);
+    try {
+      await onEditBlock(block.id, { title, date: isoDateInTimeZone(block.starts_at, zone), start_time: start, end_time: end, protected: isProtected, notes: block.notes });
+      setEditing(false);
+    } finally { setSaving(false); }
+  };
+  if (editing) {
+    return (
+      <li className="rounded-2xl border border-blue-200 bg-blue-50/40 p-4">
+        <form onSubmit={save} className="space-y-2">
+          <input value={title} onChange={(e) => setTitle(e.target.value)} className="block w-full rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm" placeholder="Título del bloque" />
+          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+            <label>Desde <input type="time" value={start} onChange={(e) => setStart(e.target.value)} className="ml-1 rounded-lg border border-blue-200 bg-white px-2 py-1.5 text-sm" /></label>
+            <label>Hasta <input type="time" value={end} onChange={(e) => setEnd(e.target.value)} className="ml-1 rounded-lg border border-blue-200 bg-white px-2 py-1.5 text-sm" /></label>
+            <label className="inline-flex items-center gap-1.5"><input type="checkbox" checked={isProtected} onChange={(e) => setIsProtected(e.target.checked)} /> Protegido (no se mueve al reorganizar)</label>
+          </div>
+          {isRecurring && <p className="text-[11px] text-slate-500">Esto cambia sólo la ocurrencia de este día, no toda la serie.</p>}
+          <div className="flex items-center gap-2">
+            <button type="submit" disabled={saving || !title.trim() || end <= start} className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50">Guardar</button>
+            <button type="button" onClick={() => { setEditing(false); setTitle(block.title); setStart(localHm(block.starts_at, zone)); setEnd(localHm(block.ends_at, zone)); setIsProtected(block.protected); }} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">Cancelar</button>
+          </div>
+        </form>
+      </li>
+    );
+  }
   return (
-    <li className="rounded-2xl border border-[var(--line)] bg-white p-4">
+    <li className="group rounded-2xl border border-[var(--line)] bg-white p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <div className="flex flex-col items-center min-w-[56px] pt-0.5">
@@ -837,6 +846,14 @@ function BlockRow({ block, tasks, clients, timeZone, onComplete, onEdit }: { blo
               )}
             </div>
             {block.notes && <p className="text-xs text-slate-500 mt-1 italic">{block.notes}</p>}
+            {confirmingDelete && (
+              <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-2.5 py-2 text-xs text-red-800">
+                <span>¿Eliminar {isRecurring ? 'este bloque?' : 'el bloque?'}</span>
+                <button type="button" onClick={async () => { await onDeleteBlock?.(block.id, 'one'); setConfirmingDelete(false); }} className="rounded-md bg-red-600 px-2 py-1 font-semibold text-white hover:bg-red-700">{isRecurring ? 'Sólo este día' : 'Eliminar'}</button>
+                {isRecurring && <button type="button" onClick={async () => { await onDeleteBlock?.(block.id, 'series'); setConfirmingDelete(false); }} className="rounded-md border border-red-300 bg-white px-2 py-1 font-semibold text-red-700 hover:bg-red-100">Este y los siguientes</button>}
+                <button type="button" onClick={() => setConfirmingDelete(false)} className="rounded-md px-2 py-1 font-semibold text-slate-600 hover:bg-white">Cancelar</button>
+              </div>
+            )}
             {linked.length > 0 && (
               <ul className="mt-2 space-y-1">
                 {linked.map((t) => (
@@ -850,6 +867,12 @@ function BlockRow({ block, tasks, clients, timeZone, onComplete, onEdit }: { blo
             )}
           </div>
         </div>
+        {editable && !confirmingDelete && (
+          <div className="flex shrink-0 items-center gap-1 sm:opacity-60 sm:group-hover:opacity-100 transition-opacity">
+            <button type="button" onClick={() => setEditing(true)} aria-label="Editar bloque" title="Editar bloque" className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-blue-700"><Edit2 className="h-3.5 w-3.5" /></button>
+            <button type="button" onClick={() => setConfirmingDelete(true)} aria-label="Eliminar bloque" title="Eliminar bloque" className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-red-50 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
+          </div>
+        )}
       </div>
     </li>
   );

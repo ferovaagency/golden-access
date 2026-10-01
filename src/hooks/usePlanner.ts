@@ -241,12 +241,24 @@ export function usePlanner() {
       setBusy(null);
     }
   }, [refresh]);
+  const updateBlock = useCallback(async (id: string, input: Parameters<typeof plannerService.updateBlock>[1]) => {
+    setBusy('block'); setError(null);
+    try { await plannerService.updateBlock(id, input); await refresh(); }
+    catch (err: any) { setError(err?.message || 'No fue posible editar el bloque.'); throw err; }
+    finally { setBusy(null); }
+  }, [refresh]);
+  const deleteBlock = useCallback(async (id: string, scope: 'one' | 'series' = 'one') => {
+    setBusy('block'); setError(null);
+    try { const n = await plannerService.deleteBlock(id, scope); await refresh(); return n; }
+    catch (err: any) { setError(err?.message || 'No fue posible eliminar el bloque.'); throw err; }
+    finally { setBusy(null); }
+  }, [refresh]);
   const dismissInsight = useCallback(async (id: string) => { await plannerService.dismissInsight(id); setInsights((prev) => prev.filter((i) => i.id !== id)); }, []);
 
   return {
     inbox, tasks, clients, services, blocks, insights, briefing, rescheduledCount, planNotice,
     loading, busy, error, date, setDate, timeZone,
     refresh, classify, previewCapture, commitCapture, planDay, regenerateInsights, regenerateBriefing,
-    completeTask, startTask, pauseTask, setStatus, setResponsable, updateTask, updateTaskDescription, postponeTask, deleteTask, createBlock, dismissInsight,
+    completeTask, startTask, pauseTask, setStatus, setResponsable, updateTask, updateTaskDescription, postponeTask, deleteTask, createBlock, updateBlock, deleteBlock, dismissInsight,
   };
 }
