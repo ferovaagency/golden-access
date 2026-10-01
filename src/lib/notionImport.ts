@@ -138,6 +138,8 @@ function draftDefaults(): Omit<PlannerDraft, 'line' | 'title' | 'detected_deadli
     risk_score: 3,
     execution_ease: 3,
     detected_project: null,
+    detected_service: null,
+    service_ref: null,
     scheduled_for: null,
     reasoning: 'Importado de Notion',
     confidence: 1,

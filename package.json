@@ -1,59 +1,59 @@
-{
-  "name": "ferova-os",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite --port=3000 --host=0.0.0.0",
-    "sitemap": "node scripts/generate-sitemap.mjs",
-    "prebuild": "npm run sitemap",
-    "build": "vite build",
-    "preview": "vite preview",
-    "clean": "rm -rf dist server.js",
-    "typecheck": "tsc --noEmit",
-    "lint": "npm run typecheck",
-    "test": "tsx tests/planService.test.ts && tsx tests/plannerScheduling.test.ts && tsx tests/calculations.test.ts && tsx tests/pricingIdeal.test.ts && tsx tests/roiCalc.test.ts && tsx tests/financialEngine.test.ts && tsx tests/paymentFees.test.ts && tsx tests/notionImport.test.ts && tsx tests/accessRules.test.ts && tsx tests/csvImport.test.ts && tsx tests/invoiceLines.test.ts && tsx tests/plantillaCargaInicial.test.ts",
-    "build:dev": "vite build --mode development"
-  },
-  "dependencies": {
-    "@ai-sdk/react": "^4.0.17",
-    "@fontsource/figtree": "^5.2.10",
-    "@fontsource/outfit": "^5.2.8",
-    "@lovable.dev/cloud-auth-js": "^1.1.2",
-    "@mdx-js/react": "^3.1.1",
-    "@mdx-js/rollup": "^3.1.1",
-    "@sentry/react": "^10.70.0",
-    "@supabase/supabase-js": "^2.110.0",
-    "@tailwindcss/vite": "^4.1.14",
-    "@types/qrcode": "^1.5.6",
-    "@vitejs/plugin-react": "^5.0.4",
-    "ai": "^7.0.16",
-    "lucide-react": "^0.546.0",
-    "motion": "^12.23.24",
-    "qrcode": "^1.5.4",
-    "react": "^19.0.1",
-    "react-dom": "^19.0.1",
-    "react-markdown": "^10.1.0",
-    "react-router-dom": "6",
-    "recharts": "^3.8.1",
-    "vite": "^6.2.3",
-    "zod": "^4.4.3"
-  },
-  "devDependencies": {
-    "@lovable.dev/vite-plugin-dev-server-bridge": "^1.0.2",
-    "@lovable.dev/vite-plugin-hmr-gate": "^1.6.4",
-    "@types/express": "^4.17.21",
-    "@types/node": "^22.14.0",
-    "@types/react-dom": "^19.2.3",
-    "autoprefixer": "^10.4.21",
-    "esbuild": "^0.25.0",
-    "lovable-tagger": "^1.3.3",
-    "tailwindcss": "^4.1.14",
-    "tsx": "^4.21.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.3"
-  },
-  "overrides": {
-    "node-domexception": "file:./node-domexception-mock"
-  }
-}
+{
+  "name": "ferova-os",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port=3000 --host=0.0.0.0",
+    "sitemap": "node scripts/generate-sitemap.mjs",
+    "prebuild": "npm run sitemap",
+    "build": "vite build",
+    "preview": "vite preview",
+    "clean": "rm -rf dist server.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "npm run typecheck",
+    "test": "tsx tests/planService.test.ts && tsx tests/plannerScheduling.test.ts && tsx tests/calculations.test.ts && tsx tests/pricingIdeal.test.ts && tsx tests/roiCalc.test.ts && tsx tests/financialEngine.test.ts && tsx tests/paymentFees.test.ts && tsx tests/notionImport.test.ts && tsx tests/accessRules.test.ts && tsx tests/csvImport.test.ts && tsx tests/invoiceLines.test.ts && tsx tests/plantillaCargaInicial.test.ts && tsx tests/taskParser.test.ts",
+    "build:dev": "vite build --mode development"
+  },
+  "dependencies": {
+    "@ai-sdk/react": "^4.0.17",
+    "@fontsource/figtree": "^5.2.10",
+    "@fontsource/outfit": "^5.2.8",
+    "@lovable.dev/cloud-auth-js": "^1.1.2",
+    "@mdx-js/react": "^3.1.1",
+    "@mdx-js/rollup": "^3.1.1",
+    "@sentry/react": "^10.70.0",
+    "@supabase/supabase-js": "^2.110.0",
+    "@tailwindcss/vite": "^4.1.14",
+    "@types/qrcode": "^1.5.6",
+    "@vitejs/plugin-react": "^5.0.4",
+    "ai": "^7.0.16",
+    "lucide-react": "^0.546.0",
+    "motion": "^12.23.24",
+    "qrcode": "^1.5.4",
+    "react": "^19.0.1",
+    "react-dom": "^19.0.1",
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "6",
+    "recharts": "^3.8.1",
+    "vite": "^6.2.3",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@lovable.dev/vite-plugin-dev-server-bridge": "^1.0.2",
+    "@lovable.dev/vite-plugin-hmr-gate": "^1.6.4",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.14.0",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.4.21",
+    "esbuild": "^0.25.0",
+    "lovable-tagger": "^1.3.3",
+    "tailwindcss": "^4.1.14",
+    "tsx": "^4.21.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.3"
+  },
+  "overrides": {
+    "node-domexception": "file:./node-domexception-mock"
+  }
+}

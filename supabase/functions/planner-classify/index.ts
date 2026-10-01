@@ -10,6 +10,7 @@ import { z } from "npm:zod";
 import { createLovableAiGatewayProvider } from "../_shared/ai-gateway.ts";
 import { logAiUsage, sumUsage } from "../_shared/ai-usage.ts";
 import { financialImpactForClient, loadClientRevenueScores } from "../_shared/client-revenue.ts";
+import { matchClientName, parseCapture, todayInZone } from "../_shared/task-parser.ts";
 
 const ClassifySchema = z.object({
   detected_type: z.enum(["task","reminder","project","idea","note","purchase","event","client","finance","unknown"]),
@@ -27,6 +28,16 @@ const ClassifySchema = z.object({
   title: z.string(),
   reasoning: z.string(),
   confidence: z.number(),
+});
+
+/** Interpretación de TODO el texto en una sola llamada: varias tareas por línea,
+ *  cliente y fecha heredados por línea, servicio detectado. */
+const BatchSchema = z.object({
+  tareas: z.array(ClassifySchema.extend({
+    detected_service: z.string().nullable(),
+    /** Línea original de la que salió, para la bandeja. */
+    source_line: z.string(),
+  })).max(40),
 });
 
 const ACTIONABLE = new Set(["task","reminder","event","purchase","finance"]);
@@ -75,13 +86,27 @@ Deno.serve(async (req) => {
     // - Duración histórica real por categoría, para anclar la estimación de
     //   tiempo a lo que de verdad se demora esta persona, no a un promedio
     //   genérico.
-    const [{ data: clientRows }, { data: doneTasks }, revenueScores] = await Promise.all([
+    const [{ data: clientRows }, { data: serviceRows }, { data: doneTasks }, { data: profile }, revenueScores] = await Promise.all([
       admin.from("finance_clientes").select("id,nombre").eq("user_id", userId),
-      admin.from("planner_tasks").select("category,client_ref,actual_minutes").eq("user_id", userId).eq("status", "done").not("actual_minutes", "is", null).limit(300),
+      admin.from("finance_servicios").select("id,nombre").eq("user_id", userId),
+      admin.from("planner_tasks").select("category,client_ref,service_ref,actual_minutes").eq("user_id", userId).eq("status", "done").not("actual_minutes", "is", null).limit(300),
+      admin.from("business_profile").select("zona_horaria").eq("user_id", userId).maybeSingle(),
       // Pareto real: impacto financiero por cliente según ventas de los últimos 90 días.
       loadClientRevenueScores(admin, userId),
     ]);
     const clients = (clientRows || []) as { id: string; nombre: string }[];
+    const services = (serviceRows || []) as { id: string; nombre: string }[];
+    // "Mañana" se calcula en la zona de la persona. A las 10 pm en Bogotá ya es
+    // el día siguiente en UTC: con la fecha UTC, "mañana" caía un día tarde.
+    const timeZone = (profile?.zona_horaria as string) || "America/Bogota";
+    const today = todayInZone(timeZone);
+    // Duración real por servicio: es el mejor predictor de cuánto toma una
+    // tarea (un reporte mensual de SEO se parece a otro reporte mensual de SEO).
+    const avgByService: Record<string, number> = {};
+    for (const service of services) {
+      const history = (doneTasks || []).filter((task: any) => task.service_ref === service.id) as { actual_minutes: number }[];
+      if (history.length) avgByService[service.id] = Math.max(5, Math.round(history.reduce((sum, task) => sum + task.actual_minutes, 0) / history.length / 5) * 5);
+    }
     const avgByCategory: Record<string, number> = {};
     const sums: Record<string, { total: number; count: number }> = {};
     for (const t of (doneTasks || []) as { category: string; actual_minutes: number }[]) {
@@ -97,14 +122,9 @@ Deno.serve(async (req) => {
       if (history.length) avgByClient[client.nombre] = Math.round(history.reduce((sum, task) => sum + task.actual_minutes, 0) / history.length);
     }
 
-    function resolveClientRef(detectedName: string | null): string | null {
-      if (!detectedName) return null;
-      const normalized = detectedName.trim().toLowerCase();
-      const exact = clients.find((c) => c.nombre.trim().toLowerCase() === normalized);
-      if (exact) return exact.id;
-      const partial = clients.find((c) => normalized.includes(c.nombre.trim().toLowerCase()) || c.nombre.trim().toLowerCase().includes(normalized));
-      return partial?.id || null;
-    }
+    // Tolerante a errores de tecleo ("roecket" → El Rocket); null si hay empate.
+    const resolveClientRef = (detectedName: string | null): string | null => matchClientName(detectedName, clients)?.id ?? null;
+    const resolveServiceRef = (detectedName: string | null): string | null => matchClientName(detectedName, services)?.id ?? null;
 
     const clientsContext = clients.length ? `Clientes reales del negocio (usa EXACTAMENTE uno de estos nombres si el texto se refiere a alguno; si no coincide con ninguno, deja detected_client en null): ${clients.map((c) => c.nombre).join(", ")}.` : "Todavía no hay clientes cargados en el sistema.";
     const durationContext = Object.keys(avgByCategory).length
@@ -134,6 +154,8 @@ Deno.serve(async (req) => {
       detected_client: string | null;
       detected_project: string | null;
       client_ref: string | null;
+      detected_service: string | null;
+      service_ref: string | null;
       scheduled_for: string | null;
       reasoning: string;
       confidence: number;
@@ -159,96 +181,140 @@ Deno.serve(async (req) => {
           title: String(d.title || d.line || "").slice(0, 300),
           detected_duration_min: Math.min(600, Math.max(5, Number(d.detected_duration_min) || 30)),
           client_ref: d.client_ref || null,
+          detected_service: d.detected_service || null,
+          service_ref: d.service_ref || null,
           scheduled_for: d.scheduled_for || null,
         });
       }
     } else {
-      // Prosa -> tareas. Hasta aquí una línea era una tarea, así que "mañana
-      // llamo a Juan y el viernes entrego la propuesta de Acme" se guardaba
-      // como UNA tarea con el párrafo entero de título. Cuando lo que llega no
-      // parece una lista (pocas líneas y texto largo), primero se le pide al
-      // modelo que separe las tareas y luego se clasifica cada una.
-      let entradas = entries;
+      // Modelo de interpretación (ver Notion · Bandeja de conocimiento IA ·
+      // "Planner · modelo de interpretación de capturas"):
+      //   1. Primero un parser determinista separa líneas en tareas, hereda el
+      //      cliente del prefijo "Cliente:" y la fecha del final de la línea,
+      //      y resuelve clientes con tolerancia a errores de tecleo.
+      //   2. Si hay IA, recibe el texto completo MÁS ese pre-análisis y
+      //      devuelve todas las tareas en una sola llamada (categoría,
+      //      duración, prioridad, servicio, puntajes). Una tarea por línea era
+      //      el error de antes: "Cliente: a, b y c para mañana" son tres.
+      //   3. Si la IA falla o no está configurada, el pre-análisis ES el
+      //      resultado: cliente y fecha correctos, el resto en valores neutros.
       const textoCompleto = entries.join("\n").trim();
-      const pareceProsa = entries.length <= 3 && textoCompleto.length > 80;
-      if (gateway && pareceProsa) {
+      const parsed = parseCapture(textoCompleto, today).slice(0, 40);
+      const preAnalysis = parsed.map((t, index) => `${index + 1}. "${t.title}" | cliente: ${t.client_text ?? "—"} | fecha: ${t.deadline ?? "—"} | línea: "${t.line}"`).join("\n");
+
+      type AiTask = z.infer<typeof BatchSchema>["tareas"][number];
+      let aiTasks: AiTask[] | null = null;
+      if (gateway) {
         try {
           const { output, usage } = await generateText({
             model: gateway("google/gemini-2.5-flash"),
-            output: Output.object({ schema: z.object({ tareas: z.array(z.string()).max(30) }) }),
-            system: "Extraes las tareas accionables de un texto libre y devuelves una por elemento, en el idioma original. Cada tarea debe entenderse sola, conservando su fecha, cliente o detalle si el texto los menciona. NO inventes tareas que no estén; NO partas una tarea en pasos; si el texto describe una sola cosa, devuelve un solo elemento.",
-            prompt: textoCompleto,
+            output: Output.object({ schema: BatchSchema }),
+            system: `Eres la asistente ejecutiva de una dueña de agencia. Convierte su captura (brain dump) en tareas accionables. Responde en el idioma del texto.
+REGLAS DE INTERPRETACIÓN:
+- Una línea puede traer varias tareas separadas por comas, punto y coma o "y". Devuelve una por tarea. NO inventes tareas ni las partas en pasos.
+- Lo que va antes de ":" o ";" al inicio de una línea es el cliente de TODAS las tareas de esa línea.
+- Una fecha al final de la línea ("para mañana", "el viernes", "antes del 15/10") aplica a todas las tareas de la línea que no tengan la suya. Fechas relativas se calculan desde HOY = ${today} (zona ${timeZone}). detected_deadline en formato YYYY-MM-DD o null.
+- El título es la tarea sin el nombre del cliente ni la fecha ("Reporte mensual", no "El Rocket: reporte mensual para mañana").
+- detected_client: usa EXACTAMENTE uno de los clientes reales aunque esté mal escrito en el texto; si no corresponde a ninguno, null. ${clientsContext}
+- detected_service: el servicio real que mejor describe la tarea, EXACTAMENTE uno de: ${services.length ? services.map((x) => x.nombre).join(", ") : "(no hay servicios cargados: deja null)"}; null si ninguno aplica.
+- Duración realista en minutos (5-240). ${durationContext} ${clientDurationContext}
+- priority=urgent sólo con entrega < 48 h o "urgente/ya". Categorías: deep_work=foco/escritura/diseño, admin=papeleo/impuestos/correos, calls=llamadas/whatsapp/reunión, creative=ideas/contenido, learning=leer/estudiar, personal=vida.
+- financial_impact, client_impact, risk_score y execution_ease de 1 a 5 sólo con evidencia explícita; 3 si no la hay. Son sugerencias editables.
+- source_line: la línea original de la que salió la tarea. confidence 0-1.`,
+            prompt: `TEXTO:\n"""${textoCompleto}"""\n\nPRE-ANÁLISIS DETERMINISTA (úsalo como base; corrige sólo si el texto lo contradice):\n${preAnalysis || "(sin tareas detectadas)"}`,
           });
           usos.push(usage);
-          const extraidas = (output as { tareas?: string[] })?.tareas?.map((t) => t.trim()).filter(Boolean) ?? [];
-          if (extraidas.length) entradas = extraidas;
+          const tareas = (output as z.infer<typeof BatchSchema>)?.tareas ?? [];
+          if (tareas.length) aiTasks = tareas;
         } catch (e) {
-          // Si la extracción falla se sigue con el texto tal cual: peor
-          // resultado, pero nunca perder lo que la persona escribió.
-          console.error("[planner-classify] extracción de prosa", e);
+          console.error("[planner-classify] interpretación con IA", e);
         }
       }
 
-      for (const line of entradas.slice(0, 20)) {
-        let extracted: z.infer<typeof ClassifySchema> | null = null;
-        try {
-          if (!gateway) throw new Error("AI gateway is not configured");
-          const { output, usage } = await generateText({
-            model: gateway("google/gemini-2.5-flash"),
-            output: Output.object({ schema: ClassifySchema }),
-            system: `You are an executive assistant that classifies brain-dump lines from a business owner. Respond in the same language as the input. Estimate a realistic duration (5-240 min). Set priority=urgent only for explicit deadlines <48h or 'urgent/asap'. Detect deadline as ISO if the text mentions a date/time. Extract client/project names if mentioned. Category deep_work=focus/writing/design, admin=paperwork/taxes/emails, calls=phone/whatsapp/meet, creative=ideas/content, learning=read/study, personal=life. Confidence 0-1. Score financial_impact, client_impact, risk_score and execution_ease from 1 (low) to 5 (high) only from explicit evidence in the text; use 3 when evidence is missing. These are editable suggestions, not facts.\n${clientsContext}\n${durationContext}\n${clientDurationContext}`,
-            prompt: `Line: """${line}"""\nToday: ${new Date().toISOString()}`,
-          });
-          extracted = output as any;
-          usos.push(usage);
-        } catch (e) {
-          console.error("[planner-classify] model error", e);
-        }
-        const fallback = {
-          detected_type: "task" as const,
-          detected_priority: "medium" as const,
-          detected_energy: "medium" as const,
-          detected_category: "admin" as const,
-          detected_duration_min: 30,
-          financial_impact: 3,
-          client_impact: 3,
-          risk_score: 3,
-          execution_ease: 3,
-          detected_deadline: null,
-          detected_client: null,
-          detected_project: null,
-          title: line,
-          reasoning: key ? "Fallback classification after AI response failure." : "Clasificación básica: la IA aún no está configurada en este despliegue.",
-          confidence: 0.3,
-        };
-        const c = extracted ?? fallback;
-        const clientRef = resolveClientRef(c.detected_client);
-        // Dinero real manda sobre la adivinanza del texto. La IA sólo conserva
-        // su 5 cuando el texto lo dice explícitamente (cobrar, cerrar, cotizar).
+      type Classified = z.infer<typeof ClassifySchema>;
+      const baseline: Pick<Classified, "detected_type" | "detected_priority" | "detected_energy" | "detected_category" | "detected_duration_min" | "financial_impact" | "client_impact" | "risk_score" | "execution_ease" | "detected_project" | "confidence"> = {
+        detected_type: "task",
+        detected_priority: "medium",
+        detected_energy: "medium",
+        detected_category: "admin",
+        detected_duration_min: 30,
+        financial_impact: 3,
+        client_impact: 3,
+        risk_score: 3,
+        execution_ease: 3,
+        detected_project: null,
+        confidence: 0.5,
+      };
+      const pushDraft = (c: {
+        line: string; title: string; detected_client: string | null; detected_service: string | null; detected_deadline: string | null; reasoning: string;
+      } & Partial<typeof baseline>) => {
+        const merged = { ...baseline, ...c };
+        const clientRef = resolveClientRef(merged.detected_client);
+        const serviceRef = resolveServiceRef(merged.detected_service);
+        // El historial del servicio pesa más que cualquier estimación de texto.
+        const duration = serviceRef && avgByService[serviceRef] ? avgByService[serviceRef] : merged.detected_duration_min;
         const revenueImpact = financialImpactForClient(revenueScores, clientRef);
-        const financialImpact = revenueImpact === null ? c.financial_impact : Math.max(revenueImpact, c.financial_impact >= 5 ? 5 : 1);
+        const financialImpact = revenueImpact === null ? merged.financial_impact : Math.max(revenueImpact, merged.financial_impact >= 5 ? 5 : 1);
         drafts.push({
-          line,
-          title: c.title || line,
-          detected_type: c.detected_type,
-          detected_priority: c.detected_priority,
-          detected_energy: c.detected_energy,
-          detected_category: c.detected_category,
-          detected_duration_min: c.detected_duration_min,
+          line: merged.line,
+          title: (merged.title || merged.line).slice(0, 300),
+          detected_type: merged.detected_type,
+          detected_priority: merged.detected_priority,
+          detected_energy: merged.detected_energy,
+          detected_category: merged.detected_category,
+          detected_duration_min: Math.min(600, Math.max(5, Number(duration) || 30)),
           financial_impact: financialImpact,
-          client_impact: c.client_impact,
-          risk_score: c.risk_score,
-          execution_ease: c.execution_ease,
-          detected_deadline: c.detected_deadline,
-          detected_client: c.detected_client,
-          detected_project: c.detected_project,
+          client_impact: merged.client_impact,
+          risk_score: merged.risk_score,
+          execution_ease: merged.execution_ease,
+          detected_deadline: merged.detected_deadline,
+          detected_client: clientRef ? clients.find((x) => x.id === clientRef)?.nombre ?? merged.detected_client : merged.detected_client,
+          detected_project: merged.detected_project,
           client_ref: clientRef,
+          detected_service: serviceRef ? services.find((x) => x.id === serviceRef)?.nombre ?? merged.detected_service : merged.detected_service,
+          service_ref: serviceRef,
           // Una fecha detectada es una intención de agenda, no sólo una fecha
-          // límite: así “el próximo viernes” queda programado de inmediato.
-          scheduled_for: c.detected_deadline ? c.detected_deadline.slice(0, 10) : null,
-          reasoning: c.reasoning,
-          confidence: c.confidence,
+          // límite: así "el próximo viernes" queda programado de inmediato.
+          scheduled_for: merged.detected_deadline ? merged.detected_deadline.slice(0, 10) : null,
+          reasoning: merged.reasoning,
+          confidence: merged.confidence,
         });
+      };
+
+      if (aiTasks) {
+        for (const t of aiTasks) {
+          pushDraft({
+            line: t.source_line || t.title,
+            title: t.title,
+            detected_type: t.detected_type,
+            detected_priority: t.detected_priority,
+            detected_energy: t.detected_energy,
+            detected_category: t.detected_category,
+            detected_duration_min: t.detected_duration_min,
+            financial_impact: t.financial_impact,
+            client_impact: t.client_impact,
+            risk_score: t.risk_score,
+            execution_ease: t.execution_ease,
+            detected_deadline: t.detected_deadline ? t.detected_deadline.slice(0, 10) : null,
+            detected_client: t.detected_client,
+            detected_service: t.detected_service,
+            detected_project: t.detected_project,
+            reasoning: t.reasoning,
+            confidence: t.confidence,
+          });
+        }
+      } else {
+        for (const t of parsed) {
+          pushDraft({
+            line: t.line,
+            title: t.title,
+            detected_client: t.client_text,
+            detected_service: null,
+            detected_deadline: t.deadline,
+            reasoning: key ? "Interpretación básica: la IA no respondió; cliente y fecha salen del texto." : "Interpretación básica: la IA aún no está configurada en este despliegue.",
+            confidence: 0.4,
+          });
+        }
       }
     }
 
@@ -260,7 +326,7 @@ Deno.serve(async (req) => {
     // Modo preview: se devuelve la interpretación sin escribir absolutamente
     // nada, junto con los clientes reales para que la UI ofrezca el selector.
     if (body?.preview === true) {
-      return json({ ok: true, preview: true, drafts, clients });
+      return json({ ok: true, preview: true, drafts, clients, services, service_avg_minutes: avgByService });
     }
 
     // Persiste un borrador y devuelve el par inbox↔tarea, o el motivo del fallo.
@@ -304,6 +370,7 @@ Deno.serve(async (req) => {
           scheduled_for: c.scheduled_for,
           project_ref: c.detected_project,
           client_ref: c.client_ref,
+          service_ref: c.service_ref || null,
           source_inbox_id: inboxRow.id,
           ai_notes: c.reasoning,
         }).select("*").single();

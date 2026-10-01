@@ -43,6 +43,8 @@ export interface PlannerDraft {
   detected_client: string | null;
   detected_project: string | null;
   client_ref: string | null;
+  detected_service: string | null;
+  service_ref: string | null;
   scheduled_for: string | null;
   reasoning: string;
   confidence: number;
@@ -667,7 +669,7 @@ export const plannerService = {
   },
   /** Interpreta el texto sin escribir nada: la UI confirma o corrige antes de persistir. */
   async previewClassify(text: string) {
-    return invokeAi<{ ok: boolean; drafts: PlannerDraft[]; clients: PlannerClient[] }>({
+    return invokeAi<{ ok: boolean; drafts: PlannerDraft[]; clients: PlannerClient[]; services?: PlannerServiceOption[]; service_avg_minutes?: Record<string, number> }>({
       functionName: 'planner-classify',
       body: { text, preview: true },
     });

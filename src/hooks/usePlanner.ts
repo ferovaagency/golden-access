@@ -75,12 +75,16 @@ export function usePlanner() {
    * Paso 1 de la captura natural: interpreta el texto sin crear nada, para que
    * la persona confirme o corrija cliente, fecha y duración.
    */
+  const [serviceAvgMinutes, setServiceAvgMinutes] = useState<Record<string, number>>({});
   const previewCapture = useCallback(async (text: string): Promise<PlannerDraft[]> => {
     if (!text.trim()) return [];
     setBusy('classify'); setError(null);
     try {
       const { data, error: err } = await plannerService.previewClassify(text);
       if (err) { setError(err.message); return []; }
+      // Duración real por servicio: la revisión la usa para recalcular la
+      // duración cuando la persona cambia el servicio de una tarea.
+      if (data?.service_avg_minutes) setServiceAvgMinutes(data.service_avg_minutes);
       return data?.drafts || [];
     } catch (err: any) {
       setError(err?.message || 'No fue posible interpretar el texto.');
@@ -256,7 +260,7 @@ export function usePlanner() {
   const dismissInsight = useCallback(async (id: string) => { await plannerService.dismissInsight(id); setInsights((prev) => prev.filter((i) => i.id !== id)); }, []);
 
   return {
-    inbox, tasks, clients, services, blocks, insights, briefing, rescheduledCount, planNotice,
+    inbox, tasks, clients, services, serviceAvgMinutes, blocks, insights, briefing, rescheduledCount, planNotice,
     loading, busy, error, date, setDate, timeZone,
     refresh, classify, previewCapture, commitCapture, planDay, regenerateInsights, regenerateBriefing,
     completeTask, startTask, pauseTask, setStatus, setResponsable, updateTask, updateTaskDescription, postponeTask, deleteTask, createBlock, updateBlock, deleteBlock, dismissInsight,

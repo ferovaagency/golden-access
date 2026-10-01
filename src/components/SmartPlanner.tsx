@@ -479,11 +479,28 @@ export default function SmartPlanner() {
                         {p.clients.map((client) => <option key={client.id} value={client.id}>{client.nombre}</option>)}
                       </select>
                     </label>
-                    <label className="text-[10px] font-medium text-slate-500">Fecha
+                    <label className="text-[10px] font-medium text-slate-500">Servicio
+                      <select
+                        value={draft.service_ref || ''}
+                        onChange={(event) => {
+                          const serviceRef = event.target.value || null;
+                          // El historial del servicio es el mejor predictor de
+                          // duración: al elegirlo se propone lo que ha tomado de verdad.
+                          const learned = serviceRef ? p.serviceAvgMinutes[serviceRef] : undefined;
+                          patchDraft(index, { service_ref: serviceRef, ...(learned ? { detected_duration_min: learned } : {}) });
+                        }}
+                        className="mt-0.5 block rounded-md border border-slate-200 bg-white px-2 py-1 text-xs outline-none focus:border-blue-400"
+                        title="Con el servicio, la duración sale de lo que te ha tomado de verdad ese tipo de trabajo"
+                      >
+                        <option value="">Sin servicio</option>
+                        {p.services.map((service) => <option key={service.id} value={service.id}>{service.nombre}{p.serviceAvgMinutes[service.id] ? ` · ~${p.serviceAvgMinutes[service.id]} min` : ''}</option>)}
+                      </select>
+                    </label>
+                    <label className="text-[10px] font-medium text-slate-500">Fecha de entrega
                       <input
                         type="date"
-                        value={draft.scheduled_for?.slice(0, 10) || ''}
-                        onChange={(event) => patchDraft(index, { scheduled_for: event.target.value || null })}
+                        value={draft.scheduled_for?.slice(0, 10) || draft.detected_deadline?.slice(0, 10) || ''}
+                        onChange={(event) => patchDraft(index, { scheduled_for: event.target.value || null, detected_deadline: event.target.value || null })}
                         className="mt-0.5 block rounded-md border border-slate-200 bg-white px-2 py-1 text-xs outline-none focus:border-blue-400"
                       />
                     </label>

@@ -80,7 +80,7 @@ function dateKey(value: string | null | undefined) {
 }
 
 /** NOTION_OWNER_ACCOUNT_ID puede ser el UUID de la cuenta o su correo de acceso. */
-async function isOwnerAccount(admin: ReturnType<typeof createClient>, accountId: string, owner: string): Promise<boolean> {
+async function isOwnerAccount(admin: { auth: { admin: { getUserById: (id: string) => Promise<{ data: { user: { email?: string | null } | null } | null; error: unknown }> } } }, accountId: string, owner: string): Promise<boolean> {
   const wanted = owner.trim().toLowerCase();
   if (!wanted) return false;
   if (accountId.toLowerCase() === wanted) return true;
