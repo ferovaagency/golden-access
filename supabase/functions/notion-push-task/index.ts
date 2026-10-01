@@ -9,7 +9,8 @@
 //   NOTION_API_KEY                   token de una integración interna de Notion
 //                                    con acceso a la base `Pendientes`.
 //   NOTION_PENDIENTES_DATA_SOURCE_ID id del data source de `Pendientes`.
-//   NOTION_OWNER_ACCOUNT_ID          cuenta de Ferova One cuyo planner se espeja.
+//   NOTION_OWNER_ACCOUNT_ID          cuenta de Ferova One cuyo planner se espeja:
+//                                    el id de usuario (UUID) o su correo de acceso.
 //                                    Sin esto NO se publica nada: la base de
 //                                    Notion es de una sola persona y el SaaS es
 //                                    multi-cuenta.
@@ -78,6 +79,17 @@ function dateKey(value: string | null | undefined) {
   return match?.[1] ?? null;
 }
 
+/** NOTION_OWNER_ACCOUNT_ID puede ser el UUID de la cuenta o su correo de acceso. */
+async function isOwnerAccount(admin: ReturnType<typeof createClient>, accountId: string, owner: string): Promise<boolean> {
+  const wanted = owner.trim().toLowerCase();
+  if (!wanted) return false;
+  if (accountId.toLowerCase() === wanted) return true;
+  if (!wanted.includes("@")) return false;
+  const { data, error } = await admin.auth.admin.getUserById(accountId);
+  if (error || !data?.user) return false;
+  return (data.user.email || "").toLowerCase() === wanted;
+}
+
 async function notion(path: string, init: RequestInit & { key: string }) {
   const response = await fetch(`${NOTION_API}${path}`, {
     ...init,
@@ -131,7 +143,9 @@ Deno.serve(async (req) => {
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { accountId } = await resolveActiveContext(admin, userData.user.id);
-    if (accountId !== ownerAccount) return json({ ok: true, skipped: true, message: "Esta cuenta no espeja su planner en Notion." });
+    if (!(await isOwnerAccount(admin, accountId, ownerAccount))) {
+      return json({ ok: true, skipped: true, message: "Esta cuenta no espeja su planner en Notion." });
+    }
 
     const body = await req.json().catch(() => ({}));
     const action: "upsert" | "archive" = body?.action === "archive" ? "archive" : "upsert";
