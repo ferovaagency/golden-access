@@ -364,19 +364,25 @@ export const plannerService = {
    * cancelada se quedaba estorbando en la agenda para siempre.
    */
   async deleteBlock(id: string, scope: 'one' | 'series' = 'one'): Promise<number> {
-    const { data: block, error: readError } = await anyDb().from('planner_blocks').select('id,title,source,starts_at,recurrence_days').eq('id', id).maybeSingle();
+    const { data: block, error: readError } = await anyDb().from('planner_blocks').select('id,title,source,starts_at,recurrence_days,task_ids').eq('id', id).maybeSingle();
     if (readError) throw readError;
     if (!block) return 0;
     const days: number[] = block.recurrence_days || [];
-    if (scope === 'series' && days.length) {
+    const taskId: string | null = (block.task_ids || [])[0] || null;
+    // Serie = bloque manual repetido (mismos días) o tarea recurrente (mismo
+    // task_id con origen "recurrence"). Un bloque de tarea suelto no es serie.
+    const esSerie = days.length > 0 || block.source === 'recurrence';
+    if (scope === 'series' && esSerie) {
       const { data: siblings, error: siblingsError } = await anyDb().from('planner_blocks')
-        .select('id,recurrence_days')
+        .select('id,recurrence_days,task_ids')
         .eq('source', block.source)
         .eq('title', block.title)
         .gte('starts_at', block.starts_at);
       if (siblingsError) throw siblingsError;
       const sameSeries = (siblings || [])
-        .filter((row: { id: string; recurrence_days: number[] | null }) => JSON.stringify(row.recurrence_days || []) === JSON.stringify(days))
+        .filter((row: { id: string; recurrence_days: number[] | null; task_ids: string[] | null }) =>
+          (days.length > 0 && JSON.stringify(row.recurrence_days || []) === JSON.stringify(days))
+          || (block.source === 'recurrence' && !!taskId && (row.task_ids || []).includes(taskId)))
         .map((row: { id: string }) => row.id);
       const { error } = await anyDb().from('planner_blocks').delete().in('id', sameSeries);
       if (error) throw error;
@@ -681,6 +687,19 @@ export const plannerService = {
       body: { drafts },
     });
   },
+  /**
+   * Estado de Google Calendar para el encabezado del Planner. Antes, si la
+   * sesión de Google expiraba, `calendarBusyBlocks` devolvía [] en silencio y
+   * el planner programaba encima de las reuniones sin avisar.
+   */
+  async calendarStatus(date: string): Promise<{ estado: 'conectado' | 'sin_conexion' | 'error'; eventos: number; detalle: string | null }> {
+    const { getAccessToken } = await import('./supabase');
+    const accessToken = getAccessToken();
+    if (!accessToken) return { estado: 'sin_conexion', eventos: 0, detalle: 'Inicia sesión con Google para reservar tus reuniones.' };
+    const { data, error } = await supabase.functions.invoke('planner-calendar-busy', { body: { date, access_token: accessToken } });
+    if (error || !data?.ok) return { estado: 'error', eventos: 0, detalle: data?.message || error?.message || 'No se pudieron leer los eventos.' };
+    return { estado: 'conectado', eventos: (data.blocks || []).length, detalle: null };
+  },
   async calendarBusyBlocks(date: string): Promise<PlannerBusyBlock[]> {
     const { getAccessToken } = await import('./supabase');
     const accessToken = getAccessToken();
@@ -778,7 +797,11 @@ export const plannerService = {
           ...calendarBlocks,
         ].map((block: any) => [zonedMinute(new Date(block.starts_at), timeZone), zonedMinute(new Date(block.ends_at), timeZone)] as [number, number]);
         const overlaps = (from: number, to: number) => busy.some(([busyFrom, busyTo]) => from < busyTo && to > busyFrom);
-        let cursor = planningDate === today ? Math.max(start, Math.ceil(zonedMinute(new Date(), timeZone) / 15) * 15) : start;
+        // Granularidad de 5 min y respiro de 10 min entre bloques: una tarea de
+        // 10 min ya no ocupa 15, y dos bloques seguidos no quedan pegados.
+        const SLOT = 5;
+        const BUFFER = 10;
+        let cursor = planningDate === today ? Math.max(start, Math.ceil(zonedMinute(new Date(), timeZone) / SLOT) * SLOT) : start;
 
         for (let index = 0; index < remaining.length;) {
           const task = remaining[index];
@@ -788,14 +811,14 @@ export const plannerService = {
             index += 1;
             continue;
           }
-          const duration = Math.max(15, Math.min(120, Math.ceil(Number(task.estimated_minutes || 30) / 15) * 15));
-          while (cursor + duration <= end && overlaps(cursor, cursor + duration)) cursor += 15;
+          const duration = Math.max(10, Math.min(120, Math.ceil(Number(task.estimated_minutes || 30) / SLOT) * SLOT));
+          while (cursor + duration <= end && overlaps(cursor, cursor + duration)) cursor += SLOT;
           if (cursor + duration > end) break;
           const startsAt = localPlannerTimeToIso(`${planningDate}T${String(Math.floor(cursor / 60)).padStart(2, '0')}:${String(cursor % 60).padStart(2, '0')}:00`, timeZone);
           const endsAt = localPlannerTimeToIso(`${planningDate}T${String(Math.floor((cursor + duration) / 60)).padStart(2, '0')}:${String((cursor + duration) % 60).padStart(2, '0')}:00`, timeZone);
           planned.push({ user_id: user.id, title: task.title, category: task.category, starts_at: startsAt, ends_at: endsAt, task_ids: [task.id], source: 'planner-rules', notes: `Priority Score ${plannerPriorityScore(task, targetDate).toFixed(2)} · orden Pareto por fecha de entrega, impacto y veces pospuesta; respeta horario laboral, zona horaria y bloques protegidos.`, protected: false });
           busy.push([cursor, cursor + duration]);
-          cursor += duration;
+          cursor += duration + BUFFER;
           remaining.splice(index, 1);
         }
       }

@@ -168,8 +168,21 @@ export default function SmartPlanner() {
   };
 
   /** Cierra la tarea y deja visible el estimado vs. real y el registro de Horas. */
+  // Aprendizaje de tiempos: si la tarea se completa sin haber corrido el
+  // cronómetro, se pregunta cuánto tomó de verdad. Antes se asumía el estimado
+  // y el "factor realidad" nunca aprendía nada de esas tareas.
+  const [askingMinutes, setAskingMinutes] = useState<{ id: string; title: string; estimated: number; value: string } | null>(null);
   const handleComplete = async (id: string) => {
-    const result = await p.completeTask(id);
+    const task = p.tasks.find((t) => t.id === id);
+    const medido = Number(task?.actual_minutes ?? 0) > 0 || !!task?.started_at;
+    if (task && !medido) {
+      setAskingMinutes({ id, title: task.title, estimated: task.estimated_minutes || 30, value: String(task.estimated_minutes || 30) });
+      return;
+    }
+    await finishComplete(id);
+  };
+  const finishComplete = async (id: string, actualMinutes?: number) => {
+    const result = await p.completeTask(id, actualMinutes);
     if (!result) return;
     const parts: string[] = [];
     if (result.estimatedMinutes != null) parts.push(`estimado ${result.estimatedMinutes} min`);
@@ -306,6 +319,17 @@ export default function SmartPlanner() {
           <p className="text-sm text-slate-500 mt-1">Vacía tu mente. El sistema clasifica, prioriza y arma bloques por energía.</p>
         </div>
         <div className="flex items-center gap-2">
+          {p.calendar && (
+            <button
+              type="button"
+              onClick={() => void p.checkCalendar()}
+              title={p.calendar.detalle || (p.calendar.estado === 'conectado' ? `Google Calendar conectado: ${p.calendar.eventos} evento(s) este día se respetan al organizar.` : '')}
+              className={`inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-2 text-[11px] font-semibold ${p.calendar.estado === 'conectado' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : p.calendar.estado === 'error' ? 'border-red-200 bg-red-50 text-red-700' : 'border-slate-200 bg-white text-slate-500'}`}
+            >
+              <CalendarDays className="h-3.5 w-3.5" />
+              {p.calendar.estado === 'conectado' ? `Calendar · ${p.calendar.eventos}` : p.calendar.estado === 'error' ? 'Calendar sin leer' : 'Calendar no conectado'}
+            </button>
+          )}
           <input
             type="date"
             value={p.date}
@@ -426,6 +450,30 @@ export default function SmartPlanner() {
       {plannerView === 'day' && <DayClientProgress tasks={p.tasks} clients={p.clients} date={p.date} />}
 
       {plannerView === 'day' && <DayAgendaSummary blocks={p.blocks} tasks={p.tasks} clients={p.clients} timeZone={p.timeZone} onComplete={handleComplete} onEdit={openTaskEditor} onEditBlock={p.updateBlock} onDeleteBlock={p.deleteBlock} />}
+
+      {askingMinutes && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-3" role="dialog" aria-modal="true" aria-label="Tiempo real de la tarea" onClick={(e) => { if (e.target === e.currentTarget) setAskingMinutes(null); }}>
+          <form
+            onSubmit={async (e) => { e.preventDefault(); const minutes = Math.max(1, Math.round(Number(askingMinutes.value) || askingMinutes.estimated)); const id = askingMinutes.id; setAskingMinutes(null); await finishComplete(id, minutes); }}
+            className="w-full max-w-sm rounded-2xl border border-blue-200 bg-white p-4 shadow-2xl"
+          >
+            <p className="text-sm font-semibold text-slate-900">¿Cuánto te tomó de verdad?</p>
+            <p className="mt-1 text-xs text-slate-500 line-clamp-2">{askingMinutes.title}</p>
+            <p className="mt-1 text-[11px] text-slate-400">Estimado: {askingMinutes.estimated} min. Con el dato real el planner aprende cuánto te toman las tareas y lo registra en Horas.</p>
+            <div className="mt-3 flex items-center gap-2">
+              <input type="number" min={1} max={1440} autoFocus value={askingMinutes.value} onChange={(e) => setAskingMinutes({ ...askingMinutes, value: e.target.value })} className="w-28 rounded-lg border border-blue-200 px-2.5 py-2 text-sm" />
+              <span className="text-xs text-slate-500">min</span>
+              <div className="ml-auto flex gap-1">
+                {[0.5, 1, 1.5, 2].map((factor) => <button key={factor} type="button" onClick={() => setAskingMinutes({ ...askingMinutes, value: String(Math.round(askingMinutes.estimated * factor)) })} className="rounded-md border border-slate-200 px-2 py-1 text-[11px] text-slate-600 hover:bg-slate-50">{factor === 1 ? 'igual' : `×${factor}`}</button>)}
+              </div>
+            </div>
+            <div className="mt-3 flex justify-end gap-2">
+              <button type="button" onClick={() => setAskingMinutes(null)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Cancelar</button>
+              <button type="submit" className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700">Finalizar y registrar</button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Brain Dump */}
       <section className="rounded-2xl border border-[var(--line)] bg-white p-5">
@@ -805,9 +853,12 @@ function BlockRow({ block, tasks, clients, timeZone, onComplete, onEdit, onEditB
   // Sólo los bloques creados a mano (reuniones, horas protegidas) se editan o
   // borran aquí. Los bloques de tareas se manejan desde la tarea; los de
   // Google Calendar, desde Google.
-  const editable = block.source === 'manual' && !!onEditBlock && !!onDeleteBlock;
+  // Editable/eliminable: todo bloque que no sea una colocación automática
+  // sin proteger (esas se rehacen con "Organizar agenda"). Incluye los
+  // bloques manuales, los de tarea con hora fija y los de tareas recurrentes.
+  const editable = (block.protected || ['manual', 'task', 'recurrence'].includes(block.source)) && !!onEditBlock && !!onDeleteBlock;
   const zone = timeZone || 'America/Bogota';
-  const isRecurring = (block.recurrence_days?.length ?? 0) > 0;
+  const isRecurring = (block.recurrence_days?.length ?? 0) > 0 || block.source === 'recurrence';
   const [editing, setEditing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [title, setTitle] = useState(block.title);
@@ -865,7 +916,7 @@ function BlockRow({ block, tasks, clients, timeZone, onComplete, onEdit, onEditB
             {block.notes && <p className="text-xs text-slate-500 mt-1 italic">{block.notes}</p>}
             {confirmingDelete && (
               <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-2.5 py-2 text-xs text-red-800">
-                <span>¿Eliminar {isRecurring ? 'este bloque?' : 'el bloque?'}</span>
+                <span>¿Eliminar {isRecurring ? 'este bloque?' : 'el bloque?'}{linked.length ? ' La tarea no se borra: vuelve a la lista sin hora fija.' : ''}</span>
                 <button type="button" onClick={async () => { await onDeleteBlock?.(block.id, 'one'); setConfirmingDelete(false); }} className="rounded-md bg-red-600 px-2 py-1 font-semibold text-white hover:bg-red-700">{isRecurring ? 'Sólo este día' : 'Eliminar'}</button>
                 {isRecurring && <button type="button" onClick={async () => { await onDeleteBlock?.(block.id, 'series'); setConfirmingDelete(false); }} className="rounded-md border border-red-300 bg-white px-2 py-1 font-semibold text-red-700 hover:bg-red-100">Este y los siguientes</button>}
                 <button type="button" onClick={() => setConfirmingDelete(false)} className="rounded-md px-2 py-1 font-semibold text-slate-600 hover:bg-white">Cancelar</button>

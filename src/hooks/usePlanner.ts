@@ -30,6 +30,11 @@ export function usePlanner() {
   const [planNotice, setPlanNotice] = useState<string | null>(null);
   const [timeZone, setTimeZone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Bogota');
   const hasAutoPlanned = useRef(false);
+  const [calendar, setCalendar] = useState<{ estado: 'conectado' | 'sin_conexion' | 'error'; eventos: number; detalle: string | null } | null>(null);
+  const checkCalendar = useCallback(async () => {
+    try { setCalendar(await plannerService.calendarStatus(date)); }
+    catch (err: any) { setCalendar({ estado: 'error', eventos: 0, detalle: err?.message || 'Sin respuesta.' }); }
+  }, [date]);
 
   const revealFirstPlannedDay = useCallback((plannedBlocks: Array<{ starts_at: string }> | undefined, zone: string) => {
     const firstBlock = plannedBlocks?.[0];
@@ -66,8 +71,9 @@ export function usePlanner() {
         plannerService.loadBriefing('morning'),
       ]);
       setInbox(i); setTasks(t); setClients(c); setServices(s); setBlocks(b); setInsights(ins); setBriefing(br); setTimeZone(zone);
+      void checkCalendar();
     } finally { setLoading(false); }
-  }, [date, revealFirstPlannedDay]);
+  }, [date, revealFirstPlannedDay, checkCalendar]);
 
   useEffect(() => { void refresh(); }, [refresh]);
 
@@ -179,10 +185,10 @@ export function usePlanner() {
     setBusy(null);
   }, []);
 
-  const completeTask = useCallback(async (id: string): Promise<CompleteTaskResult | null> => {
+  const completeTask = useCallback(async (id: string, actualMinutes?: number): Promise<CompleteTaskResult | null> => {
     setBusy('task'); setError(null);
     try {
-      const result = await plannerService.completeTask(id);
+      const result = await plannerService.completeTask(id, actualMinutes);
       await refresh();
       return result;
     } catch (err: any) {
@@ -260,7 +266,7 @@ export function usePlanner() {
   const dismissInsight = useCallback(async (id: string) => { await plannerService.dismissInsight(id); setInsights((prev) => prev.filter((i) => i.id !== id)); }, []);
 
   return {
-    inbox, tasks, clients, services, serviceAvgMinutes, blocks, insights, briefing, rescheduledCount, planNotice,
+    inbox, tasks, clients, services, serviceAvgMinutes, blocks, insights, briefing, rescheduledCount, planNotice, calendar, checkCalendar,
     loading, busy, error, date, setDate, timeZone,
     refresh, classify, previewCapture, commitCapture, planDay, regenerateInsights, regenerateBriefing,
     completeTask, startTask, pauseTask, setStatus, setResponsable, updateTask, updateTaskDescription, postponeTask, deleteTask, createBlock, updateBlock, deleteBlock, dismissInsight,
