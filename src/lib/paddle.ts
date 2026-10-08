@@ -13,10 +13,18 @@ export type Periodo = 'mensual' | 'anual';
 
 /** Un price de Paddle por plan y periodo. Los que falten dejan el botón en
  *  "próximamente": nunca se abre un checkout con un price inexistente. */
+// Prices creados en Paddle el 8 oct 2026 (producto pro_01kxsvc0y9vg4ykm4wamktks2q).
+// Los ids viajan al navegador por diseño (son públicos); el entorno puede
+// sobreescribirlos (p. ej. sandbox).
+export const DEFAULT_PRICE_IDS: Record<PaidPlan, Record<Periodo, string>> = {
+  basico: { mensual: 'pri_01m4emwxhze2x9xbrhyt2b9jsa', anual: 'pri_01m4emyb3ejg4csdgam8sfv9nf' },
+  intermedio: { mensual: 'pri_01m4emz1pamrfk6mn865hf65xs', anual: 'pri_01m4emzvw6h9sdw0m0gfmr8yw9' },
+  full: { mensual: 'pri_01m4en0g7kc57ye7px0xen5ywg', anual: 'pri_01m4en1ffgx5xygv6yppdk9pfp' },
+};
 const PRICE_IDS: Record<PaidPlan, Record<Periodo, string>> = {
-  basico: { mensual: import.meta.env.VITE_PADDLE_PRICE_BASICO_MENSUAL?.trim() || '', anual: import.meta.env.VITE_PADDLE_PRICE_BASICO_ANUAL?.trim() || '' },
-  intermedio: { mensual: import.meta.env.VITE_PADDLE_PRICE_INTERMEDIO_MENSUAL?.trim() || '', anual: import.meta.env.VITE_PADDLE_PRICE_INTERMEDIO_ANUAL?.trim() || '' },
-  full: { mensual: import.meta.env.VITE_PADDLE_PRICE_FULL_MENSUAL?.trim() || PADDLE_PRICE_ID, anual: import.meta.env.VITE_PADDLE_PRICE_FULL_ANUAL?.trim() || '' },
+  basico: { mensual: import.meta.env.VITE_PADDLE_PRICE_BASICO_MENSUAL?.trim() || DEFAULT_PRICE_IDS.basico.mensual, anual: import.meta.env.VITE_PADDLE_PRICE_BASICO_ANUAL?.trim() || DEFAULT_PRICE_IDS.basico.anual },
+  intermedio: { mensual: import.meta.env.VITE_PADDLE_PRICE_INTERMEDIO_MENSUAL?.trim() || DEFAULT_PRICE_IDS.intermedio.mensual, anual: import.meta.env.VITE_PADDLE_PRICE_INTERMEDIO_ANUAL?.trim() || DEFAULT_PRICE_IDS.intermedio.anual },
+  full: { mensual: import.meta.env.VITE_PADDLE_PRICE_FULL_MENSUAL?.trim() || DEFAULT_PRICE_IDS.full.mensual, anual: import.meta.env.VITE_PADDLE_PRICE_FULL_ANUAL?.trim() || DEFAULT_PRICE_IDS.full.anual },
 };
 
 export function priceIdFor(plan: PaidPlan, periodo: Periodo): string {
@@ -35,7 +43,8 @@ interface PaddleEvent {
 }
 
 interface PaddleCheckoutOptions {
-  items: Array<{ priceId: string; quantity: number }>;
+  items?: Array<{ priceId: string; quantity: number }>;
+  transactionId?: string;
   customer?: { email?: string; id?: string };
   customData?: Record<string, string>;
   settings?: Record<string, unknown>;
@@ -106,5 +115,25 @@ export async function openPaddleCheckout(params: {
     // El webhook lee `plan` para guardar el nivel comprado.
     customData: { user_id: params.userId, plan, periodo },
     settings: { displayMode: 'overlay', theme: 'light', locale: 'es', allowLogout: false },
+  });
+}
+
+/**
+ * Agregar método de pago a una suscripción en prueba (cardless trial). El
+ * servidor pide a Paddle la transacción de "update payment method" y aquí
+ * sólo se abre: Paddle exige el checkout de una página para este caso.
+ */
+export async function openPaddlePaymentMethodCheckout(params: { transactionId: string; onEvent?: (event: PaddleEvent) => void }): Promise<void> {
+  if (!CLIENT_TOKEN) throw new Error('Paddle todavía no está configurado.');
+  const paddle = await loadScript();
+  eventHandler = params.onEvent || null;
+  if (!(paddle as PaddleJs & { __ferovaInit?: boolean }).__ferovaInit) {
+    if (PADDLE_ENV === 'sandbox') paddle.Environment.set('sandbox');
+    paddle.Initialize({ token: CLIENT_TOKEN, eventCallback: (event) => eventHandler?.(event) });
+    (paddle as PaddleJs & { __ferovaInit?: boolean }).__ferovaInit = true;
+  }
+  paddle.Checkout.open({
+    transactionId: params.transactionId,
+    settings: { displayMode: 'overlay', variant: 'one-page', theme: 'light', locale: 'es', allowLogout: false },
   });
 }

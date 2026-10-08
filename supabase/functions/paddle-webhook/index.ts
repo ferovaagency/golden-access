@@ -111,6 +111,16 @@ Deno.serve(async (req) => {
 
   if (mapped === 'active') {
     if (!userId) return await fail('Evento sin user_id en custom_data.', 400);
+    // Prueba sin tarjeta: subscription.trialing trae la fecha de fin
+    // (next_billed_at). subscription.activated = ya pagó: se limpia la marca.
+    const subStatus: string | null = typeof data?.status === 'string' ? data.status : null;
+    const trialPatch: Record<string, unknown> = {};
+    if (eventType === 'subscription.trialing' || subStatus === 'trialing') {
+      const ends = data?.next_billed_at || data?.current_billing_period?.ends_at || null;
+      if (ends) trialPatch.trial_ends_at = ends;
+    }
+    if (eventType === 'subscription.activated' || (eventType === 'subscription.resumed' && subStatus === 'active')) trialPatch.trial_ends_at = null;
+    const periodo: string | null = typeof customData?.periodo === 'string' ? customData.periodo : null;
     const { error } = await admin.from('user_subscriptions').upsert(
       {
         user_id: userId,
@@ -119,6 +129,8 @@ Deno.serve(async (req) => {
         provider_order_id: subscriptionId ?? eventId,
         provider_customer_id: customerId,
         plan,
+        ...(periodo ? { periodo } : {}),
+        ...trialPatch,
       },
       { onConflict: 'provider,provider_order_id' },
     );

@@ -263,17 +263,27 @@ export const checkSubscription = async (userId: string): Promise<boolean> => {
 // courtesy_access_grants, RLS acotado a auth.email()). Deliberadamente
 // separado de crm_team_members: esa tabla es el allowlist del equipo interno
 // de Ferova y no debe mezclarse con el acceso de un cliente real.
-export const resolveAccess = async (userId: string, email: string): Promise<{ hasPaid: boolean; plan: PlanId }> => {
-  const { data: sub, error: subError } = await db<{ id: string; status: string; expires_at: string | null; plan: PlanId | null }>('user_subscriptions')
-    .select('id, status, expires_at, plan')
+/** Lo que la app necesita saber de la suscripción para pintar prueba / vencida. */
+export interface SubscriptionInfo {
+  /** none = nunca tuvo; trial = en prueba sin tarjeta; active = pagando; expired = prueba vencida o cancelada; courtesy = acceso de cortesía. */
+  estado: 'none' | 'trial' | 'active' | 'expired' | 'courtesy';
+  trial_ends_at: string | null;
+  periodo: 'mensual' | 'anual' | null;
+}
+
+export const resolveAccess = async (userId: string, email: string): Promise<{ hasPaid: boolean; plan: PlanId; subscription: SubscriptionInfo }> => {
+  // La fila más reciente, viva o no: una prueba cancelada también cuenta para
+  // saber que la persona ya la usó.
+  const { data: sub, error: subError } = await db<{ id: string; status: string; expires_at: string | null; plan: PlanId | null; trial_ends_at: string | null; periodo: 'mensual' | 'anual' | null }>('user_subscriptions')
+    .select('id, status, expires_at, plan, trial_ends_at, periodo')
     .eq('user_id', userId)
-    .eq('status', 'active')
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
   if (subError) console.error('[supabase] resolveAccess subscription error:', subError);
   if (subscriptionGrantsAccess(sub)) {
-    return { hasPaid: true, plan: (sub!.plan || 'full') as PlanId };
+    const enPrueba = !!sub!.trial_ends_at && new Date(sub!.trial_ends_at) >= new Date();
+    return { hasPaid: true, plan: (sub!.plan || 'full') as PlanId, subscription: { estado: enPrueba ? 'trial' : 'active', trial_ends_at: sub!.trial_ends_at, periodo: sub!.periodo } };
   }
 
   if (email) {
@@ -282,11 +292,9 @@ export const resolveAccess = async (userId: string, email: string): Promise<{ ha
       .eq('email', email)
       .maybeSingle();
     if (courtesyError) console.error('[supabase] resolveAccess courtesy error:', courtesyError);
-    if (courtesy) return { hasPaid: true, plan: (courtesy.plan || 'completo') as PlanId };
+    if (courtesy) return { hasPaid: true, plan: (courtesy.plan || 'completo') as PlanId, subscription: { estado: 'courtesy', trial_ends_at: null, periodo: null } };
   }
 
-  // Freemium: sin suscripción ni cortesía se entra igual, al plan Gratis. El
-  // muro de pago desapareció; los límites y módulos del plan piden el upgrade
-  // desde dentro de la app (ver planGate).
-  return { hasPaid: true, plan: 'free' };
+  // Sin acceso: o nunca empezó la prueba, o la prueba/suscripción ya venció.
+  return { hasPaid: false, plan: 'free', subscription: { estado: sub ? 'expired' : 'none', trial_ends_at: sub?.trial_ends_at ?? null, periodo: sub?.periodo ?? null } };
 };

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { initAuth, googleSignIn, logout, resolveAccess } from '../lib/supabase';
+import { initAuth, googleSignIn, logout, resolveAccess, type SubscriptionInfo } from '../lib/supabase';
 import { isTeamMember } from '../lib/crmService';
 import { getModules, type ModuleOverrides, PlanId } from '../lib/planService';
 import { setCurrentPlan } from '../lib/planGate';
@@ -17,6 +17,7 @@ export function useAuthAndAccess() {
   const [hasPaid, setHasPaid] = useState(false);
   const [isTeam, setIsTeam] = useState(false);
   const [plan, setPlan] = useState<PlanId>('free');
+  const [subscription, setSubscription] = useState<SubscriptionInfo>({ estado: 'none', trial_ends_at: null, periodo: null });
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [moduleOverrides, setModuleOverrides] = useState<ModuleOverrides>({});
   const modules = useMemo(() => getModules(plan, isTeam, moduleOverrides), [plan, isTeam, moduleOverrides]);
@@ -50,6 +51,7 @@ export function useAuthAndAccess() {
       });
       setHasPaid(access.hasPaid || team);
       setPlan(access.plan);
+      setSubscription(access.subscription);
       setIsTeam(team);
       setModuleOverrides(Object.fromEntries(overrides.map((override) => [override.module, override.enabled])) as ModuleOverrides);
       lastAccessRefreshAt.current = Date.now();
@@ -110,7 +112,7 @@ export function useAuthAndAccess() {
   };
 
   return {
-    user, authLoading, hasPaid, isTeam, plan, checkingPayment, moduleOverrides, modules,
+    user, authLoading, hasPaid, isTeam, plan, subscription, checkingPayment, moduleOverrides, modules,
     setHasPaid, handleLogin, handleSignOut,
     refreshAccess: () => reloadAccess.current?.(),
   };

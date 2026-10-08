@@ -12,9 +12,9 @@ import { PLAN_PRICES_USD } from '../../lib/planService';
 // planService (PLAN_PRICES_USD) y deben coincidir con los prices de Paddle.
 
 const FAQ = [
-  { q: '¿El plan Gratis vence?', a: 'No. Es gratis para siempre y no pide tarjeta. Tiene topes de volumen: 15 tareas por semana, 20 movimientos al mes, 1 proyecto activo y 10 consultas al asistente al mes. Cuando los tocas, la app te muestra el plan que los quita.' },
-  { q: '¿Cómo subo de plan?', a: 'Desde dentro de la app: al tocar un límite o un módulo bloqueado aparece el detalle de planes y pagas con tarjeta a través de Paddle. El cambio es inmediato.' },
-  { q: '¿Qué pasa con mis datos si bajo de plan o cancelo?', a: 'Se quedan. Vuelves a los topes del plan Gratis, pero nada se borra. Tus datos siguen siendo tuyos.' },
+  { q: '¿Cómo funciona la prueba gratis?', a: 'Eliges un plan y lo usas completo 7 días sin poner tarjeta. Si quieres seguir, agregas un método de pago desde la app; si no, el acceso se apaga solo al terminar y no se cobra nada.' },
+  { q: '¿Puedo cambiar de plan después?', a: 'Sí, desde dentro de la app. El cambio se prorratea desde el día en que lo haces. Durante la prueba, cambiar de plan puede pedir primero una tarjeta.' },
+  { q: '¿Qué pasa con mis datos si dejo vencer la prueba o cancelo?', a: 'Se quedan guardados. Cuando agregues un método de pago, sigues exactamente donde ibas. Tus datos siguen siendo tuyos.' },
   { q: '¿Hay permanencia mínima?', a: 'No. Mensual o anual, cancelas cuando quieras, sin penalidades. En el anual, el acceso se mantiene hasta el fin del periodo pagado.' },
   { q: '¿El precio incluye impuestos?', a: 'El precio mostrado es antes de impuestos según tu ubicación; Paddle, como comerciante registrado (Merchant of Record), calcula el total exacto en el checkout.' },
 ];
@@ -24,11 +24,11 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bg-[var(--ferova-canvas)] text-[#1f1b16] font-sans">
       <SeoHead
-        title="Precios: gratis para empezar, planes desde USD 19"
-        description="Ferova One es gratis para siempre con lo esencial. Básico, Intermedio y Full cuando tu negocio crezca: desde USD 19 al mes, sin permanencia."
+        title="Precios: 7 días gratis sin tarjeta, planes desde USD 19"
+        description="Básico, Intermedio y Full desde USD 19 al mes, con 7 días de prueba sin tarjeta y 30 % de ahorro en el plan anual. Sin permanencia."
         path="/precios"
         jsonLd={[
-          softwareApplicationSchema({ price: String(PLAN_PRICES_USD.basico), priceCurrency: 'USD' }),
+          softwareApplicationSchema({ price: String(PLAN_PRICES_USD.basico.mensual), priceCurrency: 'USD' }),
           breadcrumbSchema([{ name: 'Inicio', path: '/' }, { name: 'Precios', path: '/precios' }]),
         ]}
       />
@@ -36,8 +36,8 @@ export default function PricingPage() {
 
       <div className="mx-auto max-w-6xl px-4 py-20 text-center sm:px-6">
         <Reveal>
-          <h1 className="font-display text-3xl font-bold text-[#1f1b16] sm:text-4xl">Gratis para empezar. Pagas cuando tu negocio lo pida.</h1>
-          <p className="mx-auto mt-3 max-w-2xl text-[#57524a]">Sin tarjeta para arrancar, sin permanencia después. Cada plan quita un límite que tu propio crecimiento va a tocar.</p>
+          <h1 className="font-display text-3xl font-bold text-[#1f1b16] sm:text-4xl">7 días gratis en el plan que elijas. Sin tarjeta.</h1>
+          <p className="mx-auto mt-3 max-w-2xl text-[#57524a]">Pruebas el plan completo una semana. Si no agregas una tarjeta, se apaga solo. Anual con 30 % de ahorro, sin permanencia.</p>
         </Reveal>
         <Reveal className="mt-10">
           <PlanPricingTable ctaPath="/app" source="/precios" />

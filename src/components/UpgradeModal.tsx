@@ -3,7 +3,8 @@ import { Check, Loader2, Lock, X } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { getPlanCatalog, type PlanId } from '../lib/planService';
 import { onUpgradeRequest, type UpgradeRequest } from '../lib/planGate';
-import { openPaddleCheckout, planIsPurchasable, type PaidPlan, type Periodo } from '../lib/paddle';
+import { openPaddlePaymentMethodCheckout, planIsPurchasable, type PaidPlan, type Periodo } from '../lib/paddle';
+import { changePlan } from '../lib/subscriptionActions';
 import { checkSubscription } from '../lib/supabase';
 import { trackEvent } from '../lib/analytics';
 
@@ -26,36 +27,46 @@ export function UpgradeModal({ user, currentPlan, onUpgraded }: { user: User; cu
   useEffect(() => onUpgradeRequest((req) => { setRequest(req); setError(null); trackEvent('upgrade_modal_open', { motivo: req.limit || req.entitlement || 'manual', plan: req.planSugerido }); }), []);
 
   if (!request) return null;
-  const catalog = getPlanCatalog().filter((p) => p.id !== 'free');
+  const catalog = getPlanCatalog();
   const nivelActual = ORDEN[currentPlan] ?? 3;
 
+  // Toda cuenta con acceso ya tiene una suscripción en Paddle (la prueba sin
+  // tarjeta crea una). Cambiar de plan = actualizar esa suscripción; si Paddle
+  // exige tarjeta primero, se abre el checkout de método de pago y se reintenta.
   const comprar = async (plan: PaidPlan) => {
     setError(null);
+    setConfirming(true);
     trackEvent('upgrade_checkout', { plan, periodo });
     try {
-      await openPaddleCheckout({
-        userId: user.id,
-        email: user.email ?? undefined,
-        plan,
-        periodo,
-        onEvent: (event) => {
-          if (event.name !== 'checkout.completed') return;
-          setConfirming(true);
-          let attempts = 0;
-          const timer = window.setInterval(async () => {
-            attempts += 1;
-            const paid = await checkSubscription(user.id).catch(() => false);
-            if (paid || attempts >= 20) {
-              window.clearInterval(timer);
-              setConfirming(false);
-              if (paid) { setRequest(null); onUpgraded(); }
-              else setError('Paddle recibió el pago pero la activación aún no llega. En unos segundos se activará sola.');
-            }
-          }, 3000);
-        },
-      });
+      const result = await changePlan(plan, periodo);
+      if (result.ok) { setConfirming(false); setRequest(null); onUpgraded(); return; }
+      if ('paymentMethodRequired' in result && result.paymentMethodRequired) {
+        await openPaddlePaymentMethodCheckout({
+          transactionId: result.transactionId,
+          onEvent: async (event) => {
+            if (event.name !== 'checkout.completed') return;
+            let attempts = 0;
+            const timer = window.setInterval(async () => {
+              attempts += 1;
+              const paid = await checkSubscription(user.id).catch(() => false);
+              if (paid || attempts >= 20) {
+                window.clearInterval(timer);
+                if (!paid) { setConfirming(false); setError('Paddle recibió la tarjeta pero la confirmación aún no llega. Reintenta en unos segundos.'); return; }
+                const second = await changePlan(plan, periodo);
+                setConfirming(false);
+                if (second.ok) { setRequest(null); onUpgraded(); }
+                else setError('message' in second ? second.message : 'No fue posible cambiar de plan.');
+              }
+            }, 3000);
+          },
+        });
+        return;
+      }
+      setConfirming(false);
+      setError('message' in result ? result.message : 'No fue posible cambiar de plan.');
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'No fue posible abrir el pago.');
+      setConfirming(false);
+      setError(caught instanceof Error ? caught.message : 'No fue posible cambiar de plan.');
     }
   };
 
@@ -73,7 +84,7 @@ export function UpgradeModal({ user, currentPlan, onUpgraded }: { user: User; cu
 
         <div className="mt-4 inline-flex rounded-full border border-slate-200 bg-slate-50 p-1 text-xs font-semibold">
           {(['mensual', 'anual'] as Periodo[]).map((p) => (
-            <button key={p} type="button" onClick={() => setPeriodo(p)} className={`rounded-full px-3 py-1.5 ${periodo === p ? 'bg-slate-900 text-white' : 'text-slate-600'}`}>{p === 'mensual' ? 'Mensual' : 'Anual · −20 %'}</button>
+            <button key={p} type="button" onClick={() => setPeriodo(p)} className={`rounded-full px-3 py-1.5 ${periodo === p ? 'bg-slate-900 text-white' : 'text-slate-600'}`}>{p === 'mensual' ? 'Mensual' : 'Anual · −30 %'}</button>
           ))}
         </div>
 
@@ -93,7 +104,7 @@ export function UpgradeModal({ user, currentPlan, onUpgraded }: { user: User; cu
                 <p className="mt-0.5 text-[11px] text-slate-500">{plan.etiqueta}</p>
                 <div className="mt-3 flex items-baseline gap-1">
                   <span className="font-display text-3xl font-semibold text-slate-900">USD {precio}</span>
-                  <span className="text-xs text-slate-500">/ mes{periodo === 'anual' ? ', facturado al año' : ''}</span>
+                  <span className="text-xs text-slate-500">/ mes{periodo === 'anual' ? ` (USD ${plan.precioAnualTotal} al año)` : ''}</span>
                 </div>
                 <ul className="mt-3 flex-1 space-y-1.5">
                   {plan.incluye.map((f) => <li key={f} className="flex items-start gap-1.5 text-xs text-slate-700"><Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" /> {f}</li>)}
@@ -105,14 +116,14 @@ export function UpgradeModal({ user, currentPlan, onUpgraded }: { user: User; cu
                   className={`mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold disabled:opacity-50 ${sugerido ? 'bg-amber-500 text-white hover:bg-amber-600' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
                 >
                   {confirming ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                  {yaIncluido ? 'Tu plan actual' : !disponible ? 'Próximamente' : `Pasar a ${plan.nombre}`}
+                  {yaIncluido ? 'Tu plan actual' : !disponible ? 'Próximamente' : `Cambiar a ${plan.nombre}`}
                 </button>
               </div>
             );
           })}
         </div>
         {error && <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>}
-        <p className="mt-3 text-[11px] text-slate-400">Precios antes de impuestos; Paddle calcula el total exacto según tu país en el pago.</p>
+        <p className="mt-3 text-[11px] text-slate-400">Precios antes de impuestos; Paddle calcula el total exacto según tu país. El cambio se prorratea desde hoy. Durante la prueba, cambiar de plan puede pedir primero una tarjeta.</p>
       </div>
     </div>
   );

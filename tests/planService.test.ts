@@ -62,9 +62,10 @@ assert.equal(minimumPlanFor({ limit: 'tareas_semana' }), 'basico');
 assert.equal(minimumPlanFor({ limit: 'proyectos_activos' }), 'intermedio');
 
 const catalog = getPlanCatalog();
-assert.deepEqual(catalog.map((p) => p.id), ['free', 'basico', 'intermedio', 'full']);
-assert.deepEqual(catalog.map((p) => p.precioMensual), [0, 19, 49, 99]);
-assert.equal(catalog[2].precioAnualMes, 39.2, 'anual = 20 % menos');
+assert.deepEqual(catalog.map((p) => p.id), ['basico', 'intermedio', 'full']);
+assert.deepEqual(catalog.map((p) => p.precioMensual), [19, 29, 99], 'mensual = prices de Paddle');
+assert.deepEqual(catalog.map((p) => p.precioAnualTotal), [159, 249, 829], 'anual redondeado por Mafe');
+assert.ok(catalog.every((p) => p.ahorroAnualPct >= 28 && p.ahorroAnualPct <= 31), 'anual ≈ 30 % menos');
 assert.equal(catalog.filter((p) => p.destacado).length, 1);
 
 console.log('planService entitlements + freemium: ok');

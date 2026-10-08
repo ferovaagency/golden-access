@@ -37,7 +37,7 @@ export default function Landing() {
     <div className="min-h-screen bg-white text-slate-900 font-sans">
       <SeoHead
         title="Sabe cuánto te deja cada cliente y cuánto cobrar"
-        description="Ferova One te dice cuánto te deja cada cliente, cuánto cobrar en tu próxima cotización y cuándo pagar impuestos, con tus datos reales. Gratis, sin tarjeta."
+        description="Ferova One te dice cuánto te deja cada cliente, cuánto cobrar en tu próxima cotización y cuándo pagar impuestos, con tus datos reales. 7 días gratis, sin tarjeta."
         path="/"
         jsonLd={[organizationSchema(), websiteSchema(), softwareApplicationSchema()]}
       />
@@ -130,7 +130,7 @@ function Hero() {
               onClick={() => trackEvent('hero_primary_cta', { path: '/' })}
               className="inline-flex items-center gap-2 rounded-full bg-amber-300 px-6 py-3 font-medium text-slate-950 hover:bg-amber-200"
             >
-              Crear cuenta gratis — sin tarjeta <ArrowRight className="h-4 w-4" />
+              Empezar 7 días gratis — sin tarjeta <ArrowRight className="h-4 w-4" />
             </Link>
             <a
               href="#modulos"
@@ -140,7 +140,7 @@ function Hero() {
               Ver demos
             </a>
           </div>
-          <p className="mt-4 text-xs text-slate-400">Gratis para siempre con lo esencial · Planes desde USD 19 / mes cuando tu negocio crezca · Sin permanencia</p>
+          <p className="mt-4 text-xs text-slate-400">7 días gratis en el plan que elijas, sin tarjeta · Desde USD 19 / mes · Sin permanencia</p>
         </div>
         <motion.div
           initial={reduceMotion ? false : { opacity: 0, scale: 0.94 }}
@@ -160,7 +160,7 @@ function SocialProof() {
     { k: '3 datos', v: 'y ya tienes tus números reales' },
     { k: '0', v: 'hojas de cálculo que recalcular' },
     { k: '100%', v: 'de tus datos, tuyos' },
-    { k: 'USD 0', v: 'para empezar, sin tarjeta' },
+    { k: '7 días', v: 'gratis, sin tarjeta' },
   ];
   return (
     <section className="border-b border-slate-200 bg-slate-50">
@@ -435,8 +435,8 @@ function Pricing() {
   return (
     <section id="precios" ref={sectionRef} className="border-t border-slate-200 bg-white">
       <div className="mx-auto max-w-6xl px-4 py-20 text-center">
-        <h2 className="font-serif text-3xl md:text-4xl">Empieza gratis. Sube cuando tu negocio lo pida.</h2>
-        <p className="mx-auto mt-3 max-w-2xl text-slate-600">El plan Gratis resuelve tu día y tus números básicos. Cuando conectes tu calendario, pases de 20 movimientos al mes o quieras saber a qué cliente cobrarle más, el siguiente plan ya está listo.</p>
+        <h2 className="font-serif text-3xl md:text-4xl">Pruébalo 7 días gratis. Sin tarjeta.</h2>
+        <p className="mx-auto mt-3 max-w-2xl text-slate-600">Eliges el plan, lo usas completo una semana y decides. Si no agregas una tarjeta, se apaga solo y tus datos se quedan guardados por si vuelves.</p>
         <div className="mt-10">
           <PlanPricingTable ctaPath="/app" source="/" />
         </div>
@@ -529,7 +529,7 @@ function LossCalculator() {
             )}
           </div>
           <Link to="/app" onClick={() => trackEvent('hero_primary_cta', { path: '/', origen: 'calculadora' })} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-amber-300 px-6 py-3 font-medium text-slate-950 hover:bg-amber-200">
-            Registrar mis horas gratis <ArrowRight className="h-4 w-4" />
+            Registrar mis horas · 7 días gratis <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </div>
@@ -542,8 +542,8 @@ function Faq() {
     { q: '¿Necesito instalar algo?', a: 'No. Ferova One es 100% web. Iniciás sesión con Google y ya está.' },
     { q: '¿Mis datos están seguros?', a: 'Sí. Cada cuenta está aislada por permisos a nivel de base de datos. Solo vos ves tus datos.' },
     { q: '¿Funciona fuera de Colombia?', a: 'Sí. La calculadora de impuestos está preparada para Colombia; el resto de módulos funciona en cualquier país.' },
-    { q: '¿El plan Gratis vence?', a: 'No. Es gratis para siempre, sin tarjeta. Tiene topes de volumen (15 tareas por semana, 20 movimientos al mes, 1 proyecto, 10 consultas al asistente al mes); cuando los tocas, la app te muestra el plan que los quita.' },
-    { q: '¿Qué pasa con mis datos si bajo de plan?', a: 'Se quedan. Vuelves a los topes del plan Gratis, pero nada se borra.' },
+    { q: '¿Cómo funciona la prueba gratis?', a: 'Eliges un plan y lo usas completo 7 días sin poner tarjeta. Si quieres seguir, agregas un método de pago desde la app; si no, el acceso se apaga solo al terminar y no se cobra nada.' },
+    { q: '¿Qué pasa con mis datos si dejo vencer la prueba?', a: 'Se quedan guardados. Cuando agregues un método de pago, sigues exactamente donde ibas.' },
     { q: '¿Puedo cancelar?', a: 'Cuando quieras. Sin permanencia, sin penalidades.' },
   ];
   return (

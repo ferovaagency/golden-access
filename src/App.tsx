@@ -24,6 +24,8 @@ import { useToast, errMsg } from './components/ui/toast';
 import { LoadingState } from './components/ui/AsyncState';
 import AuthScreen from './components/AuthScreen';
 import UpgradeModal from './components/UpgradeModal';
+import SubscriptionGate, { TrialBanner } from './components/SubscriptionGate';
+import { addPaymentMethod } from './lib/subscriptionActions';
 import { requestEntitlement } from './lib/planGate';
 import { trackEvent } from './lib/analytics';
 import type { Entitlement } from './lib/planService';
@@ -107,7 +109,7 @@ function AppInner() {
   }
 
   const {
-    user, authLoading, hasPaid, isTeam, plan, checkingPayment, modules,
+    user, authLoading, hasPaid, isTeam, plan, subscription, checkingPayment, modules,
     handleSignOut, refreshAccess,
   } = useAuthAndAccess();
   const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
@@ -553,8 +555,11 @@ function AppInner() {
     return <AuthScreen />;
   }
 
-  // Freemium: ya no hay muro de pago. Sin suscripción se entra al plan Gratis
-  // y el upgrade se pide desde dentro (UpgradeModal, abierto por planGate).
+  // Sin acceso: elegir plan y empezar la prueba de 7 días sin tarjeta, o
+  // agregar método de pago si la prueba ya venció. El equipo interno no pasa.
+  if (!hasPaid && !isTeam) {
+    return <SubscriptionGate user={user} subscription={subscription} onReady={() => refreshAccess()} />;
+  }
 
   // Estado 2.5: pagó pero todavía no completó el onboarding de su negocio.
   // Los miembros del equipo de Ferova (isTeam) no son clientes reales, no pasan por esto.
@@ -778,7 +783,13 @@ function AppInner() {
 
   const aiSidebarNode = (
     <div className={isFerovaUiV2Enabled() ? 'ferova-v2-theme' : undefined}>
-      <UpgradeModal user={user} currentPlan={plan} onUpgraded={() => { refreshAccess(); toastOk('Plan activado. Bienvenida al siguiente nivel.'); }} />
+      <UpgradeModal user={user} currentPlan={plan} onUpgraded={() => { refreshAccess(); toastOk('Plan actualizado.'); }} />
+      {subscription.estado === 'trial' && subscription.trial_ends_at && (
+        <TrialBanner
+          trialEndsAt={subscription.trial_ends_at}
+          onAddCard={() => { void addPaymentMethod(user.id, () => { refreshAccess(); toastOk('Método de pago agregado. Tu plan sigue sin interrupciones.'); }).catch((e) => toastErr(errMsg(e))); }}
+        />
+      )}
       <AISidebar user={user} collapsed={aiCollapsed} onToggle={() => setAiCollapsed((v) => !v)} width={aiWidth} onResize={setAiWidth} metrics={metrics} currentArea={NAVIGATION_SECTIONS.find((section) => section.items.some((item) => item.id === activeTab))?.label} />
     </div>
   );

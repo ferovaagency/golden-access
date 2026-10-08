@@ -16,7 +16,7 @@ interface Overview {
 
 // Estimación conservadora con 4 planes: se asume el Básico. El MRR exacto por
 // plan sale de Paddle; esto es sólo una referencia del panel.
-const listPrice = PLAN_PRICES_USD.basico;
+const listPrice = PLAN_PRICES_USD.basico.mensual;
 const usd = (n: number) => `US$ ${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {

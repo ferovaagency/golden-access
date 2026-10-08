@@ -1,9 +1,9 @@
 // Product access is resolved from the plan, then adjusted by explicit admin
 // overrides. Legacy identifiers are accepted only for existing subscriptions.
 //
-// Modelo (oct 2026): Freemium + 3 niveles de pago.
-//   free        → Gratis para siempre. Resuelve un dolor completo para una
-//                 persona, con límites de volumen (ver PLAN_LIMITS).
+// Modelo (oct 2026): 3 niveles de pago con 7 días de prueba sin tarjeta
+// (cardless trial de Paddle) en el plan que la persona elija.
+//   free        → id reservado (ya no se vende; sin suscripción no hay acceso).
 //   basico      → Control operativo personal: Calendar, Sheets, finanzas
 //                 completas, impuestos y punto de equilibrio.
 //   intermedio  → Automatización comercial e IA: CRM, Apollo, WhatsApp,
@@ -25,8 +25,11 @@ export type PlanId =
   | 'financiero'
   | 'crm_ventas';
 
-/** Los cuatro planes que se venden hoy, en orden ascendente. */
-export const PAID_TIERS: readonly PlanId[] = ['free', 'basico', 'intermedio', 'full'] as const;
+/** Los tres planes que se venden hoy, en orden ascendente. */
+export const PAID_TIERS = ['basico', 'intermedio', 'full'] as const;
+export type PaidTier = typeof PAID_TIERS[number];
+/** Días de prueba sin tarjeta. Debe coincidir con el trial_period de los prices en Paddle. */
+export const TRIAL_DAYS = 7;
 
 export type Entitlement =
   | 'core_projects'
@@ -166,23 +169,33 @@ export function minimumPlanFor(target: { entitlement?: Entitlement; limit?: Limi
 }
 
 // ---------------------------------------------------------------------------
-// Catálogo comercial. Precios definidos por Mafe el 8 oct 2026: Básico 19,
-// Intermedio 49, Full 99 USD/mes. Se pueden sobreescribir por entorno
-// (VITE_PLAN_PRICE_*) sin tocar código. Deben coincidir con los prices de Paddle.
+// Catálogo comercial. Precios = los prices reales de Paddle (8 oct 2026):
+// mensual 19 / 29 / 99 y anual 159 / 249 / 829 (≈ 30 % menos). Se pueden
+// sobreescribir por entorno (VITE_PLAN_PRICE_*) sin tocar código, pero lo
+// que cobra Paddle es lo que tenga el price: si cambia uno, cambia el otro.
 // ---------------------------------------------------------------------------
-export const PLAN_PRICES_USD = { basico: 19, intermedio: 49, full: 99 } as const;
+export const PLAN_PRICES_USD: Record<PaidTier, { mensual: number; anualTotal: number }> = {
+  basico: { mensual: 19, anualTotal: 159 },
+  intermedio: { mensual: 29, anualTotal: 249 },
+  full: { mensual: 99, anualTotal: 829 },
+};
+
 export type Periodo = 'mensual' | 'anual';
 
 export interface PlanCard {
-  id: 'free' | 'basico' | 'intermedio' | 'full';
+  id: PaidTier;
   nombre: string;
   etiqueta: string;
   para: string;
   promesa: string;
   /** USD/mes facturado mensual. */
   precioMensual: number;
-  /** USD/mes equivalente facturado anual (20 % menos). */
+  /** USD total facturado una vez al año. */
+  precioAnualTotal: number;
+  /** USD/mes equivalente del anual. */
   precioAnualMes: number;
+  /** Ahorro del anual frente a 12 meses, en porcentaje entero. */
+  ahorroAnualPct: number;
   destacado: boolean;
   incluye: string[];
   limites: PlanLimits;
@@ -194,45 +207,36 @@ function envPrice(key: string, fallback: number): number {
   return Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
-/** Descuento anual: 20 % (facturado una vez al año). */
-export const ANNUAL_DISCOUNT = 0.2;
-
-export function annualMonthlyEquivalent(monthly: number): number {
-  return Math.round(monthly * (1 - ANNUAL_DISCOUNT) * 100) / 100;
+function card(id: PaidTier, base: Omit<PlanCard, 'id' | 'precioMensual' | 'precioAnualTotal' | 'precioAnualMes' | 'ahorroAnualPct' | 'limites'>): PlanCard {
+  const key = id.toUpperCase();
+  const mensual = envPrice(`VITE_PLAN_PRICE_${key}`, PLAN_PRICES_USD[id].mensual);
+  const anualTotal = envPrice(`VITE_PLAN_PRICE_${key}_ANUAL`, PLAN_PRICES_USD[id].anualTotal);
+  return {
+    id, ...base,
+    precioMensual: mensual,
+    precioAnualTotal: anualTotal,
+    precioAnualMes: Math.round((anualTotal / 12) * 100) / 100,
+    ahorroAnualPct: Math.max(0, Math.round((1 - anualTotal / (mensual * 12)) * 100)),
+    limites: PLAN_LIMITS[id],
+  };
 }
 
 export function getPlanCatalog(): PlanCard[] {
-  const basico = envPrice('VITE_PLAN_PRICE_BASICO', PLAN_PRICES_USD.basico);
-  const intermedio = envPrice('VITE_PLAN_PRICE_INTERMEDIO', PLAN_PRICES_USD.intermedio);
-  const full = envPrice('VITE_PLAN_PRICE_FULL', PLAN_PRICES_USD.full);
   return [
-    {
-      id: 'free', nombre: 'Gratis', etiqueta: 'Para probar el sistema', para: 'Freelancers que están empezando y llevan todo en notas sueltas.',
-      promesa: 'Ordena tu día y tus números básicos. Gratis para siempre, sin tarjeta.',
-      precioMensual: 0, precioAnualMes: 0, destacado: false,
-      incluye: ['Planner con captura en lenguaje natural (15 tareas por semana)', 'Ingresos y egresos a mano (20 movimientos al mes)', '1 proyecto activo con horas', 'Asistente IA: 10 consultas al mes'],
-      limites: PLAN_LIMITS.free,
-    },
-    {
-      id: 'basico', nombre: 'Básico', etiqueta: 'Control operativo personal', para: 'Freelancers consolidados y consultores independientes.',
-      promesa: 'Sabes cuánto te deja cada hora, cuánto cobrar y cuándo pagar impuestos.',
-      precioMensual: basico, precioAnualMes: annualMonthlyEquivalent(basico), destacado: false,
-      incluye: ['Planner sin límites + Google Calendar', 'Finanzas completas: movimientos ilimitados, IVA e impuestos, punto de equilibrio', 'Hasta 5 proyectos con rentabilidad por hora', 'Respaldo y sincronización con Google Sheets', 'Asistente IA: 100 consultas al mes'],
-      limites: PLAN_LIMITS.basico,
-    },
-    {
-      id: 'intermedio', nombre: 'Intermedio', etiqueta: 'Automatización comercial e IA', para: 'Agencias boutique y negocios de servicios de 1 a 3 personas.',
-      promesa: 'Sabes a qué cliente cobrarle más y de dónde sale el próximo.',
-      precioMensual: intermedio, precioAnualMes: annualMonthlyEquivalent(intermedio), destacado: true,
+    card('basico', {
+      nombre: 'Básico', etiqueta: 'Control operativo personal', para: 'Freelancers y consultores independientes que cobran por hora o por proyecto.',
+      promesa: 'Sabes cuánto te deja cada hora, cuánto cobrar y cuándo pagar impuestos.', destacado: false,
+      incluye: ['Planner con captura en lenguaje natural + Google Calendar', 'Finanzas completas: ingresos, egresos, IVA e impuestos, punto de equilibrio', 'Hasta 5 proyectos con rentabilidad por hora', 'Respaldo y sincronización con Google Sheets', 'Asistente IA: 100 consultas al mes'],
+    }),
+    card('intermedio', {
+      nombre: 'Intermedio', etiqueta: 'Automatización comercial e IA', para: 'Agencias boutique y negocios de servicios de 1 a 3 personas.',
+      promesa: 'Sabes a qué cliente cobrarle más y de dónde sale el próximo.', destacado: true,
       incluye: ['Todo lo del Básico', 'CRM: pipeline, cotizaciones y valor ganado', 'Leads enriquecidos con Apollo y oportunidades en Reddit', 'WhatsApp: avisos y asistencia con contexto', 'Rentabilidad por cliente y por servicio', 'Proyectos ilimitados · IA sin tope razonable', 'Acceso a actualizaciones y funciones nuevas', 'Próximamente: vitrina para encontrar clientes'],
-      limites: PLAN_LIMITS.intermedio,
-    },
-    {
-      id: 'full', nombre: 'Full', etiqueta: 'Directorio ejecutivo', para: 'Empresas en crecimiento, holdings y equipos de hasta 10 personas.',
-      promesa: 'Varias empresas, un solo tablero, y el sistema te avisa antes de que algo se rompa.',
-      precioMensual: full, precioAnualMes: annualMonthlyEquivalent(full), destacado: false,
+    }),
+    card('full', {
+      nombre: 'Full', etiqueta: 'Directorio ejecutivo', para: 'Empresas en crecimiento, holdings y equipos de hasta 10 personas.',
+      promesa: 'Varias empresas, un solo tablero, y el sistema te avisa antes de que algo se rompa.', destacado: false,
       incluye: ['Todo lo del Intermedio', 'Multi-empresa / holding desde una sola cuenta', 'Motor BI: salud del negocio y puntos ciegos', 'Reportes ejecutivos para el CEO', 'Colaboradores con roles (hasta 10)', 'Soporte prioritario y onboarding asistido', 'Primeros en probar cada función nueva (acceso anticipado)', 'Próximamente: vitrina para encontrar clientes, con prioridad'],
-      limites: PLAN_LIMITS.full,
-    },
+    }),
   ];
 }
