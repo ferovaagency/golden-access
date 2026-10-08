@@ -25,6 +25,7 @@ export function PrimaryNavigation({ sections, activeSectionId, onSelectSection, 
           <button
             key={section.id}
             onClick={() => onSelectSection(section)}
+            data-tour={`section-${section.id}`}
             aria-current={isActive ? 'true' : undefined}
             title={collapsed ? section.label : undefined}
             className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs font-semibold transition-colors ${

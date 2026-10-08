@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { Search, Command as CommandIcon, LogOut, UserRound, Sparkles } from 'lucide-react';
+import { Search, Command as CommandIcon, LogOut, UserRound, Sparkles, Compass } from 'lucide-react';
 import NotificationsBell from './NotificationsBell';
 
 type Props = {
@@ -40,8 +40,9 @@ export default function TopBar({ userId, onOpenPalette, onNavigate, user, extras
               aparecían nunca. Desde `lg` se ven, y cada extra decide por su
               cuenta si se oculta en pantallas más pequeñas. */}
           {extras && <div className="hidden min-w-0 items-center gap-2 lg:flex">{extras}</div>}
+          <button type="button" onClick={() => window.dispatchEvent(new Event('ferova:start-tour'))} title="Ver recorrido guiado con el Copiloto" aria-label="Ver recorrido guiado" className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:border-amber-300 hover:text-amber-600"><Compass className="h-3.5 w-3.5" /></button>
           {onOpenAssistant && (
-            <button type="button" onClick={onOpenAssistant} title="Abrir asistente IA" className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900">
+            <button type="button" onClick={onOpenAssistant} data-tour="ai-toggle" title="Abrir asistente IA" className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900">
               <Sparkles className="h-3.5 w-3.5 text-blue-600" /><span className="hidden sm:inline">Asistente</span>
             </button>
           )}
