@@ -1,15 +1,27 @@
 import React, { useState } from 'react';
-import { Loader2 } from 'lucide-react';
-import { googleSignIn, emailSignIn, emailSignUp } from '../lib/supabase';
+import { Loader2, Sparkles, WandSparkles } from 'lucide-react';
+import { googleSignIn, emailSignIn, emailSignUp, magicLinkSignIn } from '../lib/supabase';
 import { trackEvent } from '../lib/analytics';
+import { getPlanCatalog, TRIAL_DAYS } from '../lib/planService';
+import { planIntentPath, type PlanIntent } from '../lib/planIntent';
 
-export default function AuthScreen() {
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+// Pantalla de acceso. Tres caminos: Google, correo + contraseña y enlace
+// mágico (sin contraseña). Si la persona llegó desde la landing con un plan
+// elegido (`intent`), se le muestra el plan y, al entrar, la prueba de 7 días
+// arranca sola (SubscriptionGate).
+
+type Mode = 'signin' | 'signup' | 'magic';
+
+export default function AuthScreen({ intent = null }: { intent?: PlanIntent | null }) {
+  const [mode, setMode] = useState<Mode>(intent ? 'magic' : 'signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const planElegido = intent ? getPlanCatalog().find((p) => p.id === intent.plan) ?? null : null;
+  // El link del correo vuelve a /app con el plan, por si se abre en otra pestaña.
+  const returnPath = intent ? planIntentPath(intent) : '/app';
 
   const handleGoogle = async () => {
     setError(null);
@@ -31,12 +43,16 @@ export default function AuthScreen() {
     setError(null);
     setInfo(null);
     try {
-      if (mode === 'signin') {
+      if (mode === 'magic') {
+        trackEvent('login_click', { method: 'magic_link', plan: intent?.plan });
+        await magicLinkSignIn(email, returnPath);
+        setInfo(`Te enviamos un enlace a ${email}. Ábrelo y entras sin contraseña.`);
+      } else if (mode === 'signin') {
         trackEvent('login_click', { method: 'email' });
         await emailSignIn(email, password);
       } else {
         trackEvent('signup_start', { method: 'email' });
-        await emailSignUp(email, password);
+        await emailSignUp(email, password, returnPath);
         trackEvent('signup_complete', { method: 'email' });
         setInfo('Revisa tu correo para confirmar tu cuenta antes de iniciar sesión.');
       }
@@ -61,6 +77,11 @@ export default function AuthScreen() {
           <p className="text-sm text-slate-500">
             Finanzas, Growth CRM y asistente IA para operar con claridad
           </p>
+          {planElegido && (
+            <p className="mx-auto inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
+              <Sparkles className="h-3.5 w-3.5" /> Plan {planElegido.nombre} · {intent?.periodo === 'anual' ? 'anual' : 'mensual'} · {TRIAL_DAYS} días gratis, sin tarjeta
+            </p>
+          )}
         </div>
 
         <button
@@ -96,7 +117,7 @@ export default function AuthScreen() {
             className="w-full rounded-[var(--fv-radius-md)] border border-[var(--fv-line)] bg-[var(--fv-surface)] px-3 py-3 text-sm text-[var(--fv-ink)] placeholder:text-[var(--fv-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fv-brand)] focus-visible:ring-offset-1"
           />
           </div>
-          <div className="space-y-1.5">
+          {mode !== 'magic' && <div className="space-y-1.5">
             <label htmlFor="auth-password" className="text-xs font-semibold text-[var(--fv-ink-2)]">Contraseña</label>
             <input
             id="auth-password"
@@ -110,7 +131,7 @@ export default function AuthScreen() {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded-[var(--fv-radius-md)] border border-[var(--fv-line)] bg-[var(--fv-surface)] px-3 py-3 text-sm text-[var(--fv-ink)] placeholder:text-[var(--fv-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fv-brand)] focus-visible:ring-offset-1"
           />
-          </div>
+          </div>}
 
           {error && (
             <p role="alert" className="rounded-[var(--fv-radius-xs)] border border-red-200 bg-[var(--fv-danger-soft)] p-2.5 text-xs text-[var(--fv-danger)]">
@@ -128,23 +149,32 @@ export default function AuthScreen() {
             disabled={loading}
             className="flex w-full items-center justify-center gap-2 rounded-[var(--fv-radius-md)] bg-[var(--fv-brand)] py-3 font-semibold text-white transition-colors hover:bg-[var(--fv-brand-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fv-brand)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            {mode === 'signin' ? 'Iniciar sesión' : 'Crear cuenta'}
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : mode === 'magic' ? <WandSparkles className="w-4 h-4" /> : null}
+            {mode === 'magic' ? 'Enviarme un enlace de acceso' : mode === 'signin' ? 'Iniciar sesión' : planElegido ? `Crear cuenta y probar ${planElegido.nombre}` : 'Crear cuenta'}
           </button>
+          {mode === 'magic' && <p className="text-center text-[11px] text-slate-400">Sin contraseña: te llega un enlace de un solo uso. Si no tienes cuenta, se crea sola.</p>}
         </form>
 
-        <button
-          onClick={() => {
-            setMode(mode === 'signin' ? 'signup' : 'signin');
-            setError(null);
-            setInfo(null);
-          }}
-          className="w-full rounded-[var(--fv-radius-xs)] py-1 text-sm text-[var(--fv-muted)] transition-colors hover:text-[var(--fv-brand)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fv-brand)]"
-        >
-          {mode === 'signin'
-            ? '¿No tienes cuenta? Regístrate'
-            : '¿Ya tienes cuenta? Inicia sesión'}
-        </button>
+        <div className="flex flex-col items-center gap-1">
+          {mode !== 'magic' && (
+            <button type="button" onClick={() => { setMode('magic'); setError(null); setInfo(null); }} className="w-full rounded-[var(--fv-radius-xs)] py-1 text-sm text-[var(--fv-muted)] transition-colors hover:text-[var(--fv-brand)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fv-brand)]">
+              Entrar con un enlace por correo (sin contraseña)
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              setMode(mode === 'signin' ? 'signup' : 'signin');
+              setError(null);
+              setInfo(null);
+            }}
+            className="w-full rounded-[var(--fv-radius-xs)] py-1 text-sm text-[var(--fv-muted)] transition-colors hover:text-[var(--fv-brand)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fv-brand)]"
+          >
+            {mode === 'signin'
+              ? '¿No tienes cuenta? Regístrate con contraseña'
+              : mode === 'signup' ? '¿Ya tienes cuenta? Inicia sesión' : 'Prefiero usar contraseña'}
+          </button>
+        </div>
 
         <p className="text-xs text-slate-400 text-center pt-2 leading-relaxed">
           Al usar Ferova One puedes consultar la <a href="/privacidad" target="_blank" rel="noreferrer" className="underline hover:text-blue-700">Política de Tratamiento de Datos</a> y los <a href="/terminos" target="_blank" rel="noreferrer" className="underline hover:text-blue-700">Términos y Condiciones</a>.<br />

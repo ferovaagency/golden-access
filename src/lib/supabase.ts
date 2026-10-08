@@ -207,16 +207,31 @@ export const emailSignIn = async (email: string, password: string) => {
   return data;
 };
 
-export const emailSignUp = async (email: string, password: string) => {
+export const emailSignUp = async (email: string, password: string, returnPath = '/app') => {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     // "/" is now the public landing page, not the app -- a confirmed signup
-    // should land in the product, not back on the marketing site.
-    options: { emailRedirectTo: `${window.location.origin}/app` },
+    // should land in the product, not back on the marketing site. returnPath
+    // puede traer el plan elegido en la landing (/app?plan=...&periodo=...).
+    options: { emailRedirectTo: `${window.location.origin}${returnPath}` },
   });
   if (error) throw error;
   return data;
+};
+
+/**
+ * Enlace mágico: Supabase manda un correo con un link de un solo uso; al
+ * abrirlo la sesión queda iniciada y aterriza en /app. Si el correo no tiene
+ * cuenta, la crea (shouldCreateUser). El plan elegido en la landing viaja
+ * en la URL para que no se pierda si el link se abre en otra pestaña.
+ */
+export const magicLinkSignIn = async (email: string, returnPath = '/app') => {
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: `${window.location.origin}${returnPath}`, shouldCreateUser: true },
+  });
+  if (error) throw error;
 };
 
 export const logout = async () => {

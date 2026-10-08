@@ -25,6 +25,7 @@ import { LoadingState } from './components/ui/AsyncState';
 import AuthScreen from './components/AuthScreen';
 import UpgradeModal from './components/UpgradeModal';
 import SubscriptionGate, { TrialBanner } from './components/SubscriptionGate';
+import { capturePlanIntentFromUrl, type PlanIntent } from './lib/planIntent';
 import { addPaymentMethod } from './lib/subscriptionActions';
 import { requestEntitlement } from './lib/planGate';
 import { trackEvent } from './lib/analytics';
@@ -113,6 +114,9 @@ function AppInner() {
     handleSignOut, refreshAccess,
   } = useAuthAndAccess();
   const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
+  // Plan elegido en la landing (/app?plan=…&periodo=…). Se captura una sola
+  // vez al montar, antes de que el gate de auth decida qué pantalla mostrar.
+  const [planIntent] = useState<PlanIntent | null>(() => capturePlanIntentFromUrl());
 
   // Finance data state (Supabase)
   const [sheetsLoading, setSheetsLoading] = useState(false);
@@ -552,13 +556,13 @@ function AppInner() {
 
   // Estado 1: No logueado
   if (!user) {
-    return <AuthScreen />;
+    return <AuthScreen intent={planIntent} />;
   }
 
   // Sin acceso: elegir plan y empezar la prueba de 7 días sin tarjeta, o
   // agregar método de pago si la prueba ya venció. El equipo interno no pasa.
   if (!hasPaid && !isTeam) {
-    return <SubscriptionGate user={user} subscription={subscription} onReady={() => refreshAccess()} />;
+    return <SubscriptionGate user={user} subscription={subscription} intent={planIntent} onReady={() => refreshAccess()} />;
   }
 
   // Estado 2.5: pagó pero todavía no completó el onboarding de su negocio.

@@ -41,7 +41,7 @@ export default function PricingPage() {
           <p className="mx-auto mt-3 max-w-2xl text-[#57524a]">Planes para freelancers que crecen con tus clientes: hasta 3, hasta 10 o ilimitados. Pruebas el plan completo una semana sin tarjeta. Anual con 30 % de ahorro, sin permanencia.</p>
         </Reveal>
         <Reveal className="mt-10">
-          <PlanPricingTable ctaPath="/app" source="/precios" />
+          <PlanPricingTable source="/precios" />
         </Reveal>
 
         <Reveal className="mx-auto mt-16 max-w-2xl text-left">

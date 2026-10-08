@@ -438,7 +438,7 @@ function Pricing() {
         <h2 className="font-serif text-3xl md:text-4xl">Pruébalo 7 días gratis. Sin tarjeta.</h2>
         <p className="mx-auto mt-3 max-w-2xl text-slate-600">Todos los planes son para freelancers: suben con el número de clientes que atiendes, no con el tamaño de tu empresa. Eliges uno, lo usas completo una semana y decides. Si no agregas tarjeta, se apaga solo y tus datos se quedan.</p>
         <div className="mt-10">
-          <PlanPricingTable ctaPath="/app" source="/" />
+          <PlanPricingTable source="/" />
         </div>
         <p className="mt-6 text-xs text-slate-400">Precios en USD antes de impuestos. Sin permanencia: cancelas cuando quieras y tus datos siguen siendo tuyos.</p>
       </div>

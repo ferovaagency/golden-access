@@ -5,22 +5,35 @@ import { logout, supabase, checkSubscription, type SubscriptionInfo } from '../l
 import { getPlanCatalog, TRIAL_DAYS, type PaidTier, type Periodo } from '../lib/planService';
 import { openPaddlePaymentMethodCheckout } from '../lib/paddle';
 import { trackEvent } from '../lib/analytics';
+import { clearPlanIntent, type PlanIntent } from '../lib/planIntent';
 
 // Pantalla previa a la app cuando no hay acceso:
 //   · estado none    → elegir plan y empezar 7 días gratis sin tarjeta
 //                      (el servidor crea la prueba en Paddle: paddle-start-trial).
 //   · estado expired → la prueba venció sin tarjeta (o se canceló): agregar
 //                      método de pago con el checkout de una página de Paddle.
+//   · con `intent`   → la persona ya eligió plan en la landing: se preselecciona
+//                      y la prueba arranca sola, sin volver a preguntar.
 
 const PAISES: Array<[string, string]> = [['CO', 'Colombia'], ['MX', 'México'], ['AR', 'Argentina'], ['CL', 'Chile'], ['PE', 'Perú'], ['EC', 'Ecuador'], ['ES', 'España'], ['US', 'Estados Unidos'], ['BR', 'Brasil'], ['UY', 'Uruguay'], ['PA', 'Panamá'], ['CR', 'Costa Rica'], ['DO', 'República Dominicana'], ['GT', 'Guatemala'], ['BO', 'Bolivia'], ['PY', 'Paraguay'], ['VE', 'Venezuela']];
 
-export default function SubscriptionGate({ user, subscription, onReady }: { user: User; subscription: SubscriptionInfo; onReady: () => void }) {
-  const [plan, setPlan] = useState<PaidTier>('intermedio');
-  const [periodo, setPeriodo] = useState<Periodo>('mensual');
-  const [country, setCountry] = useState('CO');
+/** País probable por el idioma del navegador (es-CO → CO); si no, Colombia. */
+function guessCountry(): string {
+  const region = (navigator.language || '').split('-')[1]?.toUpperCase();
+  return region && PAISES.some(([code]) => code === region) ? region : 'CO';
+}
+
+export default function SubscriptionGate({ user, subscription, intent = null, onReady }: { user: User; subscription: SubscriptionInfo; intent?: PlanIntent | null; onReady: () => void }) {
+  const [plan, setPlan] = useState<PaidTier>(intent?.plan ?? 'intermedio');
+  const [periodo, setPeriodo] = useState<Periodo>(intent?.periodo ?? 'mensual');
+  const [country, setCountry] = useState(guessCountry);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [waiting, setWaiting] = useState(false);
+  // Arranque automático: solo una vez y solo si viene con plan y nunca tuvo prueba.
+  const autoStart = !!intent && subscription.estado === 'none';
+  const [auto, setAuto] = useState(autoStart);
+  const autoFired = useRef(false);
   const pollRef = useRef<number | null>(null);
   const catalog = getPlanCatalog();
   const expired = subscription.estado === 'expired';
@@ -44,22 +57,32 @@ export default function SubscriptionGate({ user, subscription, onReady }: { user
 
   const startTrial = async () => {
     setBusy(true); setError(null);
-    trackEvent('signup_start', { plan, periodo, country });
+    trackEvent('signup_start', { plan, periodo, country, auto });
     try {
       const { data, error: err } = await supabase.functions.invoke('paddle-start-trial', { body: { plan, periodo, country } });
       if (err) throw new Error(err.message);
       if (!data?.ok) {
-        if (data?.code === 'already_active') { onReady(); return; }
+        if (data?.code === 'already_active') { clearPlanIntent(); onReady(); return; }
         throw new Error(data?.message || 'No fue posible iniciar la prueba.');
       }
-      trackEvent('signup_complete', { plan, periodo });
+      trackEvent('signup_complete', { plan, periodo, auto });
+      clearPlanIntent();
       onReady();
     } catch (caught) {
+      // Si el arranque automático falla, se muestra la pantalla normal con el
+      // plan ya seleccionado y el error, para que la persona lo reintente.
+      setAuto(false);
       setError(caught instanceof Error ? caught.message : 'No fue posible iniciar la prueba.');
     } finally {
       setBusy(false);
     }
   };
+
+  useEffect(() => {
+    if (!autoStart || autoFired.current) return;
+    autoFired.current = true;
+    void startTrial();
+  }, [autoStart]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const addPaymentMethod = async () => {
     setBusy(true); setError(null);
@@ -86,7 +109,13 @@ export default function SubscriptionGate({ user, subscription, onReady }: { user
           <button type="button" onClick={() => void logout()} className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white"><LogOut className="h-3.5 w-3.5" /> Salir</button>
         </div>
 
-        {expired ? (
+        {auto ? (
+          <div className="mx-auto mt-16 max-w-md rounded-2xl border border-[#2a2620] bg-[#161412] p-8 text-center">
+            <Loader2 className="mx-auto h-8 w-8 animate-spin text-amber-300" />
+            <h1 className="mt-4 font-display text-2xl font-bold text-white">Activando tu prueba de {catalog.find((p) => p.id === plan)?.nombre}</h1>
+            <p className="mt-2 text-sm text-slate-400">{TRIAL_DAYS} días gratis, sin tarjeta. En un momento pasas a configurar tu negocio.</p>
+          </div>
+        ) : expired ? (
           <div className="mx-auto mt-12 max-w-lg rounded-2xl border border-[#2a2620] bg-[#161412] p-8 text-center">
             <div className="mx-auto grid h-12 w-12 place-items-center rounded-full border border-blue-500/30 bg-blue-500/10"><CreditCard className="h-6 w-6 text-blue-400" /></div>
             <h1 className="mt-4 font-display text-2xl font-bold text-white">Tu prueba terminó</h1>

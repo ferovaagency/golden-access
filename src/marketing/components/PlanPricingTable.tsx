@@ -3,14 +3,17 @@ import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { ArrowRight, Check } from 'lucide-react';
 import { getPlanCatalog, TRIAL_DAYS, type Periodo } from '../../lib/planService';
+import { planIntentPath } from '../../lib/planIntent';
 import { trackEvent } from '../../lib/analytics';
 
 // Tabla de los 3 planes con interruptor mensual/anual (−30 %). Todos empiezan
 // con 7 días de prueba sin tarjeta (cardless trial de Paddle). La usan la
 // landing y /precios; el modal de upgrade dentro de la app tiene la suya.
 // Intermedio va destacado: es el plan que queremos que la mayoría elija.
+// El botón lleva el plan y el periodo en la URL (/app?plan=…&periodo=…): la
+// app lo guarda como intención y, al entrar, arranca la prueba con ese plan.
 
-export function PlanPricingTable({ ctaPath = '/app', source = '/' }: { ctaPath?: string; source?: string }) {
+export function PlanPricingTable({ source = '/' }: { source?: string }) {
   const [periodo, setPeriodo] = useState<Periodo>('mensual');
   const planes = getPlanCatalog();
   const ahorro = Math.max(...planes.map((p) => p.ahorroAnualPct));
@@ -50,7 +53,7 @@ export function PlanPricingTable({ ctaPath = '/app', source = '/' }: { ctaPath?:
                 ))}
               </ul>
               <Link
-                to={ctaPath}
+                to={planIntentPath({ plan: plan.id, periodo })}
                 onClick={() => trackEvent('pricing_cta', { path: source, plan: plan.id, periodo })}
                 className={`mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-medium ${plan.destacado ? 'bg-amber-500 text-white hover:bg-amber-600' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
               >
