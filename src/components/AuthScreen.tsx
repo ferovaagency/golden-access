@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Loader2, Sparkles, WandSparkles } from 'lucide-react';
-import { googleSignIn, emailSignIn, emailSignUp, magicLinkSignIn } from '../lib/supabase';
+import { googleSignIn, microsoftSignIn, emailSignIn, emailSignUp, magicLinkSignIn } from '../lib/supabase';
 import { trackEvent } from '../lib/analytics';
 import { getPlanCatalog, TRIAL_DAYS } from '../lib/planService';
 import { planIntentPath, type PlanIntent } from '../lib/planIntent';
@@ -105,6 +105,19 @@ export default function AuthScreen({ intent = null }: { intent?: PlanIntent | nu
             <path fill="#34A853" d="M12 23.5c3.24 0 5.96-1.07 7.94-2.91l-3.65-2.83c-1.04.7-2.38 1.11-4.29 1.11-3.13 0-5.79-2.11-6.74-5.2l-3.99 3.09C3.25 20.81 7.3 23.5 12 23.5z" />
           </svg>
           <span>Continuar con Google</span>
+        </button>
+
+        <button
+          onClick={handleMicrosoft}
+          className="flex w-full items-center justify-center gap-3 rounded-[var(--fv-radius-md)] border border-[var(--fv-line)] bg-[var(--fv-surface)] py-3 font-sans font-semibold text-[var(--fv-ink)] shadow-sm transition-colors hover:border-blue-200 hover:bg-[var(--fv-tint)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fv-brand)] focus-visible:ring-offset-2"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 23 23">
+            <path fill="#f35325" d="M1 1h10v10H1z" />
+            <path fill="#81bc06" d="M12 1h10v10H12z" />
+            <path fill="#05a6f0" d="M1 12h10v10H1z" />
+            <path fill="#ffba08" d="M12 12h10v10H12z" />
+          </svg>
+          <span>Continuar con Microsoft</span>
         </button>
 
         <div className="flex items-center gap-3 text-xs text-slate-400">
