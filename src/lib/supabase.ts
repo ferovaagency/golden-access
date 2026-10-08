@@ -138,6 +138,17 @@ export const googleSignIn = async () => {
   return result;
 };
 
+// Microsoft Sign-in (managed por Lovable Cloud). Solo identidad; devuelve a
+// /app igual que Google para no aterrizar en la landing pública.
+export const microsoftSignIn = async () => {
+  try { sessionStorage.setItem(POST_LOGIN_RETURN_KEY, '/app'); } catch { /* storage no disponible */ }
+  const result = await lovable.auth.signInWithOAuth('microsoft', {
+    redirect_uri: `${window.location.origin}/app`,
+  });
+  if (result.error) throw result.error;
+  return result;
+};
+
 // El pathname (ej. /app) no alcanza para volver a la pestaña exacta dentro
 // del SPA -- activeTab vive en estado de React, no en la URL. Antes de
 // redirigir a Google se guarda aquí; App.tsx lo consume una sola vez al
