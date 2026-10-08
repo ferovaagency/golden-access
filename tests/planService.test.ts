@@ -59,7 +59,12 @@ assert.equal(minimumPlanFor({ entitlement: 'google_calendar' }), 'basico');
 assert.equal(minimumPlanFor({ entitlement: 'crm' }), 'intermedio');
 assert.equal(minimumPlanFor({ entitlement: 'team_management' }), 'full');
 assert.equal(minimumPlanFor({ limit: 'tareas_semana' }), 'basico');
-assert.equal(minimumPlanFor({ limit: 'proyectos_activos' }), 'intermedio');
+assert.equal(minimumPlanFor({ limit: 'proyectos_activos' }), 'full', 'sin tope sólo en Full');
+assert.equal(minimumPlanFor({ limit: 'proyectos_activos', needed: 3 }), 'basico');
+assert.equal(minimumPlanFor({ limit: 'proyectos_activos', needed: 4 }), 'intermedio', 'el cliente 4 pide Intermedio');
+assert.equal(minimumPlanFor({ limit: 'proyectos_activos', needed: 11 }), 'full', 'el cliente 11 pide Full');
+assert.equal(getLimits('basico', false).proyectos_activos, 3);
+assert.equal(getLimits('intermedio', false).proyectos_activos, 10);
 
 const catalog = getPlanCatalog();
 assert.deepEqual(catalog.map((p) => p.id), ['basico', 'intermedio', 'full']);

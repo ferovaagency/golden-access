@@ -140,8 +140,10 @@ const UNLIMITED: PlanLimits = { tareas_semana: null, movimientos_mes: null, proy
 
 const PLAN_LIMITS: Record<PlanId, PlanLimits> = {
   free: { tareas_semana: 15, movimientos_mes: 20, proyectos_activos: 1, consultas_ia_mes: 10, miembros: 1 },
-  basico: { tareas_semana: null, movimientos_mes: null, proyectos_activos: 5, consultas_ia_mes: 100, miembros: 1 },
-  intermedio: { tareas_semana: null, movimientos_mes: null, proyectos_activos: null, consultas_ia_mes: null, miembros: 3 },
+  // La escalera es por clientes activos: todos los planes son para
+  // freelancers y suben según cuántos clientes atienden.
+  basico: { tareas_semana: null, movimientos_mes: null, proyectos_activos: 3, consultas_ia_mes: 100, miembros: 1 },
+  intermedio: { tareas_semana: null, movimientos_mes: null, proyectos_activos: 10, consultas_ia_mes: null, miembros: 3 },
   full: { ...UNLIMITED, miembros: 10 },
   // Legado: quien ya pagaba no recibe topes nuevos.
   projects: UNLIMITED, finance: UNLIMITED, planner: UNLIMITED, crm: UNLIMITED, completo: UNLIMITED, custom: UNLIMITED, financiero: UNLIMITED, crm_ventas: UNLIMITED,
@@ -159,11 +161,17 @@ export function withinLimit(limits: PlanLimits, kind: LimitKind, used: number, e
   return used + extra <= limit;
 }
 
-/** Plan mínimo que desbloquea un módulo o deja sin tope un límite. */
-export function minimumPlanFor(target: { entitlement?: Entitlement; limit?: LimitKind }): 'basico' | 'intermedio' | 'full' {
+/**
+ * Plan mínimo que desbloquea un módulo, o cuyo tope alcanza para `needed`
+ * (sin `needed`: el primero sin tope). Ej.: 4 clientes → Intermedio; 11 → Full.
+ */
+export function minimumPlanFor(target: { entitlement?: Entitlement; limit?: LimitKind; needed?: number }): 'basico' | 'intermedio' | 'full' {
   for (const tier of ['basico', 'intermedio', 'full'] as const) {
     if (target.entitlement && PLAN_ENTITLEMENTS[tier].includes(target.entitlement)) return tier;
-    if (target.limit && PLAN_LIMITS[tier][target.limit] === null) return tier;
+    if (target.limit) {
+      const limit = PLAN_LIMITS[tier][target.limit];
+      if (limit === null || (target.needed !== undefined && target.needed <= limit)) return tier;
+    }
   }
   return 'full';
 }
@@ -224,19 +232,19 @@ function card(id: PaidTier, base: Omit<PlanCard, 'id' | 'precioMensual' | 'preci
 export function getPlanCatalog(): PlanCard[] {
   return [
     card('basico', {
-      nombre: 'Básico', etiqueta: 'Control operativo personal', para: 'Freelancers y consultores independientes que cobran por hora o por proyecto.',
+      nombre: 'Básico', etiqueta: 'Hasta 3 clientes activos', para: 'Para el freelancer que arranca: pocos clientes y la necesidad de saber si con ellos gana o pierde.',
       promesa: 'Sabes cuánto te deja cada hora, cuánto cobrar y cuándo pagar impuestos.', destacado: false,
-      incluye: ['Planner con captura en lenguaje natural + Google Calendar', 'Finanzas completas: ingresos, egresos, IVA e impuestos, punto de equilibrio', 'Hasta 5 proyectos con rentabilidad por hora', 'Respaldo y sincronización con Google Sheets', 'Asistente IA: 100 consultas al mes'],
+      incluye: ['Hasta 3 clientes activos con rentabilidad por hora', 'Planner con captura en lenguaje natural + Google Calendar', 'Finanzas completas: ingresos, egresos, IVA e impuestos, punto de equilibrio', 'Respaldo y sincronización con Google Sheets', 'Asistente IA: 100 consultas al mes'],
     }),
     card('intermedio', {
-      nombre: 'Intermedio', etiqueta: 'Automatización comercial e IA', para: 'Agencias boutique y negocios de servicios de 1 a 3 personas.',
+      nombre: 'Intermedio', etiqueta: 'Hasta 10 clientes activos', para: 'Para el freelancer con cartera: varios clientes a la vez, cotizaciones abiertas y la pregunta de a quién cobrarle más.',
       promesa: 'Sabes a qué cliente cobrarle más y de dónde sale el próximo.', destacado: true,
-      incluye: ['Todo lo del Básico', 'CRM: pipeline, cotizaciones y valor ganado', 'Leads enriquecidos con Apollo y oportunidades en Reddit', 'WhatsApp: avisos y asistencia con contexto', 'Rentabilidad por cliente y por servicio', 'Proyectos ilimitados · IA sin tope razonable', 'Acceso a actualizaciones y funciones nuevas', 'Próximamente: vitrina para encontrar clientes'],
+      incluye: ['Hasta 10 clientes activos', 'Todo lo del Básico', 'CRM: pipeline, cotizaciones y valor ganado', 'Leads enriquecidos con Apollo y oportunidades en Reddit', 'WhatsApp: avisos y asistencia con contexto', 'Rentabilidad por cliente y por servicio · IA sin tope razonable', 'Acceso a actualizaciones y funciones nuevas', 'Próximamente: vitrina para encontrar clientes'],
     }),
     card('full', {
-      nombre: 'Full', etiqueta: 'Directorio ejecutivo', para: 'Empresas en crecimiento, holdings y equipos de hasta 10 personas.',
-      promesa: 'Varias empresas, un solo tablero, y el sistema te avisa antes de que algo se rompa.', destacado: false,
-      incluye: ['Todo lo del Intermedio', 'Multi-empresa / holding desde una sola cuenta', 'Motor BI: salud del negocio y puntos ciegos', 'Reportes ejecutivos para el CEO', 'Colaboradores con roles (hasta 10)', 'Soporte prioritario y onboarding asistido', 'Primeros en probar cada función nueva (acceso anticipado)', 'Próximamente: vitrina para encontrar clientes, con prioridad'],
+      nombre: 'Full', etiqueta: 'Clientes ilimitados', para: 'Para el freelancer que ya es una pequeña agencia: muchos clientes, varias marcas y gente que ayuda.',
+      promesa: 'Todos tus clientes y marcas en un solo tablero, y el sistema te avisa antes de que algo se rompa.', destacado: false,
+      incluye: ['Clientes ilimitados', 'Todo lo del Intermedio', 'Varias marcas o empresas desde una sola cuenta', 'Motor BI: salud del negocio y puntos ciegos', 'Reportes ejecutivos', 'Colaboradores con roles (hasta 10)', 'Soporte prioritario y onboarding asistido', 'Primeros en probar cada función nueva (acceso anticipado)', 'Próximamente: vitrina para encontrar clientes, con prioridad'],
     }),
   ];
 }

@@ -49,7 +49,7 @@ export function requestUpgrade(request: UpgradeRequest) {
 const LIMIT_LABEL: Record<LimitKind, string> = {
   tareas_semana: 'tareas por semana',
   movimientos_mes: 'movimientos financieros por mes',
-  proyectos_activos: 'proyectos activos',
+  proyectos_activos: 'clientes activos',
   consultas_ia_mes: 'consultas al asistente por mes',
   miembros: 'personas en la cuenta',
 };
@@ -99,8 +99,9 @@ export async function assertWithinLimit(kind: Exclude<LimitKind, 'consultas_ia_m
   const consumed = used ?? await countUsage(kind);
   if (withinLimit(limits, kind, consumed, extra)) return;
   const request: UpgradeRequest = {
-    motivo: `Tu plan Gratis permite ${limits[kind]} ${LIMIT_LABEL[kind]} y ya llevas ${consumed}.`,
-    planSugerido: minimumPlanFor({ limit: kind }),
+    motivo: `Tu plan permite ${limits[kind]} ${LIMIT_LABEL[kind]} y ya llevas ${consumed}.`,
+    // El plan que alcanza para lo que se intenta: 4 clientes → Intermedio, 11 → Full.
+    planSugerido: minimumPlanFor({ limit: kind, needed: consumed + extra }),
     limit: kind,
   };
   requestUpgrade(request);

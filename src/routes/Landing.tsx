@@ -116,7 +116,7 @@ function Hero() {
         <div className="max-w-3xl text-center md:text-left">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-medium text-amber-200">
             <Sparkles className="h-3.5 w-3.5" />
-            Para freelancers y agencias que cobran por proyecto o por hora
+            Para freelancers que cobran por proyecto o por hora
           </span>
           <h1 className="mt-6 font-serif text-4xl leading-tight tracking-tight md:text-6xl">
             Deja de calcular tus ganancias <em className="text-amber-300 not-italic">a ojo</em>.
@@ -436,7 +436,7 @@ function Pricing() {
     <section id="precios" ref={sectionRef} className="border-t border-slate-200 bg-white">
       <div className="mx-auto max-w-6xl px-4 py-20 text-center">
         <h2 className="font-serif text-3xl md:text-4xl">Pruébalo 7 días gratis. Sin tarjeta.</h2>
-        <p className="mx-auto mt-3 max-w-2xl text-slate-600">Eliges el plan, lo usas completo una semana y decides. Si no agregas una tarjeta, se apaga solo y tus datos se quedan guardados por si vuelves.</p>
+        <p className="mx-auto mt-3 max-w-2xl text-slate-600">Todos los planes son para freelancers: suben con el número de clientes que atiendes, no con el tamaño de tu empresa. Eliges uno, lo usas completo una semana y decides. Si no agregas tarjeta, se apaga solo y tus datos se quedan.</p>
         <div className="mt-10">
           <PlanPricingTable ctaPath="/app" source="/" />
         </div>
@@ -457,8 +457,8 @@ function UseCases() {
       icon: Target,
     },
     {
-      titulo: 'La agencia boutique de servicios',
-      dolor: 'Tres clientes, dos herramientas nuevas y una hoja de Excel que hay que recalcular cada vez.',
+      titulo: 'El freelancer con varios clientes a la vez',
+      dolor: 'Cinco clientes, dos herramientas nuevas y una hoja de Excel que hay que recalcular cada vez que entra uno.',
       cambio: 'Cada venta, cada hora y cada gasto recalculan solos. Descubre qué cliente da pérdida antes de que sea tarde.',
       icon: TrendingUp,
     },
@@ -474,7 +474,7 @@ function UseCases() {
       <div className="mx-auto max-w-6xl px-4 py-16">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="font-serif text-3xl md:text-4xl">¿Te suena alguno?</h2>
-          <p className="mt-3 text-slate-600">Ferova One nació de estas tres conversaciones, repetidas con freelancers y agencias que facturan por proyecto o por hora.</p>
+          <p className="mt-3 text-slate-600">Ferova One nació de estas tres conversaciones, repetidas con freelancers que facturan por proyecto o por hora.</p>
         </div>
         <div className="mt-10 grid gap-4 md:grid-cols-3">
           {perfiles.map((p, index) => (

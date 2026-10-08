@@ -13,6 +13,7 @@ import { PLAN_PRICES_USD } from '../../lib/planService';
 
 const FAQ = [
   { q: '¿Cómo funciona la prueba gratis?', a: 'Eliges un plan y lo usas completo 7 días sin poner tarjeta. Si quieres seguir, agregas un método de pago desde la app; si no, el acceso se apaga solo al terminar y no se cobra nada.' },
+  { q: '¿Qué pasa cuando tengo más clientes de los que permite mi plan?', a: 'La app te lo dice en el momento de activar el cliente que sobra y te muestra el plan que alcanza (4 clientes → Intermedio; 11 → Full). Los clientes que ya tienes no se tocan.' },
   { q: '¿Puedo cambiar de plan después?', a: 'Sí, desde dentro de la app. El cambio se prorratea desde el día en que lo haces. Durante la prueba, cambiar de plan puede pedir primero una tarjeta.' },
   { q: '¿Qué pasa con mis datos si dejo vencer la prueba o cancelo?', a: 'Se quedan guardados. Cuando agregues un método de pago, sigues exactamente donde ibas. Tus datos siguen siendo tuyos.' },
   { q: '¿Hay permanencia mínima?', a: 'No. Mensual o anual, cancelas cuando quieras, sin penalidades. En el anual, el acceso se mantiene hasta el fin del periodo pagado.' },
@@ -37,7 +38,7 @@ export default function PricingPage() {
       <div className="mx-auto max-w-6xl px-4 py-20 text-center sm:px-6">
         <Reveal>
           <h1 className="font-display text-3xl font-bold text-[#1f1b16] sm:text-4xl">7 días gratis en el plan que elijas. Sin tarjeta.</h1>
-          <p className="mx-auto mt-3 max-w-2xl text-[#57524a]">Pruebas el plan completo una semana. Si no agregas una tarjeta, se apaga solo. Anual con 30 % de ahorro, sin permanencia.</p>
+          <p className="mx-auto mt-3 max-w-2xl text-[#57524a]">Planes para freelancers que crecen con tus clientes: hasta 3, hasta 10 o ilimitados. Pruebas el plan completo una semana sin tarjeta. Anual con 30 % de ahorro, sin permanencia.</p>
         </Reveal>
         <Reveal className="mt-10">
           <PlanPricingTable ctaPath="/app" source="/precios" />
