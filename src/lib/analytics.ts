@@ -15,7 +15,11 @@ export type AnalyticsEvent =
   | 'signup_start'
   | 'signup_complete'
   | 'activation'
-  | 'login_click';
+  | 'login_click'
+  | 'upgrade_modal_open'
+  | 'upgrade_checkout'
+  | 'locked_module_click'
+  | 'calculadora_horas';
 
 declare global {
   interface Window { dataLayer?: unknown[] }

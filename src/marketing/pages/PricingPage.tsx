@@ -1,34 +1,22 @@
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, Check } from 'lucide-react';
 import { MarketingHeader } from '../components/MarketingHeader';
 import { MarketingFooter } from '../components/MarketingFooter';
 import { Reveal } from '../components/Reveal';
+import { PlanPricingTable } from '../components/PlanPricingTable';
 import { SeoHead } from '../../seo/SeoHead';
 import { breadcrumbSchema, softwareApplicationSchema } from '../../seo/StructuredData';
-import { AnimatedCard } from '../../components/motion/AnimatedCard';
 import { trackEvent } from '../../lib/analytics';
+import { PLAN_PRICES_USD } from '../../lib/planService';
 
-// El precio ya se usa consistentemente en el resto del producto (Landing,
-// LandingV2, paywall). Manual_Landing_Blog_SEO sec. 2/14: de todos modos
-// reconfirmar precio, moneda y mercado antes de invertir en promocionar
-// especificamente esta pagina.
-const PRICE_USD = '52.50';
-const TRIAL_DAYS = 14;
-
-const FEATURES = [
-  'Todos los módulos incluidos',
-  'Asistente IA sin límite razonable',
-  'Google Calendar, Sheets y WhatsApp',
-  'CRM + enriquecimiento Apollo',
-  'Soporte por correo',
-];
+// Freemium + 3 niveles (modelo del 8 oct 2026). Los precios viven en
+// planService (PLAN_PRICES_USD) y deben coincidir con los prices de Paddle.
 
 const FAQ = [
-  { q: '¿Cómo funciona la prueba gratis?', a: `Tenés ${TRIAL_DAYS} días de prueba con acceso completo. Se pide tarjeta, pero no se cobra durante la prueba: si cancelás antes de que termine, no pagás nada.` },
-  { q: '¿Hay permanencia mínima?', a: 'No. Podés cancelar cuando quieras, sin penalidades.' },
-  { q: '¿El precio incluye impuestos?', a: 'El precio mostrado es antes de impuestos aplicables según tu ubicación; Paddle, como comerciante registrado (Merchant of Record), calcula el total exacto en el checkout.' },
-  { q: '¿Qué pasa si cancelo?', a: 'Tu acceso se mantiene hasta el fin del período ya pagado. Tus datos siguen siendo tuyos.' },
+  { q: '¿El plan Gratis vence?', a: 'No. Es gratis para siempre y no pide tarjeta. Tiene topes de volumen: 15 tareas por semana, 20 movimientos al mes, 1 proyecto activo y 10 consultas al asistente al mes. Cuando los tocas, la app te muestra el plan que los quita.' },
+  { q: '¿Cómo subo de plan?', a: 'Desde dentro de la app: al tocar un límite o un módulo bloqueado aparece el detalle de planes y pagas con tarjeta a través de Paddle. El cambio es inmediato.' },
+  { q: '¿Qué pasa con mis datos si bajo de plan o cancelo?', a: 'Se quedan. Vuelves a los topes del plan Gratis, pero nada se borra. Tus datos siguen siendo tuyos.' },
+  { q: '¿Hay permanencia mínima?', a: 'No. Mensual o anual, cancelas cuando quieras, sin penalidades. En el anual, el acceso se mantiene hasta el fin del periodo pagado.' },
+  { q: '¿El precio incluye impuestos?', a: 'El precio mostrado es antes de impuestos según tu ubicación; Paddle, como comerciante registrado (Merchant of Record), calcula el total exacto en el checkout.' },
 ];
 
 export default function PricingPage() {
@@ -36,42 +24,23 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bg-[var(--ferova-canvas)] text-[#1f1b16] font-sans">
       <SeoHead
-        title="Precios"
-        description="Un solo plan con todos los módulos incluidos: finanzas, CRM, planner, proyectos y asistente IA. Sin permanencia, cancelás cuando quieras."
+        title="Precios: gratis para empezar, planes desde USD 19"
+        description="Ferova One es gratis para siempre con lo esencial. Básico, Intermedio y Full cuando tu negocio crezca: desde USD 19 al mes, sin permanencia."
         path="/precios"
         jsonLd={[
-          softwareApplicationSchema({ price: PRICE_USD, priceCurrency: 'USD' }),
+          softwareApplicationSchema({ price: String(PLAN_PRICES_USD.basico), priceCurrency: 'USD' }),
           breadcrumbSchema([{ name: 'Inicio', path: '/' }, { name: 'Precios', path: '/precios' }]),
         ]}
       />
       <MarketingHeader />
 
-      <div className="mx-auto max-w-3xl px-4 py-20 text-center sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 py-20 text-center sm:px-6">
         <Reveal>
-          <h1 className="font-display text-3xl font-bold text-[#1f1b16] sm:text-4xl">Un solo plan. Todo incluido.</h1>
-          <p className="mt-3 text-[#57524a]">Sin trucos, sin escalar por usuarios, sin sorpresas.</p>
+          <h1 className="font-display text-3xl font-bold text-[#1f1b16] sm:text-4xl">Gratis para empezar. Pagas cuando tu negocio lo pida.</h1>
+          <p className="mx-auto mt-3 max-w-2xl text-[#57524a]">Sin tarjeta para arrancar, sin permanencia después. Cada plan quita un límite que tu propio crecimiento va a tocar.</p>
         </Reveal>
-        <Reveal>
-          <AnimatedCard hoverable={false} className="mx-auto mt-10 max-w-md rounded-[var(--ferova-radius-hero)] border border-[var(--ferova-line)] bg-[var(--ferova-surface)] p-8 text-left shadow-[var(--ferova-shadow)]">
-            <span className="inline-flex items-center rounded-[var(--ferova-radius-pill)] bg-[var(--ferova-gold)]/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--ferova-gold)]">
-              Precio de lanzamiento · Founder Access
-            </span>
-            <div className="mt-3 flex items-baseline gap-1">
-              <span className="font-display text-5xl text-[#1f1b16]">USD {PRICE_USD}</span>
-              <span className="text-[#8a8377]">/ mes</span>
-            </div>
-            <p className="mt-1 text-sm text-[#8a8377]">{TRIAL_DAYS} días gratis, luego facturado mensualmente. Cancelás cuando quieras.</p>
-            <ul className="mt-6 space-y-2">
-              {FEATURES.map((f) => (
-                <li key={f} className="flex items-start gap-2 text-sm text-[#1f1b16]">
-                  <Check className="mt-0.5 h-4 w-4 text-[var(--ferova-brand)]" /> {f}
-                </li>
-              ))}
-            </ul>
-            <Link to="/app" onClick={() => trackEvent('pricing_cta', { path: '/precios' })} className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-[var(--ferova-radius-pill)] bg-[var(--ferova-brand)] px-6 py-3 font-medium font-display text-white hover:bg-[var(--ferova-brand-2)]">
-              Empezar prueba de {TRIAL_DAYS} días <ArrowRight className="h-4 w-4" />
-            </Link>
-          </AnimatedCard>
+        <Reveal className="mt-10">
+          <PlanPricingTable ctaPath="/app" source="/precios" />
         </Reveal>
 
         <Reveal className="mx-auto mt-16 max-w-2xl text-left">

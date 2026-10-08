@@ -1,6 +1,21 @@
 // Product access is resolved from the plan, then adjusted by explicit admin
 // overrides. Legacy identifiers are accepted only for existing subscriptions.
+//
+// Modelo (oct 2026): Freemium + 3 niveles de pago.
+//   free        → Gratis para siempre. Resuelve un dolor completo para una
+//                 persona, con límites de volumen (ver PLAN_LIMITS).
+//   basico      → Control operativo personal: Calendar, Sheets, finanzas
+//                 completas, impuestos y punto de equilibrio.
+//   intermedio  → Automatización comercial e IA: CRM, Apollo, WhatsApp,
+//                 rentabilidad por cliente, proyectos ilimitados.
+//   full        → Multi-empresa, BI y equipo.
+// Los ids viejos (completo, financiero, …) siguen resolviendo para quien ya
+// los tiene; `completo` equivale a `full`.
 export type PlanId =
+  | 'free'
+  | 'basico'
+  | 'intermedio'
+  | 'full'
   | 'projects'
   | 'finance'
   | 'planner'
@@ -9,6 +24,9 @@ export type PlanId =
   | 'custom'
   | 'financiero'
   | 'crm_ventas';
+
+/** Los cuatro planes que se venden hoy, en orden ascendente. */
+export const PAID_TIERS: readonly PlanId[] = ['free', 'basico', 'intermedio', 'full'] as const;
 
 export type Entitlement =
   | 'core_projects'
@@ -41,6 +59,12 @@ export interface ModuleFlags {
 export type ModuleOverrides = Partial<Record<Entitlement, boolean>>;
 
 const PLAN_ENTITLEMENTS: Record<PlanId, readonly Entitlement[]> = {
+  // Freemium: planner + finanzas básicas + proyectos + IA, todo con tope.
+  free: ['core_projects', 'finance', 'planner', 'ai_assistant'],
+  basico: ['core_projects', 'finance', 'planner', 'ai_assistant', 'google_calendar', 'google_sheets'],
+  intermedio: ['core_projects', 'finance', 'planner', 'ai_assistant', 'google_calendar', 'google_sheets', 'crm', 'marketing_roi'],
+  full: ['core_projects', 'finance', 'planner', 'ai_assistant', 'google_calendar', 'google_sheets', 'crm', 'marketing_roi', 'advanced_analytics', 'team_management'],
+  // Legado.
   projects: ['core_projects'],
   finance: ['core_projects', 'finance', 'marketing_roi', 'google_sheets'],
   planner: ['core_projects', 'planner', 'ai_assistant', 'google_calendar'],
@@ -73,7 +97,7 @@ export function getModules(
   isTeam: boolean,
   overrides: ModuleOverrides = {},
 ): ModuleFlags {
-  const enabled = new Set<Entitlement>(isTeam ? ALL_ENTITLEMENTS : PLAN_ENTITLEMENTS[plan && isPlanId(plan) ? plan : 'projects']);
+  const enabled = new Set<Entitlement>(isTeam ? ALL_ENTITLEMENTS : PLAN_ENTITLEMENTS[plan && isPlanId(plan) ? plan : 'free']);
   for (const entitlement of ALL_ENTITLEMENTS) {
     if (overrides[entitlement] === true) enabled.add(entitlement);
     if (overrides[entitlement] === false) enabled.delete(entitlement);
@@ -94,4 +118,121 @@ export function getModules(
     financiero: has('finance'),
     crm_ventas: has('crm'),
   };
+}
+
+// ---------------------------------------------------------------------------
+// Límites de volumen (disparadores de upgrade). `null` = sin límite.
+// ---------------------------------------------------------------------------
+export type LimitKind = 'tareas_semana' | 'movimientos_mes' | 'proyectos_activos' | 'consultas_ia_mes' | 'miembros';
+
+export interface PlanLimits {
+  tareas_semana: number | null;
+  movimientos_mes: number | null;
+  proyectos_activos: number | null;
+  consultas_ia_mes: number | null;
+  miembros: number | null;
+}
+
+const UNLIMITED: PlanLimits = { tareas_semana: null, movimientos_mes: null, proyectos_activos: null, consultas_ia_mes: null, miembros: null };
+
+const PLAN_LIMITS: Record<PlanId, PlanLimits> = {
+  free: { tareas_semana: 15, movimientos_mes: 20, proyectos_activos: 1, consultas_ia_mes: 10, miembros: 1 },
+  basico: { tareas_semana: null, movimientos_mes: null, proyectos_activos: 5, consultas_ia_mes: 100, miembros: 1 },
+  intermedio: { tareas_semana: null, movimientos_mes: null, proyectos_activos: null, consultas_ia_mes: null, miembros: 3 },
+  full: { ...UNLIMITED, miembros: 10 },
+  // Legado: quien ya pagaba no recibe topes nuevos.
+  projects: UNLIMITED, finance: UNLIMITED, planner: UNLIMITED, crm: UNLIMITED, completo: UNLIMITED, custom: UNLIMITED, financiero: UNLIMITED, crm_ventas: UNLIMITED,
+};
+
+export function getLimits(plan: PlanId | null | undefined, isTeam: boolean): PlanLimits {
+  if (isTeam) return UNLIMITED;
+  return PLAN_LIMITS[plan && isPlanId(plan) ? plan : 'free'];
+}
+
+/** ¿Cabe `extra` más dentro del límite? `used` = lo consumido hasta ahora. */
+export function withinLimit(limits: PlanLimits, kind: LimitKind, used: number, extra = 1): boolean {
+  const limit = limits[kind];
+  if (limit === null) return true;
+  return used + extra <= limit;
+}
+
+/** Plan mínimo que desbloquea un módulo o deja sin tope un límite. */
+export function minimumPlanFor(target: { entitlement?: Entitlement; limit?: LimitKind }): 'basico' | 'intermedio' | 'full' {
+  for (const tier of ['basico', 'intermedio', 'full'] as const) {
+    if (target.entitlement && PLAN_ENTITLEMENTS[tier].includes(target.entitlement)) return tier;
+    if (target.limit && PLAN_LIMITS[tier][target.limit] === null) return tier;
+  }
+  return 'full';
+}
+
+// ---------------------------------------------------------------------------
+// Catálogo comercial. Precios definidos por Mafe el 8 oct 2026: Básico 19,
+// Intermedio 49, Full 99 USD/mes. Se pueden sobreescribir por entorno
+// (VITE_PLAN_PRICE_*) sin tocar código. Deben coincidir con los prices de Paddle.
+// ---------------------------------------------------------------------------
+export const PLAN_PRICES_USD = { basico: 19, intermedio: 49, full: 99 } as const;
+export type Periodo = 'mensual' | 'anual';
+
+export interface PlanCard {
+  id: 'free' | 'basico' | 'intermedio' | 'full';
+  nombre: string;
+  etiqueta: string;
+  para: string;
+  promesa: string;
+  /** USD/mes facturado mensual. */
+  precioMensual: number;
+  /** USD/mes equivalente facturado anual (20 % menos). */
+  precioAnualMes: number;
+  destacado: boolean;
+  incluye: string[];
+  limites: PlanLimits;
+}
+
+function envPrice(key: string, fallback: number): number {
+  const raw = (import.meta as any).env?.[key];
+  const value = Number(typeof raw === 'string' ? raw.trim() : raw);
+  return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+/** Descuento anual: 20 % (facturado una vez al año). */
+export const ANNUAL_DISCOUNT = 0.2;
+
+export function annualMonthlyEquivalent(monthly: number): number {
+  return Math.round(monthly * (1 - ANNUAL_DISCOUNT) * 100) / 100;
+}
+
+export function getPlanCatalog(): PlanCard[] {
+  const basico = envPrice('VITE_PLAN_PRICE_BASICO', PLAN_PRICES_USD.basico);
+  const intermedio = envPrice('VITE_PLAN_PRICE_INTERMEDIO', PLAN_PRICES_USD.intermedio);
+  const full = envPrice('VITE_PLAN_PRICE_FULL', PLAN_PRICES_USD.full);
+  return [
+    {
+      id: 'free', nombre: 'Gratis', etiqueta: 'Para probar el sistema', para: 'Freelancers que están empezando y llevan todo en notas sueltas.',
+      promesa: 'Ordena tu día y tus números básicos. Gratis para siempre, sin tarjeta.',
+      precioMensual: 0, precioAnualMes: 0, destacado: false,
+      incluye: ['Planner con captura en lenguaje natural (15 tareas por semana)', 'Ingresos y egresos a mano (20 movimientos al mes)', '1 proyecto activo con horas', 'Asistente IA: 10 consultas al mes'],
+      limites: PLAN_LIMITS.free,
+    },
+    {
+      id: 'basico', nombre: 'Básico', etiqueta: 'Control operativo personal', para: 'Freelancers consolidados y consultores independientes.',
+      promesa: 'Sabes cuánto te deja cada hora, cuánto cobrar y cuándo pagar impuestos.',
+      precioMensual: basico, precioAnualMes: annualMonthlyEquivalent(basico), destacado: false,
+      incluye: ['Planner sin límites + Google Calendar', 'Finanzas completas: movimientos ilimitados, IVA e impuestos, punto de equilibrio', 'Hasta 5 proyectos con rentabilidad por hora', 'Respaldo y sincronización con Google Sheets', 'Asistente IA: 100 consultas al mes'],
+      limites: PLAN_LIMITS.basico,
+    },
+    {
+      id: 'intermedio', nombre: 'Intermedio', etiqueta: 'Automatización comercial e IA', para: 'Agencias boutique y negocios de servicios de 1 a 3 personas.',
+      promesa: 'Sabes a qué cliente cobrarle más y de dónde sale el próximo.',
+      precioMensual: intermedio, precioAnualMes: annualMonthlyEquivalent(intermedio), destacado: true,
+      incluye: ['Todo lo del Básico', 'CRM: pipeline, cotizaciones y valor ganado', 'Leads enriquecidos con Apollo y oportunidades en Reddit', 'WhatsApp: avisos y asistencia con contexto', 'Rentabilidad por cliente y por servicio', 'Proyectos ilimitados · IA sin tope razonable', 'Acceso a actualizaciones y funciones nuevas', 'Próximamente: vitrina para encontrar clientes'],
+      limites: PLAN_LIMITS.intermedio,
+    },
+    {
+      id: 'full', nombre: 'Full', etiqueta: 'Directorio ejecutivo', para: 'Empresas en crecimiento, holdings y equipos de hasta 10 personas.',
+      promesa: 'Varias empresas, un solo tablero, y el sistema te avisa antes de que algo se rompa.',
+      precioMensual: full, precioAnualMes: annualMonthlyEquivalent(full), destacado: false,
+      incluye: ['Todo lo del Intermedio', 'Multi-empresa / holding desde una sola cuenta', 'Motor BI: salud del negocio y puntos ciegos', 'Reportes ejecutivos para el CEO', 'Colaboradores con roles (hasta 10)', 'Soporte prioritario y onboarding asistido', 'Primeros en probar cada función nueva (acceso anticipado)', 'Próximamente: vitrina para encontrar clientes, con prioridad'],
+      limites: PLAN_LIMITS.full,
+    },
+  ];
 }

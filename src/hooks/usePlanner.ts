@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { plannerService, type CompleteTaskResult, type CreatePlannerBlockInput, type PlannerBlock, type PlannerBriefing, type PlannerClient, type PlannerDraft, type PlannerInbox, type PlannerInsight, type PlannerServiceOption, type PlannerTask, type UpdatePlannerTaskInput } from '../lib/plannerService';
 import { countTodayAutoActions } from '../lib/auditLogService';
+import { assertWithinLimit, isLimitError } from '../lib/planGate';
 
 function today() { return todayInTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Bogota'); }
 
@@ -106,6 +107,10 @@ export function usePlanner() {
     if (!drafts.length) return false;
     setBusy('classify'); setError(null);
     try {
+      // Plan Gratis: 15 tareas por semana. Se avisa ANTES de crear nada, y el
+      // modal de upgrade se abre solo (planGate); los borradores se conservan.
+      try { await assertWithinLimit('tareas_semana', drafts.length); }
+      catch (limit) { if (isLimitError(limit)) { setError(limit.message); return false; } throw limit; }
       const { data, error: err } = await plannerService.commitDrafts(drafts);
       if (err || !data?.ok) {
         setError(err?.message || data?.message || 'No fue posible guardar las tareas.');

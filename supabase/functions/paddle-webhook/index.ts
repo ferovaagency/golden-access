@@ -94,6 +94,10 @@ Deno.serve(async (req) => {
   const data = event?.data ?? {};
   const customData = data?.custom_data ?? data?.transaction?.custom_data ?? {};
   const userId: string | null = typeof customData?.user_id === 'string' ? customData.user_id : null;
+  // Plan comprado: viaja en custom_data desde el checkout. Sin dato (compras
+  // anteriores al modelo de 4 planes) se conserva el acceso completo.
+  const PLANES = new Set(['basico', 'intermedio', 'full']);
+  const plan: string = typeof customData?.plan === 'string' && PLANES.has(customData.plan) ? customData.plan : 'full';
   const customerId: string | null = typeof data?.customer_id === 'string' ? data.customer_id : null;
   const subscriptionId: string | null =
     typeof data?.subscription_id === 'string' ? data.subscription_id : typeof data?.id === 'string' ? data.id : null;
@@ -114,7 +118,7 @@ Deno.serve(async (req) => {
         provider: 'paddle',
         provider_order_id: subscriptionId ?? eventId,
         provider_customer_id: customerId,
-        plan: 'completo',
+        plan,
       },
       { onConflict: 'provider,provider_order_id' },
     );

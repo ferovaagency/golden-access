@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { useChat } from '@ai-sdk/react';
+import { requestUpgrade } from '../lib/planGate';
+import { minimumPlanFor } from '../lib/planService';
 import { DefaultChatTransport, type UIMessage } from 'ai';
 import { Sparkles, PanelRightClose, PanelRightOpen, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -113,6 +115,13 @@ export default function AISidebar({ user, collapsed, onToggle, width, onResize, 
             throw new Error('El asistente no está disponible temporalmente. Revisa tu conexión; las demás funciones siguen operando.');
           }
         }
+      }
+      if (response.status === 402) {
+        // Tope del plan: el modal de upgrade se abre solo y el chat muestra el motivo.
+        let detalle = 'Alcanzaste el tope de consultas al asistente de tu plan.';
+        try { const body = await response.json(); if (body?.message) detalle = body.message; } catch { /* sin cuerpo */ }
+        requestUpgrade({ motivo: detalle, planSugerido: minimumPlanFor({ limit: 'consultas_ia_mes' }), limit: 'consultas_ia_mes' });
+        throw new Error(detalle);
       }
       if (!response.ok) {
         const status = response.status;

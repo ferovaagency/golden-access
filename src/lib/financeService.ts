@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { assertWithinLimit } from './planGate';
 import {
   AppData,
   Config,
@@ -310,7 +311,12 @@ export async function saveImportedFinanceData(userId: string, data: AppData) {
   await saveHoras(userId, data.horas);
 }
 
+const inicioDeMes = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`; };
+
 export async function saveClientes(userId: string, list: Cliente[]) {
+  // Plan Gratis: 1 proyecto (cliente) activo. Se cuenta sobre la lista que se
+  // va a guardar, no sobre la base: es lo que quedará después de escribir.
+  await assertWithinLimit('proyectos_activos', 0, list.filter((c) => c.activo).length);
   await overwriteTable('finance_clientes', userId, list.map((c) => ({
     id: c.id,
     nombre: c.nombre,
@@ -378,6 +384,13 @@ export async function saveOtrosGastos(userId: string, list: OtroGasto[]) {
 }
 
 export async function savePagosEgresos(userId: string, list: PagoEgreso[]) {
+  // Plan Gratis: 20 movimientos al mes entre ventas y egresos.
+  {
+    const mes = inicioDeMes();
+    const egresosMes = list.filter((p) => (p.fecha || '') >= mes).length;
+    const { count: ventasMes } = await (supabase as any).from('finance_ventas').select('id', { count: 'exact', head: true }).gte('fecha', mes);
+    await assertWithinLimit('movimientos_mes', 0, egresosMes + (ventasMes || 0));
+  }
   // Sólo se reescribe lo escrito a mano en esta pantalla. Los egresos que
   // genera pagar una deuda o una cuenta por pagar (`origen` distinto de
   // `manual`) se quedan: esta pantalla los muestra pero no los gobierna, y el
@@ -402,6 +415,13 @@ export async function savePagosEgresos(userId: string, list: PagoEgreso[]) {
 }
 
 export async function saveVentas(userId: string, list: Venta[]) {
+  // Plan Gratis: 20 movimientos al mes entre ventas y egresos.
+  {
+    const mes = inicioDeMes();
+    const ventasMes = list.filter((v) => (v.fecha || '') >= mes).length;
+    const { count: egresosMes } = await (supabase as any).from('finance_pagos_egresos').select('id', { count: 'exact', head: true }).gte('fecha', mes);
+    await assertWithinLimit('movimientos_mes', 0, ventasMes + (egresosMes || 0));
+  }
   const rows = list.map((v) => ({
     id: v.id,
     fecha: v.fecha,

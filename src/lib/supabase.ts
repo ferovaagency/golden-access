@@ -273,7 +273,7 @@ export const resolveAccess = async (userId: string, email: string): Promise<{ ha
     .maybeSingle();
   if (subError) console.error('[supabase] resolveAccess subscription error:', subError);
   if (subscriptionGrantsAccess(sub)) {
-    return { hasPaid: true, plan: (sub!.plan || 'financiero') as PlanId };
+    return { hasPaid: true, plan: (sub!.plan || 'full') as PlanId };
   }
 
   if (email) {
@@ -285,5 +285,8 @@ export const resolveAccess = async (userId: string, email: string): Promise<{ ha
     if (courtesy) return { hasPaid: true, plan: (courtesy.plan || 'completo') as PlanId };
   }
 
-  return { hasPaid: false, plan: 'financiero' };
+  // Freemium: sin suscripción ni cortesía se entra igual, al plan Gratis. El
+  // muro de pago desapareció; los límites y módulos del plan piden el upgrade
+  // desde dentro de la app (ver planGate).
+  return { hasPaid: true, plan: 'free' };
 };

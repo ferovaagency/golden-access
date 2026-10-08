@@ -5,6 +5,7 @@ import { createLovableAiGatewayProvider, getLovableAiGatewayRunId, getLovableAiG
 import { embedText, recallKnowledge, rememberKnowledge } from "../_shared/brain.ts";
 import { logAiUsage } from "../_shared/ai-usage.ts";
 import { resolveActiveContext } from "../_shared/account.ts";
+import { aiMonthlyLimit, countAiQueriesThisMonth, resolvePlanForAccount } from "../_shared/plan.ts";
 
 function textFromParts(message: UIMessage): string {
   return (message.parts || []).map((part: any) => part.type === "text" ? part.text : "").join("").trim();
@@ -128,6 +129,31 @@ Deno.serve(async (req) => {
     // (historial de conversación, permisos de equipo); `accountId` es SOBRE QUÉ
     // datos. Coinciden salvo que el holding entre a una empresa hija.
     const { accountId, orgId } = await resolveActiveContext(admin, userId);
+
+    // Freemium: tope de consultas al mes según el plan. Se cuenta sobre el
+    // registro de uso de IA (ai_usage_log), que ya se escribe por cada
+    // respuesta. El equipo interno de Ferova no tiene tope.
+    {
+      const { data: teamRow } = await admin.from("crm_team_members").select("email").eq("email", userEmail).maybeSingle();
+      if (!teamRow) {
+        const plan = await resolvePlanForAccount(admin, accountId, userEmail);
+        const limit = aiMonthlyLimit(plan);
+        if (limit !== null) {
+          const used = await countAiQueriesThisMonth(admin, userId);
+          if (used >= limit) {
+            return new Response(JSON.stringify({
+              ok: false,
+              code: "limit",
+              limit: "consultas_ia_mes",
+              used,
+              max: limit,
+              plan,
+              message: `Tu plan ${plan === "free" ? "Gratis" : "Básico"} incluye ${limit} consultas al asistente por mes y ya usaste ${used}.`,
+            }), { status: 402, headers: { ...assistantCorsHeaders, "Content-Type": "application/json" } });
+          }
+        }
+      }
+    }
     const currentArea = (req.headers.get("X-Ferova-Context-Area") || "").slice(0, 80);
     // El frontend envía las MISMAS métricas ya calculadas del dashboard (estado
     // de resultados del período), para que el asesor no dependa de una tabla
@@ -447,7 +473,7 @@ ${context}`,
 
     // Instrumentación de costo (Fase 4): registra los tokens al terminar la
     // generación, sin bloquear ni afectar el stream que ve la persona.
-    result.usage.then((usage) => logAiUsage(admin, { userId, funcion: "business-assistant-chat", modelo: "openai/gpt-5", usage })).catch((e) => console.error("[ai-usage] business-assistant-chat", e));
+    Promise.resolve(result.usage).then((usage) => logAiUsage(admin, { userId, funcion: "business-assistant-chat", modelo: "openai/gpt-5", usage })).catch((e: unknown) => console.error("[ai-usage] business-assistant-chat", e));
 
     const response = result.toUIMessageStreamResponse({
       originalMessages: messages,

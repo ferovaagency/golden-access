@@ -3,6 +3,7 @@ import type { User } from '@supabase/supabase-js';
 import { initAuth, googleSignIn, logout, resolveAccess } from '../lib/supabase';
 import { isTeamMember } from '../lib/crmService';
 import { getModules, type ModuleOverrides, PlanId } from '../lib/planService';
+import { setCurrentPlan } from '../lib/planGate';
 import { listMyOverrides } from '../lib/moduleOverridesService';
 
 /**
@@ -15,14 +16,18 @@ export function useAuthAndAccess() {
   const [authLoading, setAuthLoading] = useState(true);
   const [hasPaid, setHasPaid] = useState(false);
   const [isTeam, setIsTeam] = useState(false);
-  const [plan, setPlan] = useState<PlanId>('financiero');
+  const [plan, setPlan] = useState<PlanId>('free');
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [moduleOverrides, setModuleOverrides] = useState<ModuleOverrides>({});
   const modules = useMemo(() => getModules(plan, isTeam, moduleOverrides), [plan, isTeam, moduleOverrides]);
+  // Los servicios sin React (planner, finanzas) consultan el plan por aquí.
+  useEffect(() => { setCurrentPlan(plan, isTeam); }, [plan, isTeam]);
   const loadedUserId = useRef<string | null>(null);
   const currentUser = useRef<User | null>(null);
   const lastAccessRefreshAt = useRef(0);
 
+  // Tras un upgrade pagado, el modal pide releer el plan sin recargar la página.
+  const reloadAccess = useRef<(() => void) | null>(null);
   useEffect(() => {
     const loadAccess = async (fUser: User, force = false) => {
       // Supabase fires onAuthStateChange for TOKEN_REFRESHED too, which
@@ -79,6 +84,7 @@ export function useAuthAndAccess() {
         void loadAccess(currentUser.current, true);
       }
     };
+    reloadAccess.current = () => { if (currentUser.current) void loadAccess(currentUser.current, true); };
     document.addEventListener('visibilitychange', refreshWhenVisible);
     return () => {
       document.removeEventListener('visibilitychange', refreshWhenVisible);
@@ -106,5 +112,6 @@ export function useAuthAndAccess() {
   return {
     user, authLoading, hasPaid, isTeam, plan, checkingPayment, moduleOverrides, modules,
     setHasPaid, handleLogin, handleSignOut,
+    refreshAccess: () => reloadAccess.current?.(),
   };
 }

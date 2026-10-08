@@ -12,13 +12,14 @@ import { useInViewOnce } from '../lib/useInViewOnce';
 import { HeroOrbit } from '../marketing/components/HeroOrbit';
 import { Reveal } from '../marketing/components/Reveal';
 import { consumePostLoginReturn, supabase } from '../lib/supabase';
+import { PlanPricingTable } from '../marketing/components/PlanPricingTable';
 
 /**
  * Public sales landing at /landing.
  * Nocturnal-adjacent but tuned to the app's current light theme:
  * dark hero with gold accents, then light module demos below.
- * Única llamada a backend: founder_slots_taken() (un entero, RPC pública)
- * para el contador real de cupos Founder; todo lo demás es presentación.
+ * Única llamada a backend: supabase.auth.getSession()
+ * (sesión post-login); todo lo demás es presentación.
  */
 export default function Landing() {
   useEffect(() => {
@@ -35,8 +36,8 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans">
       <SeoHead
-        title="Software para gestionar finanzas, ventas y proyectos"
-        description="Centraliza finanzas, CRM, proyectos y planificación con un asistente de IA que trabaja con los datos de tu negocio."
+        title="Sabe cuánto te deja cada cliente y cuánto cobrar"
+        description="Ferova One te dice cuánto te deja cada cliente, cuánto cobrar en tu próxima cotización y cuándo pagar impuestos, con tus datos reales. Gratis, sin tarjeta."
         path="/"
         jsonLd={[organizationSchema(), websiteSchema(), softwareApplicationSchema()]}
       />
@@ -44,9 +45,11 @@ export default function Landing() {
       <Hero />
       <SocialProof />
       <LiveWorkflow />
+      <UseCases />
       <ModulesGrid />
       <PlannerDemo />
       <FinanceDemo />
+      <LossCalculator />
       <CrmDemo />
       <AiDemo />
       <Pricing />
@@ -90,7 +93,6 @@ function Header() {
 
 function Hero() {
   const reduceMotion = useReducedMotion();
-  const remaining = useFounderSlots();
   return (
     <section className="relative isolate overflow-hidden bg-[#09122b] text-white">
       <motion.div
@@ -114,13 +116,13 @@ function Hero() {
         <div className="max-w-3xl text-center md:text-left">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-medium text-amber-200">
             <Sparkles className="h-3.5 w-3.5" />
-            Sistema operativo de negocio con IA
+            Para freelancers y agencias que cobran por proyecto o por hora
           </span>
           <h1 className="mt-6 font-serif text-4xl leading-tight tracking-tight md:text-6xl">
-            Finanzas, CRM y un asistente que <em className="text-amber-300 not-italic">piensa por vos</em>.
+            Deja de calcular tus ganancias <em className="text-amber-300 not-italic">a ojo</em>.
           </h1>
           <p className="mt-6 text-lg text-slate-300 md:text-xl">
-            Ferova One reemplaza tu hoja de cálculo, tu CRM y tu agenda con una sola plataforma que aprende de tu negocio y te dice qué hacer cada día.
+            Ferova One te dice cuánto te deja cada cliente, cuánto cobrar en tu próxima cotización y cuándo pagar impuestos. Con tus datos reales, no con una hoja de Excel que recalculas cada vez que entra un cliente nuevo.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row md:justify-start">
             <Link
@@ -128,7 +130,7 @@ function Hero() {
               onClick={() => trackEvent('hero_primary_cta', { path: '/' })}
               className="inline-flex items-center gap-2 rounded-full bg-amber-300 px-6 py-3 font-medium text-slate-950 hover:bg-amber-200"
             >
-              Empezar ahora <ArrowRight className="h-4 w-4" />
+              Crear cuenta gratis — sin tarjeta <ArrowRight className="h-4 w-4" />
             </Link>
             <a
               href="#modulos"
@@ -138,7 +140,7 @@ function Hero() {
               Ver demos
             </a>
           </div>
-          <p className="mt-4 text-xs text-slate-400">Founder Access USD 39 / mes · {remaining !== null ? <span className="font-semibold text-amber-300">{remaining} de 20 cupos disponibles</span> : '20 cupos totales'} · Sin permanencia</p>
+          <p className="mt-4 text-xs text-slate-400">Gratis para siempre con lo esencial · Planes desde USD 19 / mes cuando tu negocio crezca · Sin permanencia</p>
         </div>
         <motion.div
           initial={reduceMotion ? false : { opacity: 0, scale: 0.94 }}
@@ -155,10 +157,10 @@ function Hero() {
 
 function SocialProof() {
   const items = [
-    { k: '6', v: 'módulos integrados' },
-    { k: '1', v: 'asistente IA siempre activo' },
+    { k: '3 datos', v: 'y ya tienes tus números reales' },
+    { k: '0', v: 'hojas de cálculo que recalcular' },
     { k: '100%', v: 'de tus datos, tuyos' },
-    { k: '24/7', v: 'operación autónoma' },
+    { k: 'USD 0', v: 'para empezar, sin tarjeta' },
   ];
   return (
     <section className="border-b border-slate-200 bg-slate-50">
@@ -428,83 +430,108 @@ function AiDemo() {
   );
 }
 
-const FOUNDER_TOTAL_SLOTS = 20;
-
-/**
- * Cupos Founder reales: cuenta suscripciones activas via RPC publica
- * (founder_slots_taken, solo devuelve un entero). Nada inventado: si la
- * consulta falla, no se muestra numero en vez de fingir uno.
- */
-function useFounderSlots() {
-  const [taken, setTaken] = useState<number | null>(null);
-  useEffect(() => {
-    void supabase.rpc('founder_slots_taken').then(({ data, error }) => {
-      if (!error && typeof data === 'number') setTaken(data);
-    });
-  }, []);
-  if (taken === null) return null;
-  return Math.max(0, FOUNDER_TOTAL_SLOTS - Math.min(taken, FOUNDER_TOTAL_SLOTS));
-}
-
 function Pricing() {
-  const remaining = useFounderSlots();
-  const features = [
-    'Todos los módulos incluidos',
-    'Asistente IA sin límite razonable',
-    'Google Calendar, Sheets y WhatsApp',
-    'CRM + enriquecimiento Apollo',
-    'Soporte por correo',
-  ];
   const sectionRef = useInViewOnce<HTMLElement>(() => trackEvent('pricing_view', { path: '/' }));
   return (
     <section id="precios" ref={sectionRef} className="border-t border-slate-200 bg-white">
-      <div className="mx-auto max-w-3xl px-4 py-20 text-center">
-        <h2 className="font-serif text-3xl md:text-4xl">Founder Access. Todo incluido.</h2>
-        <p className="mt-3 text-slate-600">Primera cohorte limitada a 20 usuarios. La disponibilidad real se confirma al pagar.</p>
-        <motion.div
-          className="mx-auto mt-10 max-w-md rounded-3xl border border-slate-200 bg-slate-50 p-8 text-left shadow-[0_22px_55px_rgba(15,23,42,.12)]"
-          initial={{ opacity: 0, y: 28, scale: 0.97 }}
-          whileInView={{ opacity: 1, y: 0, scale: 1 }}
-          whileHover={{ y: -6, scale: 1.015 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
-        >
-          <div className="mb-4 flex items-center justify-between rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900"><span>Founder Access</span><span>{remaining !== null ? `${remaining} de ${FOUNDER_TOTAL_SLOTS} cupos disponibles` : '20 cupos totales'}</span></div>
-          {remaining !== null && (
-            <div className="mb-4">
-              <div className="h-1.5 overflow-hidden rounded-full bg-amber-100">
-                <div className="h-full rounded-full bg-amber-500 transition-all" style={{ width: `${((FOUNDER_TOTAL_SLOTS - remaining) / FOUNDER_TOTAL_SLOTS) * 100}%` }} />
-              </div>
-              <p className="mt-1 text-[11px] text-amber-800">{FOUNDER_TOTAL_SLOTS - remaining} cupos ya ocupados · el precio Founder se congela para siempre</p>
-            </div>
-          )}
-          <div className="flex items-baseline gap-1">
-            <span className="font-serif text-5xl">USD 39</span>
-            <span className="text-slate-500">/ mes</span>
+      <div className="mx-auto max-w-6xl px-4 py-20 text-center">
+        <h2 className="font-serif text-3xl md:text-4xl">Empieza gratis. Sube cuando tu negocio lo pida.</h2>
+        <p className="mx-auto mt-3 max-w-2xl text-slate-600">El plan Gratis resuelve tu día y tus números básicos. Cuando conectes tu calendario, pases de 20 movimientos al mes o quieras saber a qué cliente cobrarle más, el siguiente plan ya está listo.</p>
+        <div className="mt-10">
+          <PlanPricingTable ctaPath="/app" source="/" />
+        </div>
+        <p className="mt-6 text-xs text-slate-400">Precios en USD antes de impuestos. Sin permanencia: cancelas cuando quieras y tus datos siguen siendo tuyos.</p>
+      </div>
+    </section>
+  );
+}
+
+/** Tres perfiles reales del segmento (PDF de validación, 8 oct 2026): sin
+ *  testimonios inventados. Cada tarjeta describe el dolor y qué cambia. */
+function UseCases() {
+  const perfiles = [
+    {
+      titulo: 'El freelancer que cobra por hora',
+      dolor: 'Calcula lo que gana restando lo que paga cada mes, y nunca sabe si está por debajo del mercado.',
+      cambio: 'Ve el costo real de su hora y cuánto le deja cada cliente. Cotiza con margen, no con miedo.',
+      icon: Target,
+    },
+    {
+      titulo: 'La agencia boutique de servicios',
+      dolor: 'Tres clientes, dos herramientas nuevas y una hoja de Excel que hay que recalcular cada vez.',
+      cambio: 'Cada venta, cada hora y cada gasto recalculan solos. Descubre qué cliente da pérdida antes de que sea tarde.',
+      icon: TrendingUp,
+    },
+    {
+      titulo: 'El consultor con miedo a la DIAN',
+      dolor: 'Factura, cobra y al final del bimestre descubre lo que debe de IVA y retención.',
+      cambio: 'Alertas tributarias con tus cifras: sabe cuánto apartar y cuándo, antes de gastárselo.',
+      icon: ShieldCheck,
+    },
+  ];
+  return (
+    <section className="border-b border-slate-200 bg-white">
+      <div className="mx-auto max-w-6xl px-4 py-16">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="font-serif text-3xl md:text-4xl">¿Te suena alguno?</h2>
+          <p className="mt-3 text-slate-600">Ferova One nació de estas tres conversaciones, repetidas con freelancers y agencias que facturan por proyecto o por hora.</p>
+        </div>
+        <div className="mt-10 grid gap-4 md:grid-cols-3">
+          {perfiles.map((p, index) => (
+            <motion.div
+              key={p.titulo}
+              className="rounded-2xl border border-slate-200 bg-slate-50 p-6"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ duration: 0.35, delay: index * 0.08 }}
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-amber-100 text-amber-700"><p.icon className="h-5 w-5" /></div>
+              <h3 className="mt-4 font-semibold text-slate-900">{p.titulo}</h3>
+              <p className="mt-2 text-sm text-slate-600"><span className="font-semibold text-slate-800">Hoy:</span> {p.dolor}</p>
+              <p className="mt-2 text-sm text-slate-600"><span className="font-semibold text-emerald-700">Con Ferova One:</span> {p.cambio}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** Mini-calculadora de horas no facturadas. Usa la tarifa que escribe la
+ *  persona: aquí no se inventa ninguna cifra. */
+function LossCalculator() {
+  const [horas, setHoras] = useState(4);
+  const [tarifa, setTarifa] = useState<string>('');
+  const tarifaNum = Number(tarifa.replace(/[^0-9.]/g, '')) || 0;
+  const perdidaMes = Math.round(horas * 4.33 * tarifaNum);
+  const sectionRef = useInViewOnce<HTMLElement>(() => trackEvent('calculadora_horas', { path: '/' }));
+  return (
+    <section ref={sectionRef} className="border-t border-slate-200 bg-[#09122b] text-white">
+      <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 md:grid-cols-2">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-amber-300">Horas que nadie te paga</p>
+          <h2 className="mt-3 font-serif text-3xl md:text-4xl">¿Cuántas horas trabajas a la semana que no terminan en una factura?</h2>
+          <p className="mt-4 text-slate-300">Ajustes "rápidos", reuniones que se alargan, revisiones de más. Si no las registras, no las cobras y no sabes qué cliente se las lleva.</p>
+        </div>
+        <div className="rounded-3xl border border-white/15 bg-white/5 p-6">
+          <label className="block text-sm text-slate-300">Horas no facturadas por semana: <span className="font-semibold text-white">{horas} h</span>
+            <input type="range" min={1} max={15} value={horas} onChange={(e) => setHoras(Number(e.target.value))} className="mt-2 w-full accent-amber-400" />
+          </label>
+          <label className="mt-4 block text-sm text-slate-300">Tu tarifa por hora (en tu moneda)
+            <input inputMode="decimal" value={tarifa} onChange={(e) => setTarifa(e.target.value)} placeholder="Ej. 80000" className="mt-2 w-full rounded-xl border border-white/20 bg-white/10 px-3 py-2.5 text-white placeholder:text-slate-500 focus:border-amber-300 focus:outline-none" />
+          </label>
+          <div className="mt-5 rounded-2xl border border-amber-300/40 bg-amber-300/10 p-4">
+            {tarifaNum > 0 ? (
+              <p className="text-sm text-amber-100">Al mes dejas de cobrar cerca de <span className="font-serif text-2xl text-amber-300">{perdidaMes.toLocaleString('es-CO')}</span> en tu moneda. Con tus horas reales registradas, Ferova One te muestra qué cliente se las lleva.</p>
+            ) : (
+              <p className="text-sm text-slate-300">Escribe tu tarifa y verás el cálculo con tus propios números.</p>
+            )}
           </div>
-          <p className="mt-1 text-sm text-slate-500">Facturado mensualmente. Cancelás cuando quieras.</p>
-          <ul className="mt-6 space-y-2">
-            {features.map((f, index) => (
-              <motion.li
-                key={f}
-                className="flex items-start gap-2 text-sm"
-                initial={{ opacity: 0, x: -10 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.25, delay: index * 0.06 }}
-              >
-                <Check className="mt-0.5 h-4 w-4 text-emerald-600" /> {f}
-              </motion.li>
-            ))}
-          </ul>
-          <Link
-            to="/app"
-            onClick={() => trackEvent('pricing_cta', { path: '/' })}
-            className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-3 font-medium text-white hover:bg-slate-800"
-          >
-            Empezar ahora <ArrowRight className="h-4 w-4" />
+          <Link to="/app" onClick={() => trackEvent('hero_primary_cta', { path: '/', origen: 'calculadora' })} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-amber-300 px-6 py-3 font-medium text-slate-950 hover:bg-amber-200">
+            Registrar mis horas gratis <ArrowRight className="h-4 w-4" />
           </Link>
-        </motion.div>
+        </div>
       </div>
     </section>
   );
@@ -515,6 +542,8 @@ function Faq() {
     { q: '¿Necesito instalar algo?', a: 'No. Ferova One es 100% web. Iniciás sesión con Google y ya está.' },
     { q: '¿Mis datos están seguros?', a: 'Sí. Cada cuenta está aislada por permisos a nivel de base de datos. Solo vos ves tus datos.' },
     { q: '¿Funciona fuera de Colombia?', a: 'Sí. La calculadora de impuestos está preparada para Colombia; el resto de módulos funciona en cualquier país.' },
+    { q: '¿El plan Gratis vence?', a: 'No. Es gratis para siempre, sin tarjeta. Tiene topes de volumen (15 tareas por semana, 20 movimientos al mes, 1 proyecto, 10 consultas al asistente al mes); cuando los tocas, la app te muestra el plan que los quita.' },
+    { q: '¿Qué pasa con mis datos si bajo de plan?', a: 'Se quedan. Vuelves a los topes del plan Gratis, pero nada se borra.' },
     { q: '¿Puedo cancelar?', a: 'Cuando quieras. Sin permanencia, sin penalidades.' },
   ];
   return (

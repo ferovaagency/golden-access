@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Loader2, CreditCard } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { PADDLE_LIST_PRICE_USD } from '../lib/paddle';
+import { PLAN_PRICES_USD } from '../lib/planService';
 
 // Resumen de suscripciones / MRR (Fase 7). La métrica reina de un SaaS
 // autofinanciado. MRR estimado = suscriptores de pago × precio de lista.
@@ -14,7 +14,9 @@ interface Overview {
   por_proveedor: { provider: string; n: number }[];
 }
 
-const listPrice = Number(PADDLE_LIST_PRICE_USD) || 0;
+// Estimación conservadora con 4 planes: se asume el Básico. El MRR exacto por
+// plan sale de Paddle; esto es sólo una referencia del panel.
+const listPrice = PLAN_PRICES_USD.basico;
 const usd = (n: number) => `US$ ${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
@@ -62,7 +64,7 @@ export default function AdminSubscriptions() {
       </div>
       <div className="space-y-3 p-4">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <Stat label="MRR estimado" value={usd(mrr)} hint={`${data.activos_pagos} de pago × ${usd(listPrice)}`} />
+          <Stat label="MRR estimado" value={usd(mrr)} hint={`${data.activos_pagos} de pago × ${usd(listPrice)} (Básico; el real por plan está en Paddle)`} />
           <Stat label="Suscriptores de pago" value={String(data.activos_pagos)} />
           <Stat label="Nuevos este mes" value={String(data.nuevos_mes)} />
           <Stat label="Activos (incl. cortesía)" value={String(data.activos)} />

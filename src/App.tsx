@@ -23,13 +23,16 @@ import { trackUserEvent } from './lib/userEngagementService';
 import { useToast, errMsg } from './components/ui/toast';
 import { LoadingState } from './components/ui/AsyncState';
 import AuthScreen from './components/AuthScreen';
-import Paywall from './components/Paywall';
+import UpgradeModal from './components/UpgradeModal';
+import { requestEntitlement } from './lib/planGate';
+import { trackEvent } from './lib/analytics';
+import type { Entitlement } from './lib/planService';
 import type { CRMTab } from './components/AdminCRM';
 import AISidebar from './components/AISidebar';
 import CommandPalette from './components/CommandPalette';
 import TopBar from './components/TopBar';
 import { AppShell } from './components/layout/AppShell';
-import type { NavigationSection } from './components/layout/navigationTypes';
+import type { NavigationItem, NavigationSection } from './components/layout/navigationTypes';
 import { isFerovaUiV2Enabled } from './lib/featureFlags';
 import { SeoHead } from './seo/SeoHead';
 import { QuickHourLog } from './components/QuickHourLog';
@@ -105,7 +108,7 @@ function AppInner() {
 
   const {
     user, authLoading, hasPaid, isTeam, plan, checkingPayment, modules,
-    setHasPaid, handleSignOut,
+    handleSignOut, refreshAccess,
   } = useAuthAndAccess();
   const { success: toastOk, error: toastErr, confirm: askConfirm } = useToast();
 
@@ -550,15 +553,8 @@ function AppInner() {
     return <AuthScreen />;
   }
 
-  // Estado 2: Logueado pero sin pago
-  if (!hasPaid) {
-    return (
-      <Paywall
-        user={user}
-        onPaid={() => setHasPaid(true)}
-      />
-    );
-  }
+  // Freemium: ya no hay muro de pago. Sin suscripción se entra al plan Gratis
+  // y el upgrade se pide desde dentro (UpgradeModal, abierto por planGate).
 
   // Estado 2.5: pagó pero todavía no completó el onboarding de su negocio.
   // Los miembros del equipo de Ferova (isTeam) no son clientes reales, no pasan por esto.
@@ -593,8 +589,23 @@ function AppInner() {
     { id: 'crm-bot', label: 'Bot WhatsApp', hint: 'Conocimiento y estado' },
   ] : [];
 
+  // Módulos bloqueados por plan: se muestran en el menú con candado y, al
+  // pulsarlos, abren el modal de upgrade en vez de desaparecer sin explicación.
+  const LOCKED_TABS: Record<string, { entitlement: Entitlement; nombre: string }> = {
+    'ventas-crm': { entitlement: 'crm', nombre: 'CRM y pipeline' },
+    marketingRoi: { entitlement: 'marketing_roi', nombre: 'Rentabilidad y Marketing ROI' },
+    reports: { entitlement: 'advanced_analytics', nombre: 'Reportes CEO y salud del negocio' },
+    'locked-calendar': { entitlement: 'google_calendar', nombre: 'Sincronización con Google Calendar' },
+    'locked-sheets': { entitlement: 'google_sheets', nombre: 'Respaldo en Google Sheets' },
+  };
+  const lockedItem = (id: string, label: string, plan: string): NavigationItem => ({ id, label: `🔒 ${label}`, hint: `Disponible desde el plan ${plan}` });
   const handleNavigate = (tab: string) => {
     if (tab === '__ai') { setAiCollapsed(false); return; }
+    if (LOCKED_TABS[tab] && !modules[LOCKED_TABS[tab].entitlement]) {
+      trackEvent('locked_module_click', { tab });
+      requestEntitlement(LOCKED_TABS[tab].entitlement, LOCKED_TABS[tab].nombre);
+      return;
+    }
     // The internal SaaS console has its own protected route so it can keep
     // authorization and loading states isolated from the customer workspace.
     if (tab === 'admin') { window.location.assign('/admin'); return; }
@@ -619,7 +630,7 @@ function AppInner() {
       ...(modules.planner ? [{ id: 'planner', label: 'Planner', hint: 'Prioridades, agenda y bloques' }] : []),
     ] : [] },
     { id: 'finance', label: 'Finanzas', icon: Boxes, items: [
-      ...(modules.advanced_analytics ? [{ id: 'reports', label: 'Reportes CEO', hint: 'Seguimiento ejecutivo' }] : []),
+      ...(modules.advanced_analytics ? [{ id: 'reports', label: 'Reportes CEO', hint: 'Seguimiento ejecutivo' }] : [lockedItem('reports', 'Reportes CEO', 'Full')]),
       ...(modules.financiero ? [
       { id: 'finops', label: 'Finanzas operativas', hint: 'Cuentas, deudas, flujo', group: 'Finanzas' as const },
       { id: 'ventas', label: 'Ingresos', hint: 'Ventas y abonos', group: 'Finanzas' as const },
@@ -635,12 +646,14 @@ function AppInner() {
       ] : []),
     ] },
     { id: 'sales', label: 'Ventas', icon: Grid2X2, items: [
-      ...(modules.crm_ventas ? [{ id: 'ventas-crm', label: 'CRM', hint: 'Pipeline y oportunidades' }] : []),
-      ...(modules.marketing_roi ? [{ id: 'marketingRoi', label: 'Marketing ROI', hint: 'Campañas y calculadora' }] : []),
+      ...(modules.crm_ventas ? [{ id: 'ventas-crm', label: 'CRM', hint: 'Pipeline y oportunidades' }] : [lockedItem('ventas-crm', 'CRM', 'Intermedio')]),
+      ...(modules.marketing_roi ? [{ id: 'marketingRoi', label: 'Marketing ROI', hint: 'Campañas y calculadora' }] : [lockedItem('marketingRoi', 'Marketing ROI', 'Intermedio')]),
       ...CRM_GROWTH_TABS,
     ] },
     { id: 'settings', label: 'Configuración', icon: Settings, items: [
       { id: 'integraciones', label: 'Integraciones', hint: 'Google, WhatsApp, Apollo' },
+      ...(modules.google_calendar ? [] : [lockedItem('locked-calendar', 'Google Calendar', 'Básico')]),
+      ...(modules.google_sheets ? [] : [lockedItem('locked-sheets', 'Google Sheets', 'Básico')]),
       ...(modules.financiero ? [{ id: 'ajustes', label: 'Configuración', hint: 'Datos y Google Sheets' }] : []),
       { id: 'memoria', label: 'Memoria', hint: 'Cerebro del negocio: lo que sabe de ti y de tu operación' },
       ...(isTeam ? [{ id: 'admin', label: 'Administración Ferova', hint: 'Usuarios, planes, feedback y operaciones' }] : []),
@@ -765,6 +778,7 @@ function AppInner() {
 
   const aiSidebarNode = (
     <div className={isFerovaUiV2Enabled() ? 'ferova-v2-theme' : undefined}>
+      <UpgradeModal user={user} currentPlan={plan} onUpgraded={() => { refreshAccess(); toastOk('Plan activado. Bienvenida al siguiente nivel.'); }} />
       <AISidebar user={user} collapsed={aiCollapsed} onToggle={() => setAiCollapsed((v) => !v)} width={aiWidth} onResize={setAiWidth} metrics={metrics} currentArea={NAVIGATION_SECTIONS.find((section) => section.items.some((item) => item.id === activeTab))?.label} />
     </div>
   );

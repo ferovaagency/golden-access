@@ -7,7 +7,7 @@ import { z } from 'npm:zod';
 
 const BodySchema = z.object({
   user_id: z.string().uuid(),
-  plan: z.enum(['projects', 'finance', 'planner', 'crm', 'completo', 'custom', 'financiero', 'crm_ventas']),
+  plan: z.enum(['free', 'basico', 'intermedio', 'full', 'projects', 'finance', 'planner', 'crm', 'completo', 'custom', 'financiero', 'crm_ventas']),
 });
 
 Deno.serve(async (req) => {

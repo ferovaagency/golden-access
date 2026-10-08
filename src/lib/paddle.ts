@@ -3,15 +3,29 @@
 // El API key y el secreto de webhooks viven únicamente en el servidor.
 
 const CLIENT_TOKEN = import.meta.env.VITE_PADDLE_CLIENT_TOKEN?.trim() || '';
+/** Price id del plan único anterior (Founder Access). Se conserva como
+ *  respaldo para el plan `full` mensual mientras no existan los nuevos. */
 export const PADDLE_PRICE_ID = import.meta.env.VITE_PADDLE_PRICE_ID?.trim() || '';
 const PADDLE_ENV = (import.meta.env.VITE_PADDLE_ENV?.trim() || 'production') as 'production' | 'sandbox';
 
-/** Precio de lista en USD: incluye el ~5% de Paddle (no se absorbe). */
-export const PADDLE_LIST_PRICE_USD = import.meta.env.VITE_PAYWALL_PRICE_USD?.trim() || '52.50';
+export type PaidPlan = 'basico' | 'intermedio' | 'full';
+export type Periodo = 'mensual' | 'anual';
 
-/** Días de prueba con tarjeta requerida. DEBE coincidir con el trial period
- *  configurado en el price de Paddle; Paddle es quien lo aplica realmente. */
-export const PADDLE_TRIAL_DAYS = Number(import.meta.env.VITE_PADDLE_TRIAL_DAYS?.trim() || '14');
+/** Un price de Paddle por plan y periodo. Los que falten dejan el botón en
+ *  "próximamente": nunca se abre un checkout con un price inexistente. */
+const PRICE_IDS: Record<PaidPlan, Record<Periodo, string>> = {
+  basico: { mensual: import.meta.env.VITE_PADDLE_PRICE_BASICO_MENSUAL?.trim() || '', anual: import.meta.env.VITE_PADDLE_PRICE_BASICO_ANUAL?.trim() || '' },
+  intermedio: { mensual: import.meta.env.VITE_PADDLE_PRICE_INTERMEDIO_MENSUAL?.trim() || '', anual: import.meta.env.VITE_PADDLE_PRICE_INTERMEDIO_ANUAL?.trim() || '' },
+  full: { mensual: import.meta.env.VITE_PADDLE_PRICE_FULL_MENSUAL?.trim() || PADDLE_PRICE_ID, anual: import.meta.env.VITE_PADDLE_PRICE_FULL_ANUAL?.trim() || '' },
+};
+
+export function priceIdFor(plan: PaidPlan, periodo: Periodo): string {
+  return PRICE_IDS[plan]?.[periodo] || '';
+}
+
+export function planIsPurchasable(plan: PaidPlan, periodo: Periodo): boolean {
+  return !!CLIENT_TOKEN && !!priceIdFor(plan, periodo);
+}
 
 export type PaymentProviderStatus = 'ready' | 'awaiting_configuration' | 'unavailable';
 
@@ -41,7 +55,8 @@ let paddleLoad: Promise<PaddleJs> | null = null;
 let eventHandler: ((event: PaddleEvent) => void) | null = null;
 
 export function getPaddleStatus(): PaymentProviderStatus {
-  return CLIENT_TOKEN && PADDLE_PRICE_ID ? 'ready' : 'awaiting_configuration';
+  const anyPrice = PADDLE_PRICE_ID || (['basico', 'intermedio', 'full'] as PaidPlan[]).some((p) => priceIdFor(p, 'mensual') || priceIdFor(p, 'anual'));
+  return CLIENT_TOKEN && anyPrice ? 'ready' : 'awaiting_configuration';
 }
 
 function loadScript(): Promise<PaddleJs> {
@@ -71,18 +86,25 @@ export async function initPaddle(onEvent?: (event: PaddleEvent) => void): Promis
   return paddle;
 }
 
-/** Abre el overlay de checkout de Paddle para el plan de Ferova One. */
+/** Abre el overlay de checkout de Paddle para un plan y periodo. */
 export async function openPaddleCheckout(params: {
   userId: string;
   email?: string;
   customerId?: string | null;
+  plan?: PaidPlan;
+  periodo?: Periodo;
   onEvent?: (event: PaddleEvent) => void;
 }): Promise<void> {
+  const plan = params.plan || 'full';
+  const periodo = params.periodo || 'mensual';
+  const priceId = priceIdFor(plan, periodo);
+  if (!priceId) throw new Error('Este plan todavía no está disponible para compra.');
   const paddle = await initPaddle(params.onEvent);
   paddle.Checkout.open({
-    items: [{ priceId: PADDLE_PRICE_ID, quantity: 1 }],
+    items: [{ priceId, quantity: 1 }],
     customer: params.customerId ? { id: params.customerId } : params.email ? { email: params.email } : undefined,
-    customData: { user_id: params.userId },
+    // El webhook lee `plan` para guardar el nivel comprado.
+    customData: { user_id: params.userId, plan, periodo },
     settings: { displayMode: 'overlay', theme: 'light', locale: 'es', allowLogout: false },
   });
 }

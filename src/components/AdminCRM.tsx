@@ -161,7 +161,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
   const [loadingCustomers, setLoadingCustomers] = useState(false);
   const [savingPlanFor, setSavingPlanFor] = useState<string | null>(null);
   const [courtesyEmail, setCourtesyEmail] = useState('');
-  const [courtesyPlan, setCourtesyPlan] = useState<PlanId>('completo');
+  const [courtesyPlan, setCourtesyPlan] = useState<PlanId>('full');
   const [courtesyNotas, setCourtesyNotas] = useState('');
   const [grantingCourtesy, setGrantingCourtesy] = useState(false);
   const [feedbackList, setFeedbackList] = useState<FeedbackItem[]>([]);
@@ -2517,7 +2517,11 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                               <option value="finance">Finanzas</option>
                               <option value="planner">Planner</option>
                               <option value="crm">Ventas / CRM</option>
-                              <option value="completo">Completo</option>
+                              <option value="free">Gratis</option>
+                              <option value="basico">Básico</option>
+                              <option value="intermedio">Intermedio</option>
+                              <option value="full">Full</option>
+                              <option value="completo">Completo (legado)</option>
                               <option value="custom">Personalizado</option>
                             </select>
                           </td>
@@ -2591,7 +2595,11 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                       <option value="finance">Finanzas</option>
                       <option value="planner">Planner</option>
                       <option value="crm">Ventas / CRM</option>
-                      <option value="completo">Completo</option>
+                      <option value="free">Gratis</option>
+                      <option value="basico">Básico</option>
+                      <option value="intermedio">Intermedio</option>
+                      <option value="full">Full</option>
+                      <option value="completo">Completo (legado)</option>
                       <option value="custom">Personalizado</option>
                     </select>
                   </div>
