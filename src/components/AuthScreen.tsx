@@ -37,6 +37,16 @@ export default function AuthScreen({ intent = null }: { intent?: PlanIntent | nu
     }
   };
 
+  const handleMicrosoft = async () => {
+    setError(null);
+    trackEvent('login_click', { method: 'microsoft' });
+    try {
+      await microsoftSignIn();
+    } catch (e: any) {
+      setError(e.message || 'Error al autenticar con Microsoft.');
+    }
+  };
+
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
