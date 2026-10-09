@@ -444,6 +444,19 @@ export default function Landing() {
             <TrialLink source="how_it_works">Elegir mi plan de prueba</TrialLink>
           </div>
         </section>
+        <section className="fo-section fo-container fo-testimonial" aria-labelledby="testimonio-title">
+          <p className="fo-eyebrow">LO DICEN QUIENES YA LO USAN</p>
+          <h2 id="testimonio-title" className="fo-sr-only">Testimonios</h2>
+          <figure className="fo-quote">
+            <blockquote>
+              <p>“Estoy usando la plataforma y está muy, muy top. Me centralizo todo.”</p>
+            </blockquote>
+            <figcaption>
+              <strong>Juan</strong>
+              <span>Consultor de pauta paga y rentabilidad en ecommerce · usuario de Ferova One</span>
+            </figcaption>
+          </figure>
+        </section>
         <section id="precios" className="fo-pricing-section">
           <div className="fo-container">
             <div className="fo-heading-centered">

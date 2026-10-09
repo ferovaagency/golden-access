@@ -919,6 +919,42 @@
 .fo-center {
   text-align: center;
 }
+.fo-testimonial {
+  padding-block: 40px 70px;
+  text-align: center;
+}
+.fo-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.fo-quote {
+  max-width: 760px;
+  margin: 28px auto 0;
+}
+.fo-quote blockquote p {
+  font:
+    500 clamp(22px, 3vw, 30px)/1.35 "Outfit",
+    sans-serif;
+  letter-spacing: -0.5px;
+  color: var(--fv-ink);
+}
+.fo-quote figcaption {
+  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--fv-muted);
+}
+.fo-quote figcaption strong {
+  color: var(--fv-ink);
+  font-weight: 600;
+  font-size: 14px;
+}
 .fo-pricing-section {
   background: var(--fv-soft);
   padding-block: 90px;
