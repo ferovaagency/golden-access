@@ -1,9 +1,11 @@
+import { ProfileMenu } from './ProfileMenu';
 import type { ReactNode } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { LogOut, Menu, User as UserIcon, X } from 'lucide-react';
 
 interface WorkspaceHeaderProps {
   user: User;
+  onNavigate?: (tab: string) => void;
   onSignOut: () => void;
   mobileMenuOpen: boolean;
   onToggleMobileMenu: () => void;
@@ -16,14 +18,14 @@ interface WorkspaceHeaderProps {
  * siguen viviendo -- y calculando su estado -- en App.tsx), chip de perfil
  * y el trigger del menu movil. Puramente presentacional.
  */
-export function WorkspaceHeader({ user, onSignOut, mobileMenuOpen, onToggleMobileMenu, extras }: WorkspaceHeaderProps) {
-  const displayName = (user.user_metadata as any)?.full_name || (user.user_metadata as any)?.name || 'Mafe';
+export function WorkspaceHeader({ user, onSignOut, mobileMenuOpen, onToggleMobileMenu, extras, onNavigate }: WorkspaceHeaderProps) {
+  const displayName = (user.user_metadata as any)?.full_name || (user.user_metadata as any)?.name || 'Mi cuenta';
   return (
     <header className="sticky top-0 z-20 border-b border-[var(--ferova-line)] bg-[var(--ferova-canvas)]/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
           <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[var(--ferova-brand)] font-display font-bold uppercase text-white shadow-sm">
-            F
+            <img src="/brand/ferova-isotipo.png" alt="" width="24" height="30" style={{filter: "brightness(0) invert(1)"}} />
           </div>
           <div className="min-w-0">
             <h1 className="truncate font-display text-base font-bold tracking-tight text-[var(--fv-ink)]">Ferova One</h1>
@@ -33,8 +35,9 @@ export function WorkspaceHeader({ user, onSignOut, mobileMenuOpen, onToggleMobil
 
         <div className="flex items-center gap-3">
           {extras}
+          {onNavigate && <ProfileMenu user={user} onNavigate={onNavigate} onSignOut={onSignOut} />}
 
-          <div className="flex items-center gap-2.5 rounded-2xl border border-[var(--ferova-line)] bg-[var(--ferova-surface)] p-1.5 pr-3.5 shadow-sm">
+          {!onNavigate && <div className="flex items-center gap-2.5 rounded-2xl border border-[var(--ferova-line)] bg-[var(--ferova-surface)] p-1.5 pr-3.5 shadow-sm">
             <div className="grid h-7 w-7 place-items-center rounded-xl border border-[var(--ferova-brand)]/20 bg-[var(--ferova-brand)]/10">
               <UserIcon className="h-3.5 w-3.5 text-[var(--ferova-brand)]" />
             </div>
@@ -50,7 +53,7 @@ export function WorkspaceHeader({ user, onSignOut, mobileMenuOpen, onToggleMobil
             >
               <LogOut className="h-3.5 w-3.5" />
             </button>
-          </div>
+          </div>}
 
           <button
             onClick={onToggleMobileMenu}
@@ -64,3 +67,4 @@ export function WorkspaceHeader({ user, onSignOut, mobileMenuOpen, onToggleMobil
     </header>
   );
 }
+

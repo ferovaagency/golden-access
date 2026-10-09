@@ -29,7 +29,7 @@ interface AppShellProps {
  * Shell v2 (Manual_Implementacion_Diseno_Ferova_One, Fase 2). Puramente de
  * composicion: recibe secciones, tab activo y callbacks ya resueltos por
  * App.tsx -- no reimplementa permisos, auth ni el switch de modulos. Vive
- * detras de VITE_FEROVA_UI_V2; el shell actual sigue siendo el default.
+ * habilitado por defecto; VITE_FEROVA_UI_V2=false conserva el shell anterior.
  */
 export function AppShell({
   sections, activeSectionId, activeTab, onNavigateTab, user, onSignOut,
@@ -42,7 +42,7 @@ export function AppShell({
 
   return (
     <div className="ferova-v2-theme min-h-screen bg-[var(--ferova-canvas)] font-sans text-slate-900">
-      <div className="lg:hidden"><WorkspaceHeader user={user} onSignOut={onSignOut} mobileMenuOpen={mobileMenuOpen} onToggleMobileMenu={onToggleMobileMenu} extras={headerExtras} /></div>
+      <div className="lg:hidden"><WorkspaceHeader onNavigate={onNavigateTab} user={user} onSignOut={onSignOut} mobileMenuOpen={mobileMenuOpen} onToggleMobileMenu={onToggleMobileMenu} extras={headerExtras} /></div>
 
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/35 backdrop-blur-sm lg:hidden" onClick={onCloseMobileMenu}>
@@ -101,7 +101,7 @@ export function AppShell({
 
       <aside className={`fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-[var(--ferova-line)] bg-[var(--ferova-surface)] transition-[width] duration-200 lg:flex ${sidebarCollapsed ? 'w-[72px]' : 'w-60'}`}>
         <div className={`flex h-16 items-center border-b border-[var(--ferova-line)] ${sidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-4'}`}>
-          <div className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--ferova-brand)] font-display text-sm font-bold text-white">F</div>
+          <span className="ferova-product-mark"><img src="/brand/ferova-isotipo.png" alt="" width="22" height="28" /></span>
           {!sidebarCollapsed && <div><p className="font-display text-sm font-semibold tracking-tight text-[var(--ferova-ink)]">Ferova One</p><p className="text-[9px] uppercase tracking-[.14em] text-slate-400">Business OS</p></div>}
         </div>
         <div className={`flex-1 overflow-y-auto ${sidebarCollapsed ? 'px-2 py-4' : 'px-3 py-4'}`}>
@@ -142,3 +142,5 @@ export function AppShell({
     </div>
   );
 }
+
+

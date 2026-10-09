@@ -135,7 +135,7 @@ export default function Home({ data, metrics, period, formatCop, onNavigate }: H
     return (
       <div className="mx-auto flex w-full max-w-[1380px] flex-col gap-4 pb-8">
         {/* Franja de mando: tablero de control con las cifras clave en mono tabular */}
-        <section className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 text-white shadow-sm">
+        <section className="executive-overview overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 text-white shadow-sm">
           <div className="flex flex-col justify-between gap-4 px-6 py-5 sm:flex-row sm:items-end sm:px-7">
             <div>
               <h1 className="font-display text-2xl font-semibold tracking-tight text-white sm:text-[26px]">Panorama del negocio</h1>
@@ -212,7 +212,7 @@ export default function Home({ data, metrics, period, formatCop, onNavigate }: H
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 pb-10 animate-fade-in">
       {/* Tablero de control: franja de mando oscura + rail de cifras clave en
           mono tabular alineadas, como el tope de un tablero de operaciones. */}
-      <section aria-label="Tablero de control" className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 text-white shadow-sm" style={{ order: -2 }}>
+      <section aria-label="Tablero de control" className="executive-overview overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 text-white shadow-sm" style={{ order: -2 }}>
         <div className="flex flex-col justify-between gap-4 px-6 py-6 sm:flex-row sm:items-end sm:px-7">
           <div>
             <h2 className="font-display text-2xl font-semibold tracking-tight text-white sm:text-3xl">Panorama del negocio</h2>
@@ -416,3 +416,4 @@ function OrderControls({ id, order, onMove }: { id: HomeSectionId; order: HomeSe
     <button type="button" disabled={index === order.length - 1} onClick={() => onMove(id, 1)} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-25" title="Mover abajo" aria-label="Mover ficha abajo"><ArrowDown className="h-3.5 w-3.5" /></button>
   </div>;
 }
+

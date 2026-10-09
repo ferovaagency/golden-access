@@ -1,0 +1,22 @@
+{
+  "browser": "Edge Chromium",
+  "widths": [
+    320,
+    375,
+    768,
+    1440
+  ],
+  "scenarios": [
+    "active",
+    "scheduled",
+    "canceled",
+    "trialing",
+    "past_due",
+    "none",
+    "error"
+  ],
+  "pageErrors": [],
+  "axe": [],
+  "dialogAxe": [],
+  "provider": "simulated; no live billing operations"
+}

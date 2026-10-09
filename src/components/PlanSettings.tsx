@@ -1,3 +1,4 @@
+import { SubscriptionManagement } from './billing/SubscriptionManagement';
 import { useState } from 'react';
 import { CreditCard, Loader2, RefreshCw, Sparkles } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
@@ -40,9 +41,9 @@ export default function PlanSettings({ user, plan, subscription, isTeam, onChang
       : enPrueba && subscription.trial_ends_at
         ? `Prueba gratis de ${TRIAL_DAYS} días · termina el ${fecha(subscription.trial_ends_at)}${diasRestantes !== null ? ` (${diasRestantes === 0 ? 'hoy' : diasRestantes === 1 ? 'queda 1 día' : `quedan ${diasRestantes} días`})` : ''}.`
         : subscription.estado === 'active'
-          ? 'Suscripción activa. Se renueva sola; cancelas cuando quieras.'
+          ? 'Consulta abajo el estado de renovación en Paddle.'
           : subscription.estado === 'expired'
-            ? 'La prueba terminó. Agrega una tarjeta para seguir.'
+            ? 'El acceso no está activo. Revisa tu suscripción o elige cómo continuar.'
             : 'Sin suscripción.';
 
   const cambiarPlan = () => {
@@ -102,7 +103,8 @@ export default function PlanSettings({ user, plan, subscription, isTeam, onChang
           Durante la prueba puedes cambiar de plan las veces que quieras sin pagar. Cuando pagues, Paddle cobra el plan que tengas elegido en ese momento. Si no agregas tarjeta antes del {subscription.trial_ends_at ? fecha(subscription.trial_ends_at) : 'final'}, el acceso se apaga y tus datos se quedan guardados.
         </div>
       )}
-      <p className="text-[11px] text-slate-400">Los pagos los procesa Paddle (comerciante registrado); los impuestos se calculan según tu país en el checkout. Para facturas y cancelación, usa el enlace del correo de Paddle o escríbenos.</p>
+      <SubscriptionManagement onChanged={onChanged} />
     </div>
   );
 }
+

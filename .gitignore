@@ -8,3 +8,7 @@ coverage/
 !.env.example
 
 _to_delete/
+
+.prerender/
+.interface-preview/
+.billing-preview/

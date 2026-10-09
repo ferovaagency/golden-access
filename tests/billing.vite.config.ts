@@ -1,0 +1,2 @@
+import {defineConfig} from 'vite';import react from '@vitejs/plugin-react';import tailwindcss from '@tailwindcss/vite';import path from 'node:path';
+export default defineConfig({plugins:[react(),tailwindcss()],resolve:{alias:[{find:/.*\/lib\/billingActions$/,replacement:path.resolve('tests/fixtures/billing/offline.ts')}]},build:{outDir:'.billing-preview',emptyOutDir:true,rollupOptions:{input:path.resolve('tests/fixtures/billing/index.html')}},preview:{host:'127.0.0.1',port:4176,strictPort:true}});

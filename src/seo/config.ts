@@ -3,5 +3,6 @@
 // SITE_URL aqui (un solo lugar) apenas se confirme, nada mas depende de esto.
 export const SITE_URL = 'https://one.ferova.com.co';
 export const SITE_NAME = 'Ferova One';
-export const DEFAULT_OG_IMAGE = `${SITE_URL}/og/home-ferova-one.jpg`;
+export const DEFAULT_OG_IMAGE = `${SITE_URL}/og/ferova-one-home.png`;
 export const TWITTER_HANDLE = undefined;
+

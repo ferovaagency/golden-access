@@ -120,6 +120,16 @@ function AppInner() {
   // vez al montar, antes de que el gate de auth decida qué pantalla mostrar.
   const [planIntent] = useState<PlanIntent | null>(() => capturePlanIntentFromUrl());
 
+  const [billingOpen, setBillingOpen] = useState(() => new URLSearchParams(window.location.search).get('billing') === '1');
+  const openBilling = () => {
+    const url = new URL(window.location.href); url.searchParams.set('billing', '1');
+    window.history.replaceState(null, '', url); setBillingOpen(true);
+  };
+  const closeBilling = () => {
+    const url = new URL(window.location.href); url.searchParams.delete('billing');
+    window.history.replaceState(null, '', url); setBillingOpen(false);
+  };
+
   // Finance data state (Supabase)
   const [sheetsLoading, setSheetsLoading] = useState(false);
   const [appData, setAppData] = useState<AppData | null>(null);
@@ -602,10 +612,19 @@ function AppInner() {
     return <AuthScreen intent={planIntent} />;
   }
 
+  // Billing is personal and must remain reachable before the paywall, onboarding or workspace permissions.
+  if (billingOpen) return (
+    <main className="billing-page"><div>
+      <button type="button" className="billing-back" onClick={closeBilling}>← Volver a Ferova One</button>
+      <p className="mb-5 text-sm text-slate-600">Suscripción de tu cuenta: {user.email}</p>
+      <Suspense fallback={<LoadingState label="Cargando suscripción…" />}><PlanSettings user={user} plan={plan} subscription={subscription} isTeam={isTeam} onChanged={() => refreshAccess()} /></Suspense>
+    </div></main>
+  );
+
   // Sin acceso: elegir plan y empezar la prueba de 7 días sin tarjeta, o
   // agregar método de pago si la prueba ya venció. El equipo interno no pasa.
   if (!hasPaid && !isTeam) {
-    return <SubscriptionGate user={user} subscription={subscription} intent={planIntent} onReady={() => refreshAccess()} />;
+    return <SubscriptionGate onManageSubscription={openBilling} user={user} subscription={subscription} intent={planIntent} onReady={() => refreshAccess()} />;
   }
 
   // Estado 2.5: pagó pero todavía no completó el onboarding de su negocio.
@@ -613,6 +632,8 @@ function AppInner() {
   const isReady = appData !== null;
   if (isReady && !isTeam && !businessProfile?.onboarding_completado) {
     return (
+      <>
+      <div className="bg-white border-b border-blue-100 px-5 py-3 text-right"><button type="button" onClick={openBilling} className="text-sm font-semibold text-blue-700">Administrar mi suscripción</button></div>
       <PlanOnboarding
         user={user}
         plan={plan}
@@ -626,6 +647,7 @@ function AppInner() {
         onSaveHerramientas={handleSaveHerramientas}
         onDone={(profile) => setBusinessProfile(profile)}
       />
+      </>
     );
   }
 
@@ -655,6 +677,7 @@ function AppInner() {
   const lockedActive = !!LOCKED_TABS[activeTab] && !modules[LOCKED_TABS[activeTab].entitlement];
   const lockedItem = (id: string, label: string, plan: string): NavigationItem => ({ id, label: `🔒 ${label}`, hint: `Disponible desde el plan ${plan}` });
   const handleNavigate = (tab: string) => {
+    if (tab === 'plan') { openBilling(); return; }
     if (tab === '__ai') { setAiCollapsed(false); return; }
     if (LOCKED_TABS[tab] && !modules[LOCKED_TABS[tab].entitlement]) {
       trackEvent('locked_module_click', { tab });
@@ -706,7 +729,7 @@ function AppInner() {
       ...CRM_GROWTH_TABS,
     ] },
     { id: 'settings', label: 'Configuración', icon: Settings, items: [
-      { id: 'plan', label: 'Mi plan', hint: 'Suscripción, prueba y tarjeta' },
+      { id: 'plan', label: 'Mi suscripción', hint: 'Plan, pagos y cancelación' },
       { id: 'integraciones', label: 'Integraciones', hint: 'Google, WhatsApp, Apollo' },
       ...(modules.google_calendar ? [] : [lockedItem('locked-calendar', 'Google Calendar', 'Básico')]),
       ...(modules.google_sheets ? [] : [lockedItem('locked-sheets', 'Google Sheets', 'Básico')]),
@@ -722,6 +745,7 @@ function AppInner() {
     .map((section) => ({ ...section, items: section.items.filter((item) => canView(item.id)) }))
     .filter((section) => section.items.length > 0);
   const navigateTo = (tab: string) => {
+    if (tab === 'plan') { openBilling(); setIsMobileMenuOpen(false); return; }
     if (tab === 'admin') { window.location.assign('/admin'); return; }
     setActiveTab(tab);
     setIsMobileMenuOpen(false);
@@ -1079,6 +1103,7 @@ function AppInner() {
               <div className="w-7 h-7 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-center">
                 <UserIcon className="w-3.5 h-3.5 text-blue-600" />
               </div>
+              <button type="button" onClick={openBilling} className="text-xs text-blue-700" aria-label="Administrar mi suscripción">Mi suscripción</button>
               <div className="hidden md:block text-left text-[10px] leading-tight">
                 <span className="font-semibold text-slate-900 block">{(user.user_metadata as any)?.full_name || (user.user_metadata as any)?.name || 'Mafe'}</span>
                 <span className="text-slate-400 block font-mono text-[9px] max-w-40 truncate">{user.email}</span>
@@ -1203,4 +1228,5 @@ function AppInner() {
     </div>
   );
 }
+
 

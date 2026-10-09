@@ -28,7 +28,7 @@ function guessCountry(): string {
   return lang === 'es' && code && PAISES.some(([c]) => c === code) ? code : 'CO';
 }
 
-export default function SubscriptionGate({ user, subscription, intent = null, onReady }: { user: User; subscription: SubscriptionInfo; intent?: PlanIntent | null; onReady: () => void }) {
+export default function SubscriptionGate({ user, subscription, intent = null, onReady, onManageSubscription }: { user: User; subscription: SubscriptionInfo; intent?: PlanIntent | null; onReady: () => void; onManageSubscription?: () => void }) {
   const [plan, setPlan] = useState<PaidTier>(intent?.plan ?? 'intermedio');
   const [periodo, setPeriodo] = useState<Periodo>(intent?.periodo ?? 'mensual');
   const [country, setCountry] = useState(guessCountry);
@@ -83,12 +83,14 @@ export default function SubscriptionGate({ user, subscription, intent = null, on
 
   return (
     <div className="min-h-screen bg-[#0f0e0c] text-[#e8e3d8] font-sans">
+
       <div className="mx-auto max-w-5xl px-4 py-10">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm text-slate-400"><ShieldCheck className="h-4 w-4 text-blue-400" /> {user.email}</div>
           <button type="button" onClick={() => void logout()} className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white"><LogOut className="h-3.5 w-3.5" /> Salir</button>
         </div>
 
+        {onManageSubscription && <div className="mt-5 flex justify-end"><button type="button" onClick={onManageSubscription} className="rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm font-semibold text-blue-700">Administrar mi suscripción</button></div>}
         {auto ? (
           <div className="mx-auto mt-16 max-w-md rounded-2xl border border-[#2a2620] bg-[#161412] p-8 text-center">
             <Loader2 className="mx-auto h-8 w-8 animate-spin text-amber-300" />
@@ -187,3 +189,5 @@ export function TrialBanner({ userId, trialEndsAt, onAddCard }: { userId: string
     </div>
   );
 }
+
+

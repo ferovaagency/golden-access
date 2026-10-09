@@ -10,12 +10,13 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { paddle, paddleConfigured, PaddleError, priceIdFor } from "../_shared/paddle-api.ts";
+import { assertSubscriptionOwner, billingSummary, portalLink, type PortalSubscription } from "../_shared/subscription-portal.ts";
 
 const PLANES = ["basico", "intermedio", "full"] as const;
 const PERIODOS = ["mensual", "anual"] as const;
 
 function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" } });
 }
 
 Deno.serve(async (req) => {
@@ -34,41 +35,59 @@ Deno.serve(async (req) => {
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const body = await req.json().catch(() => ({}));
     const action = body?.action as string;
+    if (!["status", "portal", "payment_method", "change_plan"].includes(action)) return json({ok:false,message:"Acción no reconocida."},400);
+    if (action === "portal" && !["overview", "cancel"].includes(body.intent)) return json({ok:false,message:"Elige una acción de administración válida."},400);
 
     // La suscripción de Paddle de esta persona: la fila más reciente cuyo
     // provider_order_id sea un id de suscripción (sub_…). Las filas con id de
     // transacción (txn_…) no sirven para operar.
-    const { data: rows } = await admin
+    const { data: rows, error: rowsError } = await admin
       .from("user_subscriptions")
       .select("id, status, provider_order_id, provider_customer_id, plan, periodo, trial_ends_at")
       .eq("user_id", userId)
       .eq("provider", "paddle")
       .order("created_at", { ascending: false })
       .limit(10);
-    const live = (rows || []).find((r: any) => r.status === "active") || (rows || [])[0] || null;
-    let subscriptionId = (rows || []).map((r: any) => r.provider_order_id as string).find((id) => id?.startsWith("sub_")) || null;
-    const customerId = (rows || []).map((r: any) => r.provider_customer_id as string | null).find(Boolean) || null;
-    const txnId = (rows || []).map((r: any) => r.provider_order_id as string).find((id) => id?.startsWith("txn_")) || null;
+    if (rowsError) throw new Error("No se pudo consultar tu suscripción. Intenta de nuevo.");
+    const live = (rows || []).find((r: any) => r.status === "active" && String(r.provider_order_id).startsWith("sub_")) || (rows || []).find((r: any) => r.status === "active") || (rows || [])[0] || null;
+    let subscriptionId = String(live?.provider_order_id).startsWith("sub_") ? live.provider_order_id : null;
+    let customerId: string | null = live?.provider_customer_id || null;
+    const txnId = String(live?.provider_order_id).startsWith("txn_") ? live.provider_order_id : null;
 
     // Si sólo tenemos el id de la transacción (prueba recién creada y el
     // webhook aún no llegó), se busca la suscripción por cliente en Paddle y,
     // si no aparece, en la transacción misma (Paddle le cuelga subscription_id
     // cuando la convierte en suscripción).
     if (!subscriptionId && customerId) {
-      const subs = await paddle<Array<{ id: string; status: string }>>("GET", `/subscriptions?customer_id=${customerId}&per_page=5`);
+      const subs = await paddle<Array<{ id: string; status: string }>>("GET", `/subscriptions?customer_id=${encodeURIComponent(customerId)}&per_page=200`);
       subscriptionId = (subs || []).find((s) => ["trialing", "active", "past_due", "paused"].includes(s.status))?.id || (subs || [])[0]?.id || null;
     }
     if (!subscriptionId && txnId) {
-      const txn = await paddle<{ id: string; status: string; subscription_id: string | null }>("GET", `/transactions/${txnId}`).catch(() => null);
+      const txn = await paddle<{ id: string; status: string; subscription_id: string | null }>("GET", `/transactions/${encodeURIComponent(txnId)}`);
       if (txn?.subscription_id) subscriptionId = txn.subscription_id;
       else console.log("[paddle-manage-subscription] transacción sin suscripción", txnId, txn?.status);
     }
-    if (subscriptionId && live && !String(live.provider_order_id).startsWith("sub_")) {
+    if (subscriptionId && live && !String(live.provider_order_id).startsWith("sub_") && !["status", "portal"].includes(action)) {
       // Se guarda el id de la suscripción en la fila para no volver a buscarlo.
       await admin.from("user_subscriptions").update({ provider_order_id: subscriptionId }).eq("id", live.id);
     }
     const plan = typeof body?.plan === "string" && (PLANES as readonly string[]).includes(body.plan) ? body.plan : null;
     const periodo = typeof body?.periodo === "string" && (PERIODOS as readonly string[]).includes(body.periodo) ? body.periodo : "mensual";
+
+    // Authenticated self-service only. No customer/user/subscription ID from the request is trusted.
+    if (action === "status" || action === "portal") {
+      let sub: PortalSubscription | null = null;
+      if (subscriptionId) {
+        sub = await paddle<PortalSubscription>("GET", `/subscriptions/${encodeURIComponent(subscriptionId)}`);
+        assertSubscriptionOwner(sub, userId, customerId);
+        customerId = sub.customer_id;
+      }
+      if (action === "status") return json(sub ? billingSummary(sub) : {ok:true,status:"none",can_manage:!!customerId,next_billed_at:null,current_period_ends_at:null,cancel_at:null,canceled_at:null});
+      if (!customerId) return json({ok:false,code:"no_subscription",message:"No encontramos una cuenta de facturación. Si acabas de pagar, actualiza el estado en unos momentos."},409);
+      if (body.intent === "cancel" && !sub) return json({ok:false,code:"no_subscription",message:"No encontramos una suscripción para cancelar. Puedes revisar tus pagos desde Administrar suscripción."},409);
+      const session = await paddle<Parameters<typeof portalLink>[0]>("POST", `/customers/${encodeURIComponent(customerId)}/portal-sessions`, {subscription_ids:sub?[sub.id]:[]});
+      return json({ok:true,url:portalLink(session,body.intent,sub?.id ?? null)});
+    }
 
     if (!subscriptionId) {
       // Prueba sin tarjeta que Paddle aún no convirtió en suscripción (o ya
@@ -84,11 +103,6 @@ Deno.serve(async (req) => {
         return json({ ok: true, trial_only: true, plan, periodo, trial_ends_at: live.trial_ends_at });
       }
       return json({ ok: false, code: "checkout_required", plan: plan ?? live?.plan ?? null, periodo: plan ? periodo : (live?.periodo ?? "mensual"), customer_id: customerId, message: "Tu prueba todavía no tiene una suscripción en Paddle: se abre el pago del plan que elegiste." });
-    }
-
-    if (action === "status") {
-      const sub = await paddle<{ id: string; status: string; next_billed_at: string | null; items: Array<{ price: { id: string } }> }>("GET", `/subscriptions/${subscriptionId}`);
-      return json({ ok: true, subscription_id: sub.id, status: sub.status, next_billed_at: sub.next_billed_at, price_id: sub.items?.[0]?.price?.id ?? null });
     }
 
     if (action === "payment_method") {

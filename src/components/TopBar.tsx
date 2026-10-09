@@ -1,6 +1,7 @@
+import { ProfileMenu } from './layout/ProfileMenu';
 import type { ReactNode } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { Search, Command as CommandIcon, LogOut, UserRound, Sparkles, Compass } from 'lucide-react';
+import { Search, Command as CommandIcon, Sparkles, Compass } from 'lucide-react';
 import NotificationsBell from './NotificationsBell';
 
 type Props = {
@@ -18,7 +19,6 @@ type Props = {
 };
 
 export default function TopBar({ userId, onOpenPalette, onNavigate, user, extras, workspaceSwitcher, onSignOut, onOpenAssistant }: Props) {
-  const displayName = (user?.user_metadata as any)?.full_name || (user?.user_metadata as any)?.name || user?.email?.split('@')[0] || 'Usuario';
   return (
     <div className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-xl">
       <div className="mx-auto flex min-h-16 max-w-[1500px] items-center justify-between gap-3 px-4 sm:px-6">
@@ -47,20 +47,11 @@ export default function TopBar({ userId, onOpenPalette, onNavigate, user, extras
             </button>
           )}
           <NotificationsBell userId={userId} onNavigate={onNavigate} />
-          {user && (
-            <div className="ml-1 flex items-center gap-2 border-l border-slate-200 pl-3">
-              <button type="button" onClick={() => onNavigate('ajustes')} title="Configuración de la cuenta" className="flex items-center gap-2 rounded-lg p-1 transition hover:bg-slate-100">
-                <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--ferova-soft)] text-[var(--ferova-brand)]"><UserRound className="h-4 w-4" /></span>
-                <div className="hidden max-w-28 leading-tight text-left xl:block">
-                  <p className="truncate text-[11px] font-semibold text-slate-800">{displayName}</p>
-                  <p className="truncate text-[9px] text-slate-400">{user.email}</p>
-                </div>
-              </button>
-              {onSignOut && <button type="button" onClick={onSignOut} aria-label="Cerrar sesión" title="Cerrar sesión" className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[var(--ferova-brand)]"><LogOut className="h-3.5 w-3.5" /></button>}
-            </div>
-          )}
+          {user && <ProfileMenu user={user} onNavigate={onNavigate} onSignOut={onSignOut} />}
         </div>
       </div>
     </div>
   );
 }
+
+
