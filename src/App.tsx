@@ -194,6 +194,7 @@ function AppInner() {
   const [aiCollapsed, setAiCollapsed] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     const stored = localStorage.getItem('ferova.ai.collapsed');
+    if (window.innerWidth < 1024) return true;
     if (stored !== null) return stored === '1';
     return window.innerWidth < 1280;
   });
@@ -631,6 +632,7 @@ function AppInner() {
     'locked-calendar': { entitlement: 'google_calendar', nombre: 'Sincronización con Google Calendar' },
     'locked-sheets': { entitlement: 'google_sheets', nombre: 'Respaldo en Google Sheets' },
   };
+  const lockedActive = !!LOCKED_TABS[activeTab] && !modules[LOCKED_TABS[activeTab].entitlement];
   const lockedItem = (id: string, label: string, plan: string): NavigationItem => ({ id, label: `🔒 ${label}`, hint: `Disponible desde el plan ${plan}` });
   const handleNavigate = (tab: string) => {
     if (tab === '__ai') { setAiCollapsed(false); return; }
@@ -873,12 +875,29 @@ function AppInner() {
 
         {isReady && metrics && appData && (
           <Suspense fallback={<LoadingState label="Cargando módulo…" />}>
-            {activeTab === 'planner' && <SmartPlanner />}
+            {lockedActive && (
+              <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center sm:p-12">
+                <Lock className="mx-auto h-8 w-8 text-blue-600" />
+                <h2 className="mt-3 text-lg font-semibold text-slate-900">{LOCKED_TABS[activeTab].nombre}</h2>
+                <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">Este módulo no está incluido en tu plan actual. Puedes cambiar de plan para activarlo o volver al resumen.</p>
+                <div className="mt-5 flex flex-wrap justify-center gap-2">
+                  <button type="button" onClick={() => requestEntitlement(LOCKED_TABS[activeTab].entitlement, LOCKED_TABS[activeTab].nombre)} className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">Ver planes</button>
+                  <button type="button" onClick={() => setActiveTab('dashboard')} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">Volver al resumen</button>
+                </div>
+              </div>
+            )}
+            {!lockedActive && !KNOWN_TABS.has(activeTab) && (
+              <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
+                <p className="text-sm text-slate-600">No encontramos esta sección.</p>
+                <button type="button" onClick={() => setActiveTab('dashboard')} className="mt-3 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Ir al resumen</button>
+              </div>
+            )}
+            {!lockedActive && activeTab === 'planner' && <SmartPlanner />}
             {activeTab === 'holding' && <HoldingOverview formatCop={formatCop} />}
             {activeTab === 'kpisOperativos' && <OperatingKpiDashboard userId={accountId} data={appData} formatCop={formatCop} />}
-            {activeTab === 'reports' && effectiveUser && <ReportsView user={effectiveUser} />}
+            {!lockedActive && activeTab === 'reports' && effectiveUser && <ReportsView user={effectiveUser} />}
             {activeTab === 'finops' && effectiveUser && <FinanceOperativa user={effectiveUser} appData={appData} formatCop={formatCop} />}
-            {activeTab === 'marketingRoi' && effectiveUser && <MarketingROI user={effectiveUser} ventas={appData.ventas} config={appData.config} formatCop={formatCop} />}
+            {!lockedActive && activeTab === 'marketingRoi' && effectiveUser && <MarketingROI user={effectiveUser} ventas={appData.ventas} config={appData.config} formatCop={formatCop} />}
             {activeTab === 'dashboard' && (
               <Home
                 data={appData}
