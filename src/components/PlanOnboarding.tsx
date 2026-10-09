@@ -5,7 +5,8 @@ import type { BusinessProfile } from '../lib/businessProfileService';
 import { upsertBusinessProfile } from '../lib/businessProfileService';
 import type { ModuleFlags, PlanId } from '../lib/planService';
 import { upsertBudgetLine } from '../lib/budgetService';
-import type { AppData, Cliente, Config, OtroGasto, Servicio } from '../types';
+import type { AppData, Cliente, Config, Herramienta, OtroGasto, Servicio } from '../types';
+import { convertToCop } from '../lib/calculations';
 import { useToast, errMsg } from './ui/toast';
 
 // Onboarding en 5 pasos, en el orden que reduce carga: identidad → oferta →
@@ -29,6 +30,7 @@ interface Props {
   onSaveServicios: (updated: Servicio[]) => Promise<void>;
   onSaveConfig: (updated: Partial<Config>) => Promise<void>;
   onSaveOtrosGastos: (updated: OtroGasto[]) => Promise<void>;
+  onSaveHerramientas: (updated: Herramienta[]) => Promise<void>;
   onDone: (profile: BusinessProfile) => void;
 }
 
@@ -81,11 +83,19 @@ function ChipPicker({ label, help, options, value, onChange, required }: { label
   );
 }
 
+function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return <button type="button" onClick={onClick} className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${active ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}>{children}</button>;
+}
+
+function Tag({ children }: { children: React.ReactNode }) {
+  return <span className="rounded-full border border-emerald-300 bg-white px-2 py-0.5 text-[10px] font-semibold text-emerald-700">{children}</span>;
+}
+
 function Added({ children }: { children: React.ReactNode }) {
   return <li className="flex items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800"><span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5" /> {children}</span></li>;
 }
 
-export default function PlanOnboarding({ user, plan, modules, profile, appData, onSaveClientes, onSaveServicios, onSaveConfig, onSaveOtrosGastos, onDone }: Props) {
+export default function PlanOnboarding({ user, plan, modules, profile, appData, onSaveClientes, onSaveServicios, onSaveConfig, onSaveOtrosGastos, onSaveHerramientas, onDone }: Props) {
   const { success: toastOk, error: toastErr } = useToast();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -110,8 +120,12 @@ export default function PlanOnboarding({ user, plan, modules, profile, appData, 
   const [savingCli, setSavingCli] = useState(false);
 
   // Paso 4 · costos fijos (varios)
+  // Un costo con alcance "por cliente" o ligado a servicios se guarda como
+  // Herramienta (así el motor lo prorratea por cliente y por servicio); el
+  // resto va a OtroGasto. Aquí se muestran juntos como una sola lista.
   const [costos, setCostos] = useState<OtroGasto[]>(appData.otrosGastos);
-  const [costo, setCosto] = useState({ nombre: '', monto: '' });
+  const [herramientas, setHerramientas] = useState<Herramienta[]>(appData.herramientas);
+  const [costo, setCosto] = useState<{ nombre: string; monto: string; moneda: 'COP' | 'USD'; alcance: 'global' | 'porCliente'; servicios: string[] }>({ nombre: '', monto: '', moneda: 'COP', alcance: 'global', servicios: [] });
   const [savingCosto, setSavingCosto] = useState(false);
 
   // Paso 5 · metas + presupuesto
@@ -121,7 +135,11 @@ export default function PlanOnboarding({ user, plan, modules, profile, appData, 
 
   const identityValid = !!(form.nombre_negocio.trim() && form.industria.trim() && form.tipo_negocio.trim() && form.tamano_equipo.trim());
   const lastStep = STEPS.length - 1;
-  const totalCostos = costos.reduce((sum, c) => sum + (c.moneda === 'COP' ? c.monto : 0), 0);
+  const trm = appData.config.trm || 4000;
+  const clientesActivos = Math.max(1, clientes.filter((c) => c.activo !== false).length);
+  const costoMensualCop = (h: Herramienta) => convertToCop(h.monto, h.moneda, trm) * (h.tipo_cobro === 'porCliente' ? clientesActivos : 1);
+  const totalCostos = costos.reduce((sum, c) => sum + convertToCop(c.monto, c.moneda, trm), 0) + herramientas.reduce((sum, h) => sum + costoMensualCop(h), 0);
+  const totalItems = costos.length + herramientas.length;
 
   const addServicio = async () => {
     if (!srv.nombre.trim()) return;
@@ -179,11 +197,20 @@ export default function PlanOnboarding({ user, plan, modules, profile, appData, 
     if (!costo.nombre.trim() || !costo.monto.trim()) return;
     setSavingCosto(true);
     try {
-      const nuevo: OtroGasto = { id: `gasto_${Date.now().toString().slice(-6)}`, nombre: costo.nombre.trim(), monto: Number(costo.monto) || 0, moneda: 'COP', categoria: 'Operativo' };
-      const lista = [...costos, nuevo];
-      await onSaveOtrosGastos(lista);
-      setCostos(lista);
-      setCosto({ nombre: '', monto: '' });
+      const monto = Number(costo.monto) || 0;
+      const suffix = Date.now().toString().slice(-6);
+      if (costo.alcance === 'porCliente' || costo.servicios.length > 0) {
+        const nueva: Herramienta = { id: `tool_${suffix}`, nombre: costo.nombre.trim(), monto, moneda: costo.moneda, tipo_cobro: costo.alcance, servicios_ids: costo.servicios.join(','), notas: 'Creado en el onboarding' };
+        const lista = [...herramientas, nueva];
+        await onSaveHerramientas(lista);
+        setHerramientas(lista);
+      } else {
+        const nuevo: OtroGasto = { id: `gasto_${suffix}`, nombre: costo.nombre.trim(), monto, moneda: costo.moneda, categoria: 'Operativo' };
+        const lista = [...costos, nuevo];
+        await onSaveOtrosGastos(lista);
+        setCostos(lista);
+      }
+      setCosto({ nombre: '', monto: '', moneda: costo.moneda, alcance: 'global', servicios: [] });
     } catch (err: any) {
       toastErr(`No se pudo guardar el costo: ${errMsg(err)}`);
     } finally {
@@ -192,16 +219,26 @@ export default function PlanOnboarding({ user, plan, modules, profile, appData, 
   };
 
   const removeCosto = async (id: string) => {
-    const lista = costos.filter((c) => c.id !== id);
-    try { await onSaveOtrosGastos(lista); setCostos(lista); }
-    catch (err: any) { toastErr(errMsg(err)); }
+    try {
+      if (herramientas.some((h) => h.id === id)) {
+        const lista = herramientas.filter((h) => h.id !== id);
+        await onSaveHerramientas(lista); setHerramientas(lista);
+      } else {
+        const lista = costos.filter((c) => c.id !== id);
+        await onSaveOtrosGastos(lista); setCostos(lista);
+      }
+    } catch (err: any) { toastErr(errMsg(err)); }
   };
+
+  const toggleServicioCosto = (id: string) => setCosto((c) => ({ ...c, servicios: c.servicios.includes(id) ? c.servicios.filter((x) => x !== id) : [...c.servicios, id] }));
+  const nombreServicio = (id: string) => servicios.find((s) => s.id === id)?.nombre || id;
 
   /** Presupuesto del mes en curso: una línea por costo fijo + sueldo propio. */
   const sembrarPresupuesto = async () => {
     const periodo = periodoActual();
     const lineas = new Map<string, number>();
-    for (const c of costos) if (c.moneda === 'COP') lineas.set(c.nombre, (lineas.get(c.nombre) || 0) + c.monto);
+    for (const c of costos) lineas.set(c.nombre, (lineas.get(c.nombre) || 0) + convertToCop(c.monto, c.moneda, trm));
+    for (const h of herramientas) lineas.set(h.nombre, (lineas.get(h.nombre) || 0) + costoMensualCop(h));
     const sueldo = Number(salario) || 0;
     if (sueldo > 0) lineas.set('Sueldo propio', sueldo);
     let n = 0;
@@ -308,21 +345,56 @@ export default function PlanOnboarding({ user, plan, modules, profile, appData, 
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {COSTOS_SUGERIDOS.map((n) => <button key={n} type="button" onClick={() => setCosto({ ...costo, nombre: n })} className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600 hover:bg-slate-50">{n}</button>)}
               </div>
-              {costos.length > 0 && (
+              {totalItems > 0 && (
                 <ul className="mt-4 space-y-1.5">
                   {costos.map((c) => (
                     <li key={c.id} className="flex items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
-                      <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5" /> {c.nombre} · {c.moneda} {fmt(c.monto)} / mes</span>
+                      <span className="flex flex-wrap items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5" /> {c.nombre} · {c.moneda} {fmt(c.monto)} / mes <Tag>Global</Tag></span>
                       <button type="button" onClick={() => removeCosto(c.id)} className="text-emerald-700 hover:text-red-600" aria-label="Quitar"><Trash2 className="h-3.5 w-3.5" /></button>
                     </li>
                   ))}
-                  <li className="px-3 pt-1 text-xs font-semibold text-slate-700">Total fijo: COP {fmt(totalCostos)} / mes</li>
+                  {herramientas.map((h) => {
+                    const ids = h.servicios_ids ? h.servicios_ids.split(',').filter(Boolean) : [];
+                    return (
+                      <li key={h.id} className="flex items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+                        <span className="flex flex-wrap items-center gap-1.5">
+                          <CheckCircle2 className="h-3.5 w-3.5" /> {h.nombre} · {h.moneda} {fmt(h.monto)} {h.tipo_cobro === 'porCliente' ? '/ cliente / mes' : '/ mes'}
+                          <Tag>{h.tipo_cobro === 'porCliente' ? `Por cliente · ×${clientesActivos}` : 'Global'}</Tag>
+                          {ids.length > 0 && <Tag>{ids.map(nombreServicio).join(', ')}</Tag>}
+                        </span>
+                        <button type="button" onClick={() => removeCosto(h.id)} className="text-emerald-700 hover:text-red-600" aria-label="Quitar"><Trash2 className="h-3.5 w-3.5" /></button>
+                      </li>
+                    );
+                  })}
+                  <li className="px-3 pt-1 text-xs font-semibold text-slate-700">Total fijo: COP {fmt(Math.round(totalCostos))} / mes{herramientas.some((h) => h.tipo_cobro === 'porCliente') ? ` (con ${clientesActivos} cliente(s) activo(s))` : ''}</li>
                 </ul>
               )}
-              <div className="mt-4 grid gap-2.5 rounded-2xl border border-slate-200 p-4 sm:grid-cols-[1fr_180px_auto]">
-                <input className={inputClass} placeholder="Ej. Arriendo, SEMrush, Contador" value={costo.nombre} onChange={(e) => setCosto({ ...costo, nombre: e.target.value })} />
-                <input className={inputClass} type="number" min="0" placeholder="Monto mensual (COP)" value={costo.monto} onChange={(e) => setCosto({ ...costo, monto: e.target.value })} />
-                <button type="button" onClick={addCosto} disabled={!costo.nombre.trim() || !costo.monto.trim() || savingCosto} className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"><Plus className="h-3.5 w-3.5" /> {savingCosto ? '…' : 'Agregar'}</button>
+              <div className="mt-4 space-y-3 rounded-2xl border border-slate-200 p-4">
+                <div className="grid gap-2.5 sm:grid-cols-[1fr_150px_90px]">
+                  <input className={inputClass} placeholder="Ej. Arriendo, SEMrush, Contador" value={costo.nombre} onChange={(e) => setCosto({ ...costo, nombre: e.target.value })} />
+                  <input className={inputClass} type="number" min="0" placeholder="Monto mensual" value={costo.monto} onChange={(e) => setCosto({ ...costo, monto: e.target.value })} />
+                  <select className={inputClass} value={costo.moneda} onChange={(e) => setCosto({ ...costo, moneda: e.target.value as 'COP' | 'USD' })}><option value="COP">COP</option><option value="USD">USD</option></select>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-700">¿Cómo se cobra?</p>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    <Chip active={costo.alcance === 'global'} onClick={() => setCosto({ ...costo, alcance: 'global' })}>Global · un solo pago al mes</Chip>
+                    <Chip active={costo.alcance === 'porCliente'} onClick={() => setCosto({ ...costo, alcance: 'porCliente' })}>Por cliente · se multiplica por tus clientes activos</Chip>
+                  </div>
+                  <HelpNote>"Por cliente" es para lo que pagas por cada cuenta (una licencia por cliente, un hosting por sitio). El total sale de multiplicar el monto por los clientes activos.</HelpNote>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-700">¿Qué servicios lo usan? <span className="font-normal text-slate-400">(opcional)</span></p>
+                  {servicios.length === 0 ? (
+                    <p className="mt-1 text-xs text-slate-400">Sin servicios en el paso 2. Puedes volver y agregarlos, o enlazarlos después en Finanzas → Gastos.</p>
+                  ) : (
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {servicios.map((s) => <Chip key={s.id} active={costo.servicios.includes(s.id)} onClick={() => toggleServicioCosto(s.id)}>{s.nombre}</Chip>)}
+                    </div>
+                  )}
+                  <HelpNote>Si lo enlazas, el costo se reparte en partes iguales entre esos servicios y entra en el margen real de cada uno. Si no, cuenta como costo general del negocio.</HelpNote>
+                </div>
+                <button type="button" onClick={addCosto} disabled={!costo.nombre.trim() || !costo.monto.trim() || savingCosto} className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"><Plus className="h-3.5 w-3.5" /> {savingCosto ? '…' : 'Agregar costo'}</button>
               </div>
             </div>}
 
@@ -345,7 +417,7 @@ export default function PlanOnboarding({ user, plan, modules, profile, appData, 
                   <span>
                     <span className="block text-sm font-semibold text-slate-900">¿Quieres que Ferova cree tu presupuesto mensual inicial?</span>
                     <span className="mt-1 block text-xs leading-5 text-slate-600">
-                      Con los {costos.length} costo(s) fijo(s) del paso anterior{Number(salario) > 0 ? ' y tu sueldo' : ''}, se crea el presupuesto de {periodoActual()} en Finanzas operativas: {costos.length + (Number(salario) > 0 ? 1 : 0)} línea(s), COP {fmt(totalCostos + (Number(salario) || 0))} en total. Lo editas cuando quieras.
+                      Con los {totalItems} costo(s) fijo(s) del paso anterior{Number(salario) > 0 ? ' y tu sueldo' : ''}, se crea el presupuesto de {periodoActual()} en Finanzas operativas: {totalItems + (Number(salario) > 0 ? 1 : 0)} línea(s), COP {fmt(Math.round(totalCostos + (Number(salario) || 0)))} en total. Lo editas cuando quieras.
                     </span>
                   </span>
                 </label>
@@ -354,7 +426,7 @@ export default function PlanOnboarding({ user, plan, modules, profile, appData, 
                 <p className="font-semibold text-slate-900">Resumen</p>
                 <ul className="mt-2 space-y-1 text-xs">
                   <li>· {form.nombre_negocio || 'Tu empresa'} · {form.tipo_negocio || 'modelo sin definir'}</li>
-                  <li>· {servicios.length} servicio(s) · {clientes.length} cliente(s) · {costos.length} costo(s) fijo(s) por COP {fmt(totalCostos)} / mes</li>
+                  <li>· {servicios.length} servicio(s) · {clientes.length} cliente(s) · {totalItems} costo(s) fijo(s) por COP {fmt(Math.round(totalCostos))} / mes</li>
                   <li>· Al entrar, el Copiloto te muestra el tablero en un recorrido de 5 estaciones. Puedes saltarlo.</li>
                 </ul>
               </div>

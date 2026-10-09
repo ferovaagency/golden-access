@@ -580,6 +580,7 @@ function AppInner() {
         onSaveServicios={handleSaveServicios}
         onSaveConfig={handleSaveConfig}
         onSaveOtrosGastos={handleSaveOtrosGastos}
+        onSaveHerramientas={handleSaveHerramientas}
         onDone={(profile) => setBusinessProfile(profile)}
       />
     );
@@ -788,12 +789,6 @@ function AppInner() {
   const aiSidebarNode = (
     <div className={isFerovaUiV2Enabled() ? 'ferova-v2-theme' : undefined}>
       <UpgradeModal user={user} currentPlan={plan} onUpgraded={() => { refreshAccess(); toastOk('Plan actualizado.'); }} />
-      {subscription.estado === 'trial' && subscription.trial_ends_at && (
-        <TrialBanner
-          trialEndsAt={subscription.trial_ends_at}
-          onAddCard={() => { void addPaymentMethod(user.id, () => { refreshAccess(); toastOk('Método de pago agregado. Tu plan sigue sin interrupciones.'); }).catch((e) => toastErr(errMsg(e))); }}
-        />
-      )}
       <AISidebar user={user} collapsed={aiCollapsed} onToggle={() => setAiCollapsed((v) => !v)} width={aiWidth} onResize={setAiWidth} metrics={metrics} currentArea={NAVIGATION_SECTIONS.find((section) => section.items.some((item) => item.id === activeTab))?.label} />
     </div>
   );
@@ -820,6 +815,13 @@ function AppInner() {
   const mainContent = (
     <div className={isFerovaUiV2Enabled() ? 'ferova-v2-theme' : undefined}>
       {!isFerovaUiV2Enabled() && topBarNode}
+      {subscription.estado === 'trial' && subscription.trial_ends_at && (
+        <TrialBanner
+          userId={user.id}
+          trialEndsAt={subscription.trial_ends_at}
+          onAddCard={() => { void addPaymentMethod(user.id, () => { refreshAccess(); toastOk('Método de pago agregado. Tu plan sigue sin interrupciones.'); }).catch((e) => toastErr(errMsg(e))); }}
+        />
+      )}
       {sheetsLoading && (
         <div className="bg-blue-50 border-b border-blue-100 text-blue-700 py-2 text-center text-xs font-semibold flex items-center justify-center gap-2">
           <Loader2 className="w-3.5 h-3.5 animate-spin" /> Guardando cambios…

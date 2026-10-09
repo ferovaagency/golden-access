@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, Loader2, LogOut, ShieldCheck, CreditCard } from 'lucide-react';
+import { Check, Loader2, LogOut, ShieldCheck, CreditCard, X } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { logout, supabase, checkSubscription, type SubscriptionInfo } from '../lib/supabase';
 import { getPlanCatalog, TRIAL_DAYS, type PaidTier, type Periodo } from '../lib/planService';
@@ -188,17 +188,26 @@ export default function SubscriptionGate({ user, subscription, intent = null, on
   );
 }
 
-/** Aviso dentro de la app mientras dura la prueba. */
-export function TrialBanner({ trialEndsAt, onAddCard }: { trialEndsAt: string; onAddCard: () => void }) {
+/**
+ * Franja fina arriba del contenido mientras dura la prueba. Se puede cerrar;
+ * vuelve a salir al día siguiente (y siempre el último día).
+ */
+export function TrialBanner({ userId, trialEndsAt, onAddCard }: { userId: string; trialEndsAt: string; onAddCard: () => void }) {
   const dias = Math.max(0, Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / 86_400_000));
+  const key = `ferova.trial-banner.dismissed.${userId}`;
+  const hoy = new Date().toISOString().slice(0, 10);
+  const [hidden, setHidden] = useState(() => { try { return localStorage.getItem(key) === hoy; } catch { return false; } });
+  if (hidden && dias > 1) return null;
+  const close = () => { try { localStorage.setItem(key, hoy); } catch { /* noop */ } setHidden(true); };
   return (
-    <div className="fixed bottom-4 left-1/2 z-40 w-[min(92vw,34rem)] -translate-x-1/2 rounded-2xl border border-amber-200 bg-white/95 px-4 py-3 shadow-[0_18px_45px_rgba(15,23,42,.18)] backdrop-blur">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-slate-800">
-          <span className="font-semibold">{dias === 0 ? 'Tu prueba termina hoy' : dias === 1 ? 'Te queda 1 día de prueba' : `Te quedan ${dias} días de prueba`}.</span>
-          <span className="text-slate-500"> Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.</span>
-        </p>
-        <button type="button" onClick={onAddCard} className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"><CreditCard className="h-3.5 w-3.5" /> Agregar tarjeta</button>
+    <div className="flex items-center justify-between gap-3 border-b border-amber-200 bg-amber-50 px-4 py-1.5 text-xs text-amber-900">
+      <p className="min-w-0 truncate">
+        <span className="font-semibold">{dias === 0 ? 'Tu prueba termina hoy' : dias === 1 ? 'Te queda 1 día de prueba' : `Te quedan ${dias} días de prueba`}.</span>
+        <span className="hidden text-amber-800/80 sm:inline"> Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.</span>
+      </p>
+      <div className="flex shrink-0 items-center gap-2">
+        <button type="button" onClick={onAddCard} className="inline-flex items-center gap-1 rounded-md bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-slate-800"><CreditCard className="h-3 w-3" /> Agregar tarjeta</button>
+        {dias > 1 && <button type="button" onClick={close} aria-label="Ocultar por hoy" title="Ocultar por hoy" className="grid h-6 w-6 place-items-center rounded-md text-amber-700 hover:bg-amber-100"><X className="h-3.5 w-3.5" /></button>}
       </div>
     </div>
   );
