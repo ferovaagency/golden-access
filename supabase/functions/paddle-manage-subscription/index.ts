@@ -96,8 +96,11 @@ Deno.serve(async (req) => {
       // Para pagar no hay nada que "actualizar": la app abre el checkout normal
       // con el plan elegido y el webhook activa al pagar.
       const enPrueba = !!live && live.status === "active" && !!live.trial_ends_at && new Date(live.trial_ends_at).getTime() > Date.now();
-      if (action === "change_plan" && enPrueba) {
-        if (!plan) return json({ ok: false, message: "Elige un plan válido." }, 400);
+      // Sólo se permite bajar o mantener el nivel sin pagar: subir de plan
+      // durante la prueba exige pasar por el checkout de Paddle.
+      const nivelActual = (PLANES as readonly string[]).indexOf(String(live?.plan ?? ""));
+      const nivelNuevo = plan ? (PLANES as readonly string[]).indexOf(plan) : -1;
+      if (action === "change_plan" && enPrueba && plan && nivelActual >= 0 && nivelNuevo <= nivelActual) {
         const { error } = await admin.from("user_subscriptions").update({ plan, periodo }).eq("id", live.id);
         if (error) return json({ ok: false, message: "No fue posible guardar el cambio de plan." }, 500);
         return json({ ok: true, trial_only: true, plan, periodo, trial_ends_at: live.trial_ends_at });
