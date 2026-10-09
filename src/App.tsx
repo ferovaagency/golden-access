@@ -263,7 +263,16 @@ function AppInner() {
   // comisiones) y al redirigirlo quedaba inalcanzable, con los datos dentro.
   useEffect(() => {
     if (activeTab === 'seguimiento') setActiveTab('kpisOperativos');
+    // "home"/"inicio" (búsqueda, notificaciones) apuntan al resumen real.
+    if (activeTab === 'home' || activeTab === 'inicio') setActiveTab('dashboard');
   }, [activeTab]);
+  // Al pasar a una pantalla estrecha con el asistente abierto, se cierra para
+  // que no tape el menú ni el contenido.
+  useEffect(() => {
+    const onResize = () => { if (window.innerWidth < 1024) setAiCollapsed(true); };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
   // Colaborador en una pestaña sin permiso -> primera que sí puede ver.
   // Aquí (tras declarar activeTab, antes de cualquier return) para no romper hooks.
   useEffect(() => {
