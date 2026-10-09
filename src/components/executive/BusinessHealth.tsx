@@ -21,7 +21,7 @@ export function BusinessHealth({ health, onNavigate }: BusinessHealthProps) {
     <AnimatedCard className="rounded-[var(--ferova-radius-card)] border border-[var(--ferova-line)] bg-[var(--ferova-surface)] p-5 shadow-[var(--ferova-shadow)] sm:p-6">
       <div className="flex items-center gap-2">
         <HeartPulse className="h-5 w-5 text-[var(--ferova-brand)]" />
-        <h3 className="font-display text-lg font-semibold text-[#1f1b16]">Business Health</h3>
+        <h3 className="font-display text-lg font-semibold text-[#1f1b16]">Salud del negocio</h3>
       </div>
       <div className="mt-5 rounded-[var(--ferova-radius-control)] p-4" style={{ backgroundColor: style.bg }}>
         <p className="text-sm font-semibold" style={{ color: style.text }}>{health.title}</p>

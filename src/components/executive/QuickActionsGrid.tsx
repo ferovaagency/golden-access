@@ -17,7 +17,7 @@ export function QuickActionsGrid({ actions, onNavigate }: QuickActionsGridProps)
   return (
     <AnimatedCard className="rounded-[var(--ferova-radius-card)] border border-[var(--ferova-line)] bg-[var(--ferova-surface)] p-5 shadow-[var(--ferova-shadow)] sm:p-6">
       <p className="font-display text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a39a8a]">Acceso rápido</p>
-      <h3 className="mt-1 font-display text-lg font-semibold text-[#1f1b16]">Quick Actions</h3>
+      <h3 className="mt-1 font-display text-lg font-semibold text-[#1f1b16]">Acciones rápidas</h3>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {actions.map(({ label, icon: Icon, tab }) => (
           <button

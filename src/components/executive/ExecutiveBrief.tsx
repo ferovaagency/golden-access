@@ -20,7 +20,7 @@ export function ExecutiveBrief({ health, topPriority, onNavigate }: ExecutiveBri
         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[var(--ferova-gold)]/15 text-[var(--ferova-gold)]">
           <Sparkles className="h-4 w-4" />
         </span>
-        <h3 className="font-display text-lg font-semibold text-[#1f1b16]">Executive Brief</h3>
+        <h3 className="font-display text-lg font-semibold text-[#1f1b16]">Resumen ejecutivo</h3>
       </div>
       <p className="mt-3 text-sm leading-6 text-[#57524a]">
         {health.detail} {topPriority ? `Lo más urgente ahora: ${topPriority.title.toLowerCase()} — ${topPriority.detail}` : 'No hay prioridades pendientes destacadas para este período.'}

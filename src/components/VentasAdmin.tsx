@@ -585,7 +585,7 @@ export default function VentasAdmin({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
           <h2 className="text-xl font-display font-medium text-blue-600">Registro de Ingresos (Ventas y Abonos)</h2>
-          <p className="text-xs text-slate-500 font-mono mt-1">Libro de cobranza, cobros anticipados, abonos y saldos de clientes de Ferova Agency</p>
+          <p className="text-xs text-slate-500 font-mono mt-1">Libro de cobranza, cobros anticipados, abonos y saldos de tus clientes</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <label className="bg-white/[0.03] hover:bg-white/[0.08] transition px-4 py-2 text-xs font-mono tracking-wider font-semibold text-blue-600 border border-slate-200 rounded-lg flex items-center gap-2 cursor-pointer">

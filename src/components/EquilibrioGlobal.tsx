@@ -105,7 +105,7 @@ export default function EquilibrioGlobal({ metrics, formatCop }: EquilibrioGloba
             <Sparkles className="w-4 h-4 text-blue-500" /> ¿Por Qué es Importante este Punto?
           </h4>
           <p className="text-xs text-[#a39d8e] leading-relaxed">
-            Como empresaria digital uniplersonal de <strong>Ferova Agency</strong>, no toda la facturación es ganancia pura.
+            Como negocio de servicios, no toda la facturación es ganancia pura.
           </p>
           <p className="text-xs text-[#a39d8e] leading-relaxed">
             El punto de equilibrio global suma tanto los costos directos de tus servicios (desarrollo web, analíticas) como tu salario mensual fijado con sus prestaciones liquidadas. Vender por debajo de este monto significa que estás absorbiendo pérdidas en tu patrimonio propio o sub-cotizando tu mano de obra.
