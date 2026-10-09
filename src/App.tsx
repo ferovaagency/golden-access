@@ -189,7 +189,25 @@ function AppInner() {
 
   // Filter and view state
   const [period, setPeriod] = useState<Period>('Todos');
-  const [activeTab, setActiveTab] = useState<string>(() => consumeGoogleLinkReturnTab() || sessionStorage.getItem('ferova.activeTab') || 'dashboard');
+  const [activeTab, setActiveTab] = useState<string>(() => consumeGoogleLinkReturnTab() || new URLSearchParams(window.location.search).get('m') || sessionStorage.getItem('ferova.activeTab') || 'dashboard');
+  // Dirección propia por módulo: ?m=<módulo> en la URL (compartible, abre en otra pestaña, botón atrás).
+  const firstTabSync = useRef(true);
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('m') === activeTab) { firstTabSync.current = false; return; }
+    url.searchParams.set('m', activeTab);
+    if (firstTabSync.current) window.history.replaceState(window.history.state, '', url);
+    else window.history.pushState(window.history.state, '', url);
+    firstTabSync.current = false;
+  }, [activeTab]);
+  useEffect(() => {
+    const onPop = () => {
+      const m = new URLSearchParams(window.location.search).get('m');
+      if (m) setActiveTab(m);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [aiCollapsed, setAiCollapsed] = useState<boolean>(() => {
@@ -869,9 +887,16 @@ function AppInner() {
         )}
 
         {!isReady && !errorMsg && (
-          <div className="rounded-2xl border border-[var(--line)] bg-white p-16 text-center space-y-3">
-            <Loader2 className="w-6 h-6 animate-spin text-blue-600 mx-auto" />
-            <p className="text-sm text-slate-500">Cargando tu negocio…</p>
+          <div className="space-y-4 animate-pulse" aria-busy="true" aria-label="Cargando tu negocio">
+            <div className="h-24 rounded-2xl border border-[var(--line)] bg-white" />
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+              {[0, 1, 2, 3].map((i) => <div key={i} className="h-24 rounded-2xl border border-[var(--line)] bg-slate-100" />)}
+            </div>
+            <div className="grid gap-4 lg:grid-cols-3">
+              <div className="h-64 rounded-2xl border border-[var(--line)] bg-white lg:col-span-2" />
+              <div className="h-64 rounded-2xl border border-[var(--line)] bg-white" />
+            </div>
+            <p className="sr-only">Cargando tu negocio…</p>
           </div>
         )}
 
