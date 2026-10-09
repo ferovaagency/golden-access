@@ -1,7 +1,3 @@
-<<<<<<< Updated upstream
-// Public landing approved in the blue/white redesign.
-export { default } from "../marketing/landing/ApprovedLanding";
-=======
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -548,4 +544,3 @@ export default function Landing() {
     </div>
   );
 }
->>>>>>> Stashed changes

@@ -12,13 +12,9 @@ const BLOG_DIR = join(ROOT, "src", "content", "blog");
 
 // Mismo SITE_URL que src/seo/config.ts -- mantenerlos sincronizados hasta
 // que el dominio final este confirmado (manual, sec. 14).
-<<<<<<< Updated upstream
-const SITE_URL = 'https://one.ferova.com.co';
-=======
 const SITE_URL = readFileSync(join(ROOT, "src/seo/config.ts"), "utf8").match(
   /export const SITE_URL\s*=\s*["']([^"']+)["']/,
 )[1];
->>>>>>> Stashed changes
 
 const STATIC_ROUTES = [
   "/",
