@@ -2,7 +2,10 @@
 // viajan al navegador — son públicos por diseño, igual que una publishable key.
 // El API key y el secreto de webhooks viven únicamente en el servidor.
 
-const CLIENT_TOKEN = import.meta.env.VITE_PADDLE_CLIENT_TOKEN?.trim() || '';
+// Token público de cliente (live). Va en el código porque .env lo regenera la
+// plataforma; el entorno puede sobreescribirlo (p. ej. sandbox).
+const DEFAULT_CLIENT_TOKEN = 'live_69ecb06c95173c17cb5475e1a2b';
+const CLIENT_TOKEN = import.meta.env.VITE_PADDLE_CLIENT_TOKEN?.trim() || DEFAULT_CLIENT_TOKEN;
 /** Price id del plan único anterior (Founder Access). Se conserva como
  *  respaldo para el plan `full` mensual mientras no existan los nuevos. */
 export const PADDLE_PRICE_ID = import.meta.env.VITE_PADDLE_PRICE_ID?.trim() || '';
