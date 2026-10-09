@@ -12,7 +12,7 @@ const BLOG_DIR = join(ROOT, 'src', 'content', 'blog');
 
 // Mismo SITE_URL que src/seo/config.ts -- mantenerlos sincronizados hasta
 // que el dominio final este confirmado (manual, sec. 14).
-const SITE_URL = 'https://ferova.one';
+const SITE_URL = 'https://one.ferova.com.co';
 
 const STATIC_ROUTES = [
   '/',
