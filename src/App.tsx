@@ -82,6 +82,7 @@ import {
   Database,
   X,
   Sparkles,
+  Lock,
 } from 'lucide-react';
 
 // noindex garantizado sin importar en que estado (loading/auth/paywall/
@@ -632,6 +633,7 @@ function AppInner() {
     'locked-calendar': { entitlement: 'google_calendar', nombre: 'Sincronización con Google Calendar' },
     'locked-sheets': { entitlement: 'google_sheets', nombre: 'Respaldo en Google Sheets' },
   };
+  const KNOWN_TABS = { has: (t: string) => t.startsWith('crm-') || t.startsWith('locked-') || ['ajustes','alertas','clientes','dashboard','equilibrioGlobal','equilibrioServicio','finops','gastos','holding','home','horas','inicio','integraciones','iva','kpisOperativos','marketingRoi','memoria','pagosEgresos','plan','planner','proyectos','reports','seguimiento','servicios','ventas','ventas-crm'].includes(t) };
   const lockedActive = !!LOCKED_TABS[activeTab] && !modules[LOCKED_TABS[activeTab].entitlement];
   const lockedItem = (id: string, label: string, plan: string): NavigationItem => ({ id, label: `🔒 ${label}`, hint: `Disponible desde el plan ${plan}` });
   const handleNavigate = (tab: string) => {
