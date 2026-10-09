@@ -57,7 +57,24 @@ Deno.serve(async (req) => {
       });
     }
 
-    const duracion = body.duracion_min ?? 30;
+    const EMAIL_RE = /^[^\s@<>]{1,64}@[^\s@<>]{1,190}\.[a-z]{2,}$/i;
+    if (body.email_prospecto && !EMAIL_RE.test(String(body.email_prospecto).trim())) {
+      return new Response(JSON.stringify({ ok: false, message: 'Correo del prospecto inválido' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    body.email_prospecto = body.email_prospecto ? String(body.email_prospecto).trim().toLowerCase() : null;
+    body.nombre_prospecto = String(body.nombre_prospecto).slice(0, 120);
+    body.notas = body.notas ? String(body.notas).slice(0, 2000) : null;
+    body.telefono_prospecto = body.telefono_prospecto ? String(body.telefono_prospecto).replace(/[^\d+]/g, '').slice(0, 20) : null;
+    // Si la cita es de una oportunidad del CRM, sólo se invita al correo registrado en ella.
+    if (body.oportunidad_id) {
+      const { data: op } = await supabase.from('crm_oportunidades').select('email').eq('id', body.oportunidad_id).maybeSingle();
+      if (!op) return new Response(JSON.stringify({ ok: false, message: 'Oportunidad no encontrada' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      const opEmail = (op as { email?: string | null }).email?.trim().toLowerCase() || null;
+      if (body.email_prospecto && opEmail && body.email_prospecto !== opEmail) {
+        return new Response(JSON.stringify({ ok: false, message: 'El correo no coincide con el de la oportunidad' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    }
+    const duracion = Math.min(Math.max(Number(body.duracion_min) || 30, 15), 240);
     const start = new Date(body.fecha_hora);
     if (Number.isNaN(start.getTime())) {
       return new Response(JSON.stringify({ ok: false, message: 'fecha_hora inválida' }), {
