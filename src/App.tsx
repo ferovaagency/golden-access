@@ -819,7 +819,7 @@ function AppInner() {
         <TrialBanner
           userId={user.id}
           trialEndsAt={subscription.trial_ends_at}
-          onAddCard={() => { void addPaymentMethod(user.id, () => { refreshAccess(); toastOk('Método de pago agregado. Tu plan sigue sin interrupciones.'); }).catch((e) => toastErr(errMsg(e))); }}
+          onAddCard={() => { void addPaymentMethod(user.id, () => { refreshAccess(); toastOk('Método de pago agregado. Tu plan sigue sin interrupciones.'); }, { email: user.email, plan: (['basico', 'intermedio', 'full'] as const).includes(plan as 'basico') ? (plan as 'basico' | 'intermedio' | 'full') : undefined, periodo: subscription.periodo === 'anual' ? 'anual' : 'mensual' }).catch((e) => toastErr(errMsg(e))); }}
         />
       )}
       {sheetsLoading && (

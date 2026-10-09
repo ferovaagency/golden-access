@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, Loader2, LogOut, ShieldCheck, CreditCard, X } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
-import { logout, supabase, checkSubscription, type SubscriptionInfo } from '../lib/supabase';
+import { logout, type SubscriptionInfo } from '../lib/supabase';
 import { getPlanCatalog, TRIAL_DAYS, type PaidTier, type Periodo } from '../lib/planService';
-import { openPaddlePaymentMethodCheckout } from '../lib/paddle';
+import { addPaymentMethod as addPaymentMethodAction, invokeFn } from '../lib/subscriptionActions';
 import { trackEvent } from '../lib/analytics';
 import { clearPlanIntent, type PlanIntent } from '../lib/planIntent';
 
@@ -34,41 +34,22 @@ export default function SubscriptionGate({ user, subscription, intent = null, on
   const [country, setCountry] = useState(guessCountry);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [waiting, setWaiting] = useState(false);
   // Arranque automático: solo una vez y solo si viene con plan y nunca tuvo prueba.
   const autoStart = !!intent && subscription.estado === 'none';
   const [auto, setAuto] = useState(autoStart);
   const autoFired = useRef(false);
-  const pollRef = useRef<number | null>(null);
   const catalog = getPlanCatalog();
   const expired = subscription.estado === 'expired';
 
-  useEffect(() => () => { if (pollRef.current) window.clearInterval(pollRef.current); }, []);
-
-  const waitForActivation = () => {
-    setWaiting(true);
-    let attempts = 0;
-    pollRef.current = window.setInterval(async () => {
-      attempts += 1;
-      const paid = await checkSubscription(user.id).catch(() => false);
-      if (paid || attempts >= 20) {
-        if (pollRef.current) window.clearInterval(pollRef.current);
-        setWaiting(false);
-        if (paid) onReady();
-        else setError('Paddle recibió el pago pero la activación aún no llega. Se activará en unos segundos; recarga la página.');
-      }
-    }, 3000);
-  };
 
   const startTrial = async () => {
     setBusy(true); setError(null);
     trackEvent('signup_start', { plan, periodo, country, auto });
     try {
-      const { data, error: err } = await supabase.functions.invoke('paddle-start-trial', { body: { plan, periodo, country } });
-      if (err) throw new Error(err.message);
-      if (!data?.ok) {
-        if (data?.code === 'already_active') { clearPlanIntent(); onReady(); return; }
-        throw new Error(data?.message || 'No fue posible iniciar la prueba.');
+      const data = await invokeFn('paddle-start-trial', { plan, periodo, country });
+      if (!data.ok) {
+        if (data.code === 'already_active') { clearPlanIntent(); onReady(); return; }
+        throw new Error(data.message || 'No fue posible iniciar la prueba.');
       }
       trackEvent('signup_complete', { plan, periodo, auto });
       clearPlanIntent();
@@ -92,13 +73,7 @@ export default function SubscriptionGate({ user, subscription, intent = null, on
   const addPaymentMethod = async () => {
     setBusy(true); setError(null);
     try {
-      const { data, error: err } = await supabase.functions.invoke('paddle-manage-subscription', { body: { action: 'payment_method' } });
-      if (err) throw new Error(err.message);
-      if (!data?.ok || !data.transaction_id) throw new Error(data?.message || 'No fue posible preparar el pago.');
-      await openPaddlePaymentMethodCheckout({
-        transactionId: data.transaction_id,
-        onEvent: (event) => { if (event.name === 'checkout.completed') waitForActivation(); },
-      });
+      await addPaymentMethodAction(user.id, () => onReady(), { email: user.email, plan, periodo });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'No fue posible abrir el pago.');
     } finally {
@@ -124,10 +99,10 @@ export default function SubscriptionGate({ user, subscription, intent = null, on
           <div className="mx-auto mt-12 max-w-lg rounded-2xl border border-[#2a2620] bg-[#161412] p-8 text-center">
             <div className="mx-auto grid h-12 w-12 place-items-center rounded-full border border-blue-500/30 bg-blue-500/10"><CreditCard className="h-6 w-6 text-blue-400" /></div>
             <h1 className="mt-4 font-display text-2xl font-bold text-white">Tu prueba terminó</h1>
-            <p className="mt-2 text-sm text-slate-400">Tus datos siguen ahí tal como los dejaste. Agrega un método de pago y sigues donde ibas, en el plan {catalog.find((p) => p.id === (subscription.periodo ? plan : plan))?.nombre ?? 'que elegiste'}.</p>
-            <button type="button" onClick={addPaymentMethod} disabled={busy || waiting} className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-60">
-              {busy || waiting ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-              {waiting ? 'Confirmando con Paddle…' : 'Agregar método de pago'}
+            <p className="mt-2 text-sm text-slate-400">Tus datos siguen ahí tal como los dejaste. Agrega un método de pago y sigues donde ibas, en el plan {catalog.find((p) => p.id === plan)?.nombre ?? 'que elegiste'}.</p>
+            <button type="button" onClick={addPaymentMethod} disabled={busy} className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-60">
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+              Agregar método de pago
             </button>
             {error && <p className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">{error}</p>}
             <p className="mt-4 text-[11px] text-slate-500">Paddle calcula los impuestos de tu país en el pago. Cancelas cuando quieras.</p>

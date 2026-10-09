@@ -121,6 +121,32 @@ Deno.serve(async (req) => {
     }
     if (eventType === 'subscription.activated' || (eventType === 'subscription.resumed' && subStatus === 'active')) trialPatch.trial_ends_at = null;
     const periodo: string | null = typeof customData?.periodo === 'string' ? customData.periodo : null;
+    // La prueba sin tarjeta se registra primero con el id de la transacción
+    // (paddle-start-trial). Cuando llega la suscripción (sub_…), se actualiza
+    // esa misma fila en vez de crear una segunda para la misma persona.
+    if (subscriptionId?.startsWith('sub_')) {
+      const { data: previa } = await admin
+        .from('user_subscriptions')
+        .select('id, provider_order_id')
+        .eq('user_id', userId)
+        .eq('provider', 'paddle')
+        .eq('status', 'active')
+        .like('provider_order_id', 'txn_%')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (previa) {
+        const { error: updErr } = await admin.from('user_subscriptions').update({
+          provider_order_id: subscriptionId,
+          provider_customer_id: customerId,
+          plan,
+          ...(periodo ? { periodo } : {}),
+          ...trialPatch,
+        }).eq('id', previa.id);
+        if (updErr) return await fail('No fue posible actualizar el acceso.');
+        return json({ ok: true, status: 'active', linked: previa.id });
+      }
+    }
     const { error } = await admin.from('user_subscriptions').upsert(
       {
         user_id: userId,

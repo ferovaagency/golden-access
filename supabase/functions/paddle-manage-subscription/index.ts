@@ -45,16 +45,34 @@ Deno.serve(async (req) => {
       .eq("provider", "paddle")
       .order("created_at", { ascending: false })
       .limit(10);
+    const live = (rows || []).find((r: any) => r.status === "active") || (rows || [])[0] || null;
     let subscriptionId = (rows || []).map((r: any) => r.provider_order_id as string).find((id) => id?.startsWith("sub_")) || null;
     const customerId = (rows || []).map((r: any) => r.provider_customer_id as string | null).find(Boolean) || null;
+    const txnId = (rows || []).map((r: any) => r.provider_order_id as string).find((id) => id?.startsWith("txn_")) || null;
 
     // Si sólo tenemos el id de la transacción (prueba recién creada y el
-    // webhook aún no llegó), se busca la suscripción por cliente en Paddle.
+    // webhook aún no llegó), se busca la suscripción por cliente en Paddle y,
+    // si no aparece, en la transacción misma (Paddle le cuelga subscription_id
+    // cuando la convierte en suscripción).
     if (!subscriptionId && customerId) {
       const subs = await paddle<Array<{ id: string; status: string }>>("GET", `/subscriptions?customer_id=${customerId}&per_page=5`);
       subscriptionId = (subs || []).find((s) => ["trialing", "active", "past_due", "paused"].includes(s.status))?.id || (subs || [])[0]?.id || null;
     }
-    if (!subscriptionId) return json({ ok: false, code: "no_subscription", message: "No encontramos una suscripción de Paddle para esta cuenta." }, 404);
+    if (!subscriptionId && txnId) {
+      const txn = await paddle<{ id: string; status: string; subscription_id: string | null }>("GET", `/transactions/${txnId}`).catch(() => null);
+      if (txn?.subscription_id) subscriptionId = txn.subscription_id;
+      else console.log("[paddle-manage-subscription] transacción sin suscripción", txnId, txn?.status);
+    }
+    if (subscriptionId && live && !String(live.provider_order_id).startsWith("sub_")) {
+      // Se guarda el id de la suscripción en la fila para no volver a buscarlo.
+      await admin.from("user_subscriptions").update({ provider_order_id: subscriptionId }).eq("id", live.id);
+    }
+    if (!subscriptionId) {
+      // Prueba sin tarjeta que Paddle aún no convirtió en suscripción (o ya
+      // venció): no hay nada que "actualizar". La app abre el checkout normal
+      // con el plan que la persona ya eligió; al pagar, el webhook activa.
+      return json({ ok: false, code: "checkout_required", plan: live?.plan ?? null, periodo: live?.periodo ?? "mensual", customer_id: customerId, message: "Tu prueba todavía no tiene una suscripción en Paddle: se abre el pago del plan que elegiste." });
+    }
 
     if (action === "status") {
       const sub = await paddle<{ id: string; status: string; next_billed_at: string | null; items: Array<{ price: { id: string } }> }>("GET", `/subscriptions/${subscriptionId}`);
