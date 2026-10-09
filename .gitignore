@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 node_modules/
 build/
 dist/
@@ -12,3 +13,18 @@ _to_delete/
 .prerender/
 .interface-preview/
 .billing-preview/
+=======
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+_to_delete/
+
+.prerender/
+.interface-preview/
+>>>>>>> Stashed changes

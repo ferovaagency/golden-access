@@ -107,3 +107,9 @@ No usamos shadcn: son componentes propios con Tailwind inline. Patrones a manten
 2. En cada pantalla que toques, reemplaza hex sueltos por el token del rol correspondiente.
 3. Migrar pendiente: las tintas cálidas `--ferova-positive/warning/danger` (`#E3F4EB/#F3EAD6/#F7E3E4`) del tema v2 aún son un set aparte; unificarlas a los `*-soft` de `--fv-*` cuando se rediseñe cada módulo.
 4. Verificación sin preview local: `npx tsc --noEmit && npx vite build`.
+
+## Landing pública — octubre de 2026
+
+La home conserva la estructura aprobada y usa azul de acción `#2563eb`, azul profundo `#123a85`, blanco y superficies azules suaves, con tipografías locales Outfit/Figtree. El isotipo mantiene su geometría original y se presenta en blanco sobre azul; los tokens están limitados a `.fo-landing`. Los componentes están en `src/marketing/landing/`.
+
+La propuesta interna actual está en `docs/redesign-2026-10-09/`: reutiliza diez componentes reales y `AppShell`, con CSS independiente y datos ficticios. Permite comparar la apariencia sin modificar sus campos ni cálculos. No cambia el producto privado ni activa nuevos flags. Sustituye como propuesta a la maqueta conceptual del 8 de octubre.

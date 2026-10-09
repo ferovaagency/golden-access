@@ -32,7 +32,14 @@ const SUBPROCESSORS: Subprocessor[] = [
   },
   {
     nombre: 'Google LLC (Gemini)',
-    proposito: 'Procesamiento de las funciones de inteligencia artificial (a través del gateway de Lovable).',
+    proposito: 'Procesamiento de la mayoría de las funciones de inteligencia artificial (a través del gateway de Lovable).',
+    datos: 'Solo el contexto necesario del negocio para cada respuesta. No se usa para entrenar modelos.',
+    ubicacion: 'Estados Unidos',
+    rol: 'Encargado',
+  },
+  {
+    nombre: 'OpenAI (GPT)',
+    proposito: 'Procesamiento del asistente principal de Ferova One (a través del gateway de Lovable).',
     datos: 'Solo el contexto necesario del negocio para cada respuesta. No se usa para entrenar modelos.',
     ubicacion: 'Estados Unidos',
     rol: 'Encargado',
@@ -43,6 +50,27 @@ const SUBPROCESSORS: Subprocessor[] = [
     datos: 'Correo y estado de pago. Ferova no almacena datos de tarjetas.',
     ubicacion: 'Reino Unido / Estados Unidos y jurisdicciones donde opere',
     rol: 'Responsable independiente',
+  },
+  {
+    nombre: 'Google LLC (Workspace)',
+    proposito: 'Calendario, Sheets y correo cuando conectas tu cuenta de Google (integración opcional).',
+    datos: 'Solo lo que autorizas en el permiso de Google: eventos, hojas y correos que decidas sincronizar.',
+    ubicacion: 'Estados Unidos',
+    rol: 'Encargado',
+  },
+  {
+    nombre: 'Notion Labs, Inc.',
+    proposito: 'Sincronización de tareas del Planner con tu base de Notion (integración opcional).',
+    datos: 'Las tareas que decidas enviar a Notion: título, cliente, fecha y estado.',
+    ubicacion: 'Estados Unidos',
+    rol: 'Encargado',
+  },
+  {
+    nombre: 'Evolution API (WhatsApp)',
+    proposito: 'Conexión del bot de WhatsApp de tu negocio, en infraestructura administrada por Ferova (integración opcional).',
+    datos: 'Mensajes entrantes y salientes de la línea de WhatsApp que conectes.',
+    ubicacion: 'Estados Unidos',
+    rol: 'Encargado',
   },
   {
     nombre: 'Apollo.io',

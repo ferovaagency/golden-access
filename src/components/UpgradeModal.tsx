@@ -111,8 +111,8 @@ export function UpgradeModal({ user, currentPlan, enPrueba = false, onUpgraded }
           {catalog.map((plan) => {
             const sugerido = plan.id === request.planSugerido;
             const esActual = plan.id === currentPlan;
-            // En prueba se puede ir a cualquier plan (arriba o abajo); con
-            // suscripción pagada sólo tiene sentido subir.
+            // En prueba se puede bajar gratis o subir pagando; con suscripción
+            // pagada sólo tiene sentido subir.
             const yaIncluido = enPrueba ? esActual : (ORDEN[plan.id] ?? 0) <= nivelActual;
             const precio = periodo === 'anual' ? plan.precioAnualMes : plan.precioMensual;
             const disponible = planIsPurchasable(plan.id as PaidPlan, periodo);
@@ -138,7 +138,7 @@ export function UpgradeModal({ user, currentPlan, enPrueba = false, onUpgraded }
                   className={`mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold disabled:opacity-50 ${sugerido ? 'bg-amber-500 text-white hover:bg-amber-600' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
                 >
                   {confirming ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                  {esActual ? 'Tu plan actual' : yaIncluido ? 'Incluido en tu plan' : !disponible ? 'Próximamente' : `Cambiar a ${plan.nombre}`}
+                  {esActual ? 'Tu plan actual' : yaIncluido ? 'Incluido en tu plan' : !disponible ? 'Próximamente' : enPrueba && (ORDEN[plan.id] ?? 0) > nivelActual ? `Pagar y pasar a ${plan.nombre}` : `Cambiar a ${plan.nombre}`}
                 </button>
               </div>
             );
@@ -146,7 +146,7 @@ export function UpgradeModal({ user, currentPlan, enPrueba = false, onUpgraded }
         </div>
         {error && <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>}
         {info && <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">{info}</p>}
-        <p className="mt-3 text-[11px] text-slate-400">Precios antes de impuestos; Paddle calcula el total exacto según tu país. {enPrueba ? 'Durante la prueba cambias de plan sin pagar; el cobro empieza cuando agregues tarjeta.' : 'El cambio se prorratea desde hoy.'}</p>
+        <p className="mt-3 text-[11px] text-slate-400">Precios antes de impuestos; Paddle calcula el total exacto según tu país. {enPrueba ? 'En prueba: bajar de plan es gratis; subir abre el pago de Paddle y la suscripción empieza ahí.' : 'El cambio se prorratea desde hoy.'}</p>
       </div>
     </div>
   );

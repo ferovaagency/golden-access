@@ -1,0 +1,2227 @@
+[
+  {
+    "id": "verify-locked-crm",
+    "text": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nVentas\n/\n🔒 CRM\n🔒 CRM\n🔒 Marketing ROI\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nAsistente Ferova\n\nContexto: Ventas\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "main": {
+        "x": 260,
+        "y": 166,
+        "width": 804,
+        "height": 820,
+        "top": 166,
+        "right": 1064,
+        "bottom": 986,
+        "left": 260
+      },
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null
+        },
+        {
+          "text": "Proyectos",
+          "aria": null
+        },
+        {
+          "text": "Finanzas",
+          "aria": null
+        },
+        {
+          "text": "Ventas",
+          "aria": null
+        },
+        {
+          "text": "Configuración",
+          "aria": null
+        },
+        {
+          "text": "Ayuda",
+          "aria": null
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null
+        },
+        {
+          "text": "[✏️]",
+          "aria": null
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado"
+        },
+        {
+          "text": "Asistente",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": null
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null
+        },
+        {
+          "text": "Trimestre",
+          "aria": null
+        },
+        {
+          "text": "Año",
+          "aria": null
+        },
+        {
+          "text": "Todo",
+          "aria": null
+        },
+        {
+          "text": "🔒 CRM",
+          "aria": null
+        },
+        {
+          "text": "🔒 Marketing ROI",
+          "aria": null
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy"
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje"
+        }
+      ]
+    },
+    "axe": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              ".tracking-\\[\\.14em\\]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".mb-2"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 6.8pt (9px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".flex-1.text-left"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".max-w-28 > .text-\\[9px\\]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #94a3b8, background color: #feffff, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "div:nth-child(5) > strong"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.23 (foreground color: #c97a61, background color: #fefeff, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".text-amber-800\\/80"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.48 (foreground color: #ab6229, background color: #fffbeb, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".border-slate-100 > .text-\\[10px\\].text-slate-400"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "footer"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "a[href$=\"privacidad\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "a[href$=\"terminos\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ],
+    "url": "https://one.ferova.com.co/app"
+  },
+  {
+    "id": "verify-locked-marketing",
+    "text": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nVentas\n/\n🔒 Marketing ROI\n🔒 CRM\n🔒 Marketing ROI\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nMarketing ROI\n\nRegistra campañas, costos completos y resultados. El ROI real incluye pauta, entrega, comisiones y honorarios profesionales.\n\nVentas reales del negocio (desde Finanzas)\n\nINGRESOS REALES (MES ACTUAL)\n\n$ 0\n\nINGRESOS REALES (TOTAL)\n\n$ 0\n\nTICKET PROMEDIO REAL\n\n$ 0\n\nCOBERTURA ATRIBUIDA A MARKETING\n\n—\n\n\"Cobertura atribuida\" compara los ingresos que suman tus campañas ($ 0) contra las ventas reales registradas. Si pasa del 100% es señal de doble conteo entre campañas o de ingresos atribuidos de más.\n\nNueva campaña\nCrear\nCampañas\n\tNOMBRE\tCANAL\tINVERSIÓN\tINGRESOS\tROAS\tROI\t\nAún no cargaste campañas.\nCalculadora inversa\n\nA partir de tu meta de facturación, calculamos cuántas ventas, citas, leads, clics e impresiones necesitás usando tus tasas actuales.\n\nMeta facturación\nTicket promedio\n\nVENTAS NECESARIAS\n\n7\n\nCITAS EFECTIVAS\n\n24\n\nCITAS\n\n40\n\nLEADS CALIFICADOS\n\n100\n\nLEADS\n\n200\n\nCLICS\n\n200\n\nIMPRESIONES\n\n10.000\n\nINVERSIÓN ESTIMADA\n\n$ 160.000\n\nAsistente Ferova\n\nContexto: Ventas\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "main": {
+        "x": 260,
+        "y": 166,
+        "width": 804,
+        "height": 1076.71875,
+        "top": 166,
+        "right": 1064,
+        "bottom": 1242.71875,
+        "left": 260
+      },
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null
+        },
+        {
+          "text": "Proyectos",
+          "aria": null
+        },
+        {
+          "text": "Finanzas",
+          "aria": null
+        },
+        {
+          "text": "Ventas",
+          "aria": null
+        },
+        {
+          "text": "Configuración",
+          "aria": null
+        },
+        {
+          "text": "Ayuda",
+          "aria": null
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null
+        },
+        {
+          "text": "[✏️]",
+          "aria": null
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado"
+        },
+        {
+          "text": "Asistente",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": null
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null
+        },
+        {
+          "text": "Trimestre",
+          "aria": null
+        },
+        {
+          "text": "Año",
+          "aria": null
+        },
+        {
+          "text": "Todo",
+          "aria": null
+        },
+        {
+          "text": "🔒 CRM",
+          "aria": null
+        },
+        {
+          "text": "🔒 Marketing ROI",
+          "aria": null
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy"
+        },
+        {
+          "text": "Crear",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje"
+        }
+      ]
+    },
+    "axe": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              ".tracking-\\[\\.14em\\]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".mb-2"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 6.8pt (9px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".flex-1.text-left"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".text-\\[9px\\].truncate.text-slate-400"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #94a3b8, background color: #feffff, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "div:nth-child(5) > strong"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.23 (foreground color: #c97a61, background color: #fefeff, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".text-amber-800\\/80"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.48 (foreground color: #ab6229, background color: #fffbeb, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".font-normal"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".mt-2"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "th:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "th:nth-child(3)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".text-right:nth-child(4)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".text-right:nth-child(5)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ],
+    "url": "https://one.ferova.com.co/app"
+  },
+  {
+    "id": "verify-seguimiento",
+    "text": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nFinanzas\n/\nSeguimiento\n🔒 Reportes CEO\nFINANZAS\nFinanzas operativas\nIngresos\nPagos\nCostos\nEquilibrio\nPor servicio\nIVA\nAlertas\nSeguimiento\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\n\nOBJETIVOS · UN SOLO TABLERO\n\nSistema de seguimiento\n\nRegistras el diario; el semanal, mensual y anual se recalculan solos con datos reales. Todo se guarda en tu cuenta y se ve en cualquier dispositivo.\n\nCUMPLIMIENTO MENSUAL\n\n0%\n\nDIARIO\n\nMotor de prospección\n\n0%\n\nContactos segmentados: 0/20\nSeguimientos: 0/10\nConversaciones calificadas: 0/5\nRespuestas recibidas: 0/8\nALIMENTA\nSEMANAL\n\nRitmo de venta\n\n0%\n\n0 conversaciones calificadas\n0 seguimientos\n0 contactos segmentados\n0 días registrados\nALIMENTA\nMENSUAL\n\nSalud del negocio\n\n$ 0\n\n0 conversaciones calificadas\n0 contactos\n0 ventas\nComisiones: $ 0\nALIMENTA\nANUAL\n\nNorte a 12 meses\n\nPor confirmar\n\nMeta MRR: sin definir\n1 clientes activos\nObjetivos de proyectos: 0/0 cumplidos\n0 ventas este año\n\nREGISTRO DE HOY\n\nKPIs que alimentan todo el sistema\n\nEl número que registrás y su meta diaria son editables.\n\nGuardar día\nContactos segmentados\nHOY\nMETA DIARIA\nSeguimientos\nHOY\nMETA DIARIA\nConversaciones calificadas\nHOY\nMETA DIARIA\nRespuestas recibidas\nHOY\nMETA DIARIA\n\nCUMPLIMIENTO Y TENDENCIA\n\nContactos segmentados\n0%\nSeguimientos\n0%\nConversaciones calificadas\n0%\nRespuestas recibidas\n0%\nGuarda al menos dos días para ver la tendencia.\n\nCOMISIONES POR PASARELA\n\nEl MRR real es el neto, no el bruto. Configura tu pasarela y se aplica a las ventas sin comisión propia.\n\nAún no tenés pasarelas. Agregá las que usás (PayPal, Wompi, transferencia…) con su comisión real.\n\nNUEVA PASARELA\nCOMISIÓN %\nFIJO\nRETIRO\nMONEDA\nCOP\nUSD\nAgregar\n\nBRUTO MES\n\n$ 0\n\n→\n\nNETO MES\n\n$ 0\n\nDescontado: $ 0. Cada venta descuenta con la pasarela que elegiste al registrarla — no se asume una comisión igual para todas.\n\nMeta anual O10\n\nLa meta queda visible como “por confirmar” hasta que ingreses tu MRR objetivo real. Se alimenta de los objetivos por proyecto definidos abajo.\n\nCOP\nObjetivos por proyecto que alimentan la meta\n0/0 cumplidos\n\nCada objetivo, hito y KPI se define en Projects → Proyectos. Aquí se ve cómo su avance sostiene la meta anual.\n\nAún no hay objetivos por proyecto. Definilos en Proyectos para relacionarlos con la meta anual.\n\nAsistente Ferova\n\nContexto: Finanzas\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "main": {
+        "x": 260,
+        "y": 166,
+        "width": 804,
+        "height": 2040,
+        "top": 166,
+        "right": 1064,
+        "bottom": 2206,
+        "left": 260
+      },
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null
+        },
+        {
+          "text": "Proyectos",
+          "aria": null
+        },
+        {
+          "text": "Finanzas",
+          "aria": null
+        },
+        {
+          "text": "Ventas",
+          "aria": null
+        },
+        {
+          "text": "Configuración",
+          "aria": null
+        },
+        {
+          "text": "Ayuda",
+          "aria": null
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null
+        },
+        {
+          "text": "[✏️]",
+          "aria": null
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado"
+        },
+        {
+          "text": "Asistente",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": null
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null
+        },
+        {
+          "text": "Trimestre",
+          "aria": null
+        },
+        {
+          "text": "Año",
+          "aria": null
+        },
+        {
+          "text": "Todo",
+          "aria": null
+        },
+        {
+          "text": "🔒 Reportes CEO",
+          "aria": null
+        },
+        {
+          "text": "Finanzas operativas",
+          "aria": null
+        },
+        {
+          "text": "Ingresos",
+          "aria": null
+        },
+        {
+          "text": "Pagos",
+          "aria": null
+        },
+        {
+          "text": "Costos",
+          "aria": null
+        },
+        {
+          "text": "Equilibrio",
+          "aria": null
+        },
+        {
+          "text": "Por servicio",
+          "aria": null
+        },
+        {
+          "text": "IVA",
+          "aria": null
+        },
+        {
+          "text": "Alertas",
+          "aria": null
+        },
+        {
+          "text": "Seguimiento",
+          "aria": null
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy"
+        },
+        {
+          "text": "Guardar día",
+          "aria": null
+        },
+        {
+          "text": "Agregar",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje"
+        }
+      ]
+    },
+    "axe": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              ".tracking-\\[\\.14em\\].text-\\[9px\\].uppercase"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".mb-2"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 6.8pt (9px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".flex-1.text-left"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".max-w-28 > .truncate.text-\\[9px\\]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #94a3b8, background color: #feffff, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "div:nth-child(5) > strong"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.23 (foreground color: #c97a61, background color: #fefeff, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".ml-2"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.45 (foreground color: #94a3b8, background color: #f8fafc, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".text-amber-800\\/80"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.48 (foreground color: #ab6229, background color: #fffbeb, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".border-l-cyan-400 > .items-start.justify-between.gap-3 > div > p"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".justify-center.tracking-widest.h-5:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.45 (foreground color: #94a3b8, background color: #f8fafc, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".border-l-emerald-400 > .items-start.justify-between.gap-3 > div > p"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".justify-center.tracking-widest.h-5:nth-child(4)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.45 (foreground color: #94a3b8, background color: #f8fafc, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".border-l-amber-400 > .items-start.justify-between.gap-3 > div > p"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ],
+    "url": "https://one.ferova.com.co/app"
+  },
+  {
+    "id": "a11y-home",
+    "text": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nInicio\n/\nResumen\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nPanorama del negocio\n\nLas cifras que mandan y lo que exige tu atención hoy.\n\nRevisar proyectos\n\nINGRESOS\n\n$ 0\n\nVentas del período\n\nUTILIDAD REAL\n\n$ 0\n\nSegún lo que pagaste de verdad\n\nUTILIDAD PROYECTADA\n\n-$ 80.000\n\nCon costos planeados\n\nUTILIDAD NETA\n\n-$ 4.080.000\n\nEstimación después de impuestos\n\nCLIENTES ACTIVOS\n\n1\n\nCuentas en seguimiento\n\nPRIORIDAD\n\nLo que exige acción\n5 señales\n\nSin ventas registradas\n\nNo hay ingresos en el período seleccionado.\n\nURGENTE\nRegistrar venta →\n\nCapacidad sin medir\n\nNo hay horas registradas en el período.\n\nPOR REVISAR\nRegistrar horas →\n\nActualiza ingresos del período\n\nRegistra ventas y abonos para que el control ejecutivo sea confiable.\n\nPOR REVISAR\nAbrir ventas →\n\nRegistra la capacidad entregada\n\nLas horas conectan la rentabilidad con la operación.\n\nPENDIENTE\nAbrir horas →\n\nRevisa el avance de proyectos activos\n\n1 cliente activo requieren seguimiento de entrega.\n\nPENDIENTE\nAbrir proyectos →\n\nPULSO FINANCIERO\n\nIngresos por mes\nÚltimos 6 meses\nRegistra ventas para ver la tendencia de ingresos.\n\nDISTRIBUCIÓN\n\n¿A dónde va cada peso?\nGastos operativos\n2%\nSueldo\n98%\n\nTOP 5 DEL PERÍODO\n\nIngresos por servicio\nSin ventas en el período.\n\nTOP 5 DEL PERÍODO\n\nIngresos por cliente\nSin ventas en el período.\n\nCARTERA\n\nClientes\n\n1\n\ntotal\n\nActivos\n1\n\nRENDIMIENTO OPERATIVO\n\nIngresos vs. utilidad\n\nMARGEN\n\n0%\n\nHORAS\n\n0 h\n\nCLIENTES\n\n1\n\nIngresos\nUtilidad\nBusiness Health\n\nAtención requerida\n\nLa utilidad operacional del período es negativa.\n\nVer finanzas\nExecutive Brief\n\nLa utilidad operacional del período es negativa. Lo más urgente ahora: actualiza ingresos del período — Registra ventas y abonos para que el control ejecutivo sea confiable.\n\nAbrir ventas\n\nÚLTIMOS MOVIMIENTOS\n\nRecent Activity\n\nAún no hay actividad registrada para este período.\n\nACCESO RÁPIDO\n\nQuick Actions\nRegistrar venta\nRegistrar horas\nVer proyectos\nGestionar clientes\nAsistente Ferova\n\nContexto: Inicio\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "main": {
+        "x": 260,
+        "y": 166,
+        "width": 804,
+        "height": 2346.15625,
+        "top": 166,
+        "right": 1064,
+        "bottom": 2512.15625,
+        "left": 260
+      },
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null
+        },
+        {
+          "text": "Proyectos",
+          "aria": null
+        },
+        {
+          "text": "Finanzas",
+          "aria": null
+        },
+        {
+          "text": "Ventas",
+          "aria": null
+        },
+        {
+          "text": "Configuración",
+          "aria": null
+        },
+        {
+          "text": "Ayuda",
+          "aria": null
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null
+        },
+        {
+          "text": "[✏️]",
+          "aria": null
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado"
+        },
+        {
+          "text": "Asistente",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": null
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null
+        },
+        {
+          "text": "Trimestre",
+          "aria": null
+        },
+        {
+          "text": "Año",
+          "aria": null
+        },
+        {
+          "text": "Todo",
+          "aria": null
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy"
+        },
+        {
+          "text": "Revisar proyectos",
+          "aria": null
+        },
+        {
+          "text": "Registrar venta →",
+          "aria": null
+        },
+        {
+          "text": "Registrar horas →",
+          "aria": null
+        },
+        {
+          "text": "Abrir ventas →",
+          "aria": null
+        },
+        {
+          "text": "Abrir horas →",
+          "aria": null
+        },
+        {
+          "text": "Abrir proyectos →",
+          "aria": null
+        },
+        {
+          "text": "Ver finanzas",
+          "aria": null
+        },
+        {
+          "text": "Abrir ventas",
+          "aria": null
+        },
+        {
+          "text": "Registrar venta",
+          "aria": null
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null
+        },
+        {
+          "text": "Ver proyectos",
+          "aria": null
+        },
+        {
+          "text": "Gestionar clientes",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje"
+        }
+      ]
+    },
+    "axe": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              ".tracking-\\[\\.14em\\].text-\\[9px\\].text-slate-400"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".mb-2"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 6.8pt (9px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".text-left.flex-1"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".text-\\[9px\\].truncate.text-slate-400"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #94a3b8, background color: #feffff, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "div:nth-child(5) > strong"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.23 (foreground color: #c97a61, background color: #fefeff, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".text-amber-800\\/80"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.48 (foreground color: #ab6229, background color: #fffbeb, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".tracking-\\[0\\.14em\\].text-\\[10px\\].text-slate-400"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".bg-blue-50.text-blue-700.py-1"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.99 (foreground color: #6366f1, background color: #eef2ff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".border-slate-50.last\\:border-b-0.py-3:nth-child(4) > .text-blue-700.bg-blue-50.px-2"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.99 (foreground color: #6366f1, background color: #eef2ff, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".border-slate-50.last\\:border-b-0.py-3:nth-child(5) > .text-blue-700.bg-blue-50.px-2"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.99 (foreground color: #6366f1, background color: #eef2ff, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".h-52"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".xl\\:grid-cols-\\[1\\.4fr_1fr\\] > .shadow-slate-200\\/30 > div:nth-child(1) > .tracking-\\[\\.14em\\].text-\\[10px\\].text-slate-400"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ],
+    "url": "https://one.ferova.com.co/app"
+  },
+  {
+    "id": "verify-command-home",
+    "text": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nInicio\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nAsistente Ferova\n\nContexto de tu negocio\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "main": {
+        "x": 260,
+        "y": 166,
+        "width": 804,
+        "height": 820,
+        "top": 166,
+        "right": 1064,
+        "bottom": 986,
+        "left": 260
+      },
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null
+        },
+        {
+          "text": "Proyectos",
+          "aria": null
+        },
+        {
+          "text": "Finanzas",
+          "aria": null
+        },
+        {
+          "text": "Ventas",
+          "aria": null
+        },
+        {
+          "text": "Configuración",
+          "aria": null
+        },
+        {
+          "text": "Ayuda",
+          "aria": null
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null
+        },
+        {
+          "text": "[✏️]",
+          "aria": null
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado"
+        },
+        {
+          "text": "Asistente",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": null
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null
+        },
+        {
+          "text": "Trimestre",
+          "aria": null
+        },
+        {
+          "text": "Año",
+          "aria": null
+        },
+        {
+          "text": "Todo",
+          "aria": null
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy"
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje"
+        }
+      ]
+    },
+    "axe": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              ".tracking-\\[\\.14em\\]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".mb-2"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 6.8pt (9px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".flex-1.text-left"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".max-w-28 > .text-\\[9px\\]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #94a3b8, background color: #feffff, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "div:nth-child(5) > strong"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.23 (foreground color: #c97a61, background color: #fefeff, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".text-amber-800\\/80"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.48 (foreground color: #ab6229, background color: #fffbeb, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".border-slate-100 > .text-\\[10px\\].text-slate-400"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "footer"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "a[href$=\"privacidad\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "a[href$=\"terminos\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ],
+    "url": "https://one.ferova.com.co/app"
+  },
+  {
+    "id": "a11y-clientes",
+    "text": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nProyectos\n/\nClientes\nClientes\nServicios\nHoras\nProyectos\nPlanner\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nMaestro de Clientes\n\nConfiguración fiscal y de localización por cliente\n\nPlantilla CSV\nSubir CSV\nNUEVO PERFIL DE CLIENTE\nID ÚNICO / RUT NIT\nNOMBRE COMERCIAL\nUBICACIÓN Y JURISDICCIÓN\n🇨🇴 Colombia (COP)\n🇵🇪 Perú (USD)\n🇪🇸 España (USD)\n🇺🇸 Estados Unidos (USD)\n🇧🇷 Brasil (USD)\nDeclarante de Renta\nAplica tarifa 4% (SI) o 6% (NO)\nCliente Activo\nAparece en listas de facturación\nNOTAS INTERNAS\nRegistrar Perfil\nDIRECTORIO CORPORATIVO DE CLIENTES\nID / RUT\tNOMBRE RAZON\tLOCALIDAD\tFÓRMULA FISCAL (RETE)\tPACTADO TOT. PERIODO\tDEDICACIÓN HORAS\tESTADO\tBORRAR\ncli_697496\tflores aja\t\n🇨🇴\nNacional\n\tCO Declarante (4%)\t$ 0\t-\tACTIVO\t\nAsistente Ferova\n\nContexto: Proyectos\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "main": {
+        "x": 260,
+        "y": 166,
+        "width": 804,
+        "height": 926.625,
+        "top": 166,
+        "right": 1064,
+        "bottom": 1092.625,
+        "left": 260
+      },
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null
+        },
+        {
+          "text": "Proyectos",
+          "aria": null
+        },
+        {
+          "text": "Finanzas",
+          "aria": null
+        },
+        {
+          "text": "Ventas",
+          "aria": null
+        },
+        {
+          "text": "Configuración",
+          "aria": null
+        },
+        {
+          "text": "Ayuda",
+          "aria": null
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null
+        },
+        {
+          "text": "[✏️]",
+          "aria": null
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado"
+        },
+        {
+          "text": "Asistente",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": null
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null
+        },
+        {
+          "text": "Trimestre",
+          "aria": null
+        },
+        {
+          "text": "Año",
+          "aria": null
+        },
+        {
+          "text": "Todo",
+          "aria": null
+        },
+        {
+          "text": "Clientes",
+          "aria": null
+        },
+        {
+          "text": "Servicios",
+          "aria": null
+        },
+        {
+          "text": "Horas",
+          "aria": null
+        },
+        {
+          "text": "Proyectos",
+          "aria": null
+        },
+        {
+          "text": "Planner",
+          "aria": null
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy"
+        },
+        {
+          "text": "Plantilla CSV",
+          "aria": null
+        },
+        {
+          "text": "Subir CSV",
+          "aria": null
+        },
+        {
+          "text": "Registrar Perfil",
+          "aria": null
+        },
+        {
+          "text": "ACTIVO",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje"
+        }
+      ]
+    },
+    "axe": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              ".tracking-\\[\\.14em\\]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".mb-2"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 6.8pt (9px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".flex-1.text-left"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".max-w-28 > .text-\\[9px\\]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #94a3b8, background color: #feffff, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "div:nth-child(5) > strong"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.23 (foreground color: #c97a61, background color: #fefeff, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".text-amber-800\\/80"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.48 (foreground color: #ab6229, background color: #fffbeb, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".p-3.bg-slate-100.justify-between:nth-child(4) > div > .block.text-slate-400.text-\\[10px\\]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.34 (foreground color: #94a3b8, background color: #f1f5f9, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".p-3.bg-slate-100.justify-between:nth-child(5) > div > .block.text-slate-400.text-\\[10px\\]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.34 (foreground color: #94a3b8, background color: #f1f5f9, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "th:nth-child(1)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "th:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "th:nth-child(3)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "th:nth-child(4)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "label",
+        "impact": "critical",
+        "nodes": [
+          {
+            "target": [
+              ".p-3.bg-slate-100.justify-between:nth-child(4) > .w-4\\.5.h-4\\.5.accent-blue-600"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          },
+          {
+            "target": [
+              ".p-3.bg-slate-100.justify-between:nth-child(5) > .w-4\\.5.h-4\\.5.accent-blue-600"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          }
+        ]
+      },
+      {
+        "id": "select-name",
+        "impact": "critical",
+        "nodes": [
+          {
+            "target": [
+              "select"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          }
+        ]
+      }
+    ],
+    "url": "https://one.ferova.com.co/app"
+  },
+  {
+    "id": "a11y-planner",
+    "text": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nProyectos\n/\nPlanner\nClientes\nServicios\nHoras\nProyectos\nPlanner\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\n\nSMART PLANNER\n\nTu día, bajo control.\n\nVacía tu mente. El sistema clasifica, prioriza y arma bloques por energía.\n\nOrganizar agenda automáticamente\nDía\nLista\nKanban\nSemana\nCalendario\n\nRespuesta automatizada; puede usar inteligencia artificial cuando esté disponible. Verifica las cifras antes de decidir.\n\nAgenda de hoy\n\nTus tareas ya asignadas aparecen aquí en su hora; el detalle completo continúa más abajo.\n\n0 bloques\n\nAún no hay tareas con horario. Usa “Reorganizar mi día” para asignarlas.\n\nBrain dump\nEscribe o pega lo que tengas que hacer. La IA detecta cliente, fecha, duración y prioridad, y cada tarea queda también en tu base de Notion.\n⌘/Ctrl+Enter para interpretar.\nInterpretar\nTU AGENDA DEL JUEVES, 8 DE OCTUBRE\n0 bloques\n+ Bloque protegido\n\nEsto sí es horario: cada bloque tiene una hora fija. \"Reorganizar mi día\" puede moverlos, excepto los marcados \nProtegido.\n\nSin bloques aún. Presioná Reorganizar mi día para que el planificador arme el horario.\nPRIORIDADES · PARETO 80/20 · 0\nOrdenadas por impacto, no por orden de llegada: ataca primero las de arriba — son el 20% que mueve el 80% de la aguja.\n\nBandeja vacía.\n\nAsistente Ferova\n\nContexto: Proyectos\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "main": {
+        "x": 260,
+        "y": 166,
+        "width": 804,
+        "height": 1157.875,
+        "top": 166,
+        "right": 1064,
+        "bottom": 1323.875,
+        "left": 260
+      },
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null
+        },
+        {
+          "text": "Proyectos",
+          "aria": null
+        },
+        {
+          "text": "Finanzas",
+          "aria": null
+        },
+        {
+          "text": "Ventas",
+          "aria": null
+        },
+        {
+          "text": "Configuración",
+          "aria": null
+        },
+        {
+          "text": "Ayuda",
+          "aria": null
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null
+        },
+        {
+          "text": "[✏️]",
+          "aria": null
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado"
+        },
+        {
+          "text": "Asistente",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": null
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null
+        },
+        {
+          "text": "Trimestre",
+          "aria": null
+        },
+        {
+          "text": "Año",
+          "aria": null
+        },
+        {
+          "text": "Todo",
+          "aria": null
+        },
+        {
+          "text": "Clientes",
+          "aria": null
+        },
+        {
+          "text": "Servicios",
+          "aria": null
+        },
+        {
+          "text": "Horas",
+          "aria": null
+        },
+        {
+          "text": "Proyectos",
+          "aria": null
+        },
+        {
+          "text": "Planner",
+          "aria": null
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy"
+        },
+        {
+          "text": "Organizar agenda automáticamente",
+          "aria": null
+        },
+        {
+          "text": "Día",
+          "aria": null
+        },
+        {
+          "text": "Lista",
+          "aria": null
+        },
+        {
+          "text": "Kanban",
+          "aria": null
+        },
+        {
+          "text": "Semana",
+          "aria": null
+        },
+        {
+          "text": "Calendario",
+          "aria": null
+        },
+        {
+          "text": "Interpretar",
+          "aria": null
+        },
+        {
+          "text": "+ Bloque protegido",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje"
+        }
+      ]
+    },
+    "axe": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              ".tracking-\\[\\.14em\\]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".mb-2"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 6.8pt (9px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".flex-1.text-left"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".max-w-28 > .text-\\[9px\\].truncate"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #94a3b8, background color: #feffff, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "div:nth-child(5) > strong"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.23 (foreground color: #c97a61, background color: #fefeff, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".text-amber-800\\/80"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.48 (foreground color: #ab6229, background color: #fffbeb, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".hover\\:text-slate-800.min-h-10.inline-flex:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".hover\\:text-slate-800.min-h-10.inline-flex:nth-child(3)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".hover\\:text-slate-800.min-h-10.inline-flex:nth-child(4)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".hover\\:text-slate-800.min-h-10.inline-flex:nth-child(5)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".flex-wrap.gap-2.flex > .text-slate-400"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".mt-3.flex-wrap.justify-between > .text-\\[11px\\].text-slate-400"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "label",
+        "impact": "critical",
+        "nodes": [
+          {
+            "target": [
+              "input[value=\"2026-10-08\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          }
+        ]
+      }
+    ],
+    "url": "https://one.ferova.com.co/app"
+  },
+  {
+    "id": "a11y-ingresos",
+    "text": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nFinanzas\n/\nIngresos\n🔒 Reportes CEO\nFINANZAS\nFinanzas operativas\nIngresos\nPagos\nCostos\nEquilibrio\nPor servicio\nIVA\nAlertas\nSeguimiento\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nRegistro de Ingresos (Ventas y Abonos)\n\nLibro de cobranza, cobros anticipados, abonos y saldos de clientes de Ferova Agency\n\nImportar cobros CSV\nExportar CSV\nNUEVA TRANSACCIÓN\nFECHA DE VENTA\nCLIENTE\nSelecciona cliente...\nflores aja (Nacional)\nSERVICIO\nSelecciona servicio…\nlogo\nCANTIDAD\nP. UNITARIO (COP)\nMÁS ÍTEMS EN ESTA FACTURA\n+ Añadir ítem\n\nDeja esto vacío para una venta de una sola línea, como siempre.\n\nCOSTO UNIT. (COP)\nMONEDA\n\nCOSTOS REALES DE RECAUDO\n\n¿Esta venta tuvo comisión de pasarela? Elegí cuál y se cargan sus tarifas; podés ajustarlas si este cliente tiene una distinta. Los cargos fijos y de retiro están en COP; no se mezclan monedas.\n\nPASARELA O MEDIO\nSin comisión de pasarela\nOtra (cargar a mano)\nDefiní tus pasarelas en Projects → Seguimiento para elegirlas acá.\nCOMISIÓN %\nFIJO (COP)\nRETIRO (COP)\n\nDESCUENTOS PASARELA\n\n−$ 0\n\nNETO REAL TRAS PASARELA\n\n$ 0\n\nABONADO / PAGADO (COP)\n$ 0\nIntroduce un adelanto si el cliente ya pagó una parte. Luego podrás gestionar abonos con fechas específicas al editar.\nIVA GENERADO\nRETENCIÓN EN LA FUENTE\nNOTAS DE TRANSACCIÓN\nCÓMPUTO EN TIEMPO REAL\nTotal Pactado: $ 0\nRetención (0%): -$ 0\nNeto fiscal antes de pasarela: $ 0\nRegistrar Venta\nHISTORIAL DE OPERACIONES\nFECHA\tCLIENTE\tSERVICIO\tTOTAL TARIFA\tRETE\tNETO ENTRA\tADELANTO\tACCIÓN\nNo se encontraron registros de ventas en la base de datos de Sheets.\nAsistente Ferova\n\nContexto: Finanzas\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "main": {
+        "x": 260,
+        "y": 166,
+        "width": 804,
+        "height": 1974.203125,
+        "top": 166,
+        "right": 1064,
+        "bottom": 2140.203125,
+        "left": 260
+      },
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null
+        },
+        {
+          "text": "Proyectos",
+          "aria": null
+        },
+        {
+          "text": "Finanzas",
+          "aria": null
+        },
+        {
+          "text": "Ventas",
+          "aria": null
+        },
+        {
+          "text": "Configuración",
+          "aria": null
+        },
+        {
+          "text": "Ayuda",
+          "aria": null
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null
+        },
+        {
+          "text": "[✏️]",
+          "aria": null
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado"
+        },
+        {
+          "text": "Asistente",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": null
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null
+        },
+        {
+          "text": "Trimestre",
+          "aria": null
+        },
+        {
+          "text": "Año",
+          "aria": null
+        },
+        {
+          "text": "Todo",
+          "aria": null
+        },
+        {
+          "text": "🔒 Reportes CEO",
+          "aria": null
+        },
+        {
+          "text": "Finanzas operativas",
+          "aria": null
+        },
+        {
+          "text": "Ingresos",
+          "aria": null
+        },
+        {
+          "text": "Pagos",
+          "aria": null
+        },
+        {
+          "text": "Costos",
+          "aria": null
+        },
+        {
+          "text": "Equilibrio",
+          "aria": null
+        },
+        {
+          "text": "Por servicio",
+          "aria": null
+        },
+        {
+          "text": "IVA",
+          "aria": null
+        },
+        {
+          "text": "Alertas",
+          "aria": null
+        },
+        {
+          "text": "Seguimiento",
+          "aria": null
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy"
+        },
+        {
+          "text": "Exportar CSV",
+          "aria": null
+        },
+        {
+          "text": "+ Añadir ítem",
+          "aria": null
+        },
+        {
+          "text": "Registrar Venta",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje"
+        }
+      ]
+    },
+    "axe": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              ".tracking-\\[\\.14em\\]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".tracking-\\[\\.16em\\]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 6.8pt (9px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".flex-1.text-left"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".max-w-28 > .truncate.text-\\[9px\\]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #94a3b8, background color: #feffff, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "div:nth-child(5) > strong"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.23 (foreground color: #c97a61, background color: #fefeff, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".ml-2"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.45 (foreground color: #94a3b8, background color: #f8fafc, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".text-amber-800\\/80"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.48 (foreground color: #ab6229, background color: #fffbeb, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".border-slate-200\\/70"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".leading-4"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".space-y-3 > label > .mb-1.text-\\[9px\\].block"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".mt-1.text-\\[9px\\].text-slate-400"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.34 (foreground color: #94a3b8, background color: #f1f5f9, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "label:nth-child(1) > .mb-1.text-\\[9px\\].block"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "label",
+        "impact": "critical",
+        "nodes": [
+          {
+            "target": [
+              "input[value=\"2026-10-09\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          },
+          {
+            "target": [
+              "input[min=\"1\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          },
+          {
+            "target": [
+              "input[required=\"\"][value=\"0\"][min=\"0\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          },
+          {
+            "target": [
+              "input[value=\"10000\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          },
+          {
+            "target": [
+              ".border-slate-200\\/70"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          }
+        ]
+      },
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              ".overflow-x-auto"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      },
+      {
+        "id": "select-name",
+        "impact": "critical",
+        "nodes": [
+          {
+            "target": [
+              "div:nth-child(2) > select"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          },
+          {
+            "target": [
+              "div:nth-child(3) > select"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          }
+        ]
+      }
+    ],
+    "url": "https://one.ferova.com.co/app"
+  },
+  {
+    "id": "mobile-home",
+    "text": "F\nFerova One\nBuscar o ejecutar…\nK\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFerova One\n/\nInicio\n/\nResumen\n\nTe quedan 7 días de prueba.\n\nAgregar tarjeta\nPanorama del negocio\n\nLas cifras que mandan y lo que exige tu atención hoy.\n\nRevisar proyectos\n\nINGRESOS\n\n$ 0\n\nVentas del período\n\nUTILIDAD REAL\n\n$ 0\n\nSegún lo que pagaste de verdad\n\nUTILIDAD PROYECTADA\n\n-$ 80.000\n\nCon costos planeados\n\nUTILIDAD NETA\n\n-$ 4.080.000\n\nEstimación después de impuestos\n\nCLIENTES ACTIVOS\n\n1\n\nCuentas en seguimiento\n\nPRIORIDAD\n\nLo que exige acción\n5 señales\n\nSin ventas registradas\n\nNo hay ingresos en el período seleccionado.\n\nURGENTE\nRegistrar venta →\n\nCapacidad sin medir\n\nNo hay horas registradas en el período.\n\nPOR REVISAR\nRegistrar horas →\n\nActualiza ingresos del período\n\nRegistra ventas y abonos para que el control ejecutivo sea confiable.\n\nPOR REVISAR\nAbrir ventas →\n\nRegistra la capacidad entregada\n\nLas horas conectan la rentabilidad con la operación.\n\nPENDIENTE\nAbrir horas →\n\nRevisa el avance de proyectos activos\n\n1 cliente activo requieren seguimiento de entrega.\n\nPENDIENTE\nAbrir proyectos →\n\nPULSO FINANCIERO\n\nIngresos por mes\nÚltimos 6 meses\nRegistra ventas para ver la tendencia de ingresos.\n\nDISTRIBUCIÓN\n\n¿A dónde va cada peso?\nGastos operativos\n2%\nSueldo\n98%\n\nTOP 5 DEL PERÍODO\n\nIngresos por servicio\nSin ventas en el período.\n\nTOP 5 DEL PERÍODO\n\nIngresos por cliente\nSin ventas en el período.\n\nCARTERA\n\nClientes\n\n1\n\ntotal\n\nActivos\n1\n\nRENDIMIENTO OPERATIVO\n\nIngresos vs. utilidad\n\nMARGEN\n\n0%\n\nHORAS\n\n0 h\n\nCLIENTES\n\n1\n\nIngresos\nUtilidad\nBusiness Health\n\nAtención requerida\n\nLa utilidad operacional del período es negativa.\n\nVer finanzas\nExecutive Brief\n\nLa utilidad operacional del período es negativa. Lo más urgente ahora: actualiza ingresos del período — Registra ventas y abonos para que el control ejecutivo sea confiable.\n\nAbrir ventas\n\nÚLTIMOS MOVIMIENTOS\n\nRecent Activity\n\nAún no hay actividad registrada para este período.\n\nACCESO RÁPIDO\n\nQuick Actions\nRegistrar venta\nRegistrar horas\nVer proyectos\nGestionar clientes\nAsistente Ferova\n\nContexto: Inicio\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 375,
+      "scrollWidth": 375,
+      "main": {
+        "x": 12,
+        "y": 329,
+        "width": 335,
+        "height": 3958.5,
+        "top": 329,
+        "right": 347,
+        "bottom": 4287.5,
+        "left": 12
+      },
+      "buttons": [
+        {
+          "text": "",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Enviar feedback"
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión"
+        },
+        {
+          "text": "",
+          "aria": "Abrir menú"
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado"
+        },
+        {
+          "text": "",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null
+        },
+        {
+          "text": "Trimestre",
+          "aria": null
+        },
+        {
+          "text": "Año",
+          "aria": null
+        },
+        {
+          "text": "Todo",
+          "aria": null
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy"
+        },
+        {
+          "text": "Revisar proyectos",
+          "aria": null
+        },
+        {
+          "text": "Registrar venta →",
+          "aria": null
+        },
+        {
+          "text": "Registrar horas →",
+          "aria": null
+        },
+        {
+          "text": "Abrir ventas →",
+          "aria": null
+        },
+        {
+          "text": "Abrir horas →",
+          "aria": null
+        },
+        {
+          "text": "Abrir proyectos →",
+          "aria": null
+        },
+        {
+          "text": "Ver finanzas",
+          "aria": null
+        },
+        {
+          "text": "Abrir ventas",
+          "aria": null
+        },
+        {
+          "text": "Registrar venta",
+          "aria": null
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null
+        },
+        {
+          "text": "Ver proyectos",
+          "aria": null
+        },
+        {
+          "text": "Gestionar clientes",
+          "aria": null
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje"
+        }
+      ]
+    },
+    "axe": [
+      {
+        "id": "button-name",
+        "impact": "critical",
+        "nodes": [
+          {
+            "target": [
+              ".gap-3.items-center.flex:nth-child(2) > .text-slate-700.inline-flex.hover\\:bg-slate-50"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          }
+        ]
+      },
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              ".text-left.flex-1"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".tracking-\\[0\\.14em\\].text-\\[10px\\].text-slate-400"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".bg-blue-50.text-blue-700.py-1"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.99 (foreground color: #6366f1, background color: #eef2ff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".border-slate-50.last\\:border-b-0.py-3:nth-child(4) > .text-blue-700.bg-blue-50.px-2"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.99 (foreground color: #6366f1, background color: #eef2ff, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".border-slate-50.last\\:border-b-0.py-3:nth-child(5) > .text-blue-700.bg-blue-50.px-2"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.99 (foreground color: #6366f1, background color: #eef2ff, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".h-52"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".xl\\:grid-cols-\\[1\\.4fr_1fr\\] > .shadow-slate-200\\/30 > div:nth-child(1) > .tracking-\\[\\.14em\\].text-\\[10px\\].text-slate-400"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".lg\\:grid-cols-2 > .shadow-slate-200\\/30:nth-child(1) > div:nth-child(1) > .tracking-\\[\\.14em\\].text-\\[10px\\].text-slate-400"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".lg\\:grid-cols-2 > .shadow-slate-200\\/30:nth-child(2) > div:nth-child(1) > .tracking-\\[\\.14em\\].text-\\[10px\\].text-slate-400"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".lg\\:grid-cols-3 > .shadow-slate-200\\/30 > div:nth-child(1) > .tracking-\\[\\.14em\\].text-\\[10px\\].text-slate-400"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "article:nth-child(7) > .text-\\[\\#a39a8a\\].tracking-\\[0\\.14em\\].font-display"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.78 (foreground color: #a39a8a, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "article:nth-child(8) > .text-\\[\\#a39a8a\\].tracking-\\[0\\.14em\\].font-display"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.78 (foreground color: #a39a8a, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ],
+    "url": "https://one.ferova.com.co/app"
+  }
+]

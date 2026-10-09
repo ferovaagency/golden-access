@@ -1,3 +1,7 @@
+<<<<<<< Updated upstream
+=======
+/* Ferova One public identity. Scope overrides so the private app keeps its tokens. */
+>>>>>>> Stashed changes
 .fo-landing {
   --fv-brand: #2563eb;
   --fv-brand-strong: #1d4ed8;
@@ -17,14 +21,23 @@
   --fv-success-soft: #edf5ff;
   background: var(--fv-canvas);
   color: var(--fv-ink);
+<<<<<<< Updated upstream
   font-family: Figtree, sans-serif;
+=======
+  font-family: "Figtree", sans-serif;
+>>>>>>> Stashed changes
   font-size: 16px;
   line-height: 1.6;
   overflow: clip;
 }
 .fo-landing *,
+<<<<<<< Updated upstream
 .fo-landing *:before,
 .fo-landing *:after {
+=======
+.fo-landing *::before,
+.fo-landing *::after {
+>>>>>>> Stashed changes
   box-sizing: border-box;
 }
 .fo-landing h1,
@@ -69,7 +82,11 @@
   top: 12px;
   padding: 12px 20px;
   background: var(--fv-brand);
+<<<<<<< Updated upstream
   color: #fff;
+=======
+  color: white;
+>>>>>>> Stashed changes
   transform: translateY(-180%);
   border-radius: 8px;
 }
@@ -96,7 +113,11 @@
   gap: 11px;
   color: var(--fv-ink);
   font:
+<<<<<<< Updated upstream
     600 27px/1 Outfit,
+=======
+    600 27px/1 "Outfit",
+>>>>>>> Stashed changes
     sans-serif;
   letter-spacing: -1px;
   white-space: nowrap;
@@ -162,11 +183,19 @@
 }
 .fo-button-primary {
   background: var(--fv-brand);
+<<<<<<< Updated upstream
   color: #fff;
 }
 .fo-button-primary:hover {
   background: var(--fv-brand-strong);
   box-shadow: 0 5px 14px #2563eb1a;
+=======
+  color: white;
+}
+.fo-button-primary:hover {
+  background: var(--fv-brand-strong);
+  box-shadow: 0 5px 14px rgb(37 99 235 / 10%);
+>>>>>>> Stashed changes
 }
 .fo-button-outline {
   border-color: var(--fv-line);
@@ -293,7 +322,11 @@
 }
 .fo-small-monogram {
   font:
+<<<<<<< Updated upstream
     500 26px Outfit,
+=======
+    500 26px "Outfit",
+>>>>>>> Stashed changes
     sans-serif;
   color: var(--fv-brand);
   border: 1px solid var(--fv-line);
@@ -324,7 +357,11 @@
   background: var(--fv-surface);
   border: 1px solid var(--fv-line);
   border-radius: 14px;
+<<<<<<< Updated upstream
   box-shadow: 0 24px 50px -26px #14366b33;
+=======
+  box-shadow: 0 24px 50px -26px rgb(20 54 107 / 20%);
+>>>>>>> Stashed changes
   overflow: hidden;
 }
 .fo-preview-top {
@@ -354,7 +391,11 @@
   gap: 5px;
   font-size: 9px;
 }
+<<<<<<< Updated upstream
 .fo-live-dot:before {
+=======
+.fo-live-dot::before {
+>>>>>>> Stashed changes
   content: "";
   width: 5px;
   height: 5px;
@@ -402,7 +443,11 @@
 }
 .fo-demo-heading h2 {
   font:
+<<<<<<< Updated upstream
     550 20px/1.3 Outfit,
+=======
+    550 20px/1.3 "Outfit",
+>>>>>>> Stashed changes
     sans-serif;
   letter-spacing: -0.4px;
   margin-top: 7px;
@@ -441,7 +486,11 @@
 .fo-demo-metrics strong {
   display: block;
   font:
+<<<<<<< Updated upstream
     550 22px/1.5 Outfit,
+=======
+    550 22px/1.5 "Outfit",
+>>>>>>> Stashed changes
     sans-serif;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.6px;
@@ -704,7 +753,11 @@
 }
 .fo-benefit h3 {
   font:
+<<<<<<< Updated upstream
     500 25px/1.2 Outfit,
+=======
+    500 25px/1.2 "Outfit",
+>>>>>>> Stashed changes
     sans-serif;
   letter-spacing: -0.5px;
 }
@@ -791,7 +844,11 @@
   border-radius: 7px;
   background: var(--fv-soft);
   color: var(--fv-brand);
+<<<<<<< Updated upstream
   font-family: Outfit, sans-serif;
+=======
+  font-family: "Outfit", sans-serif;
+>>>>>>> Stashed changes
 }
 .fo-client-example > div {
   flex: 1;
@@ -898,14 +955,22 @@
 }
 .fo-steps article > span {
   font:
+<<<<<<< Updated upstream
     400 36px/1.5 Outfit,
+=======
+    400 36px/1.5 "Outfit",
+>>>>>>> Stashed changes
     sans-serif;
   color: var(--fv-brand);
 }
 .fo-steps h3 {
   margin-top: 14px;
   font:
+<<<<<<< Updated upstream
     550 21px/1.3 Outfit,
+=======
+    550 21px/1.3 "Outfit",
+>>>>>>> Stashed changes
     sans-serif;
   letter-spacing: -0.4px;
 }
@@ -956,7 +1021,11 @@
 }
 .fo-billing button[aria-pressed="true"] {
   background: var(--fv-brand-deep);
+<<<<<<< Updated upstream
   color: #fff;
+=======
+  color: white;
+>>>>>>> Stashed changes
 }
 .fo-billing span {
   display: inline-block;
@@ -1001,7 +1070,11 @@
 }
 .fo-plan h3 {
   font:
+<<<<<<< Updated upstream
     550 29px/1.5 Outfit,
+=======
+    550 29px/1.5 "Outfit",
+>>>>>>> Stashed changes
     sans-serif;
   margin-top: 9px;
   letter-spacing: -0.7px;
@@ -1019,7 +1092,11 @@
 }
 .fo-price strong {
   font:
+<<<<<<< Updated upstream
     500 48px/1.2 Outfit,
+=======
+    500 48px/1.2 "Outfit",
+>>>>>>> Stashed changes
     sans-serif;
   letter-spacing: -2px;
 }
@@ -1118,7 +1195,11 @@
   align-items: center;
   gap: 40px;
   background: var(--fv-brand-deep);
+<<<<<<< Updated upstream
   color: #fff;
+=======
+  color: white;
+>>>>>>> Stashed changes
   padding: 58px 70px;
   border-radius: 15px;
 }
@@ -1729,24 +1810,43 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .fo-landing *,
+<<<<<<< Updated upstream
   .fo-landing *:before,
   .fo-landing *:after {
+=======
+  .fo-landing *::before,
+  .fo-landing *::after {
+>>>>>>> Stashed changes
     transition: none !important;
     animation: none !important;
     scroll-behavior: auto !important;
   }
 }
+<<<<<<< Updated upstream
 .fo-landing img[src="/brand/ferova-isotipo.png"] {
   filter: brightness(0) invert(1);
 }
+=======
+
+.fo-landing img[src="/brand/ferova-isotipo.png"] {
+  filter: brightness(0) invert(1);
+}
+
+>>>>>>> Stashed changes
 .fo-ai-answer img {
   background: var(--fv-brand);
   padding: 6px;
   box-sizing: content-box;
   border-radius: 7px;
 }
+<<<<<<< Updated upstream
 .fo-landing .fo-ai-answer img[src="/brand/ferova-isotipo.png"] {
   filter: brightness(0) saturate(100%) invert(32%) sepia(95%) saturate(3400%) hue-rotate(216deg);
   background: transparent;
   padding: 0;
 }
+=======
+
+.fo-landing .fo-ai-answer img[src='/brand/ferova-isotipo.png'] { filter: brightness(0) saturate(100%) invert(32%) sepia(95%) saturate(3400%) hue-rotate(216deg); background: transparent; padding: 0; }
+
+>>>>>>> Stashed changes

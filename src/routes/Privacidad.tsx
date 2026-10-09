@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { SeoHead } from '../seo/SeoHead';
 
 const Section = ({ title, children }: { title: string; children: ReactNode }) => (
@@ -16,7 +17,7 @@ export default function Privacidad() {
         <header className="border-b border-slate-200 pb-6">
           <p className="text-xs font-semibold uppercase tracking-widest text-blue-700">Ferova OS</p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight">Política de Tratamiento de Datos Personales</h1>
-          <p className="mt-3 text-sm text-slate-500">Versión 1.0 · Vigente desde el 17 de julio de 2026 · Última actualización: 17 de julio de 2026</p>
+          <p className="mt-3 text-sm text-slate-500">Versión 1.1 · Vigente desde el 17 de julio de 2026 · Última actualización: 9 de octubre de 2026</p>
         </header>
 
         <div className="mt-8 space-y-8">
@@ -46,12 +47,15 @@ export default function Privacidad() {
           </Section>
 
           <Section title="4. Inteligencia artificial">
-            <p>Las funciones de IA usan únicamente el contexto necesario de tu negocio para responder. El procesamiento se realiza mediante Google LLC (Gemini), a través del gateway de IA de Lovable, con infraestructura en Estados Unidos.</p>
-            <p>La IA es probabilística y puede producir resultados inexactos. Sus respuestas son asistencia y sugerencia; no sustituyen asesoría contable, tributaria, financiera ni legal. Ninguna acción material se realiza sin tu confirmación.</p>
+            <p><strong>Hablas con un sistema de IA, no con una persona.</strong> El asistente, el chat de bienvenida y el bot de WhatsApp de tu negocio (si lo activas) son sistemas automatizados. Lo decimos en la interfaz y, en WhatsApp, en el primer mensaje de cada conversación. Si pides hablar con una persona, el bot lo indica y deja de responder por ti.</p>
+            <p>Las funciones de IA usan únicamente el contexto necesario de tu negocio para responder. El procesamiento se realiza a través del gateway de IA de Lovable con modelos de <strong>Google LLC (Gemini)</strong> y <strong>OpenAI (GPT)</strong>, con infraestructura en Estados Unidos. Ningún proveedor usa tus datos para entrenar modelos; nosotros tampoco.</p>
+            <p>Todo texto, clasificación, reporte, plan o simulación que produce la IA es contenido generado automáticamente. La IA es probabilística y puede producir resultados inexactos, incompletos o inventados. Sus respuestas son asistencia y sugerencia; no sustituyen asesoría contable, tributaria, financiera ni legal, y debes verificarlas antes de actuar.</p>
+            <p><strong>Sin decisiones automatizadas con efecto jurídico.</strong> Ninguna función toma por ti decisiones con efectos legales o económicos: las acciones con efecto hacia terceros (enviar un mensaje a un cliente, agendar o cancelar una cita, registrar una venta o un pago) requieren tu confirmación, y las de pago, borrado o permisos solo las ejecutas tú. Puedes pedir explicación de cualquier sugerencia y que una persona la revise escribiendo al contacto de esta política.</p>
+            <p>Lo que entra al contexto de la IA (tu Memoria, notas de clientes, mensajes recibidos) se trata como datos, nunca como instrucciones, y se limita a lo necesario para cada respuesta. Los registros de uso de la IA se conservan 12 meses.</p>
           </Section>
 
           <Section title="5. Transferencias internacionales">
-            <p>Para prestar el servicio, los datos pueden ser tratados por Google LLC, Lovable y Supabase en Estados Unidos, como encargados que prestan servicios tecnológicos. Paddle puede tratar los datos de compra como comerciante registrado y responsable independiente de la transacción, desde el Reino Unido, Estados Unidos u otras jurisdicciones donde opere.</p>
+            <p>Para prestar el servicio, los datos pueden ser tratados por Google LLC, OpenAI, Lovable y Supabase en Estados Unidos, como encargados que prestan servicios tecnológicos. Si conectas integraciones opcionales (Google Workspace, Notion, Apollo, WhatsApp), los datos que decidas sincronizar viajan a esos proveedores según se describe en la <Link className="font-semibold text-blue-700 underline" to="/subencargados">lista de subencargados</Link>. Paddle puede tratar los datos de compra como comerciante registrado y responsable independiente de la transacción, desde el Reino Unido, Estados Unidos u otras jurisdicciones donde opere.</p>
             <p>Al aceptar esta política autorizas de manera expresa estas transmisiones necesarias para operar Ferova OS. Si no las autorizas, no podremos prestarte el servicio.</p>
           </Section>
 
@@ -62,11 +66,11 @@ export default function Privacidad() {
 
           <Section title="7. Tus derechos">
             <p>Puedes conocer, actualizar, rectificar, solicitar prueba de autorización, ser informado sobre el uso, revocar autorización, pedir supresión y acceder gratuitamente a tus datos. También puedes presentar quejas ante la Superintendencia de Industria y Comercio.</p>
-            <p>Para ejercerlos, escribe a gerencia@seoparaecommerce.co con tu nombre, derecho solicitado y hechos. Las consultas se atienden en hasta 10 días hábiles prorrogables por 5; los reclamos, en hasta 15 días hábiles prorrogables por 8.</p>
+            <p>Para ejercerlos, escribe a gerencia@seoparaecommerce.co con tu nombre, derecho solicitado y hechos. Las consultas se atienden en hasta 10 días hábiles prorrogables por 5; los reclamos, en hasta 15 días hábiles prorrogables por 8. Desde la app puedes descargar una copia de tus datos y solicitar la eliminación de tu cuenta en Configuración.</p>
           </Section>
 
           <Section title="8. Conservación, seguridad y cambios">
-            <p>Conservamos datos de cuenta mientras esté activa. Las conversaciones de asistente y onboarding se conservan hasta 12 meses; al eliminar la cuenta se suprimen los datos salvo obligaciones legales aplicables.</p>
+            <p>Conservamos datos de cuenta mientras esté activa y hasta 30 días después de que pidas eliminarla (plazo de gracia para arrepentirte); luego se suprimen, salvo obligaciones legales aplicables. Las conversaciones con el asistente y el onboarding, y los registros de uso de la IA, se conservan hasta 12 meses. Los registros de pago los conserva Paddle según sus obligaciones.</p>
             <p>Aplicamos cifrado en tránsito, controles de acceso y gestión de credenciales. Ninguna medida es infalible. Los cambios sustanciales a esta política se comunicarán y requerirán nueva autorización cuando aplique.</p>
           </Section>
         </div>

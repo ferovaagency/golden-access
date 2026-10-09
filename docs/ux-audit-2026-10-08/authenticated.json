@@ -1,0 +1,5683 @@
+[
+  {
+    "id": "desktop-inicio",
+    "url": "https://one.ferova.com.co/app",
+    "content": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nInicio\n/\nResumen\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nPanorama del negocio\n\nLas cifras que mandan y lo que exige tu atención hoy.\n\nRevisar proyectos\n\nINGRESOS\n\n$ 0\n\nVentas del período\n\nUTILIDAD REAL\n\n$ 0\n\nSegún lo que pagaste de verdad\n\nUTILIDAD PROYECTADA\n\n-$ 80.000\n\nCon costos planeados\n\nUTILIDAD NETA\n\n-$ 4.080.000\n\nEstimación después de impuestos\n\nCLIENTES ACTIVOS\n\n1\n\nCuentas en seguimiento\n\nPRIORIDAD\n\nLo que exige acción\n5 señales\n\nSin ventas registradas\n\nNo hay ingresos en el período seleccionado.\n\nURGENTE\nRegistrar venta →\n\nCapacidad sin medir\n\nNo hay horas registradas en el período.\n\nPOR REVISAR\nRegistrar horas →\n\nActualiza ingresos del período\n\nRegistra ventas y abonos para que el control ejecutivo sea confiable.\n\nPOR REVISAR\nAbrir ventas →\n\nRegistra la capacidad entregada\n\nLas horas conectan la rentabilidad con la operación.\n\nPENDIENTE\nAbrir horas →\n\nRevisa el avance de proyectos activos\n\n1 cliente activo requieren seguimiento de entrega.\n\nPENDIENTE\nAbrir proyectos →\n\nPULSO FINANCIERO\n\nIngresos por mes\nÚltimos 6 meses\nRegistra ventas para ver la tendencia de ingresos.\n\nDISTRIBUCIÓN\n\n¿A dónde va cada peso?\nGastos operativos\n2%\nSueldo\n98%\n\nTOP 5 DEL PERÍODO\n\nIngresos por servicio\nSin ventas en el período.\n\nTOP 5 DEL PERÍODO\n\nIngresos por cliente\nSin ventas en el período.\n\nCARTERA\n\nClientes\n\n1\n\ntotal\n\nActivos\n1\n\nRENDIMIENTO OPERATIVO\n\nIngresos vs. utilidad\n\nMARGEN\n\n0%\n\nHORAS\n\n0 h\n\nCLIENTES\n\n1\n\nIngresos\nUtilidad\nBusiness Health\n\nAtención requerida\n\nLa utilidad operacional del período es negativa.\n\nVer finanzas\nExecutive Brief\n\nLa utilidad operacional del período es negativa. Lo más urgente ahora: actualiza ingresos del período — Registra ventas y abonos para que el control ejecutivo sea confiable.\n\nAbrir ventas\n\nÚLTIMOS MOVIMIENTOS\n\nRecent Activity\n\nAún no hay actividad registrada para este período.\n\nACCESO RÁPIDO\n\nQuick Actions\nRegistrar venta\nRegistrar horas\nVer proyectos\nGestionar clientes\nAsistente Ferova\n\nContexto: Inicio\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        "Ferova One",
+        "Panorama del negocio",
+        "Lo que exige acción",
+        "Ingresos por mes",
+        "¿A dónde va cada peso?",
+        "Ingresos por servicio",
+        "Ingresos por cliente",
+        "Clientes",
+        "Ingresos vs. utilidad",
+        "Business Health",
+        "Executive Brief",
+        "Recent Activity",
+        "Quick Actions",
+        "Asistente Ferova"
+      ],
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Finanzas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ventas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ayuda",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null,
+          "title": "Contraer navegación"
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "[✏️]",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback",
+          "title": "Reportar un problema o enviar una sugerencia"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado",
+          "title": "Ver recorrido guiado con el Copiloto"
+        },
+        {
+          "text": "Asistente",
+          "aria": null,
+          "title": "Abrir asistente IA"
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Notificaciones"
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null,
+          "title": "Configuración de la cuenta"
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión",
+          "title": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Trimestre",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Año",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Todo",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy",
+          "title": "Ocultar por hoy"
+        },
+        {
+          "text": "Revisar proyectos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar venta →",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar horas →",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Abrir ventas →",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Abrir horas →",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Abrir proyectos →",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ver finanzas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Abrir ventas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar venta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ver proyectos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Gestionar clientes",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación",
+          "title": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente",
+          "title": "Colapsar"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso",
+          "title": "Minimizar (siempre puedes volver a abrirlo)"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje",
+          "title": ""
+        }
+      ],
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Desde",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Hasta",
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Pregúntame sobre tu negocio…",
+          "aria-label": null,
+          "id": ""
+        }
+      ]
+    },
+    "errors": [],
+    "network": []
+  },
+  {
+    "id": "desktop-clientes",
+    "url": "https://one.ferova.com.co/app",
+    "content": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nProyectos\n/\nClientes\nClientes\nServicios\nHoras\nProyectos\nPlanner\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nMaestro de Clientes\n\nConfiguración fiscal y de localización por cliente\n\nPlantilla CSV\nSubir CSV\nNUEVO PERFIL DE CLIENTE\nID ÚNICO / RUT NIT\nNOMBRE COMERCIAL\nUBICACIÓN Y JURISDICCIÓN\n🇨🇴 Colombia (COP)\n🇵🇪 Perú (USD)\n🇪🇸 España (USD)\n🇺🇸 Estados Unidos (USD)\n🇧🇷 Brasil (USD)\nDeclarante de Renta\nAplica tarifa 4% (SI) o 6% (NO)\nCliente Activo\nAparece en listas de facturación\nNOTAS INTERNAS\nRegistrar Perfil\nDIRECTORIO CORPORATIVO DE CLIENTES\nID / RUT\tNOMBRE RAZON\tLOCALIDAD\tFÓRMULA FISCAL (RETE)\tPACTADO TOT. PERIODO\tDEDICACIÓN HORAS\tESTADO\tBORRAR\ncli_697496\tflores aja\t\n🇨🇴\nNacional\n\tCO Declarante (4%)\t$ 0\t-\tACTIVO\t\nAsistente Ferova\n\nContexto: Proyectos\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        "Ferova One",
+        "Maestro de Clientes",
+        "Nuevo Perfil de Cliente",
+        "Directorio Corporativo de Clientes",
+        "Asistente Ferova"
+      ],
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Finanzas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ventas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ayuda",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null,
+          "title": "Contraer navegación"
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "[✏️]",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback",
+          "title": "Reportar un problema o enviar una sugerencia"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado",
+          "title": "Ver recorrido guiado con el Copiloto"
+        },
+        {
+          "text": "Asistente",
+          "aria": null,
+          "title": "Abrir asistente IA"
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Notificaciones"
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null,
+          "title": "Configuración de la cuenta"
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión",
+          "title": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Trimestre",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Año",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Todo",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Clientes",
+          "aria": null,
+          "title": "Cuentas activas"
+        },
+        {
+          "text": "Servicios",
+          "aria": null,
+          "title": "Catálogo y costos"
+        },
+        {
+          "text": "Horas",
+          "aria": null,
+          "title": "Capacidad y rentabilidad"
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": "Plan y seguimiento por cliente"
+        },
+        {
+          "text": "Planner",
+          "aria": null,
+          "title": "Prioridades, agenda y bloques"
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy",
+          "title": "Ocultar por hoy"
+        },
+        {
+          "text": "Plantilla CSV",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Subir CSV",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar Perfil",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "ACTIVO",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Eliminar"
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación",
+          "title": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente",
+          "title": "Colapsar"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso",
+          "title": "Minimizar (siempre puedes volver a abrirlo)"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje",
+          "title": ""
+        }
+      ],
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Desde",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Hasta",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "file",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Ej: 901234567-8 o RUTA_N",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Ej: Ruta N S.A.S",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "checkbox",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "checkbox",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Persona de contacto, observaciones clave...",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Buscar por nombre o ID...",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Pregúntame sobre tu negocio…",
+          "aria-label": null,
+          "id": ""
+        }
+      ]
+    },
+    "errors": [],
+    "network": []
+  },
+  {
+    "id": "desktop-servicios",
+    "url": "https://one.ferova.com.co/app",
+    "content": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nProyectos\n/\nServicios\nClientes\nServicios\nHoras\nProyectos\nPlanner\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nPortafolio de Líneas de Servicio\n\nConfiguración de precios de referencia, costos directos y rentabilidades por servicio\n\nPlantilla CSV\nSubir CSV\nNUEVO CATÁLOGO DE SERVICIO\nIDENTIFICADOR CORTO\nNOMBRE COMERCIAL DE LÍNEA\nServicio\nProducto\nCOSTO UNITARIO DIRECTO (COP)\n\nCosto de entrega de un desarrollador externo o aprovisionamiento técnico.\n\nMARGEN OBJETIVO (%) — OPCIONAL\n\nDefine el precio ideal sugerido en Equilibrio por Servicio. Cada servicio puede tener su propio %; si lo dejas vacío, se usa el margen mínimo de tu configuración.\n\nPRECIO DE VENTA DE REFERENCIA — OPCIONAL\nCOP\nUSD\n\nLo que cobrás hoy por esta línea. Equilibrio por Servicio lo compara contra el precio ideal (costo + margen) y te dice si deberías subirlo o bajarlo.\n\nEste servicio cobra IVA\nEl precio de referencia se considera antes de IVA; al facturar se mostrará el valor del impuesto por separado.\nRegistrar Línea\nESTRUCTURA CORPORATIVA DE SERVICIOS (1)\nID SERVICIO\tNOMBRE COMERCIAL\tCOSTO UNITARIO DIRECTO\tVENTA ACUMULADA PERIODO\tHORAS DE DEDICACIÓN\tMARGEN BRUTO (%)\t\nsrv_666496\tlogo\nMargen objetivo: 30% (mínimo por defecto)\nVende a: $ 20.000\nSin IVA\t$ 10.000\nestimado configurado\n\t$ 0\n(0 uds vendidas)\n\t-\tSin ventas\t\nAsistente Ferova\n\nContexto: Proyectos\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        "Ferova One",
+        "Portafolio de Líneas de Servicio",
+        "Nuevo Catálogo de Servicio",
+        "Estructura Corporativa de Servicios (1)",
+        "Asistente Ferova"
+      ],
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Finanzas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ventas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ayuda",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null,
+          "title": "Contraer navegación"
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "[✏️]",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback",
+          "title": "Reportar un problema o enviar una sugerencia"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado",
+          "title": "Ver recorrido guiado con el Copiloto"
+        },
+        {
+          "text": "Asistente",
+          "aria": null,
+          "title": "Abrir asistente IA"
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Notificaciones"
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null,
+          "title": "Configuración de la cuenta"
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión",
+          "title": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Trimestre",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Año",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Todo",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Clientes",
+          "aria": null,
+          "title": "Cuentas activas"
+        },
+        {
+          "text": "Servicios",
+          "aria": null,
+          "title": "Catálogo y costos"
+        },
+        {
+          "text": "Horas",
+          "aria": null,
+          "title": "Capacidad y rentabilidad"
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": "Plan y seguimiento por cliente"
+        },
+        {
+          "text": "Planner",
+          "aria": null,
+          "title": "Prioridades, agenda y bloques"
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy",
+          "title": "Ocultar por hoy"
+        },
+        {
+          "text": "Plantilla CSV",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Subir CSV",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Servicio",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Producto",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar Línea",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Editar servicio"
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Eliminar servicio"
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación",
+          "title": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente",
+          "title": "Colapsar"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso",
+          "title": "Minimizar (siempre puedes volver a abrirlo)"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje",
+          "title": ""
+        }
+      ],
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Desde",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Hasta",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "file",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Ej: SERV_SEO o DES_WEB",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Ej: Posicionamiento GEO & SEO",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": "Ej: 300000",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": "Ej: 40",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": "Ej: 950000",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "checkbox",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Pregúntame sobre tu negocio…",
+          "aria-label": null,
+          "id": ""
+        }
+      ]
+    },
+    "errors": [],
+    "network": []
+  },
+  {
+    "id": "desktop-horas",
+    "url": "https://one.ferova.com.co/app",
+    "content": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nProyectos\n/\nHoras\nClientes\nServicios\nHoras\nProyectos\nPlanner\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nControl de Horas de Trabajo\n\nBitácora de esfuerzo y valor del tiempo del consultor\n\nHORAS LOGS DEL PERIODO\n0 hs\nTotal acumulado registrado\nHORA COBRADA PROMEDIO\n$ 0\nTarifa facturada promediada\nVALOR HORA REAL\n$ 0\nMenor al valor rentable\nHORA MÍNIMA OBJETIVO\n$ 25.000\nSueldo deseado ÷ horas objetivo/mes\nCAPACIDAD Y UTILIZACIÓN DEL MES\n\nHoras registradas y horas pendientes del Planner con fecha o entrega en este período.\n\nCOMPROMETIDAS\n0 hs\nDISPONIBILIDAD\n160 hs\nUTILIZACIÓN\n0%\nCapacidad ociosa\nPARÁMETRO MENSUAL\nHORAS FACTURABLES OBJETIVO\nFijar\n\nUsado para calcular el costo de tu hora objetivo.\n\nUMBRAL DE \"PÉRDIDA\" (% DE LA HORA MÍNIMA)\nFijar\n\nUn cliente se marca \"PÉRDIDA\" cuando su hora cobrada cae debajo de este % de la hora mínima objetivo. Default 75%.\n\nREGISTRAR BITÁCORA\n⏱️ Control de Tiempos\nEsta sección es exclusiva para registrar las horas de trabajo. Si deseas facturar servicios o registrar abonos/adelantos de clientes, utiliza la pestaña 2. Ingresos (Ventas y Abonos).\nFECHA\nCLIENTE\nSelecciona cliente...\nflores aja\nSERVICIO\nSelecciona servicio...\nlogo\nTIEMPO DEDICADO\nHoras\nMinutos\n\nSe guardará como 1 h = 1 h (60 min).\n\nHITO / DESCRIPCIÓN\nLoguear Horas\nRENTABILIDAD RELATIVA POR CLIENTE\nCLIENTE\tHORAS LOGS\tPAUTADO (COP)\tHORA COBRADA\tESTATUS RENTABILIDAD\nSin registros\nPROMEDIO DE HORAS POR LÍNEA DE SERVICIO\nLÍNEA SERVICIO\tHORAS TOTALES DEDICATED\tUDS VENDIDAS\tHORAS / UNIDAD\tTARIFA HORA COBRADA\nSin registros\nLÍNEA DE TIEMPO DE BITÁCORA (ÚLTIMOS 30 REGISTROS)\nFECHA\tCLIENTE\tHORAS\tDESCRIPCIÓN DE ACTIVIDAD\tACCIONES\nAún no hay registros de horas en este periodo\nAsistente Ferova\n\nContexto: Proyectos\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        "Ferova One",
+        "Control de Horas de Trabajo",
+        "Capacidad y Utilización del Mes",
+        " Parámetro Mensual",
+        "Registrar Bitácora",
+        "Rentabilidad Relativa por Cliente",
+        "Promedio de Horas por Línea de Servicio",
+        "Línea de Tiempo de Bitácora (Últimos 30 Registros)",
+        "Asistente Ferova"
+      ],
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Finanzas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ventas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ayuda",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null,
+          "title": "Contraer navegación"
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "[✏️]",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback",
+          "title": "Reportar un problema o enviar una sugerencia"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado",
+          "title": "Ver recorrido guiado con el Copiloto"
+        },
+        {
+          "text": "Asistente",
+          "aria": null,
+          "title": "Abrir asistente IA"
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Notificaciones"
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null,
+          "title": "Configuración de la cuenta"
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión",
+          "title": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Trimestre",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Año",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Todo",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Clientes",
+          "aria": null,
+          "title": "Cuentas activas"
+        },
+        {
+          "text": "Servicios",
+          "aria": null,
+          "title": "Catálogo y costos"
+        },
+        {
+          "text": "Horas",
+          "aria": null,
+          "title": "Capacidad y rentabilidad"
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": "Plan y seguimiento por cliente"
+        },
+        {
+          "text": "Planner",
+          "aria": null,
+          "title": "Prioridades, agenda y bloques"
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy",
+          "title": "Ocultar por hoy"
+        },
+        {
+          "text": "Fijar",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Fijar",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Minutos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Loguear Horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación",
+          "title": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente",
+          "title": "Colapsar"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso",
+          "title": "Minimizar (siempre puedes volver a abrirlo)"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje",
+          "title": ""
+        }
+      ],
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Desde",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Hasta",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Ej: Maquetación de layouts con Tailwind",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Pregúntame sobre tu negocio…",
+          "aria-label": null,
+          "id": ""
+        }
+      ]
+    },
+    "errors": [],
+    "network": []
+  },
+  {
+    "id": "desktop-proyectos",
+    "url": "https://one.ferova.com.co/app",
+    "content": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nProyectos\n/\nProyectos\nClientes\nServicios\nHoras\nProyectos\nPlanner\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nProyectos y seguimiento de clientes\n\nGarantiza el cumplimiento de entrega, objetivos estratégicos, indicadores de rendimiento y branding de tus clientes.\n\nGuardar y Sincronizar\n\nREGISTRO DIARIO Y CUMPLIMIENTO\n\nRegistras el diario; el semanal, mensual y anual se recalculan solos.\n\nCUMPLIMIENTO MENSUAL\n\n0%\n\nEste proyecto aún no tiene KPIs. Créalos en la sección KPIs más abajo y aquí podrás registrarlos cada día.\n\nSEGUIMIENTO OPERATIVO\n\nIndicadores de flores aja\n\n0 KPIs configurados\n\nCrea el primer KPI abajo. No hay metas fijas ni códigos como “010”: cada medición parte de los indicadores de este proyecto.\n\nCLIENTE SELECCIONADO:\nSelecciona un cliente activo para revisar su estrategia\nSeleccionar cliente...\nflores aja (cli_697496)\nATRIBUTOS DE MARCA & PROYECTO\nCONCEPTO VISUAL & ENLACES DE INTERÉS\nDesign system, drives, lineamientos de diseño, contraseñas seguras o notas de identidad.\nRESPONSABLE (ACCOUNT MANAGER / LEAD)\nPROGRESO CONTRACTUAL\n0%\nArrastra para indicar el grado de avance en el periodo de prestación del servicio con el cliente:\n0% (Kick-off)\n50% (Entrega parcial)\n100% (Satisfecho)\nRegistra más abonos e hitos semanales para actualizar el progreso global del cliente.\nOBJETIVOS DEL CLIENTE (MARCA & SEO)\n0/0 Logrados\nNUEVO OBJETIVO ESTRATÉGICO\nPERIODICIDAD\nDiario\nSemanal\nMensual\nAnual\nFECHA META\nAgregar\nNo hay objetivos estratégicos agregados aún para este cliente.\nPRESTACIÓN DEL SERVICIO (ENTREGABLES Y HITOS CONTRACTUALES)\n0/0 Completados\nSUSCRIPCIÓN DE ENTREGABLE / HITO\nESTADO\nPendiente\nEn Progreso\nCumplido\nFECHA\nCrear\nNo hay hitos de prestación del servicio agregados aún para este cliente.\nINDICADORES CLAVE DE RENDIMIENTO (KPIS)\nNOMBRE DEL KPI\nMETA\nVALOR ACTUAL\nOBJETIVO RELACIONADO\nCrea primero un objetivo\nPERIODICIDAD\nDiario\nSemanal\nMensual\nAnual\nAgregar\nNo hay KPIs corporativos trackeados para este cliente.\nAsistente Ferova\n\nContexto: Proyectos\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        "Ferova One",
+        "Proyectos y seguimiento de clientes",
+        "Atributos de Marca & Proyecto",
+        "Progreso Contractual",
+        "Objetivos del Cliente (Marca & SEO)",
+        "Prestación del Servicio (Entregables y Hitos Contractuales)",
+        "Indicadores Clave de Rendimiento (KPIs)",
+        "Asistente Ferova"
+      ],
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Finanzas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ventas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ayuda",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null,
+          "title": "Contraer navegación"
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "[✏️]",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback",
+          "title": "Reportar un problema o enviar una sugerencia"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado",
+          "title": "Ver recorrido guiado con el Copiloto"
+        },
+        {
+          "text": "Asistente",
+          "aria": null,
+          "title": "Abrir asistente IA"
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Notificaciones"
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null,
+          "title": "Configuración de la cuenta"
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión",
+          "title": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Trimestre",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Año",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Todo",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Clientes",
+          "aria": null,
+          "title": "Cuentas activas"
+        },
+        {
+          "text": "Servicios",
+          "aria": null,
+          "title": "Catálogo y costos"
+        },
+        {
+          "text": "Horas",
+          "aria": null,
+          "title": "Capacidad y rentabilidad"
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": "Plan y seguimiento por cliente"
+        },
+        {
+          "text": "Planner",
+          "aria": null,
+          "title": "Prioridades, agenda y bloques"
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy",
+          "title": "Ocultar por hoy"
+        },
+        {
+          "text": "Guardar y Sincronizar",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Agregar",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Crear",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Agregar",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación",
+          "title": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente",
+          "title": "Colapsar"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso",
+          "title": "Minimizar (siempre puedes volver a abrirlo)"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje",
+          "title": ""
+        }
+      ],
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Desde",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Hasta",
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Ej. Colores primarios: #1A1A1A, #E4B55F. Tipografía: Syne. Drive de activos de marca: https://drive.google.com/...",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Ej. Carolina G. (SEO Strategist)",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "range",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Ej. Reposicionar palabras clave transaccionales",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Ej. Auditoría técnica SEO inicial",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Ej. Tráfico orgánico mensual",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Ej. 15,000 visitas",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Ej. 11,200 visitas",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Pregúntame sobre tu negocio…",
+          "aria-label": null,
+          "id": ""
+        }
+      ]
+    },
+    "errors": [],
+    "network": []
+  },
+  {
+    "id": "desktop-planner",
+    "url": "https://one.ferova.com.co/app",
+    "content": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nProyectos\n/\nPlanner\nClientes\nServicios\nHoras\nProyectos\nPlanner\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\n\nSMART PLANNER\n\nTu día, bajo control.\n\nVacía tu mente. El sistema clasifica, prioriza y arma bloques por energía.\n\nOrganizar agenda automáticamente\nDía\nLista\nKanban\nSemana\nCalendario\n\nRespuesta automatizada; puede usar inteligencia artificial cuando esté disponible. Verifica las cifras antes de decidir.\n\nAgenda de hoy\n\nTus tareas ya asignadas aparecen aquí en su hora; el detalle completo continúa más abajo.\n\n0 bloques\n\nAún no hay tareas con horario. Usa “Reorganizar mi día” para asignarlas.\n\nBrain dump\nEscribe o pega lo que tengas que hacer. La IA detecta cliente, fecha, duración y prioridad, y cada tarea queda también en tu base de Notion.\n⌘/Ctrl+Enter para interpretar.\nInterpretar\nTU AGENDA DEL JUEVES, 8 DE OCTUBRE\n0 bloques\n+ Bloque protegido\n\nEsto sí es horario: cada bloque tiene una hora fija. \"Reorganizar mi día\" puede moverlos, excepto los marcados \nProtegido.\n\nSin bloques aún. Presioná Reorganizar mi día para que el planificador arme el horario.\nPRIORIDADES · PARETO 80/20 · 0\nOrdenadas por impacto, no por orden de llegada: ataca primero las de arriba — son el 20% que mueve el 80% de la aguja.\n\nBandeja vacía.\n\nAsistente Ferova\n\nContexto: Proyectos\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        "Ferova One",
+        "Tu día, bajo control.",
+        "Agenda de hoy",
+        "Brain dump",
+        "Tu agenda del jueves, 8 de octubre",
+        "Prioridades · Pareto 80/20 · 0",
+        "Asistente Ferova"
+      ],
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Finanzas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ventas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ayuda",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null,
+          "title": "Contraer navegación"
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "[✏️]",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback",
+          "title": "Reportar un problema o enviar una sugerencia"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado",
+          "title": "Ver recorrido guiado con el Copiloto"
+        },
+        {
+          "text": "Asistente",
+          "aria": null,
+          "title": "Abrir asistente IA"
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Notificaciones"
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null,
+          "title": "Configuración de la cuenta"
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión",
+          "title": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Trimestre",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Año",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Todo",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Clientes",
+          "aria": null,
+          "title": "Cuentas activas"
+        },
+        {
+          "text": "Servicios",
+          "aria": null,
+          "title": "Catálogo y costos"
+        },
+        {
+          "text": "Horas",
+          "aria": null,
+          "title": "Capacidad y rentabilidad"
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": "Plan y seguimiento por cliente"
+        },
+        {
+          "text": "Planner",
+          "aria": null,
+          "title": "Prioridades, agenda y bloques"
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy",
+          "title": "Ocultar por hoy"
+        },
+        {
+          "text": "Organizar agenda automáticamente",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Día",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Lista",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Kanban",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Semana",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Calendario",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Interpretar",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "+ Bloque protegido",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación",
+          "title": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente",
+          "title": "Colapsar"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso",
+          "title": "Minimizar (siempre puedes volver a abrirlo)"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje",
+          "title": ""
+        }
+      ],
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Desde",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Hasta",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Una tarea por línea, o un párrafo. Ej.:\n- Llamar a Juan mañana\n- Pagar impuestos el viernes\n- Crear landing para producto X",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Pregúntame sobre tu negocio…",
+          "aria-label": null,
+          "id": ""
+        }
+      ]
+    },
+    "errors": [],
+    "network": []
+  },
+  {
+    "id": "desktop-reports",
+    "url": "https://one.ferova.com.co/app",
+    "content": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nFinanzas\n/\n🔒 Reportes CEO\n🔒 Reportes CEO\nFINANZAS\nFinanzas operativas\nIngresos\nPagos\nCostos\nEquilibrio\nPor servicio\nIVA\nAlertas\nSeguimiento\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nReportes CEO & Decisiones\n\nSíntesis ejecutiva del negocio y simulador de decisiones.\n\nReportes\nSimulador\nDocumento generado automáticamente a partir de los datos registrados; puede usar inteligencia artificial cuando esté disponible. Es una simulación, no una proyección certificada ni asesoría financiera.\nDiario\nSemanal\nMensual\nGenerar reporte semanal\nAsistente Ferova\n\nContexto: Finanzas\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        "Ferova One",
+        "Reportes CEO & Decisiones",
+        "Asistente Ferova"
+      ],
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Finanzas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ventas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ayuda",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null,
+          "title": "Contraer navegación"
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "[✏️]",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback",
+          "title": "Reportar un problema o enviar una sugerencia"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado",
+          "title": "Ver recorrido guiado con el Copiloto"
+        },
+        {
+          "text": "Asistente",
+          "aria": null,
+          "title": "Abrir asistente IA"
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Notificaciones"
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null,
+          "title": "Configuración de la cuenta"
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión",
+          "title": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Trimestre",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Año",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Todo",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "🔒 Reportes CEO",
+          "aria": null,
+          "title": "Disponible desde el plan Full"
+        },
+        {
+          "text": "Finanzas operativas",
+          "aria": null,
+          "title": "Cuentas, deudas, flujo"
+        },
+        {
+          "text": "Ingresos",
+          "aria": null,
+          "title": "Ventas y abonos"
+        },
+        {
+          "text": "Pagos",
+          "aria": null,
+          "title": "Egresos registrados"
+        },
+        {
+          "text": "Costos",
+          "aria": null,
+          "title": "Herramientas y gastos"
+        },
+        {
+          "text": "Equilibrio",
+          "aria": null,
+          "title": "Punto global"
+        },
+        {
+          "text": "Por servicio",
+          "aria": null,
+          "title": "Margen unitario"
+        },
+        {
+          "text": "IVA",
+          "aria": null,
+          "title": "Control tributario"
+        },
+        {
+          "text": "Alertas",
+          "aria": null,
+          "title": "Riesgos y topes"
+        },
+        {
+          "text": "Seguimiento",
+          "aria": null,
+          "title": "Metas de MRR, prospección y pasarelas"
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy",
+          "title": "Ocultar por hoy"
+        },
+        {
+          "text": "Reportes",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Simulador",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Diario",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Semanal",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Mensual",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Generar reporte semanal",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación",
+          "title": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente",
+          "title": "Colapsar"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso",
+          "title": "Minimizar (siempre puedes volver a abrirlo)"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje",
+          "title": ""
+        }
+      ],
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Desde",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Hasta",
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Pregúntame sobre tu negocio…",
+          "aria-label": null,
+          "id": ""
+        }
+      ]
+    },
+    "errors": [],
+    "network": []
+  },
+  {
+    "id": "desktop-finops",
+    "url": "https://one.ferova.com.co/app",
+    "content": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nFinanzas\n/\nFinanzas operativas\n🔒 Reportes CEO\nFINANZAS\nFinanzas operativas\nIngresos\nPagos\nCostos\nEquilibrio\nPor servicio\nIVA\nAlertas\nSeguimiento\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nFinanzas Operativas\n\nCuentas, deudas, por cobrar, por pagar, presupuesto y flujo de caja en un solo lugar.\n\nFlujo de caja\nEstado financiero\nCuentas\nMétodos de pago\nDeudas\nPor cobrar\nPor pagar\nPresupuesto\nPeriodo\n\nVista de solo lectura: resume lo que ya cargaste en Cuentas, Deudas, Por cobrar, Por pagar y Presupuesto. No se edita nada aquí — para cambiar un número, ve a la pestaña correspondiente.\n\nSALDO ACTUAL ESTIMADO\n\n$ 0\n\nCAJA DISPONIBLE\n\n$ 0\n\nCAJA PROYECTADA\n\n$ 0\n\nCOBROS ESPERADOS\n\n$ 0\n\nINGRESOS REALES (COBROS)\n\n$ 0\n\nCUENTAS POR COBRAR\n\n$ 0\n\nGASTOS REALES\n\n$ 0\n\nOBLIGACIONES PRÓXIMAS\n\n$ 0\n\nDEUDA TOTAL\n\n$ 0\n\nPresupuesto vs. gasto real\n-100.0%\nPresupuesto: $ 4.080.000 · Gasto real: $ 0\nAlertas\n•\nGastos están por debajo del presupuesto en 100.0%.\nAsistente Ferova\n\nContexto: Finanzas\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        "Ferova One",
+        "Finanzas Operativas",
+        "Presupuesto vs. gasto real",
+        " Alertas",
+        "Asistente Ferova"
+      ],
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Finanzas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ventas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ayuda",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null,
+          "title": "Contraer navegación"
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "[✏️]",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback",
+          "title": "Reportar un problema o enviar una sugerencia"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado",
+          "title": "Ver recorrido guiado con el Copiloto"
+        },
+        {
+          "text": "Asistente",
+          "aria": null,
+          "title": "Abrir asistente IA"
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Notificaciones"
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null,
+          "title": "Configuración de la cuenta"
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión",
+          "title": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Trimestre",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Año",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Todo",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "🔒 Reportes CEO",
+          "aria": null,
+          "title": "Disponible desde el plan Full"
+        },
+        {
+          "text": "Finanzas operativas",
+          "aria": null,
+          "title": "Cuentas, deudas, flujo"
+        },
+        {
+          "text": "Ingresos",
+          "aria": null,
+          "title": "Ventas y abonos"
+        },
+        {
+          "text": "Pagos",
+          "aria": null,
+          "title": "Egresos registrados"
+        },
+        {
+          "text": "Costos",
+          "aria": null,
+          "title": "Herramientas y gastos"
+        },
+        {
+          "text": "Equilibrio",
+          "aria": null,
+          "title": "Punto global"
+        },
+        {
+          "text": "Por servicio",
+          "aria": null,
+          "title": "Margen unitario"
+        },
+        {
+          "text": "IVA",
+          "aria": null,
+          "title": "Control tributario"
+        },
+        {
+          "text": "Alertas",
+          "aria": null,
+          "title": "Riesgos y topes"
+        },
+        {
+          "text": "Seguimiento",
+          "aria": null,
+          "title": "Metas de MRR, prospección y pasarelas"
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy",
+          "title": "Ocultar por hoy"
+        },
+        {
+          "text": "Flujo de caja",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Estado financiero",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Cuentas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Métodos de pago",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Deudas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Por cobrar",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Por pagar",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Presupuesto",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación",
+          "title": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente",
+          "title": "Colapsar"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso",
+          "title": "Minimizar (siempre puedes volver a abrirlo)"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje",
+          "title": ""
+        }
+      ],
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Desde",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Hasta",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "month",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Pregúntame sobre tu negocio…",
+          "aria-label": null,
+          "id": ""
+        }
+      ]
+    },
+    "errors": [],
+    "network": []
+  },
+  {
+    "id": "desktop-ventas",
+    "url": "https://one.ferova.com.co/app",
+    "content": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nFinanzas\n/\nIngresos\n🔒 Reportes CEO\nFINANZAS\nFinanzas operativas\nIngresos\nPagos\nCostos\nEquilibrio\nPor servicio\nIVA\nAlertas\nSeguimiento\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nRegistro de Ingresos (Ventas y Abonos)\n\nLibro de cobranza, cobros anticipados, abonos y saldos de clientes de Ferova Agency\n\nImportar cobros CSV\nExportar CSV\nNUEVA TRANSACCIÓN\nFECHA DE VENTA\nCLIENTE\nSelecciona cliente...\nflores aja (Nacional)\nSERVICIO\nSelecciona servicio…\nlogo\nCANTIDAD\nP. UNITARIO (COP)\nMÁS ÍTEMS EN ESTA FACTURA\n+ Añadir ítem\n\nDeja esto vacío para una venta de una sola línea, como siempre.\n\nCOSTO UNIT. (COP)\nMONEDA\n\nCOSTOS REALES DE RECAUDO\n\n¿Esta venta tuvo comisión de pasarela? Elegí cuál y se cargan sus tarifas; podés ajustarlas si este cliente tiene una distinta. Los cargos fijos y de retiro están en COP; no se mezclan monedas.\n\nPASARELA O MEDIO\nSin comisión de pasarela\nOtra (cargar a mano)\nDefiní tus pasarelas en Projects → Seguimiento para elegirlas acá.\nCOMISIÓN %\nFIJO (COP)\nRETIRO (COP)\n\nDESCUENTOS PASARELA\n\n−$ 0\n\nNETO REAL TRAS PASARELA\n\n$ 0\n\nABONADO / PAGADO (COP)\n$ 0\nIntroduce un adelanto si el cliente ya pagó una parte. Luego podrás gestionar abonos con fechas específicas al editar.\nIVA GENERADO\nRETENCIÓN EN LA FUENTE\nNOTAS DE TRANSACCIÓN\nCÓMPUTO EN TIEMPO REAL\nTotal Pactado: $ 0\nRetención (0%): -$ 0\nNeto fiscal antes de pasarela: $ 0\nRegistrar Venta\nHISTORIAL DE OPERACIONES\nFECHA\tCLIENTE\tSERVICIO\tTOTAL TARIFA\tRETE\tNETO ENTRA\tADELANTO\tACCIÓN\nNo se encontraron registros de ventas en la base de datos de Sheets.\nAsistente Ferova\n\nContexto: Finanzas\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        "Ferova One",
+        "Registro de Ingresos (Ventas y Abonos)",
+        "Nueva Transacción",
+        "Historial de Operaciones",
+        "Asistente Ferova"
+      ],
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Finanzas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ventas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ayuda",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null,
+          "title": "Contraer navegación"
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "[✏️]",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback",
+          "title": "Reportar un problema o enviar una sugerencia"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado",
+          "title": "Ver recorrido guiado con el Copiloto"
+        },
+        {
+          "text": "Asistente",
+          "aria": null,
+          "title": "Abrir asistente IA"
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Notificaciones"
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null,
+          "title": "Configuración de la cuenta"
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión",
+          "title": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Trimestre",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Año",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Todo",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "🔒 Reportes CEO",
+          "aria": null,
+          "title": "Disponible desde el plan Full"
+        },
+        {
+          "text": "Finanzas operativas",
+          "aria": null,
+          "title": "Cuentas, deudas, flujo"
+        },
+        {
+          "text": "Ingresos",
+          "aria": null,
+          "title": "Ventas y abonos"
+        },
+        {
+          "text": "Pagos",
+          "aria": null,
+          "title": "Egresos registrados"
+        },
+        {
+          "text": "Costos",
+          "aria": null,
+          "title": "Herramientas y gastos"
+        },
+        {
+          "text": "Equilibrio",
+          "aria": null,
+          "title": "Punto global"
+        },
+        {
+          "text": "Por servicio",
+          "aria": null,
+          "title": "Margen unitario"
+        },
+        {
+          "text": "IVA",
+          "aria": null,
+          "title": "Control tributario"
+        },
+        {
+          "text": "Alertas",
+          "aria": null,
+          "title": "Riesgos y topes"
+        },
+        {
+          "text": "Seguimiento",
+          "aria": null,
+          "title": "Metas de MRR, prospección y pasarelas"
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy",
+          "title": "Ocultar por hoy"
+        },
+        {
+          "text": "Exportar CSV",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "+ Añadir ítem",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar Venta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación",
+          "title": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente",
+          "title": "Colapsar"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso",
+          "title": "Minimizar (siempre puedes volver a abrirlo)"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje",
+          "title": ""
+        }
+      ],
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Desde",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Hasta",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "file",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": "Monto pagado / anticipo...",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": "0",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": "0",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Ej: Cobro de kick-off inicial",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Buscar por cliente o servicio...",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Pregúntame sobre tu negocio…",
+          "aria-label": null,
+          "id": ""
+        }
+      ]
+    },
+    "errors": [],
+    "network": []
+  },
+  {
+    "id": "desktop-pagosEgresos",
+    "url": "https://one.ferova.com.co/app",
+    "content": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nFinanzas\n/\nPagos\n🔒 Reportes CEO\nFINANZAS\nFinanzas operativas\nIngresos\nPagos\nCostos\nEquilibrio\nPor servicio\nIVA\nAlertas\nSeguimiento\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nRegistro de Prácticas de Egreso (Pagos Efectuados)\n\nLleva el control cronológico de los desembolsos reales de heramientas (SaaS), nómina/salarios de socios, pagos a contratistas externos y costos administrativos.\n\nEGRESOS EN PESOS (COP)\n$ 0\nreales\nSuma de pagos efectuados en COP.\nEGRESOS EN DÓLARES (USD)\n$0\nmoneda extranjera\nSuma de pagos de herramientas (SaaS) y proveedores.\nEGRESO CONSOLIDADO (COP)\nTRM: $ 4.000\n$ 0\ntotal\nEgreso global unificado a tasa TRM del mes.\nREGISTRAR DESEMBOLSO\nCONCEPTO / DETALLE DEL PAGO\nFECHA DE PAGO\nTIPO / CATEGORÍA\nSaaS / Herramientas\nSalarios / Socios\nContratistas Externos\nCostos Oficina\nGastos Varios / Otros\nMONTO PAGADO\nDIVISA\nCOP\nUSD\nMÉTODO DE PAGO / ORIGEN\nIVA PAGADO (DESCONTABLE)\nRETENCIÓN PRACTICADA\nNOTAS / COMPROBANTE (OPCIONAL)\nCOMPROBANTE DE PAGO (OPCIONAL)\nAdjuntar comprobante\nRegistrar Pago de Egreso\nCategoría (Todas)\nSaaS / Herramientas\nSalarios / Socios\nContratistas Externos\nCostos Oficina\nGastos Varios / Otros\nDivisa (Todas)\nCOP ($)\nUSD (US$)\nRegistro Cronológico de Salidas\n0 registros\nNo se encontraron registros de egresos con los parámetros de búsqueda indicados.\nAsistente Ferova\n\nContexto: Finanzas\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        "Ferova One",
+        " Registro de Prácticas de Egreso (Pagos Efectuados)",
+        "Asistente Ferova"
+      ],
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Finanzas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ventas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ayuda",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null,
+          "title": "Contraer navegación"
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "[✏️]",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback",
+          "title": "Reportar un problema o enviar una sugerencia"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado",
+          "title": "Ver recorrido guiado con el Copiloto"
+        },
+        {
+          "text": "Asistente",
+          "aria": null,
+          "title": "Abrir asistente IA"
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Notificaciones"
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null,
+          "title": "Configuración de la cuenta"
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión",
+          "title": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Trimestre",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Año",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Todo",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "🔒 Reportes CEO",
+          "aria": null,
+          "title": "Disponible desde el plan Full"
+        },
+        {
+          "text": "Finanzas operativas",
+          "aria": null,
+          "title": "Cuentas, deudas, flujo"
+        },
+        {
+          "text": "Ingresos",
+          "aria": null,
+          "title": "Ventas y abonos"
+        },
+        {
+          "text": "Pagos",
+          "aria": null,
+          "title": "Egresos registrados"
+        },
+        {
+          "text": "Costos",
+          "aria": null,
+          "title": "Herramientas y gastos"
+        },
+        {
+          "text": "Equilibrio",
+          "aria": null,
+          "title": "Punto global"
+        },
+        {
+          "text": "Por servicio",
+          "aria": null,
+          "title": "Margen unitario"
+        },
+        {
+          "text": "IVA",
+          "aria": null,
+          "title": "Control tributario"
+        },
+        {
+          "text": "Alertas",
+          "aria": null,
+          "title": "Riesgos y topes"
+        },
+        {
+          "text": "Seguimiento",
+          "aria": null,
+          "title": "Metas de MRR, prospección y pasarelas"
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy",
+          "title": "Ocultar por hoy"
+        },
+        {
+          "text": "COP",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "USD",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Adjuntar comprobante",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar Pago de Egreso",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación",
+          "title": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente",
+          "title": "Colapsar"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso",
+          "title": "Minimizar (siempre puedes volver a abrirlo)"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje",
+          "title": ""
+        }
+      ],
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Desde",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Hasta",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Ej. Liquidación Juan C. (SEO Copywriter)",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": "0.00",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Ej. Transferencia Bancolombia, Tarjeta de Crédito, Efectivo, Pyg",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": "0",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": "0",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Nro. Factura, cuenta de cobro, link a comprobante drive...",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "file",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Buscar pagos por concepto...",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Pregúntame sobre tu negocio…",
+          "aria-label": null,
+          "id": ""
+        }
+      ]
+    },
+    "errors": [],
+    "network": []
+  },
+  {
+    "id": "desktop-gastos",
+    "url": "https://one.ferova.com.co/app",
+    "content": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nFinanzas\n/\nCostos\n🔒 Reportes CEO\nFINANZAS\nFinanzas operativas\nIngresos\nPagos\nCostos\nEquilibrio\nPor servicio\nIVA\nAlertas\nSeguimiento\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nGestión de Costos y Gastos Fijos\n\nNómina personal, herramientas SaaS indexadas y fijos de operación\n\nMI SALARIO BASE\n$ 4.000.000\nCarga mensual de nómina\nCARGA HERRAMIENTAS SAAS\n$ 0\nHerramientas globales y prorrateadas\nOTROS GASTOS GENERALES\n$ 80.000\nOverhead de oficina o administrativos\nTOTAL COSTOS FIJOS\n$ 4.080.000\nGasto estructural mensual de Ferova\nMI SALARIO Y LIQUIDACIÓN DE PRESTACIONES\n\nDefine tu sueldo básico deseado en pesos colombianos. El sistema calculará el Ingreso Base de Cotización (IBC) reglamentario y las cotizaciones obligatorias de Ley 2026.\n\nCOP\nFijar Sueldo\nIngreso Base de Cotización (IBC 40%):\n$ 1.750.905\nSalud mensual aportes (12.5%):\n$ 218.863\nPensión pensión contribución (16%):\n$ 280.145\nLiquidación Prestaciones Totales:\n$ 499.008\nSalario Neto Retirable (Libre de prestaciones): $ 3.500.992\nDIFERENCIA DE CONCEPTO SALARIAL:\n\nEste sueldo fijado arriba es de carácter propuesto / proyectado (usado para diseñar las cotizaciones de precios, punto de equilibrio y alertar topes tributarios).\n\nEl salario real que te transfieres mes a mes se registra como un desembolso definitivo (Egreso) con la categoría de \"Salarios\" dentro de la pestaña de Pagos & Egresos.\n\nCONFIGURAR HERRAMIENTAS Y SUSCRIPCIONES SAAS\nNOMBRE SAAS\nMONTO DE LICENCIA\nMONEDA\nCOP ($)\nUSD ($.)\nTIPO DE COBRO\nGlobal (Tarifa única)\nPor Cliente (monto x clientes activos)\nPRORRATEAR ENTRE LÍNEAS DE SERVICIO\nlogo\n\nEl costo total del SaaS se dividirá equitativamente entre los servicios seleccionados.\n\nRegistrar Herramientas SaaS\nINVENTARIO GENERAL DE HERRAMIENTAS SAAS (0)\nNOMBRE TOOL\tMONTO BASE\tTIPO COBRO\tSERVICIOS VINCULADOS\tCOSTO PRORRATEADO / SERVICIO\tCOSTO ESTRUCTURAL MENSUAL\tACCIÓN\nSin herramientas registradas.\nOTROS GASTOS OPERACIONALES (FIJOS)\nCONCEPTO O DESTINO\nMONTO / VALOR\nMONEDA\nCOP ($)\nUSD ($/USD)\nCATEGORÍA GASTO\nGasto Operativo\nGasto Administrativo\nVarios\nFACTURA PAGADA (OPCIONAL)\nAdjuntar factura\nRegistrar Gasto estructural\nCONCEPTO\tCATEGORÍA\tMONTO BASE\tCOP EQUIVALENTE\t\nadobe\tOperativo\t$ 80.000\t$ 80.000\t\nDISTRIBUIDO PRORRATEADO POR LÍNEA DE SERVICIO\n\nConsolidación del costo de suscripciones asignadas de forma equitativa por unidad o por contrato a cada línea de producto o servicio en Ferova:\n\nLÍNEA DE SERVICIO\tSOBRECARGA MENSUAL HERRAMIENTAS\nlogo\t$ 0\nAsistente Ferova\n\nContexto: Finanzas\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        "Ferova One",
+        "Gestión de Costos y Gastos Fijos",
+        " Mi Salario y Liquidación de Prestaciones",
+        "Configurar Herramientas y Suscripciones SaaS",
+        "Inventario General de Herramientas SaaS (0)",
+        "Otros Gastos Operacionales (Fijos)",
+        " Distribuido Prorrateado por Línea de Servicio",
+        "Asistente Ferova"
+      ],
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Finanzas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ventas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ayuda",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null,
+          "title": "Contraer navegación"
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "[✏️]",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback",
+          "title": "Reportar un problema o enviar una sugerencia"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado",
+          "title": "Ver recorrido guiado con el Copiloto"
+        },
+        {
+          "text": "Asistente",
+          "aria": null,
+          "title": "Abrir asistente IA"
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Notificaciones"
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null,
+          "title": "Configuración de la cuenta"
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión",
+          "title": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Trimestre",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Año",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Todo",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "🔒 Reportes CEO",
+          "aria": null,
+          "title": "Disponible desde el plan Full"
+        },
+        {
+          "text": "Finanzas operativas",
+          "aria": null,
+          "title": "Cuentas, deudas, flujo"
+        },
+        {
+          "text": "Ingresos",
+          "aria": null,
+          "title": "Ventas y abonos"
+        },
+        {
+          "text": "Pagos",
+          "aria": null,
+          "title": "Egresos registrados"
+        },
+        {
+          "text": "Costos",
+          "aria": null,
+          "title": "Herramientas y gastos"
+        },
+        {
+          "text": "Equilibrio",
+          "aria": null,
+          "title": "Punto global"
+        },
+        {
+          "text": "Por servicio",
+          "aria": null,
+          "title": "Margen unitario"
+        },
+        {
+          "text": "IVA",
+          "aria": null,
+          "title": "Control tributario"
+        },
+        {
+          "text": "Alertas",
+          "aria": null,
+          "title": "Riesgos y topes"
+        },
+        {
+          "text": "Seguimiento",
+          "aria": null,
+          "title": "Metas de MRR, prospección y pasarelas"
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy",
+          "title": "Ocultar por hoy"
+        },
+        {
+          "text": "Fijar Sueldo",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar Herramientas SaaS",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Adjuntar factura",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar Gasto estructural",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Editar gasto"
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Eliminar gasto"
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación",
+          "title": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente",
+          "title": "Colapsar"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso",
+          "title": "Minimizar (siempre puedes volver a abrirlo)"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje",
+          "title": ""
+        }
+      ],
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Desde",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Hasta",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Ej: Google Workspace o Vercel",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": "20",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "checkbox",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Ej: Hosting general o publicidad",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": "50000",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "file",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Pregúntame sobre tu negocio…",
+          "aria-label": null,
+          "id": ""
+        }
+      ]
+    },
+    "errors": [],
+    "network": []
+  },
+  {
+    "id": "desktop-equilibrioGlobal",
+    "url": "https://one.ferova.com.co/app",
+    "content": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nFinanzas\n/\nEquilibrio\n🔒 Reportes CEO\nFINANZAS\nFinanzas operativas\nIngresos\nPagos\nCostos\nEquilibrio\nPor servicio\nIVA\nAlertas\nSeguimiento\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nEstudio del Punto de Equilibrio Global\n\n¿Cuánto necesita vender Ferova S.A.S para operar de forma segura?\n\nGASTOS ESTRUCTURALES\n$ 4.080.000\nGastos operativos + Salario Mafe\nMARGEN CONTRIBUCIÓN PROM.\n0.0%\nIngresos promedio menos variables\nPUNTO DE EQUILIBRIO\n$ 0\nVentas netas mínimas requeridas\nDIAGNÓSTICO FINANCIERO\nZONA GANANCIA\n$ 0 sobre mínimo\nESTADO DE CUMPLIMIENTO DE OPERACIONES\nVolumen de Ventas de este Periodo: $ 0\nMeta de Equilibrio General: $ 0\n\nNivel de auto-cobertura estructural: 0%\n\n¿POR QUÉ ES IMPORTANTE ESTE PUNTO?\n\nComo empresaria digital uniplersonal de Ferova Agency, no toda la facturación es ganancia pura.\n\nEl punto de equilibrio global suma tanto los costos directos de tus servicios (desarrollo web, analíticas) como tu salario mensual fijado con sus prestaciones liquidadas. Vender por debajo de este monto significa que estás absorbiendo pérdidas en tu patrimonio propio o sub-cotizando tu mano de obra.\n\nPLANES DE CONTINGENCIA ESTRICTA\n\nSi notas que tus ventas están recurrentemente por debajo de la meta de equilibrio del mes, evalúa:\n\nReducir el número de licencias SaaS globales redundantes.\nRe-negociar fijos o reevaluar la asignación de horas en proyectos de bajo margen.\nAjustar tu tarifa mínima por hora objetivo subiendo el valor base en tus cuentas de cobro recurrentes.\nAsistente Ferova\n\nContexto: Finanzas\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        "Ferova One",
+        "Estudio del Punto de Equilibrio Global",
+        "Asistente Ferova"
+      ],
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Finanzas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ventas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ayuda",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null,
+          "title": "Contraer navegación"
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "[✏️]",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback",
+          "title": "Reportar un problema o enviar una sugerencia"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado",
+          "title": "Ver recorrido guiado con el Copiloto"
+        },
+        {
+          "text": "Asistente",
+          "aria": null,
+          "title": "Abrir asistente IA"
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Notificaciones"
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null,
+          "title": "Configuración de la cuenta"
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión",
+          "title": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Trimestre",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Año",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Todo",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "🔒 Reportes CEO",
+          "aria": null,
+          "title": "Disponible desde el plan Full"
+        },
+        {
+          "text": "Finanzas operativas",
+          "aria": null,
+          "title": "Cuentas, deudas, flujo"
+        },
+        {
+          "text": "Ingresos",
+          "aria": null,
+          "title": "Ventas y abonos"
+        },
+        {
+          "text": "Pagos",
+          "aria": null,
+          "title": "Egresos registrados"
+        },
+        {
+          "text": "Costos",
+          "aria": null,
+          "title": "Herramientas y gastos"
+        },
+        {
+          "text": "Equilibrio",
+          "aria": null,
+          "title": "Punto global"
+        },
+        {
+          "text": "Por servicio",
+          "aria": null,
+          "title": "Margen unitario"
+        },
+        {
+          "text": "IVA",
+          "aria": null,
+          "title": "Control tributario"
+        },
+        {
+          "text": "Alertas",
+          "aria": null,
+          "title": "Riesgos y topes"
+        },
+        {
+          "text": "Seguimiento",
+          "aria": null,
+          "title": "Metas de MRR, prospección y pasarelas"
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy",
+          "title": "Ocultar por hoy"
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación",
+          "title": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente",
+          "title": "Colapsar"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso",
+          "title": "Minimizar (siempre puedes volver a abrirlo)"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje",
+          "title": ""
+        }
+      ],
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Desde",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Hasta",
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Pregúntame sobre tu negocio…",
+          "aria-label": null,
+          "id": ""
+        }
+      ]
+    },
+    "errors": [],
+    "network": []
+  },
+  {
+    "id": "desktop-equilibrioServicio",
+    "url": "https://one.ferova.com.co/app",
+    "content": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nFinanzas\n/\nPor servicio\n🔒 Reportes CEO\nFINANZAS\nFinanzas operativas\nIngresos\nPagos\nCostos\nEquilibrio\nPor servicio\nIVA\nAlertas\nSeguimiento\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nEquilibrio por Línea de Servicio\n\nAnálisis de autosuficiencia y metas de venta física unitarias\n\nlogo\nANÁLISIS\nUNIDADES EQUILIBRIO\n400 uds/mes\nUNIDADES VENDIDAS\n0 uds\nAvance de Equilibrio por Contrato:\n0%\nMATRIZ DE ESTRUCTURA DE COSTOS DEL SERVICIO (MENSUAL)\nCosto Directo Unitario (Entrega / Infra):\n$ 10.000\nHerramientas SaaS Asignadas:\n$ 0\nGastos y Nómina Prorrateada:\n$ 4.000.000\nTotal Carga Estructural:\n$ 4.000.000\nPRECIO IDEAL RECOMENDADO\nPrecio ideal (margen 30%):\n$ 28.571\n(10000 costo entrega + 10000 overhead) ÷ (1 − 30%)\nvs precio habitual ($ 20.000):\n↑ subir $ 8.571\nSin margen objetivo configurado — se usa 30 % por defecto (margen mínimo de tu configuración).\nPrecio de venta de referencia:\n$ 20.000\nAsistente Ferova\n\nContexto: Finanzas\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        "Ferova One",
+        "Equilibrio por Línea de Servicio",
+        "logo",
+        "Asistente Ferova"
+      ],
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Finanzas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ventas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ayuda",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null,
+          "title": "Contraer navegación"
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "[✏️]",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback",
+          "title": "Reportar un problema o enviar una sugerencia"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado",
+          "title": "Ver recorrido guiado con el Copiloto"
+        },
+        {
+          "text": "Asistente",
+          "aria": null,
+          "title": "Abrir asistente IA"
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Notificaciones"
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null,
+          "title": "Configuración de la cuenta"
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión",
+          "title": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Trimestre",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Año",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Todo",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "🔒 Reportes CEO",
+          "aria": null,
+          "title": "Disponible desde el plan Full"
+        },
+        {
+          "text": "Finanzas operativas",
+          "aria": null,
+          "title": "Cuentas, deudas, flujo"
+        },
+        {
+          "text": "Ingresos",
+          "aria": null,
+          "title": "Ventas y abonos"
+        },
+        {
+          "text": "Pagos",
+          "aria": null,
+          "title": "Egresos registrados"
+        },
+        {
+          "text": "Costos",
+          "aria": null,
+          "title": "Herramientas y gastos"
+        },
+        {
+          "text": "Equilibrio",
+          "aria": null,
+          "title": "Punto global"
+        },
+        {
+          "text": "Por servicio",
+          "aria": null,
+          "title": "Margen unitario"
+        },
+        {
+          "text": "IVA",
+          "aria": null,
+          "title": "Control tributario"
+        },
+        {
+          "text": "Alertas",
+          "aria": null,
+          "title": "Riesgos y topes"
+        },
+        {
+          "text": "Seguimiento",
+          "aria": null,
+          "title": "Metas de MRR, prospección y pasarelas"
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy",
+          "title": "Ocultar por hoy"
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación",
+          "title": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente",
+          "title": "Colapsar"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso",
+          "title": "Minimizar (siempre puedes volver a abrirlo)"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje",
+          "title": ""
+        }
+      ],
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Desde",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Hasta",
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Pregúntame sobre tu negocio…",
+          "aria-label": null,
+          "id": ""
+        }
+      ]
+    },
+    "errors": [],
+    "network": []
+  },
+  {
+    "id": "desktop-iva",
+    "url": "https://one.ferova.com.co/app",
+    "content": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nFinanzas\n/\nIVA\n🔒 Reportes CEO\nFINANZAS\nFinanzas operativas\nIngresos\nPagos\nCostos\nEquilibrio\nPor servicio\nIVA\nAlertas\nSeguimiento\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nControl de IVA y Obligaciones DIAN\n\nEvaluación de responsabilidad tributaria bajo el Estatuto Colombiano 2026\n\nCHEQUEO DEL ART. 437 DEL ESTATUTO TRIBUTARIO\nLÍMITE: 3.500 UVT ($ 183.309.000)\n\nPara permanecer en el **Régimen Simplificado (No responsable de IVA)** en Colombia, Mafe debe cumplir con TODOS los siguientes requisitos simultáneos. Si alguno falla, pasas a Régimen Común.\n\n1. Ventas anuales por debajo de 3.500 UVT\nTus ventas anualizadas estimadas son de $ 0. Límite: $ 183.309.000.\n2. Establecimientos de comercio\nNo poseer más de un establecimiento de comercio, oficina o local físico comercial.\n3. Actividades operadas bajo Franquicia\nQue en el local no se desarrollen actividades bajo franquicia, regalía ni concesión marcaria.\n4. Calidad de Usuario Aduanero\nNo ser calificado como usuario aduanero (los exportadores de servicios exentos Art. 481 están autorizados).\n5. Contratos individuales menores a 3.500 UVT\nNo haber celebrado contratos de venta individuales mayor o igual a $ 183.309.000 en este ejercicio fiscal.\n6. Consignaciones bancarias anuales\nConsignaciones, depósitos o inversiones financieras totales en el año deben ser menores a 3.500 UVT.\nCumples con todo el estatuto simplificado. No eres responsable de IVA.\nSIMULADOR DEL CRUCE DE IVA BIMESTRAL\n\nEn el régimen común, debes realizar una declaración bimestral restando el IVA que pagas en tus compras de servicios o insumos (IVA Descontable) del IVA que le cobraste a tus clientes nacionales (IVA Generado).\n\nIVA GENERADO (TUS VENTAS)\n\nCalculado de tus ventas nacionales con IVA: $ 0\n\nIVA DESCONTABLE (TUS COMPRAS)\n\nCalculado del IVA indicado en tus pagos/egresos: $ 0\n\nRESULTADO MATEMÁTICO FISCAL\nSaldo Bruto Netiado:\n$ 0\nIngresa montos simulados de IVA para evaluar el cruce.\nAsistente Ferova\n\nContexto: Finanzas\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        "Ferova One",
+        "Control de IVA y Obligaciones DIAN",
+        "Chequeo del Art. 437 del Estatuto Tributario",
+        "Simulador del Cruce de IVA Bimestral",
+        "Asistente Ferova"
+      ],
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Finanzas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ventas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ayuda",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null,
+          "title": "Contraer navegación"
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "[✏️]",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback",
+          "title": "Reportar un problema o enviar una sugerencia"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado",
+          "title": "Ver recorrido guiado con el Copiloto"
+        },
+        {
+          "text": "Asistente",
+          "aria": null,
+          "title": "Abrir asistente IA"
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Notificaciones"
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null,
+          "title": "Configuración de la cuenta"
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión",
+          "title": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Trimestre",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Año",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Todo",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "🔒 Reportes CEO",
+          "aria": null,
+          "title": "Disponible desde el plan Full"
+        },
+        {
+          "text": "Finanzas operativas",
+          "aria": null,
+          "title": "Cuentas, deudas, flujo"
+        },
+        {
+          "text": "Ingresos",
+          "aria": null,
+          "title": "Ventas y abonos"
+        },
+        {
+          "text": "Pagos",
+          "aria": null,
+          "title": "Egresos registrados"
+        },
+        {
+          "text": "Costos",
+          "aria": null,
+          "title": "Herramientas y gastos"
+        },
+        {
+          "text": "Equilibrio",
+          "aria": null,
+          "title": "Punto global"
+        },
+        {
+          "text": "Por servicio",
+          "aria": null,
+          "title": "Margen unitario"
+        },
+        {
+          "text": "IVA",
+          "aria": null,
+          "title": "Control tributario"
+        },
+        {
+          "text": "Alertas",
+          "aria": null,
+          "title": "Riesgos y topes"
+        },
+        {
+          "text": "Seguimiento",
+          "aria": null,
+          "title": "Metas de MRR, prospección y pasarelas"
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy",
+          "title": "Ocultar por hoy"
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación",
+          "title": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente",
+          "title": "Colapsar"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso",
+          "title": "Minimizar (siempre puedes volver a abrirlo)"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje",
+          "title": ""
+        }
+      ],
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Desde",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Hasta",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "checkbox",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "checkbox",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "checkbox",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "checkbox",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "checkbox",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "checkbox",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": "300000",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": "100000",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Pregúntame sobre tu negocio…",
+          "aria-label": null,
+          "id": ""
+        }
+      ]
+    },
+    "errors": [],
+    "network": []
+  },
+  {
+    "id": "desktop-alertas",
+    "url": "https://one.ferova.com.co/app",
+    "content": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nFinanzas\n/\nAlertas\n🔒 Reportes CEO\nFINANZAS\nFinanzas operativas\nIngresos\nPagos\nCostos\nEquilibrio\nPor servicio\nIVA\nAlertas\nSeguimiento\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nSemáforo Ampliado de Alertas Tributarias\n\nSimulación preventiva anualizada para evitar requerimientos o multas con la DIAN\n\nMetodología de Proyección Anual\n\nLas alertas toman tu promedio de facturación real acumulado mensual ($ 0/mes) multiplicándolo por 12 meses. Esto permite anticipar con meses de anticipación qué topes romperás a fin de año bajo tu volumen actual de operación.\n\nTOPE 1 · DIAN 1.400 UVT\nObligación de Declarar Renta como Persona Natural\nNIVEL SEGURO\n\nOperas holgadamente por debajo de las obligaciones DIAN para este tope. Continúa parametrizando en calma.\n\nPROYECTADO ANUAL\n$ 0\nTope: $ 73.323.600\nTOPE 2 · DIAN 3.500 UVT\nResponsabilidad de IVA (Art. 437 - Régimen Común)\nNIVEL SEGURO\n\nOperas holgadamente por debajo de las obligaciones DIAN para este tope. Continúa parametrizando en calma.\n\nCOBRADO ANUAL EST.\n$ 0\nTope: $ 183.309.000\nTOPE 3 · DIAN 1.090 UVT RETA\nTarifa a Pagar de Renta (Banda Exenta vs Gravable)\nNIVEL SEGURO\n\nOperas holgadamente por debajo de las obligaciones DIAN para este tope. Continúa parametrizando en calma.\n\nUTILIDAD ANUAL EST.\n-$ 48.960.000\nExento: $ 57.087.660\nResumen Ejecutivo de Riesgos\n\nComo Persona Natural Comerciante en Colombia, el mayor riesgo fiscal proviene del artículo 364 del estatuto tributario que contempla sanciones por omisión de activos o ingresos.\n\nSi superas las 1.400 UVT anuales en ingresos o consignaciones bancarias, estarás obligada a presentar la Declaración de Renta Cedular al año siguiente. Tu impuesto de renta se calcula de forma progresiva según las tarifas de la tabla de retenciones de personas naturales una vez deducidas las depuraciones.\n\nRecomendaciones Prácticas DIAN\nCuentas separadas: Nunca mezcles consignaciones familiares o de terceros en tu cuenta corporativa. DIAN evalúa consignaciones totales brutas sin discriminar su origen.\nLímite de IVA: Si estás por acercarte al tope de 3.500 UVT, planifica con tu contador la conveniencia de constituir una S.A.S para separar tu patrimonio personal y facturar con IVA corporativo.\nRecaudo a favor: Guarda todas tus cuentas de cobro emitidas junto a los comprobantes de retención en la fuente practicados para restarlos como abonos en tu declaración anual.\nAsistente Ferova\n\nContexto: Finanzas\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        "Ferova One",
+        "Semáforo Ampliado de Alertas Tributarias",
+        "Asistente Ferova"
+      ],
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Finanzas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ventas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ayuda",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null,
+          "title": "Contraer navegación"
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "[✏️]",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback",
+          "title": "Reportar un problema o enviar una sugerencia"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado",
+          "title": "Ver recorrido guiado con el Copiloto"
+        },
+        {
+          "text": "Asistente",
+          "aria": null,
+          "title": "Abrir asistente IA"
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Notificaciones"
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null,
+          "title": "Configuración de la cuenta"
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión",
+          "title": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Trimestre",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Año",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Todo",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "🔒 Reportes CEO",
+          "aria": null,
+          "title": "Disponible desde el plan Full"
+        },
+        {
+          "text": "Finanzas operativas",
+          "aria": null,
+          "title": "Cuentas, deudas, flujo"
+        },
+        {
+          "text": "Ingresos",
+          "aria": null,
+          "title": "Ventas y abonos"
+        },
+        {
+          "text": "Pagos",
+          "aria": null,
+          "title": "Egresos registrados"
+        },
+        {
+          "text": "Costos",
+          "aria": null,
+          "title": "Herramientas y gastos"
+        },
+        {
+          "text": "Equilibrio",
+          "aria": null,
+          "title": "Punto global"
+        },
+        {
+          "text": "Por servicio",
+          "aria": null,
+          "title": "Margen unitario"
+        },
+        {
+          "text": "IVA",
+          "aria": null,
+          "title": "Control tributario"
+        },
+        {
+          "text": "Alertas",
+          "aria": null,
+          "title": "Riesgos y topes"
+        },
+        {
+          "text": "Seguimiento",
+          "aria": null,
+          "title": "Metas de MRR, prospección y pasarelas"
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy",
+          "title": "Ocultar por hoy"
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación",
+          "title": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente",
+          "title": "Colapsar"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso",
+          "title": "Minimizar (siempre puedes volver a abrirlo)"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje",
+          "title": ""
+        }
+      ],
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Desde",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Hasta",
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Pregúntame sobre tu negocio…",
+          "aria-label": null,
+          "id": ""
+        }
+      ]
+    },
+    "errors": [],
+    "network": []
+  },
+  {
+    "id": "desktop-kpisOperativos",
+    "url": "https://one.ferova.com.co/app",
+    "content": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nFinanzas\n/\nSeguimiento\n🔒 Reportes CEO\nFINANZAS\nFinanzas operativas\nIngresos\nPagos\nCostos\nEquilibrio\nPor servicio\nIVA\nAlertas\nSeguimiento\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\n\nCargando módulo…\n\nAsistente Ferova\n\nContexto: Finanzas\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        "Ferova One",
+        "Semáforo Ampliado de Alertas Tributarias",
+        "Asistente Ferova"
+      ],
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Finanzas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ventas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ayuda",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null,
+          "title": "Contraer navegación"
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "[✏️]",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback",
+          "title": "Reportar un problema o enviar una sugerencia"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado",
+          "title": "Ver recorrido guiado con el Copiloto"
+        },
+        {
+          "text": "Asistente",
+          "aria": null,
+          "title": "Abrir asistente IA"
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Notificaciones"
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null,
+          "title": "Configuración de la cuenta"
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión",
+          "title": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Trimestre",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Año",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Todo",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "🔒 Reportes CEO",
+          "aria": null,
+          "title": "Disponible desde el plan Full"
+        },
+        {
+          "text": "Finanzas operativas",
+          "aria": null,
+          "title": "Cuentas, deudas, flujo"
+        },
+        {
+          "text": "Ingresos",
+          "aria": null,
+          "title": "Ventas y abonos"
+        },
+        {
+          "text": "Pagos",
+          "aria": null,
+          "title": "Egresos registrados"
+        },
+        {
+          "text": "Costos",
+          "aria": null,
+          "title": "Herramientas y gastos"
+        },
+        {
+          "text": "Equilibrio",
+          "aria": null,
+          "title": "Punto global"
+        },
+        {
+          "text": "Por servicio",
+          "aria": null,
+          "title": "Margen unitario"
+        },
+        {
+          "text": "IVA",
+          "aria": null,
+          "title": "Control tributario"
+        },
+        {
+          "text": "Alertas",
+          "aria": null,
+          "title": "Riesgos y topes"
+        },
+        {
+          "text": "Seguimiento",
+          "aria": null,
+          "title": "Metas de MRR, prospección y pasarelas"
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy",
+          "title": "Ocultar por hoy"
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación",
+          "title": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente",
+          "title": "Colapsar"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso",
+          "title": "Minimizar (siempre puedes volver a abrirlo)"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje",
+          "title": ""
+        }
+      ],
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Desde",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Hasta",
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Pregúntame sobre tu negocio…",
+          "aria-label": null,
+          "id": ""
+        }
+      ]
+    },
+    "errors": [],
+    "network": []
+  },
+  {
+    "id": "desktop-ventas-crm",
+    "url": "https://one.ferova.com.co/app",
+    "content": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nVentas\n/\n🔒 CRM\n🔒 CRM\n🔒 Marketing ROI\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nAsistente Ferova\n\nContexto: Ventas\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        "Ferova One",
+        "Asistente Ferova"
+      ],
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Finanzas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ventas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ayuda",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null,
+          "title": "Contraer navegación"
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "[✏️]",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback",
+          "title": "Reportar un problema o enviar una sugerencia"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado",
+          "title": "Ver recorrido guiado con el Copiloto"
+        },
+        {
+          "text": "Asistente",
+          "aria": null,
+          "title": "Abrir asistente IA"
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Notificaciones"
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null,
+          "title": "Configuración de la cuenta"
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión",
+          "title": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Trimestre",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Año",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Todo",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "🔒 CRM",
+          "aria": null,
+          "title": "Disponible desde el plan Intermedio"
+        },
+        {
+          "text": "🔒 Marketing ROI",
+          "aria": null,
+          "title": "Disponible desde el plan Intermedio"
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy",
+          "title": "Ocultar por hoy"
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación",
+          "title": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente",
+          "title": "Colapsar"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso",
+          "title": "Minimizar (siempre puedes volver a abrirlo)"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje",
+          "title": ""
+        }
+      ],
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Desde",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Hasta",
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Pregúntame sobre tu negocio…",
+          "aria-label": null,
+          "id": ""
+        }
+      ]
+    },
+    "errors": [],
+    "network": []
+  },
+  {
+    "id": "desktop-marketingRoi",
+    "url": "https://one.ferova.com.co/app",
+    "content": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nVentas\n/\n🔒 Marketing ROI\n🔒 CRM\n🔒 Marketing ROI\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nAsistente Ferova\n\nContexto: Ventas\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        "Ferova One",
+        "Asistente Ferova"
+      ],
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Finanzas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ventas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ayuda",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null,
+          "title": "Contraer navegación"
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "[✏️]",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback",
+          "title": "Reportar un problema o enviar una sugerencia"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado",
+          "title": "Ver recorrido guiado con el Copiloto"
+        },
+        {
+          "text": "Asistente",
+          "aria": null,
+          "title": "Abrir asistente IA"
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Notificaciones"
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null,
+          "title": "Configuración de la cuenta"
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión",
+          "title": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Trimestre",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Año",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Todo",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "🔒 CRM",
+          "aria": null,
+          "title": "Disponible desde el plan Intermedio"
+        },
+        {
+          "text": "🔒 Marketing ROI",
+          "aria": null,
+          "title": "Disponible desde el plan Intermedio"
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy",
+          "title": "Ocultar por hoy"
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación",
+          "title": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente",
+          "title": "Colapsar"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso",
+          "title": "Minimizar (siempre puedes volver a abrirlo)"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje",
+          "title": ""
+        }
+      ],
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Desde",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Hasta",
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Pregúntame sobre tu negocio…",
+          "aria-label": null,
+          "id": ""
+        }
+      ]
+    },
+    "errors": [],
+    "network": []
+  },
+  {
+    "id": "desktop-integraciones",
+    "url": "https://one.ferova.com.co/app",
+    "content": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nConfiguración\n/\nIntegraciones\nIntegraciones\nConfiguración\nMemoria\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nIntegraciones\n\nConecta tus herramientas para que Ferova trabaje con lo que ya usas. Todo opcional: la app funciona sin conectar nada.\n\nGoogle Workspace\n\nCalendar, Sheets, Drive y Gmail — una sola conexión.\n\nSin conectar\n\nCalendar\n\nAgenda diagnósticos y citas; se sincronizan a tu calendario.\n\nSheets / Drive\n\nRespalda tu contabilidad o importa datos desde tu propia hoja.\n\nGmail\n\nDetecta reseñas nuevas que te llegan por correo (opcional).\n\nPrivado\n\nNo guardamos tus tokens: se usan solo mientras trabajas.\n\nConectar con Google Workspace\nApollo · Enriquecimiento de contactos\n\nDesde el CRM, genera un playbook de contacto (correo, LinkedIn, WhatsApp) para cada prospecto.\n\nIr al CRM\nSe activa desde el panel; si no aparece, escríbenos para habilitarlo.\nWhatsApp · Bot de ventas\n\nUn asistente que responde a tus prospectos por WhatsApp con el conocimiento de tu negocio.\n\nPara equipos\n\nDisponible para cuentas de equipo/agencia. Escríbenos si te interesa activarlo.\n\nAsistente Ferova\n\nContexto: Configuración\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        "Ferova One",
+        "Integraciones",
+        "Google Workspace",
+        "Apollo · Enriquecimiento de contactos",
+        "WhatsApp · Bot de ventas",
+        "Asistente Ferova"
+      ],
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Finanzas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ventas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ayuda",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null,
+          "title": "Contraer navegación"
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "[✏️]",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback",
+          "title": "Reportar un problema o enviar una sugerencia"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado",
+          "title": "Ver recorrido guiado con el Copiloto"
+        },
+        {
+          "text": "Asistente",
+          "aria": null,
+          "title": "Abrir asistente IA"
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Notificaciones"
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null,
+          "title": "Configuración de la cuenta"
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión",
+          "title": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Trimestre",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Año",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Todo",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Integraciones",
+          "aria": null,
+          "title": "Google, WhatsApp, Apollo"
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": "Datos y Google Sheets"
+        },
+        {
+          "text": "Memoria",
+          "aria": null,
+          "title": "Cerebro del negocio: lo que sabe de ti y de tu operación"
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy",
+          "title": "Ocultar por hoy"
+        },
+        {
+          "text": "Conectar con Google Workspace",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ir al CRM",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación",
+          "title": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente",
+          "title": "Colapsar"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso",
+          "title": "Minimizar (siempre puedes volver a abrirlo)"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje",
+          "title": ""
+        }
+      ],
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Desde",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Hasta",
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Pregúntame sobre tu negocio…",
+          "aria-label": null,
+          "id": ""
+        }
+      ]
+    },
+    "errors": [],
+    "network": []
+  },
+  {
+    "id": "desktop-ajustes",
+    "url": "https://one.ferova.com.co/app",
+    "content": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nConfiguración\n/\nConfiguración\nIntegraciones\nConfiguración\nMemoria\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nConfiguración de Ferova One\n\nIdentidad, perfil fiscal, personalización y conexiones del negocio.\n\nRepetir recorrido\nIdentidad del negocio\n\nPersonaliza el nombre comercial y el contexto que utiliza Ferova One.\n\nNombre comercial\nIndustria o sector\nTipo de negocio\nTamaño del equipo\nCiudad\nTeléfono de contacto\n\nDías laborales\n\nEl Planner y el asistente usan esto para agendar y reprogramar dentro de tu horario real.\n\nLun\nMar\nMié\nJue\nVie\nSáb\nDom\nHorario de inicio\nHorario de fin\nZona horaria\nColombia · Bogotá (UTC−5)\nMéxico · Ciudad de México\nPerú · Lima (UTC−5)\nEcuador · Quito / Guayaquil (UTC−5)\nVenezuela · Caracas (UTC−4)\nChile · Santiago\nArgentina · Buenos Aires (UTC−3)\nBrasil · São Paulo (UTC−3)\nEspaña · Madrid\nEE. UU. · Nueva York\nEE. UU. · Los Ángeles\nEl Planner programa y muestra las horas en esta zona.\nUsar mi zona automática\nGuardar identidad\nHolding y empresas\n\nCada empresa es una cuenta aparte y sus datos no se cruzan. Desde el holding las ves todas.\n\nCargando…\nColaboradores y permisos\n\nAgrega personas de tu equipo y define qué pestañas puede ver y editar cada una. Comparten los datos del negocio.\n\nAgregar\nPARÁMETROS DE TRIBUTACIÓN COLOMBIANA (DIAN 2026)\n1. CONSTANTES DIAN OFICIALES LEY 2026\nUNIDAD VALOR TRIBUTARIO (UVT)\nOficial 2026: $52.374 COP\nSALARIO MÍNIMO (SMMLV)\nOficial 2026: $1.750.905 COP\nTRM DOLAR ESTIMADA\nCOP por cada USD\n2. TOPES ANUALES DE CONTROL (EN UVT)\nDECLARAR RENTA (VENTAS)\nNormalmente: 1.400 UVT\nEXENTO PAGO DE RENTA\nNormalmente: 1.090 UVT\nTOPE RESPONSABLE IVA\nNormalmente: 3.500 UVT\n3. PORCENTAJES DE RETENCIÓN EN LA FUENTE\nCLIENTE DECLARANTE (SERVICIOS)\nPorcentaje: 0.04 (4%)\nCLIENTE NO DECLARANTE\nPorcentaje: 0.06 (6%)\n4. PARÁMETROS DE OPERACIÓN FEROVA AGENCY\nSUELDO BASE DESEADO\nCUOTA COMERCIAL VENTAS / MES\nOBJETIVO CAPACIDAD HORAS / MES\nMARGEN MÍNIMO POR DEFECTO (%)\nSe usa en Equilibrio por Servicio cuando ese servicio no tiene su propio margen objetivo.\nActualizar Parámetros\nRESPALDO EN GOOGLE SHEETS\n\nTu contabilidad vive en Ferova One. Este respaldo es opcional: copia todo lo actual hacia tu propia hoja \"Ferova_OS_Financiero\" en Google Drive.\n\nNecesitas conectar tu cuenta de Google la primera vez.\n\nConectar Google y respaldar\n\nIMPORTAR DESDE SHEETS\n\nTrae toda tu información financiera desde la hoja \"Ferova_OS_Financiero\" de tu Drive hacia Ferova OS. Reemplazará los datos actuales.\n\nConectar Google e importar\n\nIMPORTAR PEGANDO LINK\n\nPega la URL de un Google Sheet con la misma estructura de la plantilla Ferova_OS_Financiero. Debe incluir estas pestañas, con estos nombres exactos: Config, Clientes, Servicios, Herramientas, OtrosGastos, Ventas, Horas, Respaldos y PagosEgresos.\n\nImportar desde este link\nPORTAPAPELES CONTABLE RÁPIDO (TSV)\n\nHerramienta ágil sin descargas: copia las tres planillas principales en formato tabular listo para pegar directo en Microsoft Excel o Numbers para tu contador general:\n\nPlanilla de Ventas (0 registros)\nDirectorio Clientes (1 perfiles)\nBitácora de Horas (0 registros)\nPLANTILLA DE CARGA INICIAL\n\nUn libro de Excel con una hoja por cosa —clientes, productos y servicios— con los encabezados que el sistema espera y una explicación de qué va en cada columna. Se llena una vez, se guarda cada hoja como CSV y se sube en su pestaña.\n\nDescargar plantilla (Excel)\nEXPORTAR TODOS MIS DATOS\n\nDescarga una copia completa de tu información en Ferova One (finanzas, CRM, planner, horas, memoria del negocio y más) en formato JSON abierto. Tus datos son tuyos: llévatelos cuando quieras.\n\nDescargar copia completa (JSON)\nELIMINAR MI CUENTA\n\nSolicita eliminar tu cuenta y tus datos. Tienes un período de gracia de 15 días para arrepentirte; después, la eliminación es definitiva. Si tienes una suscripción activa, recuerda cancelarla en Paddle. Considera exportar tus datos antes.\n\nSolicitar eliminación de mi cuenta\nAsistente Ferova\n\nContexto: Configuración\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        "Ferova One",
+        "Configuración de Ferova One",
+        "Identidad del negocio",
+        "Holding y empresas",
+        "Colaboradores y permisos",
+        " Parámetros de Tributación Colombiana (DIAN 2026)",
+        " Respaldo en Google Sheets",
+        " Portapapeles contable rápido (TSV)",
+        " Plantilla de carga inicial",
+        " Exportar todos mis datos",
+        " Eliminar mi cuenta",
+        "Asistente Ferova"
+      ],
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Finanzas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ventas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ayuda",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null,
+          "title": "Contraer navegación"
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "[✏️]",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback",
+          "title": "Reportar un problema o enviar una sugerencia"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado",
+          "title": "Ver recorrido guiado con el Copiloto"
+        },
+        {
+          "text": "Asistente",
+          "aria": null,
+          "title": "Abrir asistente IA"
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Notificaciones"
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null,
+          "title": "Configuración de la cuenta"
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión",
+          "title": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Trimestre",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Año",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Todo",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Integraciones",
+          "aria": null,
+          "title": "Google, WhatsApp, Apollo"
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": "Datos y Google Sheets"
+        },
+        {
+          "text": "Memoria",
+          "aria": null,
+          "title": "Cerebro del negocio: lo que sabe de ti y de tu operación"
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy",
+          "title": "Ocultar por hoy"
+        },
+        {
+          "text": "Repetir recorrido",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Lun",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Mar",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Mié",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Jue",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Vie",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Sáb",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Dom",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Usar mi zona automática",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Guardar identidad",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Agregar",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Traer TRM oficial de datos.gov.co"
+        },
+        {
+          "text": "Actualizar Parámetros",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Conectar Google y respaldar",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Conectar Google e importar",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Importar desde este link",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Planilla de Ventas (0 registros)",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Directorio Clientes (1 perfiles)",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Bitácora de Horas (0 registros)",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Descargar plantilla (Excel)",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Descargar copia completa (JSON)",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Solicitar eliminación de mi cuenta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación",
+          "title": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente",
+          "title": "Colapsar"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso",
+          "title": "Minimizar (siempre puedes volver a abrirlo)"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje",
+          "title": ""
+        }
+      ],
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Desde",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Hasta",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Ej. SEO para Ecommerce",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Ej. Marketing digital",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Ej. Agencia B2B",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Ej. 1–5 personas",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Ej. Bogotá",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "tel",
+          "placeholder": "Ej. +57 300 000 0000",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "time",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "time",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Email del colaborador",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Nombre (opcional)",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "number",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "url",
+          "placeholder": "https://docs.google.com/spreadsheets/d/XXXXXXX/edit",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Pregúntame sobre tu negocio…",
+          "aria-label": null,
+          "id": ""
+        }
+      ]
+    },
+    "errors": [],
+    "network": []
+  },
+  {
+    "id": "desktop-memoria",
+    "url": "https://one.ferova.com.co/app",
+    "content": "F\n\nFerova One\n\nBUSINESS OS\n\nNAVEGACIÓN\n\nInicio\nProyectos\nFinanzas\nVentas\nConfiguración\nAyuda\nContraer menú\nBuscar o ejecutar…\nK\nTRM\n$ 4.000\n[✏️]\nRegistrar horas\nCLIENTES: 1\nReportar / Sugerir\nAsistente\n\n[CUENTA DE PRUEBA]\n\n[CUENTA DE PRUEBA]\n\nFerova aprende contigo. Mientras más registres horas, clientes, servicios, tareas y movimientos financieros, más precisas serán sus estimaciones de tiempo, capacidad, rentabilidad y recomendaciones.\n\nPERÍODO:\nEste mes\nTrimestre\nAño\nTodo\na\nFACTURACIÓN: $ 0\nNÓMINA RETIROS: $ 4.000.000\nNETO DISPONIBLE: -$ 4.080.000\nFerova One\n/\nConfiguración\n/\nMemoria\nIntegraciones\nConfiguración\nMemoria\n\nTe quedan 7 días de prueba. Sin tarjeta, el acceso se apaga al vencer; tus datos se quedan.\n\nAgregar tarjeta\nMemoria del negocio\nActualizar desde mi negocio\n\nEl cerebro que usa el asistente para responder. Lo del negocio lo ve todo el que tenga acceso a esta cuenta; lo privado solo tú. Con “Actualizar desde mi negocio” se construye solo desde tus clientes y tu perfil.\n\nCómo funciona: lo que guarda el asistente entra Por revisar y no se usa hasta que lo apruebes. El asistente sólo responde con lo Aprobado. Un tema = una página viva: al editar anotas qué cambió. Nada se borra a la ligera: se archiva con nota de cierre.\n\nAGREGAR A LA MEMORIA\nTÍTULO\nCONTENIDO\nTIPO\nNota\nDecisión\nProceso\nDocumento\nIdea\nInvestigación\nÁREA\nSin área\nClientes\nProyectos\nOperaciones\nVentas\nDesarrollo\nAdministración\nESTADO\nAprobado (lo usa el asistente)\nPor revisar\nRequiere decisión\nENLACE DE ORIGEN\nALCANCE\nDel negocio\nPrivado (solo yo)\nGuardar\nDel negocio\n0\nPrivado (mío)\n0\nActivas 0\nPor revisar 0\nAprobado 0\nRequiere decisión 0\nArchivado 0\nAsistente Ferova\n\nContexto: Configuración\n\nEstás usando un asistente automatizado que analiza los datos registrados en Ferova One y puede usar inteligencia artificial cuando esté disponible. Verifica siempre las cifras. No sustituye asesoría contable, tributaria ni legal.\nPreguntame por rentabilidad, pipeline, reseñas, clientes, gastos o el siguiente paso del negocio.\nSolo responde con tus datos reales.\nFEROVA ONE © 2026 • FINANZAS, GROWTH CRM Y ASISTENTE CON DATOS REALES • PRIVACIDAD • TÉRMINOS\nIngresos",
+    "info": {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        "Ferova One",
+        "Memoria del negocio",
+        "Asistente Ferova"
+      ],
+      "buttons": [
+        {
+          "text": "Inicio",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Proyectos",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Finanzas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ventas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Ayuda",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Contraer menú",
+          "aria": null,
+          "title": "Contraer navegación"
+        },
+        {
+          "text": "Buscar o ejecutar…\nK",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "[✏️]",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Registrar horas",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Reportar / Sugerir",
+          "aria": "Enviar feedback",
+          "title": "Reportar un problema o enviar una sugerencia"
+        },
+        {
+          "text": "",
+          "aria": "Ver recorrido guiado",
+          "title": "Ver recorrido guiado con el Copiloto"
+        },
+        {
+          "text": "Asistente",
+          "aria": null,
+          "title": "Abrir asistente IA"
+        },
+        {
+          "text": "",
+          "aria": null,
+          "title": "Notificaciones"
+        },
+        {
+          "text": "mafe.cal2002\n\nmafe.cal2002@gmail.com",
+          "aria": null,
+          "title": "Configuración de la cuenta"
+        },
+        {
+          "text": "",
+          "aria": "Cerrar sesión",
+          "title": "Cerrar sesión"
+        },
+        {
+          "text": "Este mes",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Trimestre",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Año",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Todo",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Integraciones",
+          "aria": null,
+          "title": "Google, WhatsApp, Apollo"
+        },
+        {
+          "text": "Configuración",
+          "aria": null,
+          "title": "Datos y Google Sheets"
+        },
+        {
+          "text": "Memoria",
+          "aria": null,
+          "title": "Cerebro del negocio: lo que sabe de ti y de tu operación"
+        },
+        {
+          "text": "Agregar tarjeta",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Ocultar por hoy",
+          "title": "Ocultar por hoy"
+        },
+        {
+          "text": "Actualizar desde mi negocio",
+          "aria": null,
+          "title": "Genera memoria automáticamente desde tu perfil y tus clientes"
+        },
+        {
+          "text": "Del negocio",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Privado (solo yo)",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Guardar",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Del negocio\n0",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Privado (mío)\n0",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Activas 0",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Por revisar 0",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Aprobado 0",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Requiere decisión 0",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "Archivado 0",
+          "aria": null,
+          "title": ""
+        },
+        {
+          "text": "",
+          "aria": "Borrar conversación",
+          "title": "Borrar conversación"
+        },
+        {
+          "text": "",
+          "aria": "Colapsar asistente",
+          "title": "Colapsar"
+        },
+        {
+          "text": "",
+          "aria": "Minimizar aviso",
+          "title": "Minimizar (siempre puedes volver a abrirlo)"
+        },
+        {
+          "text": "",
+          "aria": "Enviar mensaje",
+          "title": ""
+        }
+      ],
+      "inputs": [
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Desde",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "date",
+          "placeholder": null,
+          "aria-label": "Hasta",
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "Ej. Política de descuento máximo",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "El dato completo, claro y autocontenido (que se entienda sin contexto).\n\nQué es / qué cambió:\nQué funcionó o no funcionó:\nPor qué importa:\nSiguiente paso:\n(Cifras con fecha. Lo no verificado: PENDIENTE DE VERIFICAR.)",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "placeholder": null,
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "placeholder": "https://… (opcional)",
+          "aria-label": null,
+          "id": ""
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "placeholder": "Pregúntame sobre tu negocio…",
+          "aria-label": null,
+          "id": ""
+        }
+      ]
+    },
+    "errors": [],
+    "network": []
+  }
+]

@@ -1,35 +1,35 @@
-import { lazy, Suspense } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
-import ErrorBoundary from './components/ErrorBoundary';
-import NotFound from './components/NotFound';
-import MaintenancePage from './components/MaintenancePage';
-import { usePageView } from './lib/usePageView';
+import { lazy, Suspense } from "react";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { Loader2 } from "lucide-react";
+import ErrorBoundary from "./components/ErrorBoundary";
+import NotFound from "./components/NotFound";
+import MaintenancePage from "./components/MaintenancePage";
+import { usePageView } from "./lib/usePageView";
 
 // Lazy-loaded route entrypoints. `/app` hosts the full tab-based shell
 // (App.tsx: login screen when logged out, dashboard when logged in) — turn 5
 // will split it into per-module routes. `/` is the public landing page.
-const App = lazy(() => import('./App'));
-const AdminCRMRoute = lazy(() => import('./routes/AdminRoute'));
-const Privacidad = lazy(() => import('./routes/Privacidad'));
-const Terminos = lazy(() => import('./routes/Terminos'));
-const Reembolsos = lazy(() => import('./routes/Reembolsos'));
-const Subencargados = lazy(() => import('./routes/Subencargados'));
-const Seguridad = lazy(() => import('./routes/Seguridad'));
-const Novedades = lazy(() => import('./routes/Novedades'));
-const Landing = lazy(() => import('./routes/Landing'));
+const App = lazy(() => import("./App"));
+const AdminCRMRoute = lazy(() => import("./routes/AdminRoute"));
+const Privacidad = lazy(() => import("./routes/Privacidad"));
+const Terminos = lazy(() => import("./routes/Terminos"));
+const Reembolsos = lazy(() => import("./routes/Reembolsos"));
+const Subencargados = lazy(() => import("./routes/Subencargados"));
+const Seguridad = lazy(() => import("./routes/Seguridad"));
+const Novedades = lazy(() => import("./routes/Novedades"));
+const Landing = lazy(() => import("./routes/Landing"));
 
 // Capa publica indexable (Manual_Landing_Blog_SEO_Ferova_One, sec. 3 y 8).
-const FeaturesPage = lazy(() => import('./marketing/pages/FeaturesPage'));
-const FeatureFinancePage = lazy(() => import('./marketing/pages/FeatureFinancePage'));
-const FeatureCRMPage = lazy(() => import('./marketing/pages/FeatureCRMPage'));
-const FeaturePlannerPage = lazy(() => import('./marketing/pages/FeaturePlannerPage'));
-const FeatureAIPage = lazy(() => import('./marketing/pages/FeatureAIPage'));
-const PricingPage = lazy(() => import('./marketing/pages/PricingPage'));
-const BlogIndexPage = lazy(() => import('./blog/pages/BlogIndexPage'));
-const BlogCategoryPage = lazy(() => import('./blog/pages/BlogCategoryPage'));
-const BlogPostPage = lazy(() => import('./blog/pages/BlogPostPage'));
-const AuthorPage = lazy(() => import('./blog/pages/AuthorPage'));
+const FeaturesPage = lazy(() => import("./marketing/pages/FeaturesPage"));
+const FeatureFinancePage = lazy(() => import("./marketing/pages/FeatureFinancePage"));
+const FeatureCRMPage = lazy(() => import("./marketing/pages/FeatureCRMPage"));
+const FeaturePlannerPage = lazy(() => import("./marketing/pages/FeaturePlannerPage"));
+const FeatureAIPage = lazy(() => import("./marketing/pages/FeatureAIPage"));
+const PricingPage = lazy(() => import("./marketing/pages/PricingPage"));
+const BlogIndexPage = lazy(() => import("./blog/pages/BlogIndexPage"));
+const BlogCategoryPage = lazy(() => import("./blog/pages/BlogCategoryPage"));
+const BlogPostPage = lazy(() => import("./blog/pages/BlogPostPage"));
+const AuthorPage = lazy(() => import("./blog/pages/AuthorPage"));
 
 /** Dispara page_view en cada navegacion -- debe vivir dentro de BrowserRouter para usar useLocation. */
 function PageViewTracker() {
@@ -50,13 +50,13 @@ function RouteFallback() {
   );
 }
 
-export default function Router() {
-  if (import.meta.env.VITE_MAINTENANCE_MODE === 'true') {
+export function AppRoutes() {
+  if (import.meta.env.VITE_MAINTENANCE_MODE === "true") {
     return <MaintenancePage />;
   }
 
   return (
-    <BrowserRouter>
+    <>
       <PageViewTracker />
       <ErrorBoundary>
         <Suspense fallback={<RouteFallback />}>
@@ -88,6 +88,14 @@ export default function Router() {
           </Routes>
         </Suspense>
       </ErrorBoundary>
+    </>
+  );
+}
+
+export default function Router() {
+  return (
+    <BrowserRouter>
+      <AppRoutes />
     </BrowserRouter>
   );
 }

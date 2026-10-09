@@ -1,0 +1,76 @@
+{
+  "results": [
+    {
+      "tab": "dashboard",
+      "unchangedControlsAndValues": true,
+      "fields": 7
+    },
+    {
+      "tab": "clientes",
+      "unchangedControlsAndValues": true,
+      "fields": 17
+    },
+    {
+      "tab": "servicios",
+      "unchangedControlsAndValues": true,
+      "fields": 17
+    },
+    {
+      "tab": "horas",
+      "unchangedControlsAndValues": true,
+      "fields": 18
+    },
+    {
+      "tab": "proyectos",
+      "unchangedControlsAndValues": true,
+      "fields": 33
+    },
+    {
+      "tab": "ventas",
+      "unchangedControlsAndValues": true,
+      "fields": 26
+    },
+    {
+      "tab": "equilibrioGlobal",
+      "unchangedControlsAndValues": true,
+      "fields": 0
+    },
+    {
+      "tab": "equilibrioServicio",
+      "unchangedControlsAndValues": true,
+      "fields": 0
+    },
+    {
+      "tab": "iva",
+      "unchangedControlsAndValues": true,
+      "fields": 8
+    },
+    {
+      "tab": "alertas",
+      "unchangedControlsAndValues": true,
+      "fields": 0
+    },
+    {
+      "keyboardSearch": true
+    },
+    {
+      "width": 1440,
+      "noHorizontalOverflow": true
+    },
+    {
+      "width": 768,
+      "noHorizontalOverflow": true
+    },
+    {
+      "width": 375,
+      "noHorizontalOverflow": true
+    },
+    {
+      "width": 320,
+      "noHorizontalOverflow": true
+    }
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "a11y": []
+}

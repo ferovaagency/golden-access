@@ -1,0 +1,52 @@
+{
+  "results": [
+    {
+      "width": 1440,
+      "geometry": {
+        "viewport": 1440,
+        "document": 1440,
+        "brand": "#2563eb",
+        "canvas": "rgb(255, 255, 255)"
+      },
+      "violations": []
+    },
+    {
+      "width": 768,
+      "geometry": {
+        "viewport": 768,
+        "document": 768,
+        "brand": "#2563eb",
+        "canvas": "rgb(255, 255, 255)"
+      },
+      "violations": []
+    },
+    {
+      "width": 375,
+      "geometry": {
+        "viewport": 375,
+        "document": 375,
+        "brand": "#2563eb",
+        "canvas": "rgb(255, 255, 255)"
+      },
+      "violations": []
+    },
+    {
+      "width": 320,
+      "geometry": {
+        "viewport": 320,
+        "document": 320,
+        "brand": "#2563eb",
+        "canvas": "rgb(255, 255, 255)"
+      },
+      "violations": []
+    }
+  ],
+  "errors": [],
+  "interactions": [
+    "menu Escape",
+    "annual plan links",
+    "demo",
+    "FAQ",
+    "HTML without JavaScript"
+  ]
+}

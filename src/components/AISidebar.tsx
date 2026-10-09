@@ -253,7 +253,7 @@ export default function AISidebar({ user, collapsed, onToggle, width, onResize, 
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) submit(e as any); }}
             />
             <PromptInputFooter className="justify-between">
-              <span className="text-[10px] text-slate-400">Solo responde con tus datos reales.</span>
+              <span className="text-[10px] text-slate-400">Asistente de IA: responde con tus datos reales y puede equivocarse. Verifica antes de decidir.</span>
               <PromptInputSubmit status={status} disabled={!input.trim()} onStop={stop} />
             </PromptInputFooter>
           </PromptInput>

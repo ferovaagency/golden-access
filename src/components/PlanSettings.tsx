@@ -100,7 +100,7 @@ export default function PlanSettings({ user, plan, subscription, isTeam, onChang
 
       {enPrueba && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 text-xs leading-5 text-amber-900">
-          Durante la prueba puedes cambiar de plan las veces que quieras sin pagar. Cuando pagues, Paddle cobra el plan que tengas elegido en ese momento. Si no agregas tarjeta antes del {subscription.trial_ends_at ? fecha(subscription.trial_ends_at) : 'final'}, el acceso se apaga y tus datos se quedan guardados.
+          Durante la prueba puedes bajar de plan o quedarte en el tuyo sin pagar. Para subir a un plan más alto se abre el pago de Paddle y la suscripción arranca ahí mismo. Si no agregas tarjeta antes del {subscription.trial_ends_at ? fecha(subscription.trial_ends_at) : 'final'}, el acceso se apaga y tus datos se quedan guardados.
         </div>
       )}
       <SubscriptionManagement onChanged={onChanged} />

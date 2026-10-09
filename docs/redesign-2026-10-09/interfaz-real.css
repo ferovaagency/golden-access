@@ -1,0 +1,428 @@
+/* Proposal only. No selectors from this file ship in the production application. */
+.real-preview {
+  --preview-blue: #2563eb;
+  font-family: Figtree, sans-serif;
+  background: #f8fafc;
+  min-height: 100vh;
+  color: #172b49;
+}
+.preview-reviewbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  min-height: 68px;
+  background: #143c86;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 24px;
+  font-size: 13px;
+}
+.preview-reviewbar strong,
+.preview-reviewbar span {
+  display: block;
+}
+.preview-reviewbar span {
+  color: #dbeafe;
+  font-size: 11px;
+  margin-top: 3px;
+}
+.preview-reviewbar [role="group"] {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid #ffffff40;
+  border-radius: 8px;
+}
+.preview-reviewbar button {
+  padding: 8px 13px;
+  border-radius: 5px;
+  font-size: 12px;
+  color: #fff;
+}
+.preview-reviewbar button[aria-pressed="true"] {
+  background: #fff;
+  color: #17469d;
+}
+.real-preview .ferova-v2-theme > aside {
+  top: 68px;
+}
+.proposal-topbar {
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  background: white;
+  padding: 16px 26px;
+  border-bottom: 1px solid #dbe5f0;
+}
+.proposal-topbar strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+.proposal-topbar > div > span {
+  display: block;
+  font-size: 11px;
+  color: #526880;
+  margin-top: 3px;
+}
+.proposal-topbar > div + div {
+  display: flex;
+  gap: 12px;
+}
+.proposal-topbar button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #dbe5f0;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #174da8;
+}
+.proposal-topbar kbd {
+  color: #64748b;
+  font-size: 10px;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 3px;
+}
+.proposal-period {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 26px;
+  background: white;
+  border-bottom: 1px solid #dbe5f0;
+  font-size: 11px;
+  color: #53657d;
+}
+.proposal-period > div {
+  display: flex;
+  gap: 12px;
+}
+.proposal-period label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.proposal-period input {
+  background: #f8fafc;
+  border: 1px solid #dbe5f0;
+  border-radius: 6px;
+  padding: 7px;
+  color: #172b49;
+  min-width: 0;
+}
+.proposal-period input[type="number"] {
+  width: 82px;
+}
+.demo-notice {
+  font-size: 11px;
+  color: #526880;
+  margin: 0 auto 15px;
+  max-width: 1380px;
+}
+.proposal-footer {
+  font-size: 11px;
+  color: #64748b;
+  text-align: center;
+  padding: 25px;
+}
+.module-host {
+  max-width: 1380px;
+  margin: auto;
+  min-width: 0;
+}
+.real-preview button,
+.real-preview a {
+  cursor: pointer;
+}
+.real-preview :focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
+}
+/* Proposed presentation: identical React nodes, inputs, calculations and tab IDs. */
+.real-preview[data-look="proposed"] .ferova-v2-theme {
+  --ferova-brand: #2563eb;
+  --ferova-brand-2: #1d4ed8;
+  --ferova-navy: #17469d;
+  --ferova-canvas: #f8faff;
+  --ferova-surface: #fff;
+  --ferova-line: #dbe5f0;
+  --ferova-ai: #eff6ff;
+  --fv-ai: #eff6ff;
+  --fv-accent: #2563eb;
+  --fv-muted: #526880;
+  --fv-subtle: #526880;
+}
+.real-preview[data-look="proposed"] .ferova-v2-theme > aside > div:first-child > div:first-child {
+  font-size: 0;
+  background: #2563eb;
+  position: relative;
+}
+.real-preview[data-look="proposed"]
+  .ferova-v2-theme
+  > aside
+  > div:first-child
+  > div:first-child::after {
+  content: "";
+  width: 21px;
+  height: 26px;
+  background: white;
+  mask: url("/brand/ferova-isotipo.png") center/contain no-repeat;
+  -webkit-mask: url("/brand/ferova-isotipo.png") center/contain no-repeat;
+}
+.real-preview[data-look="proposed"] nav[aria-label="Navegación principal"] button {
+  font-size: 13px;
+  min-height: 45px;
+  border-radius: 8px;
+  margin-bottom: 5px;
+}
+.real-preview[data-look="proposed"] nav[aria-label="Navegación principal"] button[aria-current] {
+  background: #eaf2ff;
+  color: #1d4ed8;
+  box-shadow: none;
+  border-left: 3px solid #2563eb;
+}
+.real-preview[data-look="proposed"] nav[aria-label="Navegación de la sección"] {
+  gap: 7px;
+  row-gap: 9px;
+}
+.real-preview[data-look="proposed"] nav[aria-label="Navegación de la sección"] button {
+  min-height: 36px;
+  border-radius: 7px;
+  font-size: 12px;
+}
+.real-preview[data-look="proposed"]
+  .module-host[data-module="dashboard"]
+  > div
+  > section:first-child {
+  background: #fff;
+  border-color: #dbe5f0;
+  box-shadow: none;
+  border-top: 4px solid #2563eb;
+}
+.real-preview[data-look="proposed"]
+  .module-host[data-module="dashboard"]
+  > div
+  > section:first-child
+  .text-white {
+  color: #163c7a;
+}
+.real-preview[data-look="proposed"]
+  .module-host[data-module="dashboard"]
+  > div
+  > section:first-child
+  .text-slate-300,
+.real-preview[data-look="proposed"]
+  .module-host[data-module="dashboard"]
+  > div
+  > section:first-child
+  .text-slate-400 {
+  color: #526880;
+}
+.real-preview[data-look="proposed"]
+  .module-host[data-module="dashboard"]
+  > div
+  > section:first-child
+  [class*="border-slate-800"] {
+  border-color: #dbe5f0;
+}
+.real-preview[data-look="proposed"]
+  .module-host[data-module="dashboard"]
+  > div
+  > section:first-child
+  button {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #dbeafe;
+}
+.real-preview[data-look="proposed"] .module-host .shadow-sm {
+  box-shadow: 0 2px 8px #143c8605;
+}
+.real-preview[data-look="proposed"] .module-host .rounded-2xl {
+  border-radius: 12px;
+}
+.real-preview[data-look="proposed"] .module-host [class*="text-[10px]"] {
+  font-size: 11px;
+}
+.real-preview[data-look="proposed"] .module-host .text-slate-400 {
+  color: #607087;
+}
+.preserved-module {
+  background: white;
+  border: 1px solid #dbe5f0;
+  padding: 40px;
+  border-radius: 12px;
+  max-width: 850px;
+}
+.preserved-module > span {
+  color: #2563eb;
+  letter-spacing: 1px;
+  font-size: 11px;
+}
+.preserved-module h1 {
+  font-size: 28px;
+  margin: 15px 0;
+}
+.preserved-module p {
+  color: #526880;
+  font-size: 14px;
+  line-height: 1.8;
+  margin: 16px 0;
+}
+.preserved-module button {
+  background: #2563eb;
+  color: white;
+  padding: 11px 18px;
+  border-radius: 7px;
+  font-size: 13px;
+}
+.proposal-dialog {
+  border: 1px solid #dbe5f0;
+  border-radius: 14px;
+  padding: 25px;
+  width: min(560px, calc(100vw - 30px));
+  max-height: 85vh;
+  color: #172b49;
+  background: white;
+  margin: auto;
+}
+.proposal-dialog::backdrop {
+  background: #102b5060;
+}
+.proposal-dialog header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.proposal-dialog h2 {
+  font-size: 21px;
+}
+.proposal-dialog header button {
+  min-width: 38px;
+  min-height: 38px;
+  display: grid;
+  place-items: center;
+  background: #eff6ff;
+  border-radius: 7px;
+}
+.proposal-dialog label {
+  display: block;
+  font-size: 12px;
+}
+.proposal-dialog input {
+  display: block;
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  padding: 12px;
+  margin: 8px 0 14px;
+}
+.preview-search-results {
+  display: grid;
+  gap: 7px;
+  max-height: 48vh;
+  overflow: auto;
+}
+.preview-search-results button {
+  text-align: left;
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 7px;
+  font-size: 14px;
+}
+.preview-search-results small {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 3px;
+}
+.assistant-dialog p {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #526880;
+  margin: 12px 0;
+}
+.ai-example {
+  background: #eff6ff;
+  padding: 18px;
+  border-radius: 9px;
+  margin: 25px 0;
+}
+.assistant-dialog small {
+  font-size: 12px;
+  color: #526880;
+}
+@media (max-width: 700px) {
+  .preview-reviewbar {
+    padding: 10px 14px;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .preview-reviewbar [role="group"] {
+    width: fit-content;
+  }
+  .preview-reviewbar button {
+    font-size: 11px;
+  }
+  .proposal-topbar {
+    padding: 13px 16px;
+    flex-wrap: wrap;
+  }
+  .proposal-period {
+    padding: 12px;
+    flex-wrap: wrap;
+  }
+  .proposal-period label {
+    font-size: 10px;
+    flex-direction: column;
+    align-items: start;
+    gap: 3px;
+  }
+  .proposal-period > div {
+    gap: 7px;
+  }
+  .proposal-period input[type="date"] {
+    width: 123px;
+  }
+  .proposal-period input[type="number"] {
+    width: 68px;
+  }
+  .preserved-module {
+    padding: 24px;
+  }
+  .proposal-topbar kbd {
+    display: none;
+  }
+  .module-host {
+    overflow-x: auto;
+  }
+  .preview-reviewbar strong {
+    font-size: 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .real-preview * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+.real-preview[data-look=proposed] nav[aria-label='Navegación principal'] button[aria-current], .real-preview[data-look=proposed] nav[aria-label='Navegación principal'] button[aria-current] span, .real-preview[data-look=proposed] nav[aria-label='Navegación principal'] button[aria-current] svg { color: #1d4ed8 !important; }
+
+.real-preview[data-look=proposed] .ferova-v2-theme { --ferova-gold: #1d4ed8; }
+.proposal-topbar kbd { color: #52637a; }
+.real-preview[data-look=proposed] .module-host [class*='text-[#a39a8a]'],
+.real-preview[data-look=proposed] .module-host [class*='text-[#8a8377]'] { color: #53657d !important; }
+
+.real-preview[data-look=proposed] .module-host p.leading-5.opacity-80 { opacity: 1; }

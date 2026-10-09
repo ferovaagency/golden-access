@@ -1,0 +1,61 @@
+{
+  "results": [
+    {
+      "name": "Demo: three views and task completion",
+      "passed": true
+    },
+    {
+      "name": "Annual plan intention reaches access route",
+      "passed": true
+    },
+    {
+      "name": "FAQ disclosure",
+      "passed": true
+    },
+    {
+      "name": "Mobile navigation closes on Escape and section link",
+      "passed": true
+    },
+    {
+      "name": "Content and plan links available without JavaScript",
+      "passed": true
+    },
+    {
+      "name": "33 public routes hydrate without page errors",
+      "passed": true
+    },
+    {
+      "name": "Proposal: five navigable sections",
+      "passed": true
+    },
+    {
+      "name": "Proposal: keyboard search",
+      "passed": true
+    },
+    {
+      "name": "Proposal: rejects zero amount; demo submits without saving",
+      "passed": true
+    },
+    {
+      "name": "Proposal: assistant opens on demand and closes",
+      "passed": true
+    },
+    {
+      "name": "Proposal accessibility 1440",
+      "issues": []
+    },
+    {
+      "name": "Proposal accessibility 375",
+      "issues": []
+    },
+    {
+      "name": "Proposal accessibility 320",
+      "issues": []
+    },
+    {
+      "name": "Proposal mobile navigation closes and removes hidden links from keyboard focus",
+      "passed": true
+    }
+  ],
+  "errors": []
+}

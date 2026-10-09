@@ -1,0 +1,1512 @@
+<!doctype html>
+<html lang="es-CO">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Ferova One · Propuesta de interfaz</title>
+    <style>
+      :root {
+        --wine: #731c36;
+        --deep: #3c1626;
+        --ink: #29262a;
+        --muted: #706770;
+        --line: #e7e1dd;
+        --canvas: #f7f6f3;
+        --rose: #f4e8ec;
+        --gold: #b58a3d;
+        --green: #316b4d;
+        --soft: #edf3ed;
+        font-family: Inter, "Segoe UI", sans-serif;
+        color: var(--ink);
+        font-size: 14px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--canvas);
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+      button,
+      a {
+        cursor: pointer;
+      }
+      button {
+        color: inherit;
+      }
+      button:focus-visible,
+      a:focus-visible,
+      input:focus-visible,
+      select:focus-visible {
+        outline: 3px solid var(--wine);
+        outline-offset: 3px;
+      }
+      button {
+        border: 0;
+      }
+      a {
+        text-decoration: none;
+        color: inherit;
+      }
+      .sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        width: 220px;
+        background: #fff;
+        border-right: 1px solid var(--line);
+        padding: 28px 17px;
+        display: flex;
+        flex-direction: column;
+        z-index: 10;
+      }
+      .brand {
+        display: flex;
+        gap: 11px;
+        align-items: center;
+        font-size: 25px;
+        font-weight: 650;
+        letter-spacing: -1px;
+      }
+      .brand img {
+        width: 26px;
+        height: 33px;
+        object-fit: contain;
+      }
+      .brand-icon {
+        background: var(--deep);
+        padding: 5px 9px;
+        border-radius: 10px;
+      }
+      .brand em {
+        font-style: normal;
+        font-weight: 400;
+        color: var(--wine);
+        margin-left: 4px;
+      }
+      .workspace {
+        margin: 28px 0 21px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .initial {
+        width: 30px;
+        height: 30px;
+        display: grid;
+        place-items: center;
+        border-radius: 7px;
+        background: var(--rose);
+        color: var(--wine);
+        font-weight: 650;
+      }
+      .workspace small {
+        display: block;
+        color: var(--muted);
+        font-size: 10px;
+        margin-top: 3px;
+      }
+      .nav-label {
+        font-size: 9px;
+        letter-spacing: 1.7px;
+        color: var(--muted);
+        margin: 12px 13px;
+      }
+      .nav {
+        display: grid;
+        gap: 6px;
+      }
+      .nav button {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 13px 14px;
+        min-height: 45px;
+        border-radius: 8px;
+        background: transparent;
+        text-align: left;
+        font-size: 13px;
+        font-weight: 550;
+      }
+      .nav button[aria-current="page"] {
+        color: var(--wine);
+        background: var(--rose);
+      }
+      .nav button:hover {
+        background: var(--canvas);
+      }
+      .nav-symbol {
+        font-size: 18px;
+        width: 21px;
+        text-align: center;
+      }
+      .sidebar-bottom {
+        margin-top: auto;
+        padding: 16px 13px 0;
+        border-top: 1px solid var(--line);
+        font-size: 11px;
+        line-height: 1.7;
+        color: var(--muted);
+      }
+      .sidebar-bottom b {
+        color: var(--wine);
+        display: block;
+      }
+      .app {
+        margin-left: 220px;
+      }
+      .topbar {
+        height: 80px;
+        border-bottom: 1px solid var(--line);
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 38px;
+        gap: 20px;
+      }
+      .search {
+        background: var(--canvas);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 11px 14px;
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+        width: 310px;
+        font-size: 12px;
+        text-align: left;
+      }
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 17px;
+      }
+      .prototype {
+        font-size: 9px;
+        letter-spacing: 1.1px;
+        color: var(--muted);
+      }
+      .ai-button {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--rose);
+        color: var(--wine);
+        border-radius: 7px;
+        padding: 10px 13px;
+        font-size: 12px;
+        min-height: 40px;
+      }
+      .avatar {
+        width: 32px;
+        height: 32px;
+        background: #ebe9e5;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-size: 11px;
+      }
+      .menu {
+        display: none;
+        background: transparent;
+        font-size: 22px;
+      }
+      .content {
+        max-width: 1240px;
+        padding: 39px 42px;
+        margin: auto;
+      }
+      .overline {
+        font-size: 10px;
+        letter-spacing: 1.5px;
+        color: var(--muted);
+        margin: 0 0 9px;
+      }
+      .page-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 29px;
+      }
+      h1 {
+        font-size: 32px;
+        font-weight: 550;
+        letter-spacing: -1.2px;
+        margin: 0 0 9px;
+      }
+      h2 {
+        font-size: 15px;
+        font-weight: 600;
+        margin: 0;
+      }
+      h3 {
+        font-size: 13px;
+        margin: 0;
+      }
+      .page-heading p {
+        color: var(--muted);
+        font-size: 12px;
+        margin: 0;
+      }
+      .primary {
+        background: var(--wine);
+        color: #fff;
+        border-radius: 8px;
+        padding: 12px 17px;
+        font-weight: 600;
+        font-size: 12px;
+        min-height: 44px;
+      }
+      .primary:hover {
+        background: var(--deep);
+      }
+      .secondary {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 10px 14px;
+        font-size: 12px;
+        min-height: 42px;
+      }
+      .period {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .segments {
+        display: flex;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 3px;
+        background: #fff;
+      }
+      .segments button {
+        padding: 8px 15px;
+        background: transparent;
+        font-size: 11px;
+        border-radius: 5px;
+        min-height: 35px;
+      }
+      .segments button[aria-pressed="true"] {
+        background: var(--deep);
+        color: white;
+      }
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        margin-bottom: 27px;
+      }
+      .metric {
+        padding: 23px 26px;
+      }
+      .metric + .metric {
+        border-left: 1px solid var(--line);
+      }
+      .metric-label {
+        font-size: 11px;
+        color: var(--muted);
+        display: block;
+      }
+      .metric-value {
+        font-size: 31px;
+        letter-spacing: -1px;
+        font-weight: 550;
+        display: block;
+        margin: 10px 0;
+        font-variant-numeric: tabular-nums;
+      }
+      .metric small {
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .metric small.positive {
+        color: var(--green);
+      }
+      .main-grid {
+        display: grid;
+        grid-template-columns: 1.45fr 1fr;
+        gap: 23px;
+      }
+      .panel {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 24px;
+      }
+      .panel-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        gap: 10px;
+      }
+      .count {
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .attention-row {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        border-top: 1px solid var(--line);
+        padding: 19px 0;
+      }
+      .attention-row:last-child {
+        padding-bottom: 3px;
+      }
+      .attention-icon {
+        background: #fbf0e2;
+        color: #8c5f18;
+        width: 32px;
+        height: 32px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        font-size: 15px;
+      }
+      .attention-row > div {
+        flex: 1;
+      }
+      .attention-row b {
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .attention-row small {
+        display: block;
+        font-size: 10px;
+        color: var(--muted);
+        margin-top: 5px;
+        line-height: 1.6;
+      }
+      .row-action {
+        background: transparent;
+        color: var(--wine);
+        font-weight: 600;
+        font-size: 11px;
+        min-height: 42px;
+        padding: 8px;
+      }
+      .task {
+        display: flex;
+        align-items: start;
+        gap: 11px;
+        border-top: 1px solid var(--line);
+        padding: 17px 0;
+        font-size: 12px;
+      }
+      .task input {
+        accent-color: var(--wine);
+        width: 17px;
+        height: 17px;
+        flex-shrink: 0;
+      }
+      .task small {
+        display: block;
+        font-size: 10px;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+      .task:has(input:checked) b {
+        text-decoration: line-through;
+        color: var(--muted);
+      }
+      .task b {
+        font-weight: 550;
+      }
+      .next-step {
+        background: var(--canvas);
+        padding: 13px;
+        border-radius: 7px;
+        margin-top: 9px;
+        font-size: 10px;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+      .next-step strong {
+        color: var(--wine);
+      }
+      .bottom-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.15fr;
+        gap: 23px;
+        margin-top: 23px;
+      }
+      .chart {
+        display: flex;
+        gap: 14px;
+        align-items: end;
+        height: 150px;
+        padding-top: 10px;
+      }
+      .bar-group {
+        flex: 1;
+        display: flex;
+        gap: 5px;
+        align-items: end;
+        height: 100%;
+        position: relative;
+        padding-bottom: 22px;
+      }
+      .bar-group i {
+        flex: 1;
+        background: var(--wine);
+        border-radius: 3px 3px 0 0;
+      }
+      .bar-group i + i {
+        background: #d3be92;
+      }
+      .bar-group small {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        text-align: center;
+        color: var(--muted);
+        font-size: 9px;
+      }
+      .legend {
+        display: flex;
+        gap: 16px;
+        color: var(--muted);
+        font-size: 10px;
+        margin-top: 12px;
+      }
+      .legend span:first-child {
+        color: var(--wine);
+      }
+      .projects-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 11px;
+      }
+      .projects-table th {
+        font-size: 9px;
+        color: var(--muted);
+        font-weight: 500;
+        padding: 0 0 13px;
+      }
+      .projects-table td {
+        padding: 16px 0;
+        border-top: 1px solid var(--line);
+      }
+      .projects-table td small {
+        display: block;
+        color: var(--muted);
+        font-size: 9px;
+        margin-top: 5px;
+      }
+      .progress {
+        display: block;
+        width: 70px;
+        height: 4px;
+        border-radius: 4px;
+        background: var(--canvas);
+        margin-top: 7px;
+      }
+      .progress i {
+        display: block;
+        background: var(--wine);
+        height: 100%;
+        border-radius: 4px;
+      }
+      .tag {
+        font-size: 9px;
+        background: var(--soft);
+        color: var(--green);
+        padding: 4px 7px;
+        border-radius: 4px;
+        display: inline-block;
+      }
+      .footnote {
+        color: var(--muted);
+        font-size: 10px;
+        margin: 25px 0 0;
+        line-height: 1.7;
+      }
+      .alternate {
+        display: none;
+      }
+      .client-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+      }
+      .client-card h2 {
+        margin-top: 17px;
+        font-size: 21px;
+      }
+      .client-card p {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.8;
+      }
+      .client-card .secondary {
+        margin-top: 15px;
+      }
+      .schedule {
+        margin-top: 18px;
+        display: grid;
+        gap: 12px;
+      }
+      .schedule > div {
+        display: grid;
+        grid-template-columns: 70px 1fr;
+        gap: 20px;
+        align-items: center;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .schedule article {
+        background: var(--rose);
+        border-left: 3px solid var(--wine);
+        border-radius: 0 8px 8px 0;
+        padding: 22px;
+        color: var(--ink);
+      }
+      .schedule small {
+        display: block;
+        color: var(--muted);
+        margin-top: 8px;
+      }
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--deep);
+        color: #fff;
+        padding: 14px 22px;
+        border-radius: 9px;
+        z-index: 40;
+        font-size: 12px;
+        box-shadow: 0 8px 30px #0002;
+        max-width: 90vw;
+      }
+      .toast:empty {
+        display: none;
+      }
+      dialog {
+        border: 1px solid var(--line);
+        border-radius: 15px;
+        padding: 30px;
+        width: min(460px, calc(100% - 30px));
+        color: var(--ink);
+        box-shadow: 0 20px 70px #0002;
+      }
+      dialog::backdrop {
+        background: #29262a60;
+      }
+      dialog header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 22px;
+      }
+      dialog header h2 {
+        font-size: 22px;
+        letter-spacing: -0.5px;
+      }
+      dialog .close {
+        background: var(--canvas);
+        width: 36px;
+        height: 36px;
+        border-radius: 7px;
+        font-size: 23px;
+      }
+      dialog label {
+        display: block;
+        font-size: 12px;
+        margin-bottom: 15px;
+        font-weight: 550;
+      }
+      dialog input,
+      dialog select {
+        display: block;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 12px;
+        width: 100%;
+        margin-top: 7px;
+        background: #fff;
+        color: var(--ink);
+      }
+      dialog p {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.8;
+      }
+      dialog .primary {
+        width: 100%;
+        margin-top: 14px;
+      }
+      dialog .secondary {
+        margin-top: 12px;
+      }
+      .search-results {
+        display: grid;
+        gap: 8px;
+      }
+      .search-results button {
+        padding: 14px;
+        background: var(--canvas);
+        border-radius: 8px;
+        text-align: left;
+      }
+      .search-results button:hover {
+        background: var(--rose);
+      }
+      .ai-context {
+        background: var(--canvas);
+        padding: 16px;
+        border-radius: 8px;
+        border-left: 3px solid var(--gold);
+      }
+      .drawer-dialog {
+        height: 100dvh;
+        max-height: 100dvh;
+        position: fixed;
+        inset: 0 0 0 auto;
+        margin: 0;
+        border-radius: 0;
+        width: min(440px, 100%);
+        padding: 30px;
+      }
+      .drawer-dialog header {
+        margin-bottom: 30px;
+      }
+      .ai-suggest {
+        display: grid;
+        gap: 10px;
+        margin-block: 20px;
+      }
+      .ai-suggest button {
+        background: var(--rose);
+        color: var(--wine);
+        padding: 14px;
+        border-radius: 8px;
+        text-align: left;
+        font-size: 12px;
+      }
+      .ai-response {
+        padding: 16px;
+        background: var(--soft);
+        border-radius: 8px;
+        font-size: 12px;
+        line-height: 1.9;
+        display: none;
+      }
+      @media (max-width: 1100px) {
+        .sidebar {
+          width: 190px;
+        }
+        .app {
+          margin-left: 190px;
+        }
+        .content {
+          padding: 30px 25px;
+        }
+        .topbar {
+          padding-inline: 25px;
+        }
+        .prototype {
+          display: none;
+        }
+        .metric {
+          padding: 20px;
+        }
+        .metric-value {
+          font-size: 26px;
+        }
+        .main-grid,
+        .bottom-grid {
+          gap: 16px;
+        }
+        .panel {
+          padding: 20px;
+        }
+      }
+      @media (max-width: 850px) {
+        .sidebar {
+          width: 180px;
+        }
+        .app {
+          margin-left: 180px;
+        }
+        .main-grid,
+        .bottom-grid {
+          grid-template-columns: 1fr;
+        }
+        .search {
+          width: 210px;
+        }
+        .top-actions {
+          gap: 10px;
+        }
+        .metric {
+          padding: 17px 12px;
+        }
+        .metric-value {
+          font-size: 22px;
+        }
+        .metric-label {
+          font-size: 10px;
+        }
+        .page-heading h1 {
+          font-size: 27px;
+        }
+        .client-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 650px) {
+        .sidebar {
+          transform: translateX(-100%);
+          width: 235px;
+          box-shadow: 10px 0 35px #0001;
+        }
+        .sidebar.open {
+          transform: translateX(0);
+        }
+        .app {
+          margin-left: 0;
+        }
+        .topbar {
+          height: 68px;
+          padding-inline: 18px;
+          gap: 10px;
+        }
+        .menu {
+          display: block;
+        }
+        .search {
+          width: auto;
+          flex: 1;
+          font-size: 11px;
+        }
+        .search kbd {
+          display: none;
+        }
+        .top-actions .avatar {
+          display: none;
+        }
+        .ai-button {
+          font-size: 11px;
+          padding: 10px;
+        }
+        .content {
+          padding: 26px 18px;
+        }
+        .page-heading {
+          align-items: start;
+          gap: 10px;
+        }
+        .page-heading h1 {
+          font-size: 27px;
+        }
+        .page-heading p {
+          font-size: 11px;
+        }
+        .page-heading > .primary {
+          font-size: 11px;
+          padding-inline: 10px;
+        }
+        .metrics {
+          grid-template-columns: 1fr;
+          margin-bottom: 20px;
+        }
+        .metric {
+          padding: 17px 20px;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          align-items: center;
+          gap: 4px;
+        }
+        .metric + .metric {
+          border-left: 0;
+          border-top: 1px solid var(--line);
+        }
+        .metric-value {
+          text-align: right;
+          font-size: 26px;
+          margin: 0;
+          grid-column: 2;
+          grid-row: 1/3;
+        }
+        .metric small {
+          grid-column: 1;
+        }
+        .period {
+          font-size: 10px;
+        }
+        .panel {
+          padding: 19px;
+        }
+        .attention-row {
+          gap: 9px;
+        }
+        .attention-row b {
+          font-size: 11px;
+        }
+        .attention-icon {
+          width: 28px;
+          height: 28px;
+        }
+        .row-action {
+          font-size: 10px;
+          padding: 6px;
+        }
+        .brand {
+          font-size: 26px;
+        }
+        .bottom-grid {
+          margin-top: 16px;
+        }
+        .projects-table {
+          font-size: 10px;
+        }
+        .schedule > div {
+          grid-template-columns: 45px 1fr;
+          gap: 10px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          scroll-behavior: auto !important;
+          transition: none !important;
+        }
+      }
+      .sidebar-close {
+        display: none;
+      }
+      @media (max-width: 650px) {
+        .sidebar-close {
+          display: block;
+          position: absolute;
+          right: 4px;
+          top: 4px;
+          width: 40px;
+          height: 40px;
+          background: transparent;
+          font-size: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <aside class="sidebar" id="sidebar">
+      <button class="sidebar-close" aria-label="Cerrar navegación">×</button
+      ><a class="brand" href="#inicio"
+        ><span class="brand-icon"
+          ><img src="../../public/brand/ferova-isotipo.png" alt="Isotipo Ferova" /></span
+        ><span>ferova<em>one</em></span></a
+      >
+      <div class="workspace">
+        <span class="initial">E</span
+        ><span><b>Estudio creativo</b><small>Mi espacio de trabajo · ejemplo</small></span>
+      </div>
+      <p class="nav-label">TU NEGOCIO</p>
+      <nav class="nav" aria-label="Navegación principal">
+        <button data-view="inicio" aria-current="page">
+          <span class="nav-symbol">⌂</span>Inicio</button
+        ><button data-view="clientes"><span class="nav-symbol">♧</span>Clientes</button
+        ><button data-view="proyectos"><span class="nav-symbol">▣</span>Proyectos</button
+        ><button data-view="agenda"><span class="nav-symbol">▦</span>Agenda</button
+        ><button data-view="finanzas"><span class="nav-symbol">▤</span>Finanzas</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <b>Propuesta de interfaz</b>Datos ficticios, sin conexión a tu cuenta. Las acciones de esta
+        demo no guardan datos reales.
+      </div>
+    </aside>
+    <div class="app">
+      <header class="topbar">
+        <button class="menu" aria-label="Abrir menú" aria-controls="sidebar" aria-expanded="false">
+          ☰</button
+        ><button class="search" id="search-open">
+          <span>⌕ &nbsp; Buscar en mi negocio</span><kbd>Ctrl K</kbd>
+        </button>
+        <div class="top-actions">
+          <span class="prototype">PROPUESTA · DATOS DE EJEMPLO</span
+          ><button class="ai-button" id="ai-open">✦ Asistente</button
+          ><span class="avatar" aria-label="Usuario de ejemplo">E</span>
+        </div>
+      </header>
+      <main class="content">
+        <p class="overline" id="breadcrumb">TU ESPACIO / INICIO</p>
+        <div class="page-heading">
+          <div>
+            <h1 id="page-title">Un buen día empieza claro.</h1>
+            <p id="page-subtitle">Esto es lo que necesita tu atención. Lo demás puede esperar.</p>
+          </div>
+          <button class="primary" id="new-sale">＋ Nueva venta</button>
+        </div>
+        <section id="inicio-view">
+          <div class="period">
+            <span>Resumen de tu negocio · <span id="period-label">este mes</span></span>
+            <div class="segments" role="group" aria-label="Período de ejemplo">
+              <button aria-pressed="true" data-period="month">Este mes</button
+              ><button aria-pressed="false" data-period="year">Este año</button>
+            </div>
+          </div>
+          <div class="metrics">
+            <div class="metric">
+              <span class="metric-label">Ingresos registrados</span
+              ><strong class="metric-value" id="income">$8.400.000</strong
+              ><small class="positive">COP · cifras de ejemplo</small>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Pendiente por cobrar</span
+              ><strong class="metric-value" id="receivables">$2.100.000</strong
+              ><small>2 cobros por revisar</small>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Horas en proyectos</span
+              ><strong class="metric-value" id="hours">64 h</strong><small>Tiempo registrado</small>
+            </div>
+          </div>
+          <div class="main-grid">
+            <section class="panel">
+              <div class="panel-heading">
+                <h2>Lo que necesita tu atención</h2>
+                <span class="count">3 acciones</span>
+              </div>
+              <div class="attention-row">
+                <span class="attention-icon">$</span>
+                <div>
+                  <b>Revisar el cobro de Casa Oliva</b
+                  ><small>$1.200.000 pendientes · vencimiento cercano</small>
+                </div>
+                <button class="row-action" data-detail="cobro">Ver cobro ↗</button>
+              </div>
+              <div class="attention-row">
+                <span class="attention-icon">↗</span>
+                <div>
+                  <b>Enviar la propuesta a Estudio Norte</b
+                  ><small>Identidad de marca · lista para revisar</small>
+                </div>
+                <button class="row-action" data-detail="propuesta">Revisar ↗</button>
+              </div>
+              <div class="attention-row">
+                <span class="attention-icon">◷</span>
+                <div>
+                  <b>Registrar el tiempo de tu última entrega</b
+                  ><small>Completa el contexto de rentabilidad</small>
+                </div>
+                <button class="row-action" data-detail="horas">Anotar ↗</button>
+              </div>
+            </section>
+            <section class="panel">
+              <div class="panel-heading">
+                <h2>Tu foco de hoy</h2>
+                <span class="count" id="task-count">2 pendientes</span>
+              </div>
+              <label class="task"
+                ><input type="checkbox" /><span
+                  ><b>Diseñar la primera propuesta</b
+                  ><small>Estudio Norte · 90 min de foco</small></span
+                ></label
+              ><label class="task"
+                ><input type="checkbox" /><span
+                  ><b>Revisar ajustes del sitio web</b><small>Casa Oliva · 30 min</small></span
+                ></label
+              >
+              <div class="next-step">
+                <strong>Un paso a la vez.</strong><br />Tu agenda completa sigue disponible en
+                Agenda.
+              </div>
+            </section>
+          </div>
+          <div class="bottom-grid">
+            <section class="panel">
+              <div class="panel-heading">
+                <h2>Cómo va tu negocio</h2>
+                <span class="count">Ejemplo · 6 meses</span>
+              </div>
+              <div
+                class="chart"
+                role="img"
+                aria-label="Gráfico ilustrativo de ingresos y costos por mes"
+              >
+                <div class="bar-group">
+                  <i style="height: 40%"></i><i style="height: 24%"></i><small>Ene</small>
+                </div>
+                <div class="bar-group">
+                  <i style="height: 58%"></i><i style="height: 28%"></i><small>Feb</small>
+                </div>
+                <div class="bar-group">
+                  <i style="height: 46%"></i><i style="height: 26%"></i><small>Mar</small>
+                </div>
+                <div class="bar-group">
+                  <i style="height: 72%"></i><i style="height: 39%"></i><small>Abr</small>
+                </div>
+                <div class="bar-group">
+                  <i style="height: 64%"></i><i style="height: 32%"></i><small>May</small>
+                </div>
+                <div class="bar-group">
+                  <i style="height: 92%"></i><i style="height: 42%"></i><small>Jun</small>
+                </div>
+              </div>
+              <div class="legend"><span>● Ingresos</span><span>● Costos registrados</span></div>
+            </section>
+            <section class="panel">
+              <div class="panel-heading">
+                <h2>Proyectos en marcha</h2>
+                <button class="row-action" data-view="proyectos">Ver todos ↗</button>
+              </div>
+              <table class="projects-table">
+                <thead>
+                  <tr>
+                    <th>Cliente / proyecto</th>
+                    <th>Avance</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><b>Estudio Norte</b><small>Identidad de marca</small></td>
+                    <td>
+                      65%<span class="progress"><i style="width: 65%"></i></span>
+                    </td>
+                    <td><span class="tag">En marcha</span></td>
+                  </tr>
+                  <tr>
+                    <td><b>Casa Oliva</b><small>Sitio web</small></td>
+                    <td>
+                      40%<span class="progress"><i style="width: 40%"></i></span>
+                    </td>
+                    <td><span class="tag">En marcha</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+          </div>
+        </section>
+        <section class="alternate" id="clientes-view">
+          <div class="client-grid">
+            <article class="panel client-card">
+              <span class="initial">N</span>
+              <h2>Estudio Norte</h2>
+              <p>
+                Identidad de marca<br />1 proyecto activo · 34 horas registradas<br />Cobros
+                pendientes: $900.000
+              </p>
+              <button class="secondary" data-detail="cliente">Abrir ficha del cliente ↗</button>
+            </article>
+            <article class="panel client-card">
+              <span class="initial">O</span>
+              <h2>Casa Oliva</h2>
+              <p>
+                Diseño y desarrollo web<br />1 proyecto activo · 30 horas registradas<br />Cobros
+                pendientes: $1.200.000
+              </p>
+              <button class="secondary" data-detail="cobro">Revisar cobro pendiente ↗</button>
+            </article>
+          </div>
+        </section>
+        <section class="alternate" id="proyectos-view">
+          <div class="panel">
+            <div class="panel-heading">
+              <h2>El proyecto, con todo su contexto</h2>
+              <span class="tag">Ejemplo</span>
+            </div>
+            <p class="footnote">Cliente, entregables, horas y cobros dentro de la misma ficha.</p>
+            <div class="schedule">
+              <div>
+                <span>65%</span>
+                <article>
+                  <h3>Estudio Norte · Identidad de marca</h3>
+                  <small>Próximo hito: presentar propuesta visual</small
+                  ><button class="row-action" data-detail="propuesta">Abrir proyecto ↗</button>
+                </article>
+              </div>
+              <div>
+                <span>40%</span>
+                <article>
+                  <h3>Casa Oliva · Sitio web</h3>
+                  <small>Próximo hito: revisión de ajustes</small
+                  ><button class="row-action" data-detail="cliente">Abrir proyecto ↗</button>
+                </article>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section class="alternate" id="agenda-view">
+          <div class="panel">
+            <div class="panel-heading">
+              <h2>Una agenda que puedes leer de un vistazo</h2>
+              <span class="count">Día de ejemplo</span>
+            </div>
+            <div class="schedule">
+              <div>
+                <span>09:00</span>
+                <article>
+                  <h3>Trabajo enfocado · Estudio Norte</h3>
+                  <small>Identidad de marca · 90 minutos</small>
+                </article>
+              </div>
+              <div>
+                <span>11:00</span>
+                <article>
+                  <h3>Revisión · Casa Oliva</h3>
+                  <small>Reunión · 30 minutos</small>
+                </article>
+              </div>
+              <div>
+                <span>14:00</span>
+                <article>
+                  <h3>Cobros y administración</h3>
+                  <small>Operación del estudio · 45 minutos</small>
+                </article>
+              </div>
+            </div>
+            <button class="secondary" data-detail="horas">Registrar tiempo</button>
+          </div>
+        </section>
+        <section class="alternate" id="finanzas-view">
+          <div class="panel">
+            <div class="panel-heading">
+              <h2>Dinero que entra, dinero que sale</h2>
+              <button class="primary" data-open-sale>Nueva venta</button>
+            </div>
+            <table class="projects-table">
+              <thead>
+                <tr>
+                  <th>Movimiento</th>
+                  <th>Importe COP</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Identidad de marca · Estudio Norte</td>
+                  <td>$2.400.000</td>
+                  <td><span class="tag">Registrado</span></td>
+                </tr>
+                <tr>
+                  <td>Sitio web · Casa Oliva</td>
+                  <td>$3.600.000</td>
+                  <td><span class="tag">Abono pendiente</span></td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="footnote">
+              Propuesta: separar Ingresos, Gastos y Cuentas en vistas claras. Impuestos, comisiones
+              y opciones avanzadas se muestran cuando aplican.
+            </p>
+          </div>
+        </section>
+        <p class="footnote">
+          Prototipo de diseño · Información ilustrativa, no corresponde a tu cuenta. Menos avisos
+          permanentes; contexto y ayuda disponibles cuando los necesitas.
+        </p>
+      </main>
+    </div>
+    <dialog id="sale-dialog" class="drawer-dialog" aria-labelledby="sale-title">
+      <header>
+        <h2 id="sale-title">Nueva venta</h2>
+        <button class="close" data-close aria-label="Cerrar formulario">×</button>
+      </header>
+      <p>Empieza por lo esencial. Las opciones avanzadas se abren cuando las necesitas.</p>
+      <form id="sale-form">
+        <label
+          >Cliente<select required name="client">
+            <option value="">Selecciona un cliente</option>
+            <option>Estudio Norte</option>
+            <option>Casa Oliva</option>
+          </select></label
+        ><label
+          >Concepto<input
+            name="concept"
+            placeholder="Por ejemplo, diseño de identidad"
+            required /></label
+        ><label
+          >Importe en COP<input
+            name="amount"
+            type="number"
+            min="1"
+            step="1"
+            placeholder="0"
+            required /></label
+        ><label
+          >Estado del cobro<select name="status">
+            <option>Pendiente por cobrar</option>
+            <option>Pagado</option>
+          </select></label
+        >
+        <details>
+          <summary>Impuestos y comisiones</summary>
+          <p>
+            En la aplicación, este apartado contendría los campos del perfil tributario y la
+            pasarela elegida.
+          </p>
+        </details>
+        <button class="primary" type="submit">Probar validación del formulario</button>
+        <p>Esta demostración no guarda una venta ni modifica tu cuenta.</p>
+      </form>
+    </dialog>
+    <dialog id="search-dialog" aria-labelledby="search-title">
+      <header>
+        <h2 id="search-title">Ir a…</h2>
+        <button class="close" data-close aria-label="Cerrar búsqueda">×</button>
+      </header>
+      <label
+        >Buscar sección<input
+          id="search-input"
+          type="search"
+          placeholder="Clientes, proyectos, agenda…"
+      /></label>
+      <div class="search-results">
+        <button data-view="inicio">Inicio · lo importante hoy</button
+        ><button data-view="clientes">Clientes · información y cobros</button
+        ><button data-view="proyectos">Proyectos · entregables y avance</button
+        ><button data-view="agenda">Agenda · tareas y tiempo</button
+        ><button data-view="finanzas">Finanzas · ingresos y gastos</button>
+      </div>
+      <p id="search-empty" hidden>No se encontraron secciones.</p>
+    </dialog>
+    <dialog id="ai-dialog" class="drawer-dialog" aria-labelledby="ai-title">
+      <header>
+        <h2 id="ai-title">✦ Asistente Ferova</h2>
+        <button class="close" data-close aria-label="Cerrar asistente">×</button>
+      </header>
+      <div class="ai-context">
+        <h3>Contexto: tu negocio</h3>
+        <p>Se abre a petición y deja el área de trabajo despejada al cerrarlo.</p>
+      </div>
+      <div class="ai-suggest">
+        <button data-question="cobros">¿Qué cobros debería revisar?</button
+        ><button data-question="proyectos">¿Cómo van mis proyectos?</button
+        ><button data-question="hoy">Ayúdame a priorizar el día</button>
+      </div>
+      <div class="ai-response" id="ai-response" role="status"></div>
+      <p>
+        Respuestas escritas para ilustrar el diseño. Este prototipo no llama a una IA ni accede a
+        tus datos.
+      </p>
+    </dialog>
+    <dialog id="detail-dialog" aria-labelledby="detail-title">
+      <header>
+        <h2 id="detail-title">Detalle</h2>
+        <button class="close" data-close aria-label="Cerrar detalle">×</button>
+      </header>
+      <p id="detail-copy"></p>
+      <button class="primary" data-close>Volver a mi espacio</button>
+    </dialog>
+    <div class="toast" role="status" id="toast"></div>
+    <script>
+      const titles = {
+        inicio: [
+          "Un buen día empieza claro.",
+          "Esto es lo que necesita tu atención. Lo demás puede esperar.",
+        ],
+        clientes: [
+          "Cada cliente, con su contexto.",
+          "Proyectos, horas y cobros reunidos en una sola ficha.",
+        ],
+        proyectos: [
+          "El trabajo se mueve aquí.",
+          "Entregables y siguiente paso, sin saltar entre módulos.",
+        ],
+        agenda: ["Hazle espacio a tu foco.", "Una agenda legible, con tiempo para lo importante."],
+        finanzas: [
+          "Tus números, sin vueltas.",
+          "Primero lo esencial. Los detalles, cuando los necesitas.",
+        ],
+      };
+      const sidebar = document.querySelector("#sidebar"),
+        menu = document.querySelector(".menu");
+      let previousFocus = null;
+      function syncSidebar() {
+        sidebar.inert =
+          matchMedia("(max-width:650px)").matches && !sidebar.classList.contains("open");
+      }
+      syncSidebar();
+      window.addEventListener("resize", syncSidebar);
+      document.querySelector(".sidebar-close").onclick = () => {
+        sidebar.classList.remove("open");
+        menu.setAttribute("aria-expanded", "false");
+        menu.setAttribute("aria-label", "Abrir menú");
+        syncSidebar();
+        menu.focus();
+      };
+      function openDialog(id) {
+        previousFocus = document.activeElement;
+        document.getElementById(id).showModal();
+      }
+      function navigate(view) {
+        if (!titles[view]) view = "inicio";
+        document
+          .querySelectorAll(".content>section")
+          .forEach((s) => (s.style.display = s.id === view + "-view" ? "block" : "none"));
+        document.querySelectorAll(".nav button").forEach((b) => {
+          if (b.dataset.view === view) b.setAttribute("aria-current", "page");
+          else b.removeAttribute("aria-current");
+        });
+        document.querySelector("#page-title").textContent = titles[view][0];
+        document.querySelector("#page-subtitle").textContent = titles[view][1];
+        document.querySelector("#breadcrumb").textContent = "TU ESPACIO / " + view.toUpperCase();
+        sidebar.classList.remove("open");
+        menu.setAttribute("aria-expanded", "false");
+        menu.setAttribute("aria-label", "Abrir menú");
+        syncSidebar();
+        document.querySelectorAll("dialog[open]").forEach((d) => d.close());
+        if (location.hash !== "#" + view) history.pushState(null, "", "#" + view);
+        window.scrollTo(0, 0);
+      }
+      document
+        .querySelectorAll("[data-view]")
+        .forEach((b) => b.addEventListener("click", () => navigate(b.dataset.view)));
+      window.addEventListener("hashchange", () => navigate(location.hash.slice(1)));
+      window.addEventListener("popstate", () => navigate(location.hash.slice(1)));
+      if (location.hash) navigate(location.hash.slice(1));
+      menu.addEventListener("click", () => {
+        const open = sidebar.classList.toggle("open");
+        menu.setAttribute("aria-expanded", String(open));
+        menu.setAttribute("aria-label", open ? "Cerrar menú" : "Abrir menú");
+        syncSidebar();
+        if (open) document.querySelector(".sidebar-close").focus();
+      });
+      document.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+          e.preventDefault();
+          openDialog("search-dialog");
+          document.querySelector("#search-input").focus();
+        }
+        if (e.key === "Escape") {
+          const wasOpen = sidebar.classList.contains("open");
+          sidebar.classList.remove("open");
+          menu.setAttribute("aria-expanded", "false");
+          menu.setAttribute("aria-label", "Abrir menú");
+          syncSidebar();
+          if (wasOpen) menu.focus();
+        }
+      });
+      document
+        .querySelectorAll("[data-close]")
+        .forEach((b) => b.addEventListener("click", () => b.closest("dialog").close()));
+      document.querySelectorAll("dialog").forEach((d) => {
+        d.addEventListener("close", () => previousFocus?.focus());
+        d.addEventListener("click", (e) => {
+          if (e.target === d) {
+            const r = d.getBoundingClientRect();
+            if (
+              e.clientX < r.left ||
+              e.clientX > r.right ||
+              e.clientY < r.top ||
+              e.clientY > r.bottom
+            )
+              d.close();
+          }
+        });
+      });
+      document.querySelector("#search-open").onclick = () => {
+        openDialog("search-dialog");
+        document.querySelector("#search-input").focus();
+      };
+      document.querySelector("#ai-open").onclick = () => openDialog("ai-dialog");
+      document
+        .querySelectorAll("#new-sale,[data-open-sale]")
+        .forEach((b) => (b.onclick = () => openDialog("sale-dialog")));
+      document.querySelector("#search-input").addEventListener("input", (e) => {
+        const q = e.target.value.toLocaleLowerCase("es");
+        let found = 0;
+        document.querySelectorAll(".search-results button").forEach((b) => {
+          b.hidden = !b.textContent.toLocaleLowerCase("es").includes(q);
+          if (!b.hidden) found++;
+        });
+        document.querySelector("#search-empty").hidden = found > 0;
+      });
+      let toastTimer;
+      function toast(message) {
+        document.querySelector("#toast").textContent = message;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => (document.querySelector("#toast").textContent = ""), 4500);
+      }
+      document.querySelector("#sale-form").onsubmit = (e) => {
+        e.preventDefault();
+        document.querySelector("#sale-dialog").close();
+        e.target.reset();
+        toast("Validación correcta. No se guardó ninguna venta: estás en una propuesta de diseño.");
+      };
+      document.querySelectorAll(".task input").forEach(
+        (i) =>
+          (i.onchange = () => {
+            document.querySelector("#task-count").textContent =
+              document.querySelectorAll(".task input:not(:checked)").length + " pendientes";
+          }),
+      );
+      document.querySelectorAll("[data-period]").forEach(
+        (b) =>
+          (b.onclick = () => {
+            document
+              .querySelectorAll("[data-period]")
+              .forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+            const year = b.dataset.period === "year";
+            document.querySelector("#period-label").textContent = year ? "este año" : "este mes";
+            document.querySelector("#income").textContent = year ? "$50.400.000" : "$8.400.000";
+            document.querySelector("#receivables").textContent = "$2.100.000";
+            document.querySelector("#hours").textContent = year ? "384 h" : "64 h";
+          }),
+      );
+      const details = {
+        cobro: [
+          "Cobro por revisar",
+          "Casa Oliva · $1.200.000 pendientes. En la interfaz propuesta, aquí aparecerían la factura, el historial de abonos y una acción para registrar el pago, sin abandonar el panel.",
+        ],
+        propuesta: [
+          "Propuesta de Estudio Norte",
+          "El panel reúne objetivos, entregables y la siguiente acción. En la aplicación, podrías revisar el proyecto y volver exactamente al punto en el que estabas.",
+        ],
+        horas: [
+          "Registrar tiempo",
+          "Propuesta: elegir cliente, proyecto y duración en un formulario corto. La fecha debe ser la del negocio y la confirmación debe explicar dónde quedó el registro.",
+        ],
+        cliente: [
+          "Ficha del cliente",
+          "Un mismo lugar para datos de contacto, proyectos, acuerdos, horas y cobros. Las opciones tributarias pueden abrirse como información avanzada.",
+        ],
+      };
+      document.querySelectorAll("[data-detail]").forEach(
+        (b) =>
+          (b.onclick = () => {
+            const d = details[b.dataset.detail];
+            document.querySelector("#detail-title").textContent = d[0];
+            document.querySelector("#detail-copy").textContent = d[1];
+            openDialog("detail-dialog");
+          }),
+      );
+      const answers = {
+        cobros:
+          "En estos datos de ejemplo, Casa Oliva tiene $1.200.000 pendientes y Estudio Norte $900.000. El siguiente paso sería revisar los vencimientos antes de contactar a cada cliente.",
+        proyectos:
+          "En el ejemplo, Estudio Norte está al 65% y Casa Oliva al 40%. Abre cada proyecto para revisar el siguiente entregable y su fecha.",
+        hoy: "En este ejemplo: revisa el cobro cercano a vencer, confirma la propuesta y protege tu bloque de diseño. Las sugerencias deberían enlazar a las acciones correspondientes.",
+      };
+      document.querySelectorAll("[data-question]").forEach(
+        (b) =>
+          (b.onclick = () => {
+            const r = document.querySelector("#ai-response");
+            r.textContent = answers[b.dataset.question];
+            r.style.display = "block";
+          }),
+      );
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1 @@
+Registro accidental de prueba de valor cero eliminado. Verificación tras recargar: No se encontraron registros de ventas en la base de datos de Sheets.

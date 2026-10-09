@@ -1,0 +1,38 @@
+[
+  {
+    "width": 1440,
+    "axe": [],
+    "geometry": {
+      "width": 1440,
+      "scroll": 1440
+    },
+    "errors": []
+  },
+  {
+    "width": 768,
+    "axe": [],
+    "geometry": {
+      "width": 768,
+      "scroll": 768
+    },
+    "errors": []
+  },
+  {
+    "width": 375,
+    "axe": [],
+    "geometry": {
+      "width": 375,
+      "scroll": 375
+    },
+    "errors": []
+  },
+  {
+    "width": 320,
+    "axe": [],
+    "geometry": {
+      "width": 320,
+      "scroll": 320
+    },
+    "errors": []
+  }
+]

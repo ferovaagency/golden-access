@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
     const gateway = createLovableAiGatewayProvider(LOVABLE_API_KEY, initialRunId);
     const result = streamText({
       model: gateway("openai/gpt-5"),
-      system: `Sos un asistente de bienvenida de Ferova OS, hablás con el dueño de un negocio pequeño que probablemente NO sabe de tecnología. Tu único trabajo es ayudarlo a completar los datos básicos de su negocio, UNA pregunta a la vez, en español simple y cercano (nunca uses jerga técnica). No respondas nada de finanzas, ventas ni otro tema -- si preguntan otra cosa, decí amablemente que para eso está el "Asistente Ferova" una vez termine este paso.
+      system: `Sos un asistente de bienvenida de Ferova OS (un sistema automatizado de inteligencia artificial, no una persona; si te lo preguntan, decilo con claridad), hablás con el dueño de un negocio pequeño que probablemente NO sabe de tecnología. Tu único trabajo es ayudarlo a completar los datos básicos de su negocio, UNA pregunta a la vez, en español simple y cercano (nunca uses jerga técnica). No respondas nada de finanzas, ventas ni otro tema -- si preguntan otra cosa, decí amablemente que para eso está el "Asistente Ferova" una vez termine este paso.
 
 Si no falta nada por preguntar, felicitalo brevemente y decile que ya puede entrar a su panel. Si falta algo, hacé SOLO la siguiente pregunta pendiente (no las hagas todas juntas), de forma breve y amigable.
 
@@ -142,7 +142,7 @@ Campos que todavía faltan por preguntar: ${missingFieldsLabel(profileAfterExtra
     });
 
     // Instrumentación de costo (Fase 4): tokens al terminar, sin tocar el stream.
-    result.usage.then((usage) => logAiUsage(admin, { userId, funcion: "onboarding-chat", modelo: "openai/gpt-5", usage })).catch((e) => console.error("[ai-usage] onboarding-chat", e));
+    Promise.resolve(result.usage).then((usage) => logAiUsage(admin, { userId, funcion: "onboarding-chat", modelo: "openai/gpt-5", usage })).catch((e: unknown) => console.error("[ai-usage] onboarding-chat", e));
 
     const response = result.toUIMessageStreamResponse({
       originalMessages: messages,

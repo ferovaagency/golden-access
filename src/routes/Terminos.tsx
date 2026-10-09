@@ -17,7 +17,7 @@ export default function Terminos() {
         <header className="border-b border-slate-200 pb-6">
           <p className="text-xs font-semibold uppercase tracking-widest text-blue-700">Ferova OS</p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight">Términos y Condiciones de Uso</h1>
-          <p className="mt-3 text-sm text-slate-500">Versión 1.0 · Vigente desde el 17 de julio de 2026</p>
+          <p className="mt-3 text-sm text-slate-500">Versión 1.1 · Vigente desde el 17 de julio de 2026 · Última actualización: 9 de octubre de 2026</p>
         </header>
 
         <div className="mt-8 space-y-8">
@@ -34,12 +34,16 @@ export default function Terminos() {
           <Section title="3. Suscripciones y pagos">
             <p>Las suscripciones se procesan a través de Paddle, que actúa como comerciante registrado (Merchant of Record) de la transacción: Paddle es el vendedor frente al cliente y gestiona el cobro recurrente, la facturación, los impuestos aplicables, los reembolsos y las disputas de pago según sus propios términos.</p>
             <p>Ferova no almacena datos de tarjetas ni otros medios de pago. La activación depende de la confirmación de suscripción recibida de Paddle. Los precios y condiciones vigentes se muestran antes de contratar.</p>
-            <p><strong>Cambios de precio.</strong> Podemos ajustar el precio de la suscripción avisando con al menos 30 días de anticipación por correo; el nuevo precio aplica desde el siguiente período de facturación. Los suscriptores fundadores conservan su precio de lanzamiento durante 12 meses desde su contratación; pasado ese plazo pasan al precio de lista vigente con el mismo preaviso.</p>
+            <p><strong>Prueba gratis.</strong> Todo plan empieza con 7 días gratis sin tarjeta. Durante la prueba puedes bajar de plan sin costo; subir de plan abre el pago en Paddle y la suscripción empieza en ese momento. Si al terminar la prueba no has agregado un método de pago, el acceso se suspende y tus datos se conservan según la Política de Tratamiento de Datos.</p>
+            <p><strong>Cambios de precio.</strong> Podemos ajustar el precio de la suscripción avisando con al menos 30 días de anticipación por correo; el nuevo precio aplica desde el siguiente período de facturación.</p>
           </Section>
 
           <Section title="4. Inteligencia artificial">
-            <p>Las funciones de IA generan sugerencias, clasificaciones, reportes, planes y simulaciones. Son probabilísticas y pueden ser inexactas, incompletas o incorrectas.</p>
-            <p>No constituyen asesoría contable, tributaria, financiera, jurídica ni de inversión. Debes verificar cifras y recomendaciones antes de actuar; toda decisión de negocio es exclusivamente tuya y ninguna función ejecuta automáticamente decisiones con efectos jurídicos o económicos.</p>
+            <p><strong>Naturaleza de las funciones de IA.</strong> Las funciones de IA generan sugerencias, clasificaciones, reportes, planes y simulaciones mediante modelos probabilísticos. Pueden producir resultados inexactos, incompletos, sesgados o inventados ("alucinaciones"). No garantizamos la veracidad, exhaustividad ni idoneidad de ninguna salida.</p>
+            <p><strong>Verificación humana.</strong> Las salidas no constituyen asesoría contable, tributaria, financiera, jurídica ni de inversión. Te corresponde revisar y validar cifras, recomendaciones y textos antes de usarlos en decisiones o frente a terceros; toda decisión de negocio es exclusivamente tuya. Ninguna función ejecuta automáticamente decisiones con efectos jurídicos o económicos: las acciones hacia terceros requieren tu confirmación y las de pago, borrado o permisos solo las ejecutas tú.</p>
+            <p><strong>Acciones delegadas al asistente.</strong> Cuando confirmas una acción propuesta por el asistente (por ejemplo, enviar un mensaje o agendar una cita), la acción es tuya. Ferova responde por el funcionamiento del software conforme a la sección 7, no por el contenido que decidas enviar ni por las consecuencias de instrucciones ambiguas o de contenido malicioso introducido en tus datos por terceros.</p>
+            <p><strong>Disponibilidad de la IA.</strong> Las funciones de IA dependen de proveedores externos de modelos (a través del gateway de Lovable). Su latencia, límites de uso y disponibilidad quedan fuera de cualquier compromiso de disponibilidad de la Plataforma; una interrupción de esos proveedores no constituye incumplimiento de Ferova.</p>
+            <p><strong>Tus entradas y salidas.</strong> Conservas los derechos sobre lo que cargas y sobre lo que la IA genera a partir de tus datos. Nos otorgas una licencia limitada solo para prestarte el servicio. No usamos tus datos ni tus conversaciones para entrenar modelos propios ni de terceros.</p>
             <p><strong>Uso justo del asistente.</strong> El uso del asistente de IA está sujeto a un uso razonable, acorde a la operación normal de un negocio. Nos reservamos el derecho de contactar y acordar condiciones con las cuentas cuyo consumo se desvíe de forma extraordinaria de ese uso razonable.</p>
           </Section>
 
