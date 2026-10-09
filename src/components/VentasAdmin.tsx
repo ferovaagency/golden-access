@@ -297,6 +297,11 @@ export default function VentasAdmin({
       toastErr('Por favor selecciona un cliente y un servicio válidos.');
       return;
     }
+    if (!(Number(precioVentaUnitario) > 0) || !(Number(cantidad) > 0)) {
+      toastErr('Escribe el precio y la cantidad de la venta antes de registrarla (deben ser mayores que cero).');
+      return;
+    }
+
 
     if (editingVentaId) {
       const updated = ventas.map(v => {
