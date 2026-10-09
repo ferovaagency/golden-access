@@ -1,3 +1,4 @@
+import { todayLocal } from '../lib/localDate';
 import React, { useState, useEffect } from 'react';
 import { Hora, Cliente, Servicio, Config, AppData } from '../types';
 import { FinancialMetrics, calcularProductividadClientes, calcularProductividadServicios } from '../lib/calculations';
@@ -39,7 +40,7 @@ export default function HorasAdmin({
   const [isUpdatingConfig, setIsUpdatingConfig] = useState(false);
 
   // Form states
-  const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
+  const [fecha, setFecha] = useState(todayLocal());
   const [clienteId, setClienteId] = useState('');
   const [servicioId, setServicioId] = useState('');
   const [horasDedicadas, setHorasDedicadas] = useState(1);

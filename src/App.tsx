@@ -839,7 +839,7 @@ function AppInner() {
       )}
       {sheetsLoading && (
         <div className="bg-blue-50 border-b border-blue-100 text-blue-700 py-2 text-center text-xs font-semibold flex items-center justify-center gap-2">
-          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Guardando cambios…
+          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Sincronizando tus datos…
         </div>
       )}
 
@@ -1091,7 +1091,7 @@ function AppInner() {
       {sheetsLoading && (
         <div className="bg-blue-50 border-b border-blue-100 text-blue-700 py-2 text-center text-xs font-semibold flex items-center justify-center gap-2">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          <span>Guardando cambios en la base de datos...</span>
+          <span>Sincronizando tus datos…</span>
         </div>
       )}
 

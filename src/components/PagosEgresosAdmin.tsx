@@ -1,3 +1,4 @@
+import { todayLocal } from '../lib/localDate';
 import React, { useState, useEffect } from 'react';
 import { PagoEgreso, Config } from '../types';
 import { listAccounts, type FinanceAccount } from '../lib/accountsService';
@@ -37,7 +38,7 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
   const [editingId, setEditingId] = usePersistentState<string | null>('pagosEgresos.editingId', null);
 
   // Form state
-  const [fecha, setFecha] = usePersistentState('pagosEgresos.fecha', new Date().toISOString().split('T')[0]);
+  const [fecha, setFecha] = usePersistentState('pagosEgresos.fecha', todayLocal());
   const [concepto, setConcepto] = usePersistentState('pagosEgresos.concepto', '');
   const [categoria, setCategoria] = usePersistentState<'Herramientas' | 'Salarios' | 'Contratistas' | 'Administrativo' | 'Otros'>('pagosEgresos.categoria', 'Salarios');
   const [monto, setMonto] = usePersistentState<number | ''>('pagosEgresos.monto', '');
@@ -52,7 +53,7 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
 
   const resetForm = () => {
     setEditingId(null);
-    setFecha(new Date().toISOString().split('T')[0]);
+    setFecha(todayLocal());
     setConcepto('');
     setCategoria('Salarios');
     setMonto('');
