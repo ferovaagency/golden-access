@@ -208,7 +208,7 @@ Deno.serve(async (req) => {
     const clientMessages = body.messages || [];
     const last = clientMessages[clientMessages.length - 1];
     if (last?.role === "user") {
-      const { error } = await admin.from("business_assistant_messages").insert({ user_id: userId, role: "user", parts: last.parts || [], content: textFromParts(last) });
+      const { error } = await admin.from("business_assistant_messages").insert({ user_id: userId, role: "user", parts: [{ type: "text", text: textFromParts(last).slice(0, 8000) }], content: textFromParts(last).slice(0, 8000) });
       if (error) console.error("[business-assistant] user persist error", error);
     }
 
