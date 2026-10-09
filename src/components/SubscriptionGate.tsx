@@ -17,10 +17,15 @@ import { clearPlanIntent, type PlanIntent } from '../lib/planIntent';
 
 const PAISES: Array<[string, string]> = [['CO', 'Colombia'], ['MX', 'México'], ['AR', 'Argentina'], ['CL', 'Chile'], ['PE', 'Perú'], ['EC', 'Ecuador'], ['ES', 'España'], ['US', 'Estados Unidos'], ['BR', 'Brasil'], ['UY', 'Uruguay'], ['PA', 'Panamá'], ['CR', 'Costa Rica'], ['DO', 'República Dominicana'], ['GT', 'Guatemala'], ['BO', 'Bolivia'], ['PY', 'Paraguay'], ['VE', 'Venezuela']];
 
-/** País probable por el idioma del navegador (es-CO → CO); si no, Colombia. */
+/**
+ * País probable por el idioma del navegador, solo si es español con región
+ * (es-MX → MX). Un navegador en en-US no dice nada del país de quien lo usa
+ * (muchos freelancers en Latinoamérica lo tienen así), así que ahí va Colombia.
+ */
 function guessCountry(): string {
-  const region = (navigator.language || '').split('-')[1]?.toUpperCase();
-  return region && PAISES.some(([code]) => code === region) ? region : 'CO';
+  const [lang, region] = (navigator.language || '').split('-');
+  const code = region?.toUpperCase();
+  return lang === 'es' && code && PAISES.some(([c]) => c === code) ? code : 'CO';
 }
 
 export default function SubscriptionGate({ user, subscription, intent = null, onReady }: { user: User; subscription: SubscriptionInfo; intent?: PlanIntent | null; onReady: () => void }) {
