@@ -26,7 +26,7 @@ export async function invokeFn(name: string, body: Record<string, unknown>): Pro
   return { ok: false, message };
 }
 
-function waitUntilPaid(userId: string, onActivated?: () => void) {
+export function waitUntilPaid(userId: string, onActivated?: () => void) {
   if (!onActivated) return;
   let attempts = 0;
   const timer = window.setInterval(async () => {
@@ -69,12 +69,16 @@ export async function addPaymentMethod(userId: string, onActivated?: () => void,
   throw new Error(data.message || 'No fue posible preparar el pago.');
 }
 
-export type ChangePlanResult = { ok: true } | { ok: false; paymentMethodRequired: true; transactionId: string } | { ok: false; paymentMethodRequired?: false; message: string };
+export type ChangePlanResult =
+  | { ok: true; trialOnly?: boolean }
+  | { ok: false; paymentMethodRequired: true; transactionId: string }
+  | { ok: false; checkoutRequired: true; plan: PaidPlan; periodo: Periodo; customerId: string | null }
+  | { ok: false; paymentMethodRequired?: false; checkoutRequired?: false; message: string };
 
 export async function changePlan(plan: PaidPlan, periodo: Periodo): Promise<ChangePlanResult> {
   const data = await invokeFn('paddle-manage-subscription', { action: 'change_plan', plan, periodo });
-  if (data.ok) return { ok: true };
+  if (data.ok) return { ok: true, trialOnly: data.trial_only === true };
   if (data.code === 'payment_method_required' && typeof data.transaction_id === 'string') return { ok: false, paymentMethodRequired: true, transactionId: data.transaction_id };
-  if (data.code === 'checkout_required') return { ok: false, message: 'Tu prueba aún no tiene suscripción en Paddle: primero agrega una tarjeta con el botón "Agregar tarjeta".' };
+  if (data.code === 'checkout_required') return { ok: false, checkoutRequired: true, plan, periodo, customerId: typeof data.customer_id === 'string' ? data.customer_id : null };
   return { ok: false, message: data.message || 'No fue posible cambiar de plan.' };
 }

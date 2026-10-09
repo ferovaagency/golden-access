@@ -67,11 +67,23 @@ Deno.serve(async (req) => {
       // Se guarda el id de la suscripción en la fila para no volver a buscarlo.
       await admin.from("user_subscriptions").update({ provider_order_id: subscriptionId }).eq("id", live.id);
     }
+    const plan = typeof body?.plan === "string" && (PLANES as readonly string[]).includes(body.plan) ? body.plan : null;
+    const periodo = typeof body?.periodo === "string" && (PERIODOS as readonly string[]).includes(body.periodo) ? body.periodo : "mensual";
+
     if (!subscriptionId) {
       // Prueba sin tarjeta que Paddle aún no convirtió en suscripción (o ya
-      // venció): no hay nada que "actualizar". La app abre el checkout normal
-      // con el plan que la persona ya eligió; al pagar, el webhook activa.
-      return json({ ok: false, code: "checkout_required", plan: live?.plan ?? null, periodo: live?.periodo ?? "mensual", customer_id: customerId, message: "Tu prueba todavía no tiene una suscripción en Paddle: se abre el pago del plan que elegiste." });
+      // venció). Cambiar de plan durante la prueba sólo toca la fila local: el
+      // plan real se fija en el checkout, que usa el price del plan elegido.
+      // Para pagar no hay nada que "actualizar": la app abre el checkout normal
+      // con el plan elegido y el webhook activa al pagar.
+      const enPrueba = !!live && live.status === "active" && !!live.trial_ends_at && new Date(live.trial_ends_at).getTime() > Date.now();
+      if (action === "change_plan" && enPrueba) {
+        if (!plan) return json({ ok: false, message: "Elige un plan válido." }, 400);
+        const { error } = await admin.from("user_subscriptions").update({ plan, periodo }).eq("id", live.id);
+        if (error) return json({ ok: false, message: "No fue posible guardar el cambio de plan." }, 500);
+        return json({ ok: true, trial_only: true, plan, periodo, trial_ends_at: live.trial_ends_at });
+      }
+      return json({ ok: false, code: "checkout_required", plan: plan ?? live?.plan ?? null, periodo: plan ? periodo : (live?.periodo ?? "mensual"), customer_id: customerId, message: "Tu prueba todavía no tiene una suscripción en Paddle: se abre el pago del plan que elegiste." });
     }
 
     if (action === "status") {
@@ -85,8 +97,6 @@ Deno.serve(async (req) => {
     }
 
     if (action === "change_plan") {
-      const plan = typeof body?.plan === "string" && (PLANES as readonly string[]).includes(body.plan) ? body.plan : null;
-      const periodo = typeof body?.periodo === "string" && (PERIODOS as readonly string[]).includes(body.periodo) ? body.periodo : "mensual";
       if (!plan) return json({ ok: false, message: "Elige un plan válido." }, 400);
       const priceId = priceIdFor(plan, periodo);
       if (!priceId) return json({ ok: false, message: "Ese plan aún no tiene precio configurado." }, 400);

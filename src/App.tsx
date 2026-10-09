@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { linkGoogleIdentity, getAccessToken, saveGoogleLinkReturnTab, consumeGoogleLinkReturnTab, consumeOAuthError } from './lib/supabase';
 import { backupAppDataToSheets, fetchSpreadsheetData, findSpreadsheet, importSheetByUrl, syncExpenseDocumentsToSheets } from './lib/sheetsService';
 import * as financeService from './lib/financeService';
@@ -25,9 +25,9 @@ import { LoadingState } from './components/ui/AsyncState';
 import AuthScreen from './components/AuthScreen';
 import UpgradeModal from './components/UpgradeModal';
 import SubscriptionGate, { TrialBanner } from './components/SubscriptionGate';
-import { capturePlanIntentFromUrl, type PlanIntent } from './lib/planIntent';
+import { capturePlanIntentFromUrl, clearPlanIntent, type PlanIntent } from './lib/planIntent';
 import { addPaymentMethod } from './lib/subscriptionActions';
-import { requestEntitlement } from './lib/planGate';
+import { requestEntitlement, requestUpgrade } from './lib/planGate';
 import { trackEvent } from './lib/analytics';
 import type { Entitlement } from './lib/planService';
 import type { CRMTab } from './components/AdminCRM';
@@ -65,6 +65,7 @@ const OperatingKpiDashboard = lazy(() => import('./components/OperatingKpiDashbo
 const FinanceOperativa = lazy(() => import('./components/FinanceOperativa'));
 const MarketingROI = lazy(() => import('./components/MarketingROI'));
 const MemoriaPanel = lazy(() => import('./components/MemoriaPanel'));
+const PlanSettings = lazy(() => import('./components/PlanSettings'));
 
 import {
   FolderKanban,
@@ -298,6 +299,19 @@ function AppInner() {
       setSheetsLoading(false);
     }
   };
+
+  // Llegó desde la landing con un plan elegido pero la cuenta ya tiene acceso
+  // (prueba o suscripción): no se vuelve a pasar por el gate, así que se abre
+  // el modal de planes con ese plan preseleccionado. Si es el plan que ya
+  // tiene, no hay nada que hacer.
+  const intentHandled = useRef(false);
+  useEffect(() => {
+    if (intentHandled.current || appData === null || !planIntent || !hasPaid || isTeam) return;
+    intentHandled.current = true;
+    clearPlanIntent();
+    if (planIntent.plan === plan) return;
+    requestUpgrade({ motivo: `Elegiste ${planIntent.plan === 'basico' ? 'Básico' : planIntent.plan === 'intermedio' ? 'Intermedio' : 'Full'} en la página de precios`, planSugerido: planIntent.plan, periodo: planIntent.periodo });
+  }, [appData, planIntent, hasPaid, isTeam, plan]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Conecta Google Workspace (scopes de Calendar/Sheets/Drive/Gmail). El OAuth
   // redirige la página; al volver, guardamos la pestaña para regresar aquí.
@@ -661,6 +675,7 @@ function AppInner() {
       ...CRM_GROWTH_TABS,
     ] },
     { id: 'settings', label: 'Configuración', icon: Settings, items: [
+      { id: 'plan', label: 'Mi plan', hint: 'Suscripción, prueba y tarjeta' },
       { id: 'integraciones', label: 'Integraciones', hint: 'Google, WhatsApp, Apollo' },
       ...(modules.google_calendar ? [] : [lockedItem('locked-calendar', 'Google Calendar', 'Básico')]),
       ...(modules.google_sheets ? [] : [lockedItem('locked-sheets', 'Google Sheets', 'Básico')]),
@@ -788,7 +803,7 @@ function AppInner() {
 
   const aiSidebarNode = (
     <div className={isFerovaUiV2Enabled() ? 'ferova-v2-theme' : undefined}>
-      <UpgradeModal user={user} currentPlan={plan} onUpgraded={() => { refreshAccess(); toastOk('Plan actualizado.'); }} />
+      <UpgradeModal user={user} currentPlan={plan} enPrueba={subscription.estado === 'trial'} onUpgraded={() => { refreshAccess(); toastOk('Plan actualizado.'); }} />
       <AISidebar user={user} collapsed={aiCollapsed} onToggle={() => setAiCollapsed((v) => !v)} width={aiWidth} onResize={setAiWidth} metrics={metrics} currentArea={NAVIGATION_SECTIONS.find((section) => section.items.some((item) => item.id === activeTab))?.label} />
     </div>
   );
@@ -908,6 +923,7 @@ function AppInner() {
               />
             )}
             {activeTab === 'memoria' && <MemoriaPanel />}
+            {activeTab === 'plan' && <PlanSettings user={user} plan={plan} subscription={subscription} isTeam={isTeam} onChanged={() => refreshAccess()} />}
             {modules.crm_ventas && activeTab.startsWith('crm-') && (
               // Las pestañas de crecimiento (Pipeline, Citas, LinkedIn+Reddit,
               // Bot WhatsApp, Reseñas) son del módulo del cliente: cada cuenta

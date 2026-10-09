@@ -15,6 +15,8 @@ export interface UpgradeRequest {
   planSugerido: 'basico' | 'intermedio' | 'full';
   limit?: LimitKind;
   entitlement?: Entitlement;
+  /** Periodo preseleccionado en el modal (p. ej. el elegido en la landing). */
+  periodo?: 'mensual' | 'anual';
 }
 
 export class LimitError extends Error {

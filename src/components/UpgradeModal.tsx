@@ -3,8 +3,8 @@ import { Check, Loader2, Lock, X } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { getPlanCatalog, type PlanId } from '../lib/planService';
 import { onUpgradeRequest, type UpgradeRequest } from '../lib/planGate';
-import { openPaddlePaymentMethodCheckout, planIsPurchasable, type PaidPlan, type Periodo } from '../lib/paddle';
-import { changePlan } from '../lib/subscriptionActions';
+import { openPaddleCheckout, openPaddlePaymentMethodCheckout, planIsPurchasable, type PaidPlan, type Periodo } from '../lib/paddle';
+import { changePlan, waitUntilPaid } from '../lib/subscriptionActions';
 import { checkSubscription } from '../lib/supabase';
 import { trackEvent } from '../lib/analytics';
 
@@ -18,28 +18,47 @@ import { trackEvent } from '../lib/analytics';
 
 const ORDEN: Record<string, number> = { free: 0, basico: 1, intermedio: 2, full: 3 };
 
-export function UpgradeModal({ user, currentPlan, onUpgraded }: { user: User; currentPlan: PlanId; onUpgraded: () => void }) {
+export function UpgradeModal({ user, currentPlan, enPrueba = false, onUpgraded }: { user: User; currentPlan: PlanId; enPrueba?: boolean; onUpgraded: () => void }) {
   const [request, setRequest] = useState<UpgradeRequest | null>(null);
   const [periodo, setPeriodo] = useState<Periodo>('mensual');
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
 
-  useEffect(() => onUpgradeRequest((req) => { setRequest(req); setError(null); trackEvent('upgrade_modal_open', { motivo: req.limit || req.entitlement || 'manual', plan: req.planSugerido }); }), []);
+  useEffect(() => onUpgradeRequest((req) => { setRequest(req); setError(null); setInfo(null); if (req.periodo) setPeriodo(req.periodo); trackEvent('upgrade_modal_open', { motivo: req.limit || req.entitlement || 'manual', plan: req.planSugerido }); }), []);
 
   if (!request) return null;
   const catalog = getPlanCatalog();
   const nivelActual = ORDEN[currentPlan] ?? 3;
 
-  // Toda cuenta con acceso ya tiene una suscripción en Paddle (la prueba sin
-  // tarjeta crea una). Cambiar de plan = actualizar esa suscripción; si Paddle
-  // exige tarjeta primero, se abre el checkout de método de pago y se reintenta.
+  // Con suscripción en Paddle, cambiar de plan = actualizar esa suscripción
+  // (si Paddle exige tarjeta primero, se abre el checkout de método de pago y
+  // se reintenta). Durante la prueba sin tarjeta no hay suscripción todavía:
+  // el cambio se guarda localmente y, si la persona quiere pagar ya, se abre
+  // el checkout normal del plan elegido (checkout_required).
   const comprar = async (plan: PaidPlan) => {
-    setError(null);
+    setError(null); setInfo(null);
     setConfirming(true);
     trackEvent('upgrade_checkout', { plan, periodo });
     try {
       const result = await changePlan(plan, periodo);
-      if (result.ok) { setConfirming(false); setRequest(null); onUpgraded(); return; }
+      if (result.ok) {
+        setConfirming(false);
+        if (result.trialOnly) { setInfo(`Listo: tu prueba sigue con el plan ${catalog.find((p) => p.id === plan)?.nombre ?? plan}. Cuando agregues tarjeta, se cobra ese plan.`); onUpgraded(); setTimeout(() => setRequest(null), 1600); return; }
+        setRequest(null); onUpgraded(); return;
+      }
+      if ('checkoutRequired' in result && result.checkoutRequired) {
+        await openPaddleCheckout({
+          userId: user.id,
+          email: user.email,
+          customerId: result.customerId,
+          plan: result.plan,
+          periodo: result.periodo,
+          onEvent: (event) => { if (event.name === 'checkout.completed') waitUntilPaid(user.id, () => { setConfirming(false); setRequest(null); onUpgraded(); }); },
+        });
+        setConfirming(false);
+        return;
+      }
       if ('paymentMethodRequired' in result && result.paymentMethodRequired) {
         await openPaddlePaymentMethodCheckout({
           transactionId: result.transactionId,
@@ -91,7 +110,10 @@ export function UpgradeModal({ user, currentPlan, onUpgraded }: { user: User; cu
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           {catalog.map((plan) => {
             const sugerido = plan.id === request.planSugerido;
-            const yaIncluido = (ORDEN[plan.id] ?? 0) <= nivelActual;
+            const esActual = plan.id === currentPlan;
+            // En prueba se puede ir a cualquier plan (arriba o abajo); con
+            // suscripción pagada sólo tiene sentido subir.
+            const yaIncluido = enPrueba ? esActual : (ORDEN[plan.id] ?? 0) <= nivelActual;
             const precio = periodo === 'anual' ? plan.precioAnualMes : plan.precioMensual;
             const disponible = planIsPurchasable(plan.id as PaidPlan, periodo);
             return (
@@ -116,14 +138,15 @@ export function UpgradeModal({ user, currentPlan, onUpgraded }: { user: User; cu
                   className={`mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold disabled:opacity-50 ${sugerido ? 'bg-amber-500 text-white hover:bg-amber-600' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
                 >
                   {confirming ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                  {yaIncluido ? 'Tu plan actual' : !disponible ? 'Próximamente' : `Cambiar a ${plan.nombre}`}
+                  {esActual ? 'Tu plan actual' : yaIncluido ? 'Incluido en tu plan' : !disponible ? 'Próximamente' : `Cambiar a ${plan.nombre}`}
                 </button>
               </div>
             );
           })}
         </div>
         {error && <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>}
-        <p className="mt-3 text-[11px] text-slate-400">Precios antes de impuestos; Paddle calcula el total exacto según tu país. El cambio se prorratea desde hoy. Durante la prueba, cambiar de plan puede pedir primero una tarjeta.</p>
+        {info && <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">{info}</p>}
+        <p className="mt-3 text-[11px] text-slate-400">Precios antes de impuestos; Paddle calcula el total exacto según tu país. {enPrueba ? 'Durante la prueba cambias de plan sin pagar; el cobro empieza cuando agregues tarjeta.' : 'El cambio se prorratea desde hoy.'}</p>
       </div>
     </div>
   );
