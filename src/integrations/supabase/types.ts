@@ -3280,11 +3280,13 @@ export type Database = {
           created_at: string
           expires_at: string | null
           id: string
+          periodo: string | null
           plan: string
           provider: string
           provider_customer_id: string | null
           provider_order_id: string | null
           status: string
+          trial_ends_at: string | null
           user_id: string
         }
         Insert: {
@@ -3292,11 +3294,13 @@ export type Database = {
           created_at?: string
           expires_at?: string | null
           id?: string
+          periodo?: string | null
           plan?: string
           provider?: string
           provider_customer_id?: string | null
           provider_order_id?: string | null
           status: string
+          trial_ends_at?: string | null
           user_id: string
         }
         Update: {
@@ -3304,11 +3308,13 @@ export type Database = {
           created_at?: string
           expires_at?: string | null
           id?: string
+          periodo?: string | null
           plan?: string
           provider?: string
           provider_customer_id?: string | null
           provider_order_id?: string | null
           status?: string
+          trial_ends_at?: string | null
           user_id?: string
         }
         Relationships: []
