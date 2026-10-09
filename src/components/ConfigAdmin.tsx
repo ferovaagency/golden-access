@@ -451,7 +451,7 @@ export default function ConfigAdmin({
             {/* Metas Ferova */}
             <div className="space-y-4">
               <h4 className="font-semibold text-blue-500 border-b border-slate-200 pb-1.5 uppercase font-mono text-[10px] tracking-wider">
-                4. Parámetros de Operación Ferova Agency
+                4. Parámetros de operación
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-sans">
                 <div>

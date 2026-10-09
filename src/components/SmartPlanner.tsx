@@ -603,7 +603,7 @@ export default function SmartPlanner() {
             <button onClick={() => setShowBlockForm((value) => !value)} className="text-xs font-semibold text-blue-700 hover:text-blue-900">{showBlockForm ? 'Cancelar' : '+ Bloque protegido'}</button>
           </div>
         </div>
-        <p className="mb-3 text-[11px] text-slate-400">Esto sí es horario: cada bloque tiene una hora fija. "Reorganizar mi día" puede moverlos, excepto los marcados <span className="inline-flex items-center gap-0.5 text-amber-700"><Lock className="h-2.5 w-2.5" />Protegido</span>.</p>
+        <p className="mb-3 text-[11px] text-slate-400">Esto sí es horario: cada bloque tiene una hora fija. "Organizar agenda automáticamente" puede moverlos, excepto los marcados <span className="inline-flex items-center gap-0.5 text-amber-700"><Lock className="h-2.5 w-2.5" />Protegido</span>.</p>
         {showBlockForm && (
           <form onSubmit={createProtectedBlock} className="mb-3 grid gap-2 rounded-2xl border border-blue-200 bg-blue-50 p-3 sm:grid-cols-[1fr_auto_auto_auto] sm:items-end">
             <label className="text-xs text-slate-600">Evento o compromiso
@@ -643,7 +643,7 @@ export default function SmartPlanner() {
         )}
         {p.blocks.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-[var(--line)] bg-white p-6 text-center text-sm text-slate-500">
-            Sin bloques aún. Presioná <span className="font-semibold text-slate-700">Reorganizar mi día</span> para que el planificador arme el horario.
+            Sin bloques aún. Presiona <span className="font-semibold text-slate-700">Organizar agenda automáticamente</span> para que el planificador arme el horario.
           </div>
         ) : (
           <ul className="space-y-2">
@@ -780,7 +780,7 @@ function addDays(date: Date, days: number) {
 function DayAgendaSummary({ blocks, tasks, clients, timeZone, onComplete, onEdit, onEditBlock, onDeleteBlock }: { blocks: PlannerBlock[]; tasks: PlannerTask[]; clients: Array<{ id: string; nombre: string }>; timeZone: string; onComplete: (id: string) => void; onEdit?: (task: PlannerTask) => void; onEditBlock?: (id: string, input: BlockEditInput) => Promise<void>; onDeleteBlock?: (id: string, scope: 'one' | 'series') => Promise<unknown> }) {
   return <section className="rounded-2xl border border-blue-200 bg-blue-50/60 p-4">
     <div className="flex items-center justify-between gap-3"><div><h2 className="text-sm font-semibold text-blue-950">Agenda de hoy</h2><p className="mt-0.5 text-[11px] text-blue-800">Tus tareas ya asignadas aparecen aquí en su hora; el detalle completo continúa más abajo.</p></div><span className="rounded-full bg-white px-2 py-1 text-xs font-semibold text-blue-700">{blocks.length} bloques</span></div>
-    {blocks.length ? <ul className="mt-3 space-y-2">{blocks.map((block) => <BlockRow key={block.id} block={block} tasks={tasks} clients={clients} timeZone={timeZone} onComplete={onComplete} onEdit={onEdit} onEditBlock={onEditBlock} onDeleteBlock={onDeleteBlock} />)}</ul> : <p className="mt-3 rounded-xl border border-dashed border-blue-200 bg-white px-3 py-3 text-xs text-slate-500">Aún no hay tareas con horario. Usa “Reorganizar mi día” para asignarlas.</p>}
+    {blocks.length ? <ul className="mt-3 space-y-2">{blocks.map((block) => <BlockRow key={block.id} block={block} tasks={tasks} clients={clients} timeZone={timeZone} onComplete={onComplete} onEdit={onEdit} onEditBlock={onEditBlock} onDeleteBlock={onDeleteBlock} />)}</ul> : <p className="mt-3 rounded-xl border border-dashed border-blue-200 bg-white px-3 py-3 text-xs text-slate-500">Aún no hay tareas con horario. Usa “Organizar agenda automáticamente” para asignarlas.</p>}
   </section>;
 }
 

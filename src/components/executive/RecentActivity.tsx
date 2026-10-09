@@ -19,7 +19,7 @@ export function RecentActivity({ entries }: RecentActivityProps) {
   return (
     <AnimatedCard className="rounded-[var(--ferova-radius-card)] border border-[var(--ferova-line)] bg-[var(--ferova-surface)] p-5 shadow-[var(--ferova-shadow)] sm:p-6">
       <p className="font-display text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a39a8a]">Últimos movimientos</p>
-      <h3 className="mt-1 font-display text-lg font-semibold text-[#1f1b16]">Recent Activity</h3>
+      <h3 className="mt-1 font-display text-lg font-semibold text-[#1f1b16]">Actividad reciente</h3>
       {entries.length ? (
         <StaggerGroup className="mt-4 divide-y divide-[var(--ferova-line)]" staggerDelay={0.05}>
           {entries.map(({ id, date, title, detail, icon: Icon }) => (

@@ -1,3 +1,4 @@
+import { todayLocal } from '../lib/localDate';
 import React, { useState, useEffect } from 'react';
 import { Venta, Cliente, Servicio, Config } from '../types';
 import { convertToCop } from '../lib/calculations';
@@ -44,7 +45,7 @@ export default function VentasAdmin({
   const { error: toastErr, success: toastSuccess } = useToast();
   // Form states
   // Borrador persistente (N1: no perder lo escrito al cambiar de pestaña).
-  const [fecha, setFecha] = usePersistentState('ventas.fecha', new Date().toISOString().split('T')[0]);
+  const [fecha, setFecha] = usePersistentState('ventas.fecha', todayLocal());
   const [clienteId, setClienteId] = usePersistentState('ventas.clienteId', '');
   const [servicioId, setServicioId] = usePersistentState('ventas.servicioId', '');
   const [cantidad, setCantidad] = usePersistentState('ventas.cantidad', 1);
@@ -92,7 +93,7 @@ export default function VentasAdmin({
 
   const [activeAbonos, setActiveAbonos] = useState<any[]>([]);
   const [newAbonoMonto, setNewAbonoMonto] = useState<number | ''>('');
-  const [newAbonoFecha, setNewAbonoFecha] = useState(new Date().toISOString().split('T')[0]);
+  const [newAbonoFecha, setNewAbonoFecha] = useState(todayLocal());
   const [newAbonoNotas, setNewAbonoNotas] = useState('');
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -230,7 +231,7 @@ export default function VentasAdmin({
 
   const handleCancelEdit = () => {
     setEditingVentaId(null);
-    setFecha(new Date().toISOString().split('T')[0]);
+    setFecha(todayLocal());
     const cleanActiveList = clientes.filter(c => c.activo);
     if (cleanActiveList.length > 0) {
       handleClientChange(cleanActiveList[0].id);
@@ -296,6 +297,11 @@ export default function VentasAdmin({
       toastErr('Por favor selecciona un cliente y un servicio válidos.');
       return;
     }
+    if (!(Number(precioVentaUnitario) > 0) || !(Number(cantidad) > 0)) {
+      toastErr('Escribe el precio y la cantidad de la venta antes de registrarla (deben ser mayores que cero).');
+      return;
+    }
+
 
     if (editingVentaId) {
       const updated = ventas.map(v => {
@@ -487,7 +493,7 @@ export default function VentasAdmin({
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Ferova_Libro_Ventas_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `Ferova_Libro_Ventas_${todayLocal()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -584,7 +590,7 @@ export default function VentasAdmin({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
           <h2 className="text-xl font-display font-medium text-blue-600">Registro de Ingresos (Ventas y Abonos)</h2>
-          <p className="text-xs text-slate-500 font-mono mt-1">Libro de cobranza, cobros anticipados, abonos y saldos de clientes de Ferova Agency</p>
+          <p className="text-xs text-slate-500 font-mono mt-1">Libro de cobranza, cobros anticipados, abonos y saldos de tus clientes</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <label className="bg-white/[0.03] hover:bg-white/[0.08] transition px-4 py-2 text-xs font-mono tracking-wider font-semibold text-blue-600 border border-slate-200 rounded-lg flex items-center gap-2 cursor-pointer">
@@ -859,7 +865,7 @@ export default function VentasAdmin({
                   {gateways.filter((g) => g.activo).map((g) => <option key={g.id} value={g.nombre}>{g.nombre} · {g.comision_porcentaje}%{g.comision_fija ? ` + ${g.comision_fija} ${g.moneda}` : ''}</option>)}
                   <option value="__otra">Otra (cargar a mano)</option>
                 </select>
-                {gateways.length === 0 && <span className="mt-1 block text-[9px] text-slate-400">Definí tus pasarelas en Projects → Seguimiento para elegirlas acá.</span>}
+                {gateways.length === 0 && <span className="mt-1 block text-[9px] text-slate-400">Define tus pasarelas en Finanzas → Seguimiento para elegirlas aquí.</span>}
               </label>
               {manualGateway && <label className="block"><span className="mb-1 block text-[9px] font-semibold uppercase text-slate-500">Nombre del medio</span><input value={pasarelaPago} onChange={(e) => setPasarelaPago(e.target.value)} placeholder="Banco, efectivo…" className="w-full rounded-lg border border-slate-200 bg-white p-2 text-xs" /></label>}
               <div className="grid grid-cols-3 gap-2">
@@ -1168,7 +1174,7 @@ export default function VentasAdmin({
                   {filteredVentas.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="px-5 py-12 text-center text-slate-400 font-mono">
-                        No se encontraron registros de ventas en la base de datos de Sheets.
+                        Aún no registras ventas. Usa el formulario de arriba para registrar la primera.
                       </td>
                     </tr>
                   ) : (

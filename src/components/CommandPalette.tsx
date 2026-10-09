@@ -31,7 +31,7 @@ export default function CommandPalette({ open, onClose, onNavigate, isTeam, hasF
   const items: CommandItem[] = useMemo(() => {
     const go = (id: string) => () => { onNavigate(id); onClose(); };
     const base: CommandItem[] = [
-      { id: 'nav:home', label: 'Ir a Home', group: 'Navegar', icon: LayoutGrid, run: go('home') },
+      { id: 'nav:home', label: 'Ir a Inicio', group: 'Navegar', icon: LayoutGrid, run: go('dashboard') },
       { id: 'nav:planner', label: 'Planificador', group: 'Navegar', icon: CalendarCheck, run: go('planner') },
       { id: 'nav:reports', label: 'Reportes CEO', group: 'Navegar', icon: FileText, run: go('reports') },
       { id: 'nav:proyectos', label: 'Proyectos', group: 'Navegar', icon: LayoutGrid, run: go('proyectos') },
