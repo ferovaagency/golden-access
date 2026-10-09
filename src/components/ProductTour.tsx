@@ -150,7 +150,7 @@ export default function ProductTour({ userId, modules, onNavigate }: Props) {
       <aside
         ref={boxRef}
         style={style}
-        className={`fixed z-[80] flex w-[min(92vw,340px)] flex-col items-end gap-1.5 ${pos ? '' : 'bottom-4 right-4 sm:bottom-6 sm:right-6'}`}
+        className={`fixed z-[80] flex w-[min(92vw,340px)] flex-col items-end gap-1.5 ${pos ? '' : 'bottom-4 left-4 sm:bottom-6 sm:left-6 lg:left-72'}`}
         aria-live="polite"
       >
         {/* Globo de diálogo */}

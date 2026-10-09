@@ -138,7 +138,7 @@ export default function NotificationsBell({ userId, onNavigate }: Props) {
                   <div
                     key={n.id}
                     className={`px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition ${isRead ? 'opacity-60' : ''}`}
-                    onClick={() => { markOne(n); onNavigate?.(n.actionTab || 'home'); setOpen(false); }}
+                    onClick={() => { markOne(n); onNavigate?.(n.actionTab || 'dashboard'); setOpen(false); }}
                   >
                     <div className="flex items-start gap-2.5">
                       <div className={`rounded-lg border p-1.5 ${st.bg}`}>
