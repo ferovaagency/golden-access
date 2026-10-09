@@ -2,7 +2,7 @@
 // vive sólo aquí (secreto PADDLE_API_KEY); al navegador sólo viaja el
 // client-side token. PADDLE_ENV=sandbox apunta al entorno de pruebas.
 
-const API_KEY = Deno.env.get("PADDLE_API_KEY") || "";
+const API_KEY = (Deno.env.get("PADDLE_API_KEY") || "").trim().replace(/^Bearer\s+/i, "").replace(/["']/g, "").trim();
 const BASE = (Deno.env.get("PADDLE_ENV") || "production") === "sandbox" ? "https://sandbox-api.paddle.com" : "https://api.paddle.com";
 
 export function paddleConfigured(): boolean {
