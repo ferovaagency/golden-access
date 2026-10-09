@@ -205,12 +205,23 @@ Deno.serve(async (req) => {
     const body = await req.json() as { messages?: UIMessage[] };
     // The client can display a short recent history, but the model receives a
     // bounded window so long conversations do not grow cost or context forever.
-    const messages = (body.messages || []).slice(-MAX_MODEL_MESSAGES);
-    const last = messages[messages.length - 1];
+    const clientMessages = body.messages || [];
+    const last = clientMessages[clientMessages.length - 1];
     if (last?.role === "user") {
       const { error } = await admin.from("business_assistant_messages").insert({ user_id: userId, role: "user", parts: last.parts || [], content: textFromParts(last) });
       if (error) console.error("[business-assistant] user persist error", error);
     }
+
+    // El historial que ve el modelo sale de la base (filas guardadas por el
+    // servidor), nunca del body: así nadie puede inyectar turnos "assistant".
+    const { data: histRows } = await admin.from("business_assistant_messages")
+      .select("id, role, parts, content, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(MAX_MODEL_MESSAGES);
+    const messages: UIMessage[] = (histRows || []).reverse()
+      .filter((r: any) => r.role === "user" || r.role === "assistant")
+      .map((r: any) => ({ id: String(r.id), role: r.role, parts: Array.isArray(r.parts) && r.parts.length ? r.parts : [{ type: "text", text: r.content || "" }] }) as UIMessage);
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) {

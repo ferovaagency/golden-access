@@ -58,12 +58,23 @@ Deno.serve(async (req) => {
     if (!LOVABLE_API_KEY) return new Response(JSON.stringify({ ok: false, message: "LOVABLE_API_KEY no configurada" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const body = await req.json() as { messages?: UIMessage[] };
-    const messages = body.messages || [];
-    const last = messages[messages.length - 1];
+    const clientMessages = body.messages || [];
+    const last = clientMessages[clientMessages.length - 1];
     if (last?.role === "user") {
       const { error } = await admin.from("onboarding_messages").insert({ user_id: userId, role: "user", parts: last.parts || [], content: textFromParts(last) });
       if (error) console.error("[onboarding-chat] user persist error", error);
     }
+
+    // El historial que ve el modelo sale de la base (filas guardadas por el
+    // servidor), nunca del body: así nadie puede inyectar turnos "assistant".
+    const { data: histRows } = await admin.from("onboarding_messages")
+      .select("id, role, parts, content, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(40);
+    const messages: UIMessage[] = (histRows || []).reverse()
+      .filter((r: any) => r.role === "user" || r.role === "assistant")
+      .map((r: any) => ({ id: String(r.id), role: r.role, parts: Array.isArray(r.parts) && r.parts.length ? r.parts : [{ type: "text", text: r.content || "" }] }) as UIMessage);
 
     const { data: existingProfile } = await admin.from("business_profile").select("*").eq("user_id", userId).maybeSingle();
 
