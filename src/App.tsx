@@ -898,7 +898,9 @@ function AppInner() {
         </div>
       )}
 
-      <div className="max-w-6xl mx-auto px-0 sm:px-4 lg:px-10 py-4 sm:py-8">
+      {/* El Planner usa todo el ancho: con dos columnas (prioridades + agenda)
+          el contenedor de 72rem dejaba los títulos de las tareas en dos letras. */}
+      <div className={`${activeTab === 'planner' ? 'max-w-[1380px]' : 'max-w-6xl'} mx-auto px-0 sm:px-4 lg:px-6 py-4 sm:py-8`}>
         {errorMsg && (
           <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 flex gap-3 text-sm text-red-900">
             <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />

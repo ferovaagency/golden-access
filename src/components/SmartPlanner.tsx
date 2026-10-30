@@ -311,7 +311,7 @@ export default function SmartPlanner() {
   const completedToday = p.tasks.filter((t) => t.status === 'done' && (t.completed_at || '').slice(0, 10) === p.date);
 
   return (
-    <div className="space-y-8 max-w-5xl">
+    <div className="space-y-8">
       <header className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs uppercase tracking-widest text-slate-500 font-semibold">Smart Planner</p>
@@ -593,7 +593,9 @@ export default function SmartPlanner() {
       )}
 
       {/* Híbrido: Prioridades (izquierda) + Agenda del día (derecha), lado a lado en pantallas grandes */}
-      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+      {/* Las prioridades necesitan ancho para leer el título completo: 3/5 del
+          espacio para ellas y 2/5 para la agenda del día. */}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start">
       {/* Timeline of blocks */}
       {plannerView === 'day' && <section className="lg:order-2">
         <div className="mb-1 flex items-center justify-between">
@@ -1052,24 +1054,31 @@ function TaskRow({ task, clientName, isProtected, today, onEdit, onStart, onPaus
   const enPausa = task.status === 'in_progress' && !task.started_at && (task.actual_minutes ?? 0) > 0;
   void isProtected; void onPostpone;
   return (
-    <li className="group flex items-center gap-2 rounded-xl border border-[var(--line)] bg-white px-3 py-2">
-      <button onClick={() => onEdit(task)} className="flex min-w-0 flex-1 items-center gap-2 text-left" title="Abrir tarea">
-        <span className={`h-2 w-2 shrink-0 rounded-full ${running ? 'bg-emerald-500 animate-pulse' : task.deadline ? 'bg-amber-400' : 'bg-slate-300'}`} aria-hidden />
-        <span className="truncate text-sm text-slate-800">{task.title}</span>
-        {clientName && <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${clientTone(task.client_ref)}`}>● {clientName}</span>}
-        {/* Señales anti-procrastinación: entrega cercana/vencida y cuántas veces
-            se ha pospuesto. Lo que se evita tiene que verse, no esconderse. */}
-        {(() => {
-          const days = plannerDaysToDeadline(task.deadline, today);
-          if (days === null) return null;
-          const label = days < 0 ? `vencida hace ${-days} d` : days === 0 ? 'hoy' : days === 1 ? 'mañana' : `en ${days} d`;
-          const tone = days <= 1 ? 'border-red-200 bg-red-50 text-red-700' : days <= 3 ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-slate-200 bg-slate-50 text-slate-600';
-          return <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${tone}`} title={`Fecha de entrega: ${task.deadline?.slice(0, 10)}`}>{label}</span>;
-        })()}
-        {(task.postponed_count ?? 0) > 0 && (
-          <span className="shrink-0 rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[10px] font-semibold text-orange-700" title="Cada vez que la pospones sube en la lista">pospuesta ×{task.postponed_count}</span>
-        )}
-        <span className="hidden shrink-0 font-mono text-[10px] text-slate-400 sm:inline" title="Priority Score (Pareto): urgencia, dinero, cliente, riesgo, facilidad y veces pospuesta">{plannerPriorityScore(task, today).toFixed(1)}</span>
+    <li className="group flex items-start gap-2 rounded-xl border border-[var(--line)] bg-white px-3 py-2">
+      <button onClick={() => onEdit(task)} className="flex min-w-0 flex-1 items-start gap-2 text-left" title="Abrir tarea">
+        <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${running ? 'bg-emerald-500 animate-pulse' : task.deadline ? 'bg-amber-400' : 'bg-slate-300'}`} aria-hidden />
+        <span className="min-w-0 flex-1">
+          {/* El título va solo en su línea (hasta dos renglones) y las señales
+              debajo: antes competían por el mismo renglón y el título quedaba
+              en dos letras. */}
+          <span className="line-clamp-2 text-sm leading-5 text-slate-800">{task.title}</span>
+          <span className="mt-1 flex flex-wrap items-center gap-1">
+            {clientName && <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${clientTone(task.client_ref)}`}>● {clientName}</span>}
+            {/* Señales anti-procrastinación: entrega cercana/vencida y cuántas veces
+                se ha pospuesto. Lo que se evita tiene que verse, no esconderse. */}
+            {(() => {
+              const days = plannerDaysToDeadline(task.deadline, today);
+              if (days === null) return null;
+              const label = days < 0 ? `vencida hace ${-days} d` : days === 0 ? 'hoy' : days === 1 ? 'mañana' : `en ${days} d`;
+              const tone = days <= 1 ? 'border-red-200 bg-red-50 text-red-700' : days <= 3 ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-slate-200 bg-slate-50 text-slate-600';
+              return <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${tone}`} title={`Fecha de entrega: ${task.deadline?.slice(0, 10)}`}>{label}</span>;
+            })()}
+            {(task.postponed_count ?? 0) > 0 && (
+              <span className="rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[10px] font-semibold text-orange-700" title="Cada vez que la pospones sube en la lista">pospuesta ×{task.postponed_count}</span>
+            )}
+            <span className="font-mono text-[10px] text-slate-400" title="Priority Score (Pareto): urgencia, dinero, cliente, riesgo, facilidad y veces pospuesta">{plannerPriorityScore(task, today).toFixed(1)}</span>
+          </span>
+        </span>
       </button>
       {task.started_at && running && <LiveTimer startedAt={task.started_at} estimatedMinutes={task.estimated_minutes} acumuladoMin={task.actual_minutes} />}
       {enPausa && (
