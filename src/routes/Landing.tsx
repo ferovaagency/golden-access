@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { ProfitExplorer } from "../marketing/landing/ProfitExplorer";
 import { DemoVideo } from "../marketing/landing/DemoVideo";
 import { Link } from "react-router-dom";
 import {
@@ -28,6 +29,7 @@ import { ProductPreview } from "../marketing/landing/ProductPreview";
 import { LandingPricing } from "../marketing/landing/LandingPricing";
 import { HOME_DESCRIPTION, HOME_FAQ, HOME_TITLE } from "../marketing/landing/content";
 import "../marketing/landing/landing.css";
+import "../marketing/landing/landing-motion.css";
 
 // Recorrido de la página (consultoría ID 1840, E4 §3): valor → problema →
 // beneficios → funcionalidades y demo → cómo empezar → planes → FAQ → cierre.
@@ -166,6 +168,20 @@ function LandingHeader() {
 export default function Landing() {
   const startingPrice = getPlanCatalog()[0].precioMensual;
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return;
+    const elements = document.querySelectorAll('.fo-landing .fo-section-heading, .fo-landing .fo-benefit, .fo-landing .fo-four-card, .fo-landing .fo-profit-lab, .fo-landing .fo-ai-grid, .fo-landing .fo-steps article');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('fo-entered');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08 });
+    elements.forEach((element) => { element.classList.add('fo-reveal'); observer.observe(element); });
+    return () => { observer.disconnect(); elements.forEach((element) => element.classList.remove('fo-reveal', 'fo-entered')); };
+  }, []);
+  useEffect(() => {
     let active = true;
     // Preserve OAuth returns without loading the auth client in the server render.
     void import("../lib/supabase")
@@ -209,24 +225,25 @@ export default function Landing() {
       </a>
       <LandingHeader />
       <main id="contenido">
+        <div className="fo-hero-stage">
         <section className="fo-hero fo-container" aria-labelledby="hero-title">
           <div className="fo-hero-copy">
             <p className="fo-eyebrow">
               <span aria-hidden="true" />
-              PARA FREELANCERS Y PROFESIONALES INDEPENDIENTES
+              TU TALENTO. TU NEGOCIO. TUS NÚMEROS.
             </p>
             <h1 id="hero-title">
               Deja de adivinar
               <br />
               <span>cuánto cobrar.</span>
             </h1>
-            <p className="fo-hero-subtitle">Conoce tus costos. Organiza tu trabajo. Mejora tus decisiones.</p>
+            <p className="fo-hero-subtitle">Trabaja por tu cuenta. Cobra con criterio.</p>
             <p className="fo-hero-description">
-              Ferova One reúne finanzas, proyectos, CRM e inteligencia artificial para ayudarte a
-              gestionar tu negocio independiente desde un solo lugar.
+              Conecta tus horas, costos y clientes para saber qué te deja cada proyecto.
+              Organiza tu negocio independiente en un solo lugar.
             </p>
             <div className="fo-hero-ctas">
-              <TrialLink source="hero_explorar_planes">Explorar planes</TrialLink>
+              <TrialLink source="hero_explorar_planes">Probar 7 días gratis</TrialLink>
               <a
                 href="#demo"
                 className="fo-demo-link"
@@ -255,11 +272,13 @@ export default function Landing() {
               <span aria-hidden="true">↘</span>
             </div>
             <ProductPreview />
+            <div className="fo-orbit-note"><span aria-hidden="true">✦</span><div><strong>Tu próximo paso, más claro.</strong><small>Finanzas + tiempo + clientes</small></div></div>
             <div className="fo-preview-below">
               <span aria-hidden="true">✦</span> Tu operación conectada, de principio a fin.
             </div>
           </div>
         </section>
+        </div>
         <div className="fo-connection-strip">
           <div className="fo-container">
             <span>Todo lo que mueve tu negocio.</span>
@@ -296,13 +315,12 @@ export default function Landing() {
               </h2>
             </div>
             <p>
-              Cuando trabajas de manera independiente, administrar clientes, proyectos, horas, costos
-              y pagos se vuelve una tarea más. Si esa información está dispersa, es difícil fijar
-              tarifas adecuadas y saber qué servicio te deja margen y cuál te lo quita. Ferova One
-              conecta esas piezas para que gestiones tu actividad con claridad.
+              Facturar más no siempre significa ganar más. Las revisiones, las herramientas y las
+              horas que no cuentas también salen de tu bolsillo. Empieza por verlas juntas.
             </p>
           </div>
         </section>
+        <div className="fo-container fo-lab-section"><ProfitExplorer /></div>
         <section id="beneficios" className="fo-section fo-container" aria-labelledby="beneficios-title">
           <div className="fo-section-heading">
             <div>
@@ -313,7 +331,7 @@ export default function Landing() {
                 Más claridad para decidir.
               </h2>
             </div>
-            <p>Cuatro resultados concretos, sin prometer cifras que dependen de tu trabajo.</p>
+            <p>Del primer presupuesto al último cobro, entiende lo que pasa con tu trabajo.</p>
           </div>
           <div className="fo-four">
             {beneficios.map((b) => (
