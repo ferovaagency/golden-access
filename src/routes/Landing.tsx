@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { DemoVideo } from "../marketing/landing/DemoVideo";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -258,6 +259,23 @@ export default function Landing() {
             </span>
           </div>
         </div>
+        <section id="demo" className="fo-section fo-container fo-demo" aria-labelledby="demo-title">
+          <div className="fo-section-heading">
+            <div>
+              <p className="fo-eyebrow">DEMO REAL · SIN MAQUETAS</p>
+              <h2 id="demo-title">
+                ¿Sabes cuánto ganas
+                <br />
+                de verdad con cada proyecto?
+              </h2>
+            </div>
+            <p>
+              Grabación real de Ferova One, sin montajes: de los costos del negocio al precio que
+              deberías cobrar y a cómo cerró el mes.
+            </p>
+          </div>
+          <DemoVideo />
+        </section>
         <section id="producto" className="fo-section fo-container">
           <div className="fo-section-heading">
             <div>

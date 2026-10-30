@@ -7,6 +7,7 @@ export type AnalyticsEvent =
   | 'page_view'
   | 'hero_primary_cta'
   | 'hero_demo_open'
+  | 'demo_play'
   | 'module_demo_interaction'
   | 'pricing_view'
   | 'pricing_cta'
