@@ -7,6 +7,7 @@ import { copyText } from '../lib/clipboard';
 import { PIPELINE_STAGES } from './crm/constants';
 import { PlaybookCard } from './crm/PlaybookCard';
 import AdminFeedbackPanel from './AdminFeedbackPanel';
+import AdminFeatures from './AdminFeatures';
 import AdminDeepAnalytics from './AdminDeepAnalytics';
 import {
   isTeamMember,
@@ -83,7 +84,7 @@ import { useToast, errMsg } from './ui/toast';
 import { getBusinessProfile, upsertBusinessProfile } from '../lib/businessProfileService';
 import { crearClienteYVentaDesdeOportunidad } from '../lib/financeService';
 
-export type CRMTab = 'pipeline' | 'citas' | 'contenido' | 'bot' | 'resenas' | 'clientes' | 'feedback' | 'analitica';
+export type CRMTab = 'pipeline' | 'citas' | 'contenido' | 'bot' | 'resenas' | 'clientes' | 'feedback' | 'analitica' | 'funciones';
 
 interface Props {
   user: User;
@@ -1114,7 +1115,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
           </header>
 
           <nav className="flex gap-2 px-6 py-3 border-b border-slate-200 text-xs font-mono">
-            {(['clientes', 'feedback', 'analitica'] as const).map((t) => (
+            {(['clientes', 'feedback', 'analitica', 'funciones'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -1122,7 +1123,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
                   tab === t ? 'bg-blue-50 text-blue-600 border border-blue-500/40' : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
-                {t === 'clientes' ? 'Clientes' : t === 'feedback' ? 'Feedback & Uso' : 'Analítica profunda'}
+                {t === 'clientes' ? 'Clientes' : t === 'feedback' ? 'Feedback & Uso' : t === 'analitica' ? 'Analítica profunda' : 'Funciones'}
               </button>
             ))}
           </nav>
@@ -2680,6 +2681,7 @@ export default function AdminCRM({ user, embedded = false, tab: controlledTab, o
         )}
         {tab === 'feedback' && <AdminFeedbackPanel />}
         {tab === 'analitica' && <AdminDeepAnalytics />}
+        {tab === 'funciones' && <AdminFeatures />}
       </main>
     </div>
   );
