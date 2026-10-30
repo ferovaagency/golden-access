@@ -474,7 +474,7 @@ export default function Dashboard({ data, metrics, selectedMonth, formatCop, for
                   contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', color: '#0f172a', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   formatter={(v: any) => [formatCop(v)]}
                 />
-                <Legend textAnchor="middle" wrapperStyle={{ fontSize: 11, color: '#e8e3d8', paddingTop: 10 }} />
+                <Legend align="center" wrapperStyle={{ fontSize: 11, color: '#e8e3d8', paddingTop: 10 }} />
                 <Line type="monotone" dataKey="ventas" name="Ventas" stroke="#2563eb" strokeWidth={2} activeDot={{ r: 6 }} />
                 <Line type="monotone" dataKey="costos" name="Costos + Fijos" stroke="#dc2626" strokeWidth={1.5} />
                 <Line type="monotone" dataKey="utilidad" name="Utilidad Estimada" stroke="#16a34a" strokeWidth={2.5} />
