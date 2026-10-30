@@ -29,21 +29,46 @@ import { LandingPricing } from "../marketing/landing/LandingPricing";
 import { HOME_DESCRIPTION, HOME_FAQ, HOME_TITLE } from "../marketing/landing/content";
 import "../marketing/landing/landing.css";
 
+// Recorrido de la página (consultoría ID 1840, E4 §3): valor → problema →
+// beneficios → funcionalidades y demo → cómo empezar → planes → FAQ → cierre.
 const steps = [
   {
     n: "01",
-    title: "Ponle nombre a tu trabajo.",
-    text: "Añade tus clientes y servicios. Empieza con lo que ya tienes, sin configurar todo el negocio de una vez.",
+    title: "Elige tu plan.",
+    text: "Selecciona el nivel que se ajusta a tu negocio. Los primeros 7 días son gratis y sin tarjeta.",
   },
   {
     n: "02",
-    title: "Conecta tiempo y dinero.",
-    text: "Registra horas, ingresos y gastos. Cada dato aporta contexto para entender tus proyectos.",
+    title: "Configura tu información.",
+    text: "En cinco pasos cargas tu empresa, tus servicios, tus clientes y tus costos fijos. Al terminar ya tienes tu punto de equilibrio.",
   },
   {
     n: "03",
-    title: "Decide con más claridad.",
-    text: "Revisa tus números y organiza el siguiente paso. Lo importante deja de depender de tu memoria.",
+    title: "Gestiona con mayor claridad.",
+    text: "Registra horas, ingresos y gastos; revisa precios recomendados y decide con números, no con intuición.",
+  },
+];
+
+const beneficios = [
+  {
+    icon: Wallet,
+    title: "Controla tu rentabilidad",
+    text: "Relaciona costos, horas y metas para establecer tarifas con criterios económicos, servicio por servicio.",
+  },
+  {
+    icon: CalendarDays,
+    title: "Organiza tu trabajo",
+    text: "Administra proyectos, tareas y compromisos desde un entorno integrado, con una agenda que protege tu tiempo.",
+  },
+  {
+    icon: FolderKanban,
+    title: "Gestiona tus oportunidades",
+    text: "Centraliza la información de tus clientes y da seguimiento a tus actividades comerciales sin otra herramienta.",
+  },
+  {
+    icon: Sparkles,
+    title: "Apóyate en inteligencia artificial",
+    text: "Planificación y análisis asistidos por IA para entender tus números y decidir el siguiente paso.",
   },
 ];
 
@@ -188,25 +213,26 @@ export default function Landing() {
           <div className="fo-hero-copy">
             <p className="fo-eyebrow">
               <span aria-hidden="true" />
-              PARA QUIENES VIVEN DE SU TALENTO
+              PARA FREELANCERS Y PROFESIONALES INDEPENDIENTES
             </p>
             <h1 id="hero-title">
-              Tu negocio, claro.
+              Deja de adivinar
               <br />
-              <span>Tu tiempo, tuyo.</span>
+              <span>cuánto cobrar.</span>
             </h1>
+            <p className="fo-hero-subtitle">Conoce tus costos. Organiza tu trabajo. Mejora tus decisiones.</p>
             <p className="fo-hero-description">
-              Clientes, proyectos y finanzas en un solo lugar. Entiende lo que ganas con tu trabajo
-              y enfócate en lo que sigue.
+              Ferova One reúne finanzas, proyectos, CRM e inteligencia artificial para ayudarte a
+              gestionar tu negocio independiente desde un solo lugar.
             </p>
             <div className="fo-hero-ctas">
-              <TrialLink source="hero" />
+              <TrialLink source="hero_explorar_planes">Explorar planes</TrialLink>
               <a
                 href="#demo"
                 className="fo-demo-link"
                 onClick={() => trackEvent("hero_demo_open", { path: "/" })}
               >
-                Explorar la demo <ArrowUpRight size={16} aria-hidden="true" />
+                Ver demostración <ArrowUpRight size={16} aria-hidden="true" />
               </a>
             </div>
             <p className="fo-trust">
@@ -259,36 +285,61 @@ export default function Landing() {
             </span>
           </div>
         </div>
-        <section id="demo" className="fo-section fo-container fo-demo" aria-labelledby="demo-title">
+        <section id="problema" className="fo-section fo-container fo-problem" aria-labelledby="problema-title">
           <div className="fo-section-heading">
             <div>
-              <p className="fo-eyebrow">DEMO REAL · SIN MAQUETAS</p>
-              <h2 id="demo-title">
-                ¿Sabes cuánto ganas
+              <p className="fo-eyebrow">EL PROBLEMA</p>
+              <h2 id="problema-title">
+                Tu talento tiene valor.
                 <br />
-                de verdad con cada proyecto?
+                ¿Sabes cuánto ganas realmente con cada proyecto?
               </h2>
             </div>
             <p>
-              Grabación real de Ferova One, sin montajes: de los costos del negocio al precio que
-              deberías cobrar y a cómo cerró el mes.
+              Cuando trabajas de manera independiente, administrar clientes, proyectos, horas, costos
+              y pagos se vuelve una tarea más. Si esa información está dispersa, es difícil fijar
+              tarifas adecuadas y saber qué servicio te deja margen y cuál te lo quita. Ferova One
+              conecta esas piezas para que gestiones tu actividad con claridad.
             </p>
           </div>
-          <DemoVideo />
+        </section>
+        <section id="beneficios" className="fo-section fo-container" aria-labelledby="beneficios-title">
+          <div className="fo-section-heading">
+            <div>
+              <p className="fo-eyebrow">LO QUE GANAS</p>
+              <h2 id="beneficios-title">
+                Más control sobre tu negocio.
+                <br />
+                Más claridad para decidir.
+              </h2>
+            </div>
+            <p>Cuatro resultados concretos, sin prometer cifras que dependen de tu trabajo.</p>
+          </div>
+          <div className="fo-four">
+            {beneficios.map((b) => (
+              <article key={b.title} className="fo-four-card">
+                <div className="fo-feature-icon">
+                  <b.icon size={22} />
+                </div>
+                <h3>{b.title}</h3>
+                <p>{b.text}</p>
+              </article>
+            ))}
+          </div>
         </section>
         <section id="producto" className="fo-section fo-container">
           <div className="fo-section-heading">
             <div>
-              <p className="fo-eyebrow">EL TRABAJO YA ES SUFICIENTE TRABAJO</p>
+              <p className="fo-eyebrow">FUNCIONALIDADES</p>
               <h2>
-                Que llevar tu negocio
+                Las herramientas que necesitas
                 <br />
-                no sea otro proyecto.
+                para tu negocio independiente.
               </h2>
             </div>
             <p>
-              Tu información suele terminar repartida entre una hoja, una agenda y tu cabeza. Ferova
-              One te ayuda a conectarla.
+              Cuatro bloques: finanzas y rentabilidad, proyectos y planificación, clientes y
+              oportunidades, e inteligencia de negocio. Todo con tus datos reales.
             </p>
           </div>
           <div className="fo-benefits">
@@ -297,13 +348,13 @@ export default function Landing() {
                 <Wallet size={23} />
               </div>
               <h3>
-                Que facturar más
+                Finanzas y
                 <br />
-                también tenga sentido.
+                rentabilidad.
               </h3>
               <p>
-                Relaciona ingresos, costos y horas. Entiende qué cliente merece más de tu tiempo y
-                qué servicio necesita un ajuste.
+                Ingresos, gastos, costos y resultado por servicio. Precio recomendado, punto de
+                equilibrio y cuentas por cobrar en un solo lugar.
               </p>
               <div className="fo-profit-example">
                 <div>
@@ -332,12 +383,13 @@ export default function Landing() {
                 <CalendarDays size={23} />
               </div>
               <h3>
-                De mil pendientes
-                <br />a un siguiente paso.
+                Proyectos y
+                <br />
+                planificación.
               </h3>
               <p>
-                Reúne tus tareas, revisa prioridades y organiza tu agenda. Registra el tiempo que
-                dedicas a cada cliente.
+                Tareas con cliente y fecha, registro de horas y un Smart Planner que prioriza por
+                impacto y protege tu agenda.
               </p>
               <div className="fo-agenda-example" aria-label="Ejemplo de agenda">
                 <span>09:00</span>
@@ -360,13 +412,13 @@ export default function Landing() {
                 <FolderKanban size={23} />
               </div>
               <h3>
-                El contexto completo.
+                Clientes y
                 <br />
-                Sin volver a preguntar.
+                oportunidades.
               </h3>
               <p>
-                Clientes, objetivos, entregables y seguimiento juntos. Conecta tu operación con el
-                CRM a partir del plan Intermedio.
+                Clientes, objetivos, entregables y seguimiento comercial juntos. El CRM se activa a
+                partir del plan Intermedio.
               </p>
               <div className="fo-client-example">
                 <span className="fo-client-avatar">N</span>
@@ -399,7 +451,7 @@ export default function Landing() {
         <section className="fo-ai-section">
           <div className="fo-container fo-ai-grid">
             <div>
-              <p className="fo-eyebrow">UN POCO DE PERSPECTIVA EXTRA</p>
+              <p className="fo-eyebrow">INTELIGENCIA DE NEGOCIO</p>
               <h2>
                 Una segunda mirada.
                 <br />
@@ -435,18 +487,36 @@ export default function Landing() {
             </div>
           </div>
         </section>
-        <section id="como-funciona" className="fo-section fo-container">
+        <section id="demo" className="fo-section fo-container fo-demo" aria-labelledby="demo-title">
           <div className="fo-section-heading">
             <div>
-              <p className="fo-eyebrow">EMPIEZA PEQUEÑO. GANA CLARIDAD.</p>
-              <h2>
-                No tienes que organizarlo
+              <p className="fo-eyebrow">DEMOSTRACIÓN REAL · SIN MAQUETAS</p>
+              <h2 id="demo-title">
+                Así se ve
                 <br />
-                todo el primer día.
+                por dentro.
               </h2>
             </div>
             <p>
-              Un cliente, un servicio y tu primer registro. Después, construye el hábito a tu ritmo.
+              Grabación real de Ferova One, sin montajes: de los costos del negocio al precio que
+              deberías cobrar y a cómo cerró el mes.
+            </p>
+          </div>
+          <DemoVideo />
+        </section>
+        <section id="como-funciona" className="fo-section fo-container">
+          <div className="fo-section-heading">
+            <div>
+              <p className="fo-eyebrow">CÓMO EMPEZAR</p>
+              <h2>
+                Empieza a organizar tu negocio
+                <br />
+                en tres pasos.
+              </h2>
+            </div>
+            <p>
+              Sin configurar todo el primer día: con un cliente, un servicio y tus costos fijos ya
+              tienes tu primer número real.
             </p>
           </div>
           <div className="fo-steps">
@@ -495,13 +565,13 @@ export default function Landing() {
         </section>
         <section id="preguntas" className="fo-section fo-container fo-faq">
           <div>
-            <p className="fo-eyebrow">ANTES DE EMPEZAR</p>
+            <p className="fo-eyebrow">PREGUNTAS FRECUENTES</p>
             <h2>
               Las cosas claras,
               <br />
               desde aquí.
             </h2>
-            <p>Sin letras pequeñas sobre tu prueba.</p>
+            <p>Suscripción, planes, cancelación y condiciones, sin letra pequeña.</p>
             <Link to="/seguridad" className="fo-text-link">
               <ShieldCheck size={17} /> Cómo cuidamos tus datos
             </Link>
@@ -520,14 +590,14 @@ export default function Landing() {
         </section>
         <section className="fo-final-cta fo-container">
           <div>
-            <p className="fo-eyebrow">HAZLE ESPACIO A LO QUE SIGUE</p>
+            <p className="fo-eyebrow">EMPIEZA HOY</p>
             <h2>
-              Menos administrar.
+              Cobra con criterio.
               <br />
-              <span>Más hacer lo tuyo.</span>
+              <span>Decide con tus números.</span>
             </h2>
-            <p>Tu trabajo merece un negocio que lo acompañe.</p>
-            <TrialLink source="footer" className="fo-button-light" />
+            <p>Elige tu plan y prueba Ferova One con tu propio negocio.</p>
+            <TrialLink source="footer" className="fo-button-light">Explorar planes y empezar gratis</TrialLink>
             <p className="fo-final-note">
               {TRIAL_DAYS} días gratis · Sin tarjeta · Tú decides si continúas
             </p>

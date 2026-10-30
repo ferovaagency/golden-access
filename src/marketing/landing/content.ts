@@ -1,40 +1,45 @@
-export const HOME_TITLE = "Finanzas y proyectos para freelancers";
+export const HOME_TITLE = "Deja de adivinar cuánto cobrar";
 export const HOME_DESCRIPTION =
-  "Organiza clientes, proyectos, horas y finanzas con Ferova One. Entiende la rentabilidad de tu trabajo. Prueba 7 días gratis, sin tarjeta.";
+  "Ferova One ayuda a freelancers y profesionales independientes a conocer sus costos, organizar sus proyectos y fijar tarifas rentables. Prueba 7 días gratis, sin tarjeta.";
 export const HOME_FAQ = [
   {
-    question: "¿Qué es Ferova One y para quién es?",
+    question: "¿Para quién está diseñada Ferova One?",
     answer:
-      "Ferova One es una plataforma web que reúne clientes, proyectos, registro de horas, planificación y finanzas. Está pensada para freelancers, consultores y pequeñas agencias que venden servicios y quieren entender la rentabilidad de su trabajo.",
+      "Para freelancers y profesionales independientes que venden servicios y necesitan organizar sus proyectos, controlar sus finanzas y entender la rentabilidad de lo que hacen. También sirve a pequeñas agencias con varias marcas (plan Full).",
+  },
+  {
+    question: "¿Cuál es la diferencia entre los planes?",
+    answer:
+      "Son acumulativos y crecen con tus clientes. Básico (hasta 3 clientes activos) cubre proyectos, horas, finanzas completas, Planner y asistente. Intermedio (hasta 10) suma CRM, oportunidades y más capacidad del asistente. Full (ilimitado) añade varias marcas, reportes ejecutivos y colaboradores.",
   },
   {
     question: "¿Cómo funcionan los 7 días gratis?",
     answer:
-      "Elige un plan y crea tu cuenta. Puedes probarlo durante 7 días sin registrar una tarjeta. Si decides continuar, añade un método de pago desde la aplicación. Si no lo haces, la prueba termina sin un cobro automático.",
+      "Eliges un plan y creas tu cuenta sin registrar tarjeta. Durante 7 días usas el plan completo. Si quieres seguir, agregas un método de pago desde Configuración → Mi plan; si no, el acceso se suspende sin cobro y tus datos quedan guardados.",
   },
   {
-    question: "¿Necesito saber contabilidad para empezar?",
+    question: "¿Puedo cambiar de plan?",
     answer:
-      "Puedes empezar con tus clientes, servicios, ingresos y gastos. Ferova One organiza los datos que registras y calcula indicadores para ayudarte a tomar decisiones. Sus estimaciones no sustituyen la revisión de un contador.",
+      "Sí. Durante la prueba puedes bajar de plan sin costo; subir abre el pago y la suscripción empieza ahí. Con una suscripción activa, el cambio se prorratea desde el día del cambio.",
   },
   {
-    question: "¿Puedo usarlo desde el celular?",
+    question: "¿Puedo contratar un plan anual?",
     answer:
-      "Sí. Ferova One se abre en el navegador de tu computador, tablet o celular. No necesitas instalar una aplicación. Para configurar información financiera extensa, te recomendamos una pantalla grande.",
+      "Sí. El plan anual tiene un 30 % de descuento sobre el mensual y se factura una vez al año. También empieza con los 7 días de prueba.",
   },
   {
-    question: "¿Qué diferencia a Ferova One de una hoja de cálculo?",
+    question: "¿La plataforma incluye inteligencia artificial?",
     answer:
-      "En Ferova One, clientes, servicios, horas y movimientos financieros comparten información dentro de la plataforma. Así puedes relacionar el tiempo dedicado con los ingresos y costos de tu trabajo, sin mantener varias hojas separadas.",
+      "Sí, en todos los planes: el asistente responde con tus datos reales y el Smart Planner prioriza tus tareas. Básico incluye 100 consultas al mes al asistente; Intermedio y Full tienen mayor capacidad. La IA es una ayuda para decidir: revisa sus cifras antes de actuar.",
   },
   {
-    question: "¿Funciona fuera de Colombia?",
+    question: "¿Puedo cancelar mi suscripción?",
     answer:
-      "Puedes registrar operaciones en COP y USD. Las herramientas tributarias están orientadas a Colombia; si operas en otro país, revisa las obligaciones locales con tu contador. Los precios de los planes se expresan en USD, antes de impuestos.",
+      "Cuando quieras, desde Configuración → Mi plan o desde el enlace del correo de Paddle. No hay permanencia; el acceso sigue hasta el final del período pagado.",
   },
   {
     question: "¿Qué ocurre con mis datos si no continúo?",
     answer:
-      "Al terminar la prueba sin un método de pago, el acceso se desactiva y los datos permanecen guardados. Puedes consultar las condiciones de tratamiento, conservación y eliminación en la Política de Privacidad.",
+      "Al terminar la prueba sin método de pago, el acceso se desactiva y los datos permanecen guardados. Puedes descargarlos o pedir la eliminación de tu cuenta desde la app; las condiciones están en la Política de Privacidad.",
   },
 ];

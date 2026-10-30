@@ -7,7 +7,7 @@ import { trackEvent } from "../../lib/analytics";
 
 const details: Record<PaidTier, { description: string; features: string[] }> = {
   basico: {
-    description: "Para poner en orden tu trabajo independiente.",
+    description: "Controla tu negocio: proyectos, horas, costos y el precio que deberías cobrar.",
     features: [
       "Hasta 3 clientes activos",
       "Proyectos, horas y Planner",
@@ -17,7 +17,7 @@ const details: Record<PaidTier, { description: string; features: string[] }> = {
     ],
   },
   intermedio: {
-    description: "Para conectar tu operación con tus ventas.",
+    description: "Organiza y haz crecer tu negocio: finanzas ampliadas, Planner y seguimiento comercial.",
     features: [
       "Hasta 10 clientes activos",
       "Todo lo incluido en Básico",
@@ -27,7 +27,7 @@ const details: Record<PaidTier, { description: string; features: string[] }> = {
     ],
   },
   full: {
-    description: "Para trabajar con tu equipo y varias marcas.",
+    description: "Gestiona tu negocio con inteligencia: análisis avanzado, varias marcas y equipo.",
     features: [
       "Clientes ilimitados",
       "Todo lo incluido en Intermedio",
@@ -76,7 +76,7 @@ export function LandingPricing() {
           <article key={plan.id} className={`fo-plan ${plan.destacado ? "fo-plan-featured" : ""}`}>
             <div className="fo-plan-top">
               <span>{plan.etiqueta}</span>
-              {plan.destacado && <b>Para crecer</b>}
+              {plan.destacado && <b>Recomendado</b>}
             </div>
             <h3>{plan.nombre}</h3>
             <p>{details[plan.id].description}</p>
