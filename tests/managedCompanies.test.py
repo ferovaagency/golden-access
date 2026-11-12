@@ -49,7 +49,7 @@ async def main():
         assert active == olivia['data_user_id']
         foreign = await api("return await supabase.from('finance_clientes').select('id').eq('user_id',args);",uid)
         assert foreign['error'] is None and foreign['data'] == []
-        saved = await api("return await supabase.from('finance_clientes').insert({id:crypto.randomUUID(),user_id:args,nombre:'Verificación aislamiento'}).select('id').single();",active)
+        saved = await api("return await supabase.from('finance_clientes').insert({id:crypto.randomUUID(),user_id:args,nombre:'Verificación aislamiento',tipo:'Nacional',fecha_creacion:'2026-11-12'}).select('id').single();",active)
         assert saved['error'] is None, saved['error']
         await page.reload(); await page.wait_for_timeout(4000)
         assert await api("return (await supabase.rpc('current_account_id')).data;") == active
