@@ -18,7 +18,7 @@ interface EgresoAutomatico {
   id: string;
   fecha: string;
   concepto: string;
-  categoria: 'Herramientas' | 'Salarios' | 'Contratistas' | 'Administrativo' | 'Otros';
+  categoria: 'Herramientas' | 'Salarios' | 'Contratistas' | 'MateriaPrima' | 'Empaques' | 'Administrativo' | 'Otros';
   monto: number;
   moneda: string;
   origen: OrigenEgreso;

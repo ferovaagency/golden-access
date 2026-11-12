@@ -152,6 +152,8 @@ export interface FinancialMetrics {
     Herramientas: number;
     Salarios: number;
     Contratistas: number;
+    MateriaPrima: number;
+    Empaques: number;
     Administrativo: number;
     Otros: number;
   };
@@ -198,6 +200,8 @@ export function calcularMétricasFinancieras(
     Herramientas: 0,
     Salarios: 0,
     Contratistas: 0,
+    MateriaPrima: 0,
+    Empaques: 0,
     Administrativo: 0,
     Otros: 0,
   };

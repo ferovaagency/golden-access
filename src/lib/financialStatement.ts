@@ -19,7 +19,7 @@ export function buildFinancialStatement(data: AppData, period: string, fiscal?: 
   const metrics = calcularMétricasFinancieras(data, period, fiscal);
   const rows: FinancialStatementRow[] = [
     { section: 'Resultados', concept: 'Ingresos por ventas', amount: metrics.totalVentas },
-    { section: 'Resultados', concept: 'Costos directos de los servicios', amount: -metrics.costosVariables },
+    { section: 'Resultados', concept: 'Costo de ventas (materia prima, insumos y entrega)', amount: -metrics.costosVariables },
     { section: 'Resultados', concept: 'Utilidad bruta', amount: metrics.utilidadBruta, total: true },
     { section: 'Resultados', concept: 'Gastos operativos recurrentes', amount: -metrics.gastosOperativos },
     { section: 'Resultados', concept: 'Utilidad operacional', amount: metrics.utilidadOperacional, total: true },

@@ -51,7 +51,7 @@ export default function GastosAdmin({
   const [otroNombre, setOtroNombre] = usePersistentState('gastos.otro.nombre', '');
   const [otroMonto, setOtroMonto] = usePersistentState('gastos.otro.monto', 0);
   const [otroMoneda, setOtroMoneda] = usePersistentState<'COP' | 'USD'>('gastos.otro.moneda', 'COP');
-  const [otroCategoria, setOtroCategoria] = usePersistentState<'Operativo' | 'Administrativo' | 'Otros'>('gastos.otro.categoria', 'Operativo');
+  const [otroCategoria, setOtroCategoria] = usePersistentState<'Operativo' | 'MateriaPrima' | 'Administrativo' | 'Otros'>('gastos.otro.categoria', 'Operativo');
   const [otroComprobanteUrl, setOtroComprobanteUrl] = usePersistentState<string | undefined>('gastos.otro.comprobanteUrl', undefined);
   const [otroComprobanteNombre, setOtroComprobanteNombre] = usePersistentState<string | undefined>('gastos.otro.comprobanteNombre', undefined);
   const [editingOtroId, setEditingOtroId] = usePersistentState<string | null>('gastos.otro.editingId', null);
@@ -611,6 +611,7 @@ export default function GastosAdmin({
                   className="w-full bg-slate-50 text-slate-900 border border-slate-200 p-2.5 rounded focus:outline-none"
                 >
                   <option value="Operativo" className="bg-white">Gasto Operativo</option>
+                  <option value="MateriaPrima" className="bg-white">Materia prima e insumos</option>
                   <option value="Administrativo" className="bg-white">Gasto Administrativo</option>
                   <option value="Otros" className="bg-white">Varios</option>
                 </select>
