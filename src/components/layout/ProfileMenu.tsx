@@ -36,39 +36,32 @@ export function ProfileMenu({
     onNavigate(tab);
   };
   return (
-    <div ref={root} className="profile-menu">
+    <div ref={root} className="relative shrink-0">
       <button
         ref={trigger}
         type="button"
-        className="profile-trigger"
+        className="flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
         aria-label="Mi perfil"
         aria-expanded={open}
         onClick={() => setOpen(!open)}
       >
-        <UserRound size={18} />
+        <UserRound className="h-3.5 w-3.5" />
         <span className="hidden xl:inline">Mi perfil</span>
       </button>
       {open && (
-        <div className="profile-options">
-          <strong>
-            {user.user_metadata?.full_name || user.email?.split("@")[0] || "Mi cuenta"}
-          </strong>
-          <span>{user.email}</span>
-          <button onClick={() => choose("plan")}>
-            <CreditCard size={16} /> Administrar mi suscripción
-          </button>
-          <button onClick={() => choose("ajustes")}>
-            <Settings size={16} /> Configuración
-          </button>
+        <div role="menu" className="absolute right-0 top-[calc(100%+8px)] z-50 w-64 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+          <div className="border-b border-slate-100 px-4 py-3">
+            <p className="truncate text-sm font-semibold text-slate-900">{user.user_metadata?.full_name || user.email?.split("@")[0] || "Mi cuenta"}</p>
+            <p className="truncate text-xs text-slate-500">{user.email}</p>
+          </div>
+          <div className="p-1.5">
+            <button role="menuitem" onClick={() => choose("ajustes")} className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"><Settings className="h-4 w-4 text-slate-400" /> Configuración del negocio</button>
+            <button role="menuitem" onClick={() => choose("plan")} className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"><CreditCard className="h-4 w-4 text-slate-400" /> Plan y suscripción</button>
+          </div>
           {onSignOut && (
-            <button
-              onClick={() => {
-                setOpen(false);
-                onSignOut();
-              }}
-            >
-              <LogOut size={16} /> Cerrar sesión
-            </button>
+            <div className="border-t border-slate-100 p-1.5">
+              <button role="menuitem" onClick={() => { setOpen(false); onSignOut(); }} className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"><LogOut className="h-4 w-4" /> Cerrar sesión</button>
+            </div>
           )}
         </div>
       )}

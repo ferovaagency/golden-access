@@ -729,11 +729,11 @@ function AppInner() {
       ...CRM_GROWTH_TABS,
     ] },
     { id: 'settings', label: 'Configuración', icon: Settings, items: [
-      { id: 'plan', label: 'Mi suscripción', hint: 'Plan, pagos y cancelación' },
+      ...(modules.financiero ? [{ id: 'ajustes', label: 'Perfil del negocio', hint: 'Datos, horario, holding y colaboradores' }] : []),
       { id: 'integraciones', label: 'Integraciones', hint: 'Google, WhatsApp, Apollo' },
       ...(modules.google_calendar ? [] : [lockedItem('locked-calendar', 'Google Calendar', 'Básico')]),
       ...(modules.google_sheets ? [] : [lockedItem('locked-sheets', 'Google Sheets', 'Básico')]),
-      ...(modules.financiero ? [{ id: 'ajustes', label: 'Configuración', hint: 'Datos y Google Sheets' }] : []),
+      { id: 'plan', label: 'Plan y suscripción', hint: 'Plan, pagos y cancelación' },
       { id: 'memoria', label: 'Memoria', hint: 'Cerebro del negocio: lo que sabe de ti y de tu operación' },
       ...(isTeam ? [{ id: 'admin', label: 'Administración Ferova', hint: 'Usuarios, planes, feedback y operaciones' }] : []),
     ] },
