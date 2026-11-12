@@ -8,3 +8,6 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Tenant data identities reference `workspace_accounts`; managed companies use an organization-owned UUID, while login, billing, notifications and task assignees remain real Auth users. This isolates businesses without synthetic logins.
+- Persist workspace selection on the server before updating the UI, and refresh workspace options after company creation, so row-level access and visible data stay aligned.

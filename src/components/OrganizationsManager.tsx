@@ -1,4 +1,3 @@
-import { supabase } from '../lib/supabase';
 import { useEffect, useState } from 'react';
 import { Building2, Loader2, Network, Plus, Share2, UserPlus, X } from 'lucide-react';
 import {
@@ -25,6 +24,7 @@ export default function OrganizationsManager() {
   // Alta de una empresa dentro del holding.
   const [empresaNombre, setEmpresaNombre] = useState('');
   const [empresaEmail, setEmpresaEmail] = useState('');
+  const [empresaExterna, setEmpresaExterna] = useState(false);
 
   const reload = () => {
     setLoading(true);
@@ -64,21 +64,17 @@ export default function OrganizationsManager() {
   const agregarEmpresa = async () => {
     if (!holding) return;
     if (!empresaNombre.trim()) { toastErr('Escribe el nombre de la empresa.'); return; }
-    if (!empresaEmail.trim()) { toastErr('Escribe el correo del fundador: es lo que enlaza su cuenta.'); return; }
-    const { data: me } = await supabase.auth.getUser();
-    if (me?.user?.email && me.user.email.toLowerCase() === empresaEmail.trim().toLowerCase()) {
-      toastErr('Ese correo ya es tu empresa principal. Cada empresa necesita el correo de otra cuenta (por ejemplo, uno creado para esa marca).');
-      return;
-    }
+    if (empresaExterna && !empresaEmail.trim()) { toastErr('Escribe el correo del socio.'); return; }
     setSaving(true);
     try {
       await createOrganization({
         nombre: empresaNombre,
         parentOrgId: holding.id,
-        inviteEmail: empresaEmail,
+        inviteEmail: empresaExterna ? empresaEmail : null,
       });
       setEmpresaNombre(''); setEmpresaEmail('');
-      toastOk('Empresa añadida. Se enlazará cuando su fundador se registre con ese correo.');
+      toastOk('Empresa añadida. Ya puedes elegirla en el selector de empresas.');
+      window.dispatchEvent(new Event('ferova:organizations-changed'));
       reload();
     } catch (e: any) { toastErr(`No se pudo añadir: ${errMsg(e)}`); } finally { setSaving(false); }
   };
@@ -227,20 +223,27 @@ export default function OrganizationsManager() {
             ))}
           </div>
 
+          <fieldset className="mt-3 flex flex-wrap gap-4 text-xs text-[var(--fv-ink-2)]">
+            <legend className="mb-2 font-semibold">Nueva empresa</legend>
+            <label className="flex items-center gap-2"><input type="radio" name="company-management" checked={!empresaExterna} onChange={() => setEmpresaExterna(false)} />Gestionada por mí</label>
+            <label className="flex items-center gap-2"><input type="radio" name="company-management" checked={empresaExterna} onChange={() => setEmpresaExterna(true)} />Con un socio externo</label>
+          </fieldset>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             <input
               value={empresaNombre}
               onChange={(e) => setEmpresaNombre(e.target.value)}
               placeholder="Nombre de la empresa"
+              aria-label="Nombre de la nueva empresa"
               className="rounded-lg border border-slate-200 px-3 py-2 text-xs"
             />
-            <input
+            {empresaExterna && <input
               value={empresaEmail}
               onChange={(e) => setEmpresaEmail(e.target.value)}
-              placeholder="Correo de su fundador"
+              placeholder="Correo del socio"
+              aria-label="Correo del socio"
               type="email"
               className="rounded-lg border border-slate-200 px-3 py-2 text-xs"
-            />
+            />}
           </div>
           <button
             onClick={agregarEmpresa}
@@ -252,9 +255,7 @@ export default function OrganizationsManager() {
           </button>
 
           <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-            El fundador de cada empresa entra con su propio correo y sólo ve lo suyo. Con "Personas" le
-            das acceso a alguien más. No lo agregues al equipo interno de Ferova: eso le daría acceso al
-            CRM comercial y a la memoria compartida.
+            Con "Personas" puedes dar acceso a esta empresa sin compartir las demás empresas del holding.
           </p>
 
           {gestionando && (

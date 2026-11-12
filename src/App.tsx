@@ -143,6 +143,12 @@ function AppInner() {
   // Ver docs/DISENO_ORGANIZACIONES.md.
   const [workspace, setWorkspace] = useState<WorkspaceContext | null>(null);
   const [workspaceResolved, setWorkspaceResolved] = useState(false);
+  const [workspaceRevision, setWorkspaceRevision] = useState(0);
+  useEffect(() => {
+    const refresh = () => setWorkspaceRevision((v) => v + 1);
+    window.addEventListener('ferova:organizations-changed', refresh);
+    return () => window.removeEventListener('ferova:organizations-changed', refresh);
+  }, []);
   useEffect(() => {
     if (!user) { setWorkspace(null); setWorkspaceResolved(false); return; }
     let alive = true;
@@ -151,7 +157,7 @@ function AppInner() {
       .then((w) => { if (alive) { setWorkspace(w); setWorkspaceResolved(true); } })
       .catch(() => { if (alive) { setWorkspace(null); setWorkspaceResolved(true); } });
     return () => { alive = false; };
-  }, [user]);
+  }, [user, workspaceRevision]);
 
   const activeWorkspace = workspace?.active ?? null;
   // Quién y sobre qué empresa, para que un error de producción se pueda
@@ -160,12 +166,14 @@ function AppInner() {
   useEffect(() => { setActiveAccount(activeWorkspace?.orgId ?? null); }, [activeWorkspace]);
   // Cambiar de empresa recarga los datos del negocio: se limpia appData para
   // que el bootstrap vuelva a correr con la cuenta nueva.
-  const switchWorkspace = (key: string) => {
+  const switchWorkspace = async (key: string) => {
     if (!workspace || key === workspace.active.key) return;
     const next = workspace.options.find((o) => o.key === key);
     if (!next) return;
-    rememberActiveWorkspace(key, next.orgId, next.accountId);
+    try { await rememberActiveWorkspace(key, next.orgId, next.accountId); }
+    catch (e) { toastErr(errMsg(e)); return; }
     setAppData(null);
+    setBusinessProfile(null);
     setWorkspace({ ...workspace, active: next });
   };
 

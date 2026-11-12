@@ -277,9 +277,9 @@ export async function resolveWorkspaceContext(): Promise<WorkspaceContext | null
  *   qué cuenta consultar —sería dejar que el cliente declare a qué datos
  *   accede—, así que lo leen de esta tabla vía `active_context_for_user`.
  */
-export function rememberActiveWorkspace(key: string, orgId: string | null, accountId: string): void {
+export async function rememberActiveWorkspace(key: string, orgId: string | null, accountId: string): Promise<void> {
+  await persistActiveWorkspace(orgId, accountId);
   try { localStorage.setItem(ACTIVE_KEY, key); } catch { /* almacenamiento no disponible */ }
-  void persistActiveWorkspace(orgId, accountId);
 }
 
 /** El espacio de trabajo activo según el SERVIDOR: lo que decide qué filas
@@ -321,7 +321,7 @@ async function persistActiveWorkspace(orgId: string | null, accountId: string): 
     : await db('user_active_org').delete().eq('user_id', uid);
   // Que falle no debe romper el selector, pero sí hay que verlo: mientras no se
   // guarde, la interfaz muestra una empresa y el asistente responde por otra.
-  if (error) console.error('[organizationsService] user_active_org', error.message);
+  if (error) throw new Error(`No se pudo cambiar de empresa: ${error.message}`);
 }
 
 interface Collaboration { ownerUserId: string; nombre: string | null; permisos: PermisosMap }
