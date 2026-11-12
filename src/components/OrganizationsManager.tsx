@@ -1,3 +1,4 @@
+import { supabase } from '../lib/supabase';
 import { useEffect, useState } from 'react';
 import { Building2, Loader2, Network, Plus, Share2, UserPlus, X } from 'lucide-react';
 import {
@@ -64,6 +65,11 @@ export default function OrganizationsManager() {
     if (!holding) return;
     if (!empresaNombre.trim()) { toastErr('Escribe el nombre de la empresa.'); return; }
     if (!empresaEmail.trim()) { toastErr('Escribe el correo del fundador: es lo que enlaza su cuenta.'); return; }
+    const { data: me } = await supabase.auth.getUser();
+    if (me?.user?.email && me.user.email.toLowerCase() === empresaEmail.trim().toLowerCase()) {
+      toastErr('Ese correo ya es tu empresa principal. Cada empresa necesita el correo de otra cuenta (por ejemplo, uno creado para esa marca).');
+      return;
+    }
     setSaving(true);
     try {
       await createOrganization({
