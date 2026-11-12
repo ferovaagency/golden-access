@@ -1086,6 +1086,95 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_flag_changes: {
+        Row: {
+          a: string
+          created_at: string
+          de: string | null
+          flag_key: string
+          id: number
+          motivo: string | null
+          por: string | null
+        }
+        Insert: {
+          a: string
+          created_at?: string
+          de?: string | null
+          flag_key: string
+          id?: number
+          motivo?: string | null
+          por?: string | null
+        }
+        Update: {
+          a?: string
+          created_at?: string
+          de?: string | null
+          flag_key?: string
+          id?: number
+          motivo?: string | null
+          por?: string | null
+        }
+        Relationships: []
+      }
+      feature_flag_users: {
+        Row: {
+          added_at: string
+          email: string
+          flag_key: string
+        }
+        Insert: {
+          added_at?: string
+          email: string
+          flag_key: string
+        }
+        Update: {
+          added_at?: string
+          email?: string
+          flag_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_flag_users_flag_key_fkey"
+            columns: ["flag_key"]
+            isOneToOne: false
+            referencedRelation: "feature_flags"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      feature_flags: {
+        Row: {
+          created_at: string
+          descripcion: string | null
+          estado: string
+          key: string
+          nombre: string
+          plan_minimo: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          descripcion?: string | null
+          estado?: string
+          key: string
+          nombre: string
+          plan_minimo?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          descripcion?: string | null
+          estado?: string
+          key?: string
+          nombre?: string
+          plan_minimo?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       ferova_knowledge: {
         Row: {
           compartir_arriba: boolean
@@ -3413,6 +3502,10 @@ export type Database = {
         Returns: string
       }
       current_account_id: { Args: never; Returns: string }
+      feature_enabled_for: {
+        Args: { p_key: string; p_user: string }
+        Returns: boolean
+      }
       founder_slots_taken: { Args: never; Returns: number }
       is_collaborator_of: { Args: { owner: string }; Returns: boolean }
       is_team_member: { Args: never; Returns: boolean }
@@ -3461,6 +3554,14 @@ export type Database = {
         Args: never
         Returns: {
           id: string
+        }[]
+      }
+      my_features: {
+        Args: never
+        Returns: {
+          estado: string
+          key: string
+          plan_minimo: string
         }[]
       }
       org_descendants: {
