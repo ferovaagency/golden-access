@@ -31,7 +31,7 @@ async def main():
         await page.get_by_role('button', name='Añadir empresa', exact=True).click()
         await page.wait_for_timeout(1500)
         await page.get_by_title('Cambiar de empresa').click()
-        await page.get_by_role('option',name='Verificación holding sin correo').wait_for()
+        await page.get_by_role('option',name='Verificación holding sin correo').first.wait_for()
         await page.keyboard.press('Escape')
         result = await api("return await supabase.rpc('create_organization',{p_nombre:'Verificación holding mismo correo',p_parent_org_id:args.parent,p_invite_email:args.email});", {'parent':holding['id'],'email':session['user']['email']})
         assert result['error'] is None, result['error']
