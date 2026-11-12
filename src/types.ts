@@ -74,7 +74,7 @@ export interface OtroGasto {
   nombre: string;
   monto: number;
   moneda: 'COP' | 'USD';
-  categoria: 'Operativo' | 'Administrativo' | 'Otros';
+  categoria: 'Operativo' | 'MateriaPrima' | 'Administrativo' | 'Otros';
   comprobante_url?: string;
   comprobante_nombre?: string;
 }
@@ -83,7 +83,7 @@ export interface PagoEgreso {
   id: string;
   fecha: string;
   concepto: string; // e.g. "Licencia SEMrush Mayo", "Salario Carolina", etc.
-  categoria: 'Herramientas' | 'Salarios' | 'Contratistas' | 'Administrativo' | 'Otros';
+  categoria: 'Herramientas' | 'Salarios' | 'Contratistas' | 'MateriaPrima' | 'Empaques' | 'Administrativo' | 'Otros';
   monto: number;
   moneda: 'COP' | 'USD';
   metodo_pago: string; // e.g. "Bancolombia", "Tarjeta de Crédito", "Efectivo"

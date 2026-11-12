@@ -40,7 +40,7 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
   // Form state
   const [fecha, setFecha] = usePersistentState('pagosEgresos.fecha', todayLocal());
   const [concepto, setConcepto] = usePersistentState('pagosEgresos.concepto', '');
-  const [categoria, setCategoria] = usePersistentState<'Herramientas' | 'Salarios' | 'Contratistas' | 'Administrativo' | 'Otros'>('pagosEgresos.categoria', 'Salarios');
+  const [categoria, setCategoria] = usePersistentState<'Herramientas' | 'Salarios' | 'Contratistas' | 'MateriaPrima' | 'Empaques' | 'Administrativo' | 'Otros'>('pagosEgresos.categoria', 'Salarios');
   const [monto, setMonto] = usePersistentState<number | ''>('pagosEgresos.monto', '');
   const [moneda, setMoneda] = usePersistentState<'COP' | 'USD'>('pagosEgresos.moneda', 'COP');
   const [metodoPago, setMetodoPago] = usePersistentState('pagosEgresos.metodoPago', 'Bancolombia');
@@ -308,6 +308,8 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
                   <option value="Herramientas">SaaS / Herramientas</option>
                   <option value="Salarios">Salarios / Socios</option>
                   <option value="Contratistas">Contratistas Externos</option>
+                  <option value="MateriaPrima">Materia prima e insumos</option>
+                  <option value="Empaques">Empaques y logística</option>
                   <option value="Administrativo">Costos Oficina</option>
                   <option value="Otros">Gastos Varios / Otros</option>
                 </select>
@@ -468,6 +470,8 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
                   <option value="Herramientas">SaaS / Herramientas</option>
                   <option value="Salarios">Salarios / Socios</option>
                   <option value="Contratistas">Contratistas Externos</option>
+                  <option value="MateriaPrima">Materia prima e insumos</option>
+                  <option value="Empaques">Empaques y logística</option>
                   <option value="Administrativo">Costos Oficina</option>
                   <option value="Otros">Gastos Varios / Otros</option>
                 </select>
@@ -548,7 +552,7 @@ export default function PagosEgresosAdmin({ pagosEgresos = [], config, onSavePag
                                 ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
                                 : 'bg-neutral-500/10 text-neutral-400 border border-neutral-500/20'
                             }`}>
-                              {p.categoria === 'Salarios' ? 'Salarios / Socios' : p.categoria}
+                              {p.categoria === 'Salarios' ? 'Salarios / Socios' : p.categoria === 'MateriaPrima' ? 'Materia prima' : p.categoria === 'Empaques' ? 'Empaques y logística' : p.categoria}
                             </span>
                           </td>
                           <td className="p-3 font-semibold font-mono">

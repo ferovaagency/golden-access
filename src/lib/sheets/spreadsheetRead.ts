@@ -161,18 +161,21 @@ function normalizeEstadoPago(value: unknown): 'Pendiente' | 'Adelanto' | 'Pagado
   return 'Pendiente';
 }
 
-function normalizeOtroGastoCategoria(value: unknown): 'Operativo' | 'Administrativo' | 'Otros' {
+function normalizeOtroGastoCategoria(value: unknown): 'Operativo' | 'MateriaPrima' | 'Administrativo' | 'Otros' {
   const normalized = normalizeKey(value);
   if (normalized.includes('admin')) return 'Administrativo';
+  if (normalized.includes('materia') || normalized.includes('insumo')) return 'MateriaPrima';
   if (normalized.includes('oper')) return 'Operativo';
   return 'Otros';
 }
 
-function normalizePagoCategoria(value: unknown): 'Herramientas' | 'Salarios' | 'Contratistas' | 'Administrativo' | 'Otros' {
+function normalizePagoCategoria(value: unknown): 'Herramientas' | 'Salarios' | 'Contratistas' | 'MateriaPrima' | 'Empaques' | 'Administrativo' | 'Otros' {
   const normalized = normalizeKey(value);
   if (normalized.includes('herramient')) return 'Herramientas';
   if (normalized.includes('salario') || normalized.includes('nomina')) return 'Salarios';
   if (normalized.includes('contrat')) return 'Contratistas';
+  if (normalized.includes('materia') || normalized.includes('insumo')) return 'MateriaPrima';
+  if (normalized.includes('empaque') || normalized.includes('logist')) return 'Empaques';
   if (normalized.includes('admin')) return 'Administrativo';
   return 'Otros';
 }
