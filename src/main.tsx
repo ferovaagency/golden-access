@@ -12,6 +12,7 @@ import Router from "./router";
 import { ToastProvider } from "./components/ui/toast";
 import { initObservability } from "./lib/observability";
 import "./index.css";
+import "./styles/product-blue.css";
 
 initObservability();
 
