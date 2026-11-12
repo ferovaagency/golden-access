@@ -147,7 +147,15 @@ export type Database = {
           status?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       biz_crm_contactos: {
         Row: {
@@ -213,7 +221,15 @@ export type Database = {
           user_id?: string
           valor_estimado?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "biz_crm_contactos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       business_assistant_messages: {
         Row: {
@@ -240,7 +256,15 @@ export type Database = {
           role?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "business_assistant_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       business_blindspots: {
         Row: {
@@ -306,7 +330,15 @@ export type Database = {
           user_id?: string
           why?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "business_blindspots_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       business_health_snapshots: {
         Row: {
@@ -351,7 +383,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "business_health_snapshots_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       business_profile: {
         Row: {
@@ -411,7 +451,15 @@ export type Database = {
           user_id?: string
           zona_horaria?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "business_profile_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       calculation_runs: {
         Row: {
@@ -444,7 +492,15 @@ export type Database = {
           outputs?: Json
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "calculation_runs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ceo_reports: {
         Row: {
@@ -495,7 +551,15 @@ export type Database = {
           user_id?: string
           wins?: Json
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ceo_reports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       collaborators: {
         Row: {
@@ -1051,7 +1115,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "crm_whatsapp_instances_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       decision_simulations: {
         Row: {
@@ -1084,7 +1156,15 @@ export type Database = {
           scenario_type?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "decision_simulations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       feature_flag_changes: {
         Row: {
@@ -1288,7 +1368,15 @@ export type Database = {
           user_id?: string
           venta_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "finance_abonos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       finance_accounts: {
         Row: {
@@ -1336,7 +1424,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "finance_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       finance_budget_monthly: {
         Row: {
@@ -1375,7 +1471,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "finance_budget_monthly_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       finance_clientes: {
         Row: {
@@ -1426,7 +1530,15 @@ export type Database = {
           tipo?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "finance_clientes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       finance_config: {
         Row: {
@@ -1495,7 +1607,15 @@ export type Database = {
           user_id?: string
           uvt?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "finance_config_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       finance_debt_payments: {
         Row: {
@@ -1544,6 +1664,13 @@ export type Database = {
             columns: ["payment_method_id"]
             isOneToOne: false
             referencedRelation: "finance_payment_methods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_debt_payments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -1605,6 +1732,13 @@ export type Database = {
             referencedRelation: "finance_accounts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "finance_debts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       finance_herramienta_servicios: {
@@ -1623,7 +1757,15 @@ export type Database = {
           servicio_id?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "finance_herramienta_servicios_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       finance_herramientas: {
         Row: {
@@ -1653,7 +1795,15 @@ export type Database = {
           tipo_cobro?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "finance_herramientas_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       finance_horas: {
         Row: {
@@ -1683,7 +1833,15 @@ export type Database = {
           servicio_id?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "finance_horas_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       finance_otros_gastos: {
         Row: {
@@ -1716,7 +1874,15 @@ export type Database = {
           nombre?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "finance_otros_gastos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       finance_pagos_egresos: {
         Row: {
@@ -1773,7 +1939,15 @@ export type Database = {
           retencion?: number
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "finance_pagos_egresos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       finance_payables: {
         Row: {
@@ -1854,6 +2028,13 @@ export type Database = {
             referencedRelation: "finance_payment_methods"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "finance_payables_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       finance_payment_methods: {
@@ -1887,7 +2068,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "finance_payment_methods_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       finance_receivable_payments: {
         Row: {
@@ -1945,6 +2134,13 @@ export type Database = {
             referencedRelation: "finance_receivables"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "finance_receivable_payments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       finance_receivables: {
@@ -1999,7 +2195,15 @@ export type Database = {
           vencimiento?: string | null
           venta_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "finance_receivables_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       finance_servicios: {
         Row: {
@@ -2053,7 +2257,15 @@ export type Database = {
           tipo?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "finance_servicios_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       finance_ventas: {
         Row: {
@@ -2131,7 +2343,15 @@ export type Database = {
           trm_conversion?: number | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "finance_ventas_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       google_workspace_connections: {
         Row: {
@@ -2241,6 +2461,13 @@ export type Database = {
             referencedRelation: "marketing_campaigns"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "marketing_campaign_metrics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       marketing_campaigns: {
@@ -2307,6 +2534,13 @@ export type Database = {
             referencedRelation: "finance_payment_methods"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "marketing_campaigns_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       onboarding_messages: {
@@ -2334,7 +2568,15 @@ export type Database = {
           role?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       operating_kpi_days: {
         Row: {
@@ -2364,7 +2606,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "operating_kpi_days_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       operating_kpi_settings: {
         Row: {
@@ -2385,7 +2635,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "operating_kpi_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       organization_invites: {
         Row: {
@@ -2462,6 +2720,7 @@ export type Database = {
           data_user_id: string | null
           id: string
           invite_email: string | null
+          managed_account_id: string | null
           nombre: string
           parent_org_id: string | null
         }
@@ -2472,6 +2731,7 @@ export type Database = {
           data_user_id?: string | null
           id?: string
           invite_email?: string | null
+          managed_account_id?: string | null
           nombre: string
           parent_org_id?: string | null
         }
@@ -2482,10 +2742,18 @@ export type Database = {
           data_user_id?: string | null
           id?: string
           invite_email?: string | null
+          managed_account_id?: string | null
           nombre?: string
           parent_org_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "organizations_managed_account_id_fkey"
+            columns: ["managed_account_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "organizations_parent_org_id_fkey"
             columns: ["parent_org_id"]
@@ -2556,7 +2824,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "payment_gateways_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       paypal_webhook_events: {
         Row: {
@@ -2607,7 +2883,15 @@ export type Database = {
           user_id?: string
           window_days?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "planner_behavior_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       planner_blocks: {
         Row: {
@@ -2661,7 +2945,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "planner_blocks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       planner_briefings: {
         Row: {
@@ -2688,7 +2980,15 @@ export type Database = {
           payload?: Json
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "planner_briefings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       planner_goals: {
         Row: {
@@ -2739,6 +3039,13 @@ export type Database = {
             columns: ["parent_goal_id"]
             isOneToOne: false
             referencedRelation: "planner_goals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "planner_goals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -2817,7 +3124,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "planner_inbox_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       planner_insights: {
         Row: {
@@ -2862,7 +3177,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "planner_insights_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       planner_routines: {
         Row: {
@@ -2910,7 +3233,15 @@ export type Database = {
           user_id?: string
           weekday?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "planner_routines_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       planner_tasks: {
         Row: {
@@ -3029,6 +3360,13 @@ export type Database = {
             referencedRelation: "planner_inbox"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "planner_tasks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       product_feedback: {
@@ -3101,7 +3439,15 @@ export type Database = {
           user_id?: string
           valor?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "project_kpi_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_kpis: {
         Row: {
@@ -3137,7 +3483,15 @@ export type Database = {
           unidad?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "project_kpis_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       saas_plans: {
         Row: {
@@ -3328,7 +3682,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_fiscal_profile_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_notifications: {
         Row: {
@@ -3408,6 +3770,24 @@ export type Database = {
         }
         Relationships: []
       }
+      workspace_accounts: {
+        Row: {
+          created_at: string
+          id: string
+          owner_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          owner_user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       business_overview: {
@@ -3450,7 +3830,15 @@ export type Database = {
           user_id?: string | null
           ventas_totales?: never
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "finance_config_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       crm_growth_overview: {
         Row: {
@@ -3475,7 +3863,15 @@ export type Database = {
           user_id: string | null
           ventas_count: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "finance_ventas_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
