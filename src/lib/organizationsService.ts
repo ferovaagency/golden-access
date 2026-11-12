@@ -258,7 +258,7 @@ export async function resolveWorkspaceContext(): Promise<WorkspaceContext | null
   // Sólo se escribe si difiere: recargar la página no debe generar escrituras.
   const cuentaEnServidor = enServidor.accountId ?? user.id;
   if (cuentaEnServidor !== active.accountId) {
-    void persistActiveWorkspace(active.orgId ?? null, active.accountId);
+    await persistActiveWorkspace(active.orgId ?? null, active.accountId);
   }
 
   const holdings = orgs.filter((o) => !o.dataUserId && orgs.some((h) => h.parentOrgId === o.id));

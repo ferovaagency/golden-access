@@ -62,6 +62,8 @@ async def main():
         assert await api("return (await supabase.rpc('current_account_id')).data;") == uid
         foreign = await api("return (await supabase.from('finance_clientes').select('id').eq('user_id',args)).data;",active)
         assert foreign == []
+        cleanup = await api("return await supabase.from('organizations').delete().in('nombre',['Verificación holding sin correo','Verificación holding mismo correo']).eq('created_by',args);", uid)
+        assert cleanup['error'] is None, cleanup['error']
         print('PASS: name-only UI creation, own-email creation, distinct identities, denied parent, switch, save/read, reload persistence and RLS isolation.')
         await browser.close()
 
