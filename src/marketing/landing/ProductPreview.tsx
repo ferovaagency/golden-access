@@ -18,10 +18,10 @@ const demoViews = [
 ] as const;
 
 export function ProductPreview() {
-  const [view, setView] = useState<(typeof demoViews)[number]["id"]>("hoy");
+  const [view, setView] = useState<(typeof demoViews)[number]["id"]>("finanzas");
   const [done, setDone] = useState(false);
   return (
-    <div className="fo-preview" id="demo">
+    <div className="fo-preview" id="vista-interactiva">
       <div className="fo-preview-top">
         <span className="fo-preview-dots" aria-hidden="true">
           <i />
@@ -48,7 +48,7 @@ export function ProductPreview() {
             </button>
           ))}
         </div>
-        <div className="fo-demo-content" aria-live="polite">
+        <div className="fo-demo-content" key={view} aria-live="polite">
           <div className="fo-demo-heading">
             <div>
               <span className="fo-small-label">ESTUDIO CREATIVO · EJEMPLO</span>

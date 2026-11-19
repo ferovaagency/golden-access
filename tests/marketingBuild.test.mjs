@@ -33,10 +33,12 @@ for (const url of urls) {
     JSON.parse(match[1]);
 }
 const home = await readFile(resolve(dist, "index.html"), "utf8");
-assert.ok(home.includes("Tu negocio, claro."));
+assert.ok(home.includes("Deja de adivinar"));
 assert.ok(home.replace(/<!--.*?-->/g, "").includes("Probar Básico"));
 assert.ok(home.includes("/app?plan=basico&amp;periodo=mensual"));
 assert.ok(home.includes("FAQPage"));
+assert.equal((home.match(/id="demo"/g) || []).length, 1, "Demo anchor must be unique");
+assert.ok(home.includes('id="project-hours"'), "Interactive profitability example missing");
 assert.ok(!home.includes("aggregateRating"), "Do not invent ratings");
 assert.ok(!home.includes("SearchAction"), "Do not claim unsupported site search");
 await access(resolve(dist, "brand/ferova-isotipo.png"));
@@ -48,7 +50,7 @@ for (const href of [...home.matchAll(/href="(\/[^"#?]*)"/g)].map((m) => m[1])) {
 }
 const app = await readFile(resolve(dist, "app/index.html"), "utf8");
 assert.ok(app.includes("noindex, nofollow"));
-assert.ok(!app.includes("Tu negocio, claro."));
+assert.ok(!app.includes("Deja de adivinar"));
 console.log(
   `Marketing build: ${urls.length} static public routes, metadata, JSON-LD, home links and private shell verified.`,
 );
