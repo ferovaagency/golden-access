@@ -22,7 +22,7 @@ assert.match(billingMessage({ ...base, status: "past_due" }).description, /pendi
 assert.equal(safePortalUrl("https://whop.com/billing/manage/mber_1"), "https://whop.com/billing/manage/mber_1");
 assert.equal(safePortalUrl("https://sandbox.whop.com/billing/manage/mber_1"), "https://sandbox.whop.com/billing/manage/mber_1");
 for (const bad of ["javascript:alert(1)", "http://whop.com/x", "https://whop.com.evil.test/", "https://evilwhop.com/", "https://user:pw@whop.com/", "https://whop.com:8443/"]) {
-  assert.throws(() => safePortalUrl(bad), undefined, bad);
+  assert.throws(() => safePortalUrl(bad), Error, bad);
 }
 assert.equal(readCheckoutReturn("?checkout=whop&status=succeeded&payment=pay_1"), "succeeded");
 assert.equal(readCheckoutReturn("?checkout=whop&status=failed"), "failed");
