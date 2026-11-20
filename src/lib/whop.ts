@@ -14,9 +14,22 @@ const env = ((import.meta as { env?: Record<string, string | undefined> }).env ?
 
 export const WHOP_ENVIRONMENT: 'production' | 'sandbox' = env.VITE_WHOP_ENV?.trim() === 'sandbox' ? 'sandbox' : 'production';
 
+// Valores por defecto: Lovable no deja configurar variables VITE_, así que los
+// ids de producción quedan aquí. Una variable de entorno los reemplaza.
+const DEFAULT_PLAN_IDS: Record<PaidTier, Record<Periodo, string>> = {
+  medio: { mensual: 'plan_ZwMC0nr2KEB5k', anual: 'plan_DJKe5WnNDnwIc' },
+  pro: { mensual: 'plan_L9onuXf7jYIwA', anual: 'plan_9YW1e0bbUIXJU' },
+};
+
 const PLAN_IDS: Record<PaidTier, Record<Periodo, string>> = {
-  medio: { mensual: env.VITE_WHOP_PLAN_MEDIO_MENSUAL?.trim() || '', anual: env.VITE_WHOP_PLAN_MEDIO_ANUAL?.trim() || '' },
-  pro: { mensual: env.VITE_WHOP_PLAN_PRO_MENSUAL?.trim() || '', anual: env.VITE_WHOP_PLAN_PRO_ANUAL?.trim() || '' },
+  medio: {
+    mensual: env.VITE_WHOP_PLAN_MEDIO_MENSUAL?.trim() || DEFAULT_PLAN_IDS.medio.mensual,
+    anual: env.VITE_WHOP_PLAN_MEDIO_ANUAL?.trim() || DEFAULT_PLAN_IDS.medio.anual,
+  },
+  pro: {
+    mensual: env.VITE_WHOP_PLAN_PRO_MENSUAL?.trim() || DEFAULT_PLAN_IDS.pro.mensual,
+    anual: env.VITE_WHOP_PLAN_PRO_ANUAL?.trim() || DEFAULT_PLAN_IDS.pro.anual,
+  },
 };
 
 export function whopPlanIdFor(plan: PaidTier, periodo: Periodo): string {
