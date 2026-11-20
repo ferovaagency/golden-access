@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Building2, Check, ChevronDown, Users } from 'lucide-react';
+import { Building2, Check, ChevronDown, LayoutGrid, Users } from 'lucide-react';
 import type { WorkspaceOption } from '../lib/organizationsService';
 
 // Selector de empresa activa. Cambiar aquí cambia la cuenta sobre la que opera
@@ -10,6 +10,8 @@ interface Props {
   options: WorkspaceOption[];
   active: WorkspaceOption;
   onSelect: (key: string) => void;
+  /** Para quien administra un holding: abre la vista consolidada del grupo. */
+  onOpenGroup?: () => void;
 }
 
 const ETIQUETA: Record<WorkspaceOption['kind'], string> = {
@@ -18,7 +20,7 @@ const ETIQUETA: Record<WorkspaceOption['kind'], string> = {
   colaboracion: 'Invitación',
 };
 
-export default function WorkspaceSwitcher({ options, active, onSelect }: Props) {
+export default function WorkspaceSwitcher({ options, active, onSelect, onOpenGroup }: Props) {
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
 
@@ -80,6 +82,19 @@ export default function WorkspaceSwitcher({ options, active, onSelect }: Props) 
               </button>
             );
           })}
+          {onOpenGroup && (
+            <button
+              type="button"
+              onClick={() => { onOpenGroup(); setOpen(false); }}
+              className="flex w-full items-center gap-2.5 border-t border-slate-100 px-3 py-2 text-left transition hover:bg-slate-50"
+            >
+              <LayoutGrid className="h-3.5 w-3.5 shrink-0 text-blue-600" />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-xs font-semibold text-slate-900">Todo el grupo</span>
+                <span className="block text-[10px] text-slate-400">Las empresas del holding, consolidadas</span>
+              </span>
+            </button>
+          )}
         </div>
       )}
     </div>

@@ -4,7 +4,32 @@ import { HelpCircle, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
 import { WorkspaceHeader } from './WorkspaceHeader';
 import { PrimaryNavigation } from './PrimaryNavigation';
 import { ContextNavigation } from './ContextNavigation';
-import type { NavigationSection } from './navigationTypes';
+import { itemContains, itemTarget, type NavigationItem, type NavigationSection } from './navigationTypes';
+
+/** Pestañas internas de una entrada que reúne varios módulos (p. ej. Movimientos). */
+function ChildTabs({ item, activeTab, onSelect }: { item: NavigationItem; activeTab: string; onSelect: (id: string) => void }) {
+  if (!item.children || item.children.length < 2) return null;
+  return (
+    <nav className="fv-child-tabs mt-3 flex flex-wrap gap-x-5 gap-y-1 border-b border-[var(--fv-line)]" aria-label={`Pestañas de ${item.label}`}>
+      {item.children.map((child) => {
+        const active = child.id === activeTab;
+        return (
+          <button
+            key={child.id}
+            type="button"
+            onClick={() => onSelect(child.id)}
+            aria-current={active ? 'page' : undefined}
+            data-tour={`tab-${child.id}`}
+            title={child.locked ? 'Disponible en un plan superior' : child.hint}
+            className={`-mb-px border-b-2 px-0.5 pb-2 text-[13px] font-medium transition-colors ${active ? 'border-[var(--fv-brand)] text-[var(--fv-ink)]' : 'border-transparent text-[var(--fv-muted)] hover:text-[var(--fv-ink)]'}`}
+          >
+            {child.label}
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
 
 interface AppShellProps {
   sections: NavigationSection[];
@@ -37,7 +62,8 @@ export function AppShell({
   mobileMenuOpen, onToggleMobileMenu, onCloseMobileMenu, children,
 }: AppShellProps) {
   const activeSection = sections.find((section) => section.id === activeSectionId);
-  const activeItem = activeSection?.items.find((item) => item.id === activeTab);
+  const activeItem = activeSection?.items.find((item) => itemContains(item, activeTab));
+  const activeChild = activeItem?.children?.find((child) => child.id === activeTab);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
@@ -64,9 +90,9 @@ export function AppShell({
                 return (
                   <section key={section.id} className="rounded-[var(--ferova-radius-card)] border border-[var(--ferova-line)] p-2">
                     <button
-                      onClick={() => section.items[0] && onNavigateTab(section.items[0].id)}
+                      onClick={() => section.items[0] && onNavigateTab(itemTarget(section.items[0]))}
                       className={`flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-semibold font-display ${
-                        isActive ? 'bg-[var(--ferova-brand)] text-white' : 'text-slate-500 hover:bg-[var(--ferova-soft)]'
+                        isActive ? 'bg-[var(--fv-monolith)] text-white' : 'text-slate-500 hover:bg-[var(--ferova-soft)]'
                       }`}
                     >
                       <Icon className="h-4 w-4" /> {section.label}
@@ -79,9 +105,9 @@ export function AppShell({
                               <p className="px-3 pb-1 pt-3 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 first:pt-1">{item.group}</p>
                             )}
                             <button
-                              onClick={() => onNavigateTab(item.id)}
+                              onClick={() => onNavigateTab(itemTarget(item))}
                               className={`min-h-11 w-full rounded-xl px-3 py-2 text-left ${
-                                activeTab === item.id ? 'bg-[var(--ferova-ai)] text-[var(--ferova-navy)]' : 'text-slate-500 hover:bg-[var(--ferova-soft)]'
+                                itemContains(item, activeTab) ? 'bg-[var(--ferova-ai)] text-[var(--ferova-navy)]' : 'text-slate-500 hover:bg-[var(--ferova-soft)]'
                               }`}
                             >
                               <span className="block text-xs font-semibold">{item.label}</span>
@@ -109,7 +135,7 @@ export function AppShell({
           <PrimaryNavigation
             sections={sections}
             activeSectionId={activeSectionId}
-            onSelectSection={(section) => section.items[0] && onNavigateTab(section.items[0].id)}
+            onSelectSection={(section) => section.items[0] && onNavigateTab(itemTarget(section.items[0]))}
             collapsed={sidebarCollapsed}
           />
         </div>
@@ -129,9 +155,11 @@ export function AppShell({
             <div className="mx-auto mb-4 max-w-[1380px] border-b border-[var(--ferova-line)] pb-3 pt-4">
               <div className="mb-3 flex items-center gap-2 text-xs text-slate-500" aria-label="Ubicación actual">
                 <span>Ferova One</span><span aria-hidden="true">/</span><span>{activeSection?.label || 'Inicio'}</span>
-                {activeItem && <><span aria-hidden="true">/</span><span className="font-medium text-[var(--ferova-ink)]">{activeItem.label}</span></>}
+                {activeItem && <><span aria-hidden="true">/</span><span className={activeChild ? '' : 'font-medium text-[var(--ferova-ink)]'}>{activeItem.label}</span></>}
+                {activeChild && <><span aria-hidden="true">/</span><span className="font-medium text-[var(--ferova-ink)]">{activeChild.label.replace('🔒 ', '')}</span></>}
               </div>
               {activeSection && activeSection.items.length > 1 && <ContextNavigation items={activeSection.items} activeTab={activeTab} onSelectItem={onNavigateTab} />}
+              {activeItem && <ChildTabs item={activeItem} activeTab={activeTab} onSelect={onNavigateTab} />}
             </div>
             {children}
           </main>

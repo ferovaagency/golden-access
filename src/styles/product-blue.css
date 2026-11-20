@@ -13,31 +13,7 @@
   --fv-muted: #526880;
   --fv-subtle: #526880;
 }
-.ferova-v2-theme nav[aria-label="Navegación principal"] button {
-  font-size: 13px;
-  min-height: 45px;
-  border-radius: 8px;
-  margin-bottom: 5px;
-}
-.ferova-v2-theme nav[aria-label="Navegación principal"] button[aria-current] {
-  background: #eaf2ff !important;
-  color: #1d4ed8 !important;
-  box-shadow: none;
-  border-left: 3px solid #2563eb;
-}
-.ferova-v2-theme nav[aria-label="Navegación principal"] button[aria-current] :is(span, svg) {
-  color: #1d4ed8 !important;
-  stroke: currentColor;
-}
-.ferova-v2-theme nav[aria-label="Navegación de la sección"] {
-  gap: 7px;
-  row-gap: 9px;
-}
-.ferova-v2-theme nav[aria-label="Navegación de la sección"] button {
-  min-height: 36px;
-  border-radius: 7px;
-  font-size: 12px;
-}
+/* La navegación (menú lateral y entradas de sección) vive en styles/nordic.css. */
 .ferova-v2-theme .executive-overview {
   background: #fff;
   border-color: #dbe5f0;

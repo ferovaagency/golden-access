@@ -1,0 +1,123 @@
+/* ============================================================
+   SISTEMA VISUAL NOV 2026 · "NORDIC CON AZUL FEROVA"
+   Base: el sistema "Nordic Monolith Forest" del proyecto de Stitch
+   (Ferova One Design System), adaptado a la marca: la estructura, la
+   densidad, los bordes finos y la elevación por tono vienen de Stitch;
+   el color de acción sigue siendo el azul Ferova (#2563EB), el índigo
+   queda para IA y el verde sólo para cifras positivas.
+
+   Reglas que impone:
+   · Nivel 1 (tarjetas, paneles, tablas): superficie blanca sobre lienzo
+     #F8FAFC, borde de 1px y SIN sombra. La separación es por tono.
+   · Nivel 2 (menús, popovers, modales): borde + sombra corta y suave.
+   · Radios contenidos: 6px en controles, 8px en tarjetas y modales.
+     Las píldoras completas quedan para insignias y contadores.
+   · Navegación: la sección activa del menú lateral es un bloque sólido
+     de pizarra (#0F172A); las entradas de la sección, un control
+     segmentado; las pestañas internas, subrayado azul.
+   · Tablas como libro mayor: rótulos en mayúscula, líneas finas entre
+     filas y cifras tabulares.
+
+   Se aplica sólo dentro de la app (.ferova-v2-theme). La landing y las
+   páginas públicas no cambian. Nada aquí toca lógica ni JSX de módulos.
+   ============================================================ */
+
+.ferova-v2-theme {
+  --fv-canvas: #F8FAFC;
+  --fv-line: #E2E8F0;
+  --fv-hairline: #F1F5F9;   /* líneas entre filas */
+  --fv-monolith: #0F172A;   /* bloque sólido de la navegación activa */
+
+  --fv-radius-xs: 4px;
+  --fv-radius-sm: 6px;
+  --fv-radius-md: 6px;      /* controles */
+  --fv-radius-lg: 8px;      /* tarjetas, tablas, modales */
+  --fv-radius-xl: 12px;     /* héroes */
+  --radius-lg: 8px;
+
+  --fv-shadow-sm: none;
+  --fv-shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.06), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
+  --fv-shadow-lg: 0 12px 32px -4px rgba(15, 23, 42, 0.10), 0 4px 12px -2px rgba(15, 23, 42, 0.05);
+
+  /* Alias que se calculan en :root con los radios anteriores: se redeclaran
+     aquí para que tomen los nuevos dentro de la app. */
+  --ferova-radius-control: var(--fv-radius-md);
+  --ferova-radius-card: var(--fv-radius-lg);
+  --ferova-radius-hero: var(--fv-radius-xl);
+  --ferova-shadow: var(--fv-shadow-sm);
+  --ferova-shadow-hover: var(--fv-shadow-lg);
+  --radius-sm: var(--fv-radius-xs);
+  --radius-md: var(--fv-radius-md);
+  --shadow-soft: var(--fv-shadow-md);
+
+  /* Neutros de pizarra en vez de los azulados de la paleta anterior. */
+  --ferova-canvas: var(--fv-canvas);
+  --ferova-line: var(--fv-line);
+  --ferova-soft: var(--fv-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Radios ---------- */
+.ferova-v2-theme :is(.rounded-3xl, .rounded-2xl) { border-radius: var(--fv-radius-lg) !important; }
+.ferova-v2-theme :is(.rounded-xl, .rounded-lg) { border-radius: var(--fv-radius-md) !important; }
+.ferova-v2-theme :is(input, select, textarea) { border-radius: var(--fv-radius-md); }
+
+/* ---------- Elevación por tono ---------- */
+.ferova-v2-theme :is(.shadow-sm, .shadow) { box-shadow: none !important; }
+.ferova-v2-theme .shadow-md { box-shadow: var(--fv-shadow-md) !important; }
+.ferova-v2-theme :is(.shadow-lg, .shadow-xl, .shadow-2xl) { box-shadow: var(--fv-shadow-lg) !important; }
+/* Sombras de color sueltas de módulos viejos (p. ej. shadow-slate-200/30). */
+.ferova-v2-theme [class*="shadow-slate-"],
+.ferova-v2-theme [class*="shadow-blue-"] { --tw-shadow-color: rgba(15, 23, 42, 0.05); }
+
+/* ---------- Tipografía ---------- */
+.ferova-v2-theme :is(h1, h2) { letter-spacing: -0.015em; }
+
+/* ---------- Tablas: libro mayor ---------- */
+.ferova-v2-theme thead { background: var(--fv-canvas); }
+.ferova-v2-theme th {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--fv-muted);
+  border-bottom: 1px solid var(--fv-line) !important;
+}
+.ferova-v2-theme td { border-bottom: 1px solid var(--fv-hairline); }
+.ferova-v2-theme :is(th, td) { padding: 0.625rem 0.875rem; }
+.ferova-v2-theme tbody tr:hover { background: var(--fv-canvas); }
+.ferova-v2-theme tbody tr:last-child td { border-bottom: 0; }
+.ferova-v2-theme .overflow-x-auto { border-radius: var(--fv-radius-lg); }
+
+/* ---------- Navegación lateral: sección activa = bloque de pizarra ---------- */
+.ferova-v2-theme nav[aria-label="Navegación principal"] button {
+  min-height: 38px;
+  margin-bottom: 2px;
+  border-radius: var(--fv-radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fv-ink-2);
+}
+.ferova-v2-theme nav[aria-label="Navegación principal"] button[aria-current] {
+  background: var(--fv-monolith) !important;
+  color: #ffffff !important;
+  border-left: 0;
+  box-shadow: none;
+}
+.ferova-v2-theme nav[aria-label="Navegación principal"] button[aria-current] :is(span, svg) {
+  color: #ffffff !important;
+}
+
+/* ---------- Pestañas internas (Movimientos, Rentabilidad, …) ---------- */
+.ferova-v2-theme .fv-child-tabs button { min-height: 32px; }
+
+/* ---------- Insignias y píldoras: se conservan redondas ---------- */
+.ferova-v2-theme .rounded-full { border-radius: 9999px !important; }
+
+/* ---------- Restos de la paleta oscura con transparencia ----------
+   Algunos módulos viejos usan fondos oscuros con opacidad (bg-[#0f0e0c]/40,
+   border-[#2a2620]/80) que las capas anteriores no remapeaban: salían como
+   bloques grises sobre el lienzo claro. Pasan a la superficie suave. */
+.ferova-v2-theme :is([class*="bg-[#0f0e0c]/"], [class*="bg-[#161412]/"], [class*="bg-[#1c1916]/"], [class*="bg-[#11100e]/"], [class*="bg-[#14120f]/"]) {
+  background-color: var(--fv-soft) !important;
+}
+.ferova-v2-theme [class*="border-[#2a2620]/"] { border-color: var(--fv-line) !important; }

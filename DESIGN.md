@@ -1,5 +1,26 @@
 # Ferova One — Sistema visual
 
+## Nov 2026: "Nordic con azul Ferova" (dentro de la app)
+
+Adaptación del sistema **Nordic Monolith Forest** del proyecto de Stitch
+"Ferova One Design System". Se tomó la estructura y se conservó la marca:
+
+- **Se toma de Stitch:** lienzo `#F8FAFC` + superficies blancas con borde de 1px
+  y **sin sombra** (la elevación es por tono); sombra corta sólo en menús,
+  popovers y modales; radios de **6px** en controles y **8px** en tarjetas y
+  modales; tablas como libro mayor (rótulos en mayúscula, líneas finas
+  `#F1F5F9` entre filas, cifras tabulares); la sección activa del menú lateral
+  como **bloque sólido de pizarra** `#0F172A`.
+- **Se conserva de Ferova:** azul `#2563EB` como color de acción, índigo para IA,
+  verde/ámbar/rojo sólo como estado, y Figtree/Outfit. (Stitch usa negro + verde
+  y Geist; se descartó para no cambiar la identidad.)
+- **Navegación:** 5 secciones → entradas de la sección en un control segmentado →
+  pestañas internas con subrayado azul cuando una entrada reúne varios módulos
+  (Movimientos, Rentabilidad, Impuestos, Clientes y servicios, Pipeline,
+  Integraciones). Ver `navigationTypes.ts` (`children`).
+- **Dónde vive:** `src/styles/nordic.css`, cargado después de `product-blue.css`,
+  con alcance `.ferova-v2-theme` (la landing y las páginas públicas no cambian).
+
 ## Mundo: "Tablero de operaciones" (modo Operate)
 
 **Tesis:** una app financiera que se lee como un **tablero de control / de salidas**: la

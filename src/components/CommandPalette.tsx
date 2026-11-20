@@ -40,12 +40,19 @@ export default function CommandPalette({ open, onClose, onNavigate, isTeam, hasF
       base.push(
         { id: 'nav:dashboard', label: 'Finanzas · Dashboard', group: 'Finanzas', icon: Wallet, run: go('dashboard') },
         { id: 'nav:ventas', label: 'Ingresos', group: 'Finanzas', icon: Wallet, run: go('ventas') },
-        { id: 'nav:gastos', label: 'Costos', group: 'Finanzas', icon: Wallet, run: go('gastos') },
+        { id: 'nav:pagos', label: 'Pagos', group: 'Finanzas', icon: Wallet, run: go('pagosEgresos') },
+        { id: 'nav:gastos', label: 'Costos fijos', group: 'Finanzas', icon: Wallet, run: go('gastos') },
+        { id: 'nav:caja', label: 'Caja y bancos', group: 'Finanzas', icon: Wallet, run: go('finCaja') },
+        { id: 'nav:cobrar', label: 'Cobrar y pagar', group: 'Finanzas', icon: Wallet, run: go('finCobrar') },
+        { id: 'nav:estado', label: 'Estado y presupuesto', group: 'Finanzas', icon: Wallet, run: go('finEstado') },
         { id: 'nav:horas', label: 'Horas', group: 'Finanzas', icon: Wallet, run: go('horas') },
         { id: 'nav:clientes', label: 'Clientes', group: 'Finanzas', icon: Users, run: go('clientes') },
+        { id: 'nav:servicios', label: 'Servicios', group: 'Finanzas', icon: Wallet, run: go('servicios') },
         { id: 'nav:iva', label: 'IVA', group: 'Finanzas', icon: Wallet, run: go('iva') },
+        { id: 'nav:alertas', label: 'Alertas DIAN', group: 'Finanzas', icon: Wallet, run: go('alertas') },
         { id: 'nav:equilibrioGlobal', label: 'Punto de equilibrio', group: 'Finanzas', icon: Target, run: go('equilibrioGlobal') },
-        { id: 'nav:ajustes', label: 'Configuración', group: 'Navegar', icon: LayoutGrid, run: go('ajustes') },
+        { id: 'nav:equilibrioServicio', label: 'Rentabilidad por servicio', group: 'Finanzas', icon: Target, run: go('equilibrioServicio') },
+        { id: 'nav:ajustes', label: 'Negocio y equipo', group: 'Navegar', icon: LayoutGrid, run: go('ajustes') },
       );
     }
     if (isTeam) {

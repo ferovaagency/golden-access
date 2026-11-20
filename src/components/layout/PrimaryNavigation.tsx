@@ -30,7 +30,7 @@ export function PrimaryNavigation({ sections, activeSectionId, onSelectSection, 
             title={collapsed ? section.label : undefined}
             className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs font-semibold transition-colors ${
               isActive
-                ? 'bg-[var(--ferova-brand)] text-white shadow-sm'
+                ? 'bg-[var(--fv-monolith)] text-white'
                 : 'text-[var(--fv-ink-2)] hover:bg-[var(--fv-soft)] hover:text-[var(--fv-ink)]'
             }`}
           >

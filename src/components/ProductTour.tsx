@@ -94,7 +94,7 @@ export default function ProductTour({ userId, modules, onNavigate }: Props) {
     { tab: 'proyectos', target: 'tab-proyectos', titulo: 'Donde tus clientes cobran vida', texto: 'Avance, horas dedicadas y rentabilidad de cada entrega. Cada hora que registras se convierte en un número de verdad.' },
     { tab: 'gastos', target: 'tab-gastos', titulo: 'Tus costos', texto: 'Los costos fijos del onboarding viven aquí. Puedes marcar cuáles son por cliente y a qué servicios pertenecen: así el margen de cada servicio es real.' },
     ...(modules.finance ? [
-      { tab: 'finops', target: 'tab-finops', titulo: 'Tus números, vivos', texto: '¡Tu presupuesto ya está aquí! Cuentas por cobrar, deudas y flujo de caja del mes. Nada de recalcular hojas de Excel.' },
+      { tab: 'finCaja', target: 'tab-finCaja', titulo: 'Tus números, vivos', texto: '¡Tu presupuesto ya está aquí! Flujo de caja y saldos en Caja y bancos; lo que te deben y lo que debes en Cobrar y pagar. Nada de recalcular hojas de Excel.' },
       { tab: 'equilibrioGlobal', target: 'tab-equilibrioGlobal', titulo: 'Tu punto de equilibrio', texto: 'Cuánto necesitas facturar al mes para cubrir costos y tu sueldo. Con lo que cargaste ya tienes el número; cámbialo cuando cambien tus costos.' },
     ] : []),
     ...(modules.crm_ventas ? [{ tab: 'ventas-crm', target: 'tab-ventas-crm', titulo: 'Tu pipeline', texto: 'Oportunidades, cotizaciones y valor ganado. Lo que entra aquí termina como cliente en Proyectos.' }] : []),

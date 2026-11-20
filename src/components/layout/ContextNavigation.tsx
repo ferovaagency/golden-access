@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import type { NavigationItem } from './navigationTypes';
+import { itemContains, itemTarget, type NavigationItem } from './navigationTypes';
 
 interface ContextNavigationProps {
   items: NavigationItem[];
@@ -18,9 +18,9 @@ interface ContextNavigationProps {
 export function ContextNavigation({ items, activeTab, onSelectItem, className = '', variant = 'horizontal' }: ContextNavigationProps) {
   if (items.length === 0) return null;
   return (
-    <nav className={`${variant === 'vertical' ? 'space-y-1' : 'flex flex-wrap items-center gap-1.5'} ${className}`} aria-label="Navegación de la sección">
+    <nav className={`${variant === 'vertical' ? 'space-y-1' : 'inline-flex max-w-full flex-wrap items-center gap-1 rounded-[var(--fv-radius-lg)] bg-[var(--fv-soft)] p-1'} ${className}`} aria-label="Navegación de la sección">
       {items.map((item, index) => {
-        const isActive = activeTab === item.id;
+        const isActive = itemContains(item, activeTab);
         const showGroupLabel = item.group && items.findIndex((candidate) => candidate.group === item.group) === index;
         return (
           <Fragment key={item.id}>
@@ -30,14 +30,14 @@ export function ContextNavigation({ items, activeTab, onSelectItem, className = 
               </span>
             )}
             <button
-              onClick={() => onSelectItem(item.id)}
+              onClick={() => onSelectItem(itemTarget(item))}
               title={item.hint}
               data-tour={`tab-${item.id}`}
               aria-current={isActive ? 'true' : undefined}
-              className={`${variant === 'vertical' ? 'flex w-full items-center rounded-lg px-3 py-2 text-left text-xs font-medium' : 'rounded-[var(--ferova-radius-pill)] px-3.5 py-1.5 text-xs font-semibold font-display'} transition-colors ${
-                isActive
-                  ? 'bg-blue-600 text-white shadow-sm'
-                : variant === 'vertical' ? 'text-[var(--fv-ink-2)] hover:bg-[var(--fv-soft)] hover:text-[var(--fv-ink)]' : 'bg-[var(--fv-surface)] text-[var(--fv-ink-2)] border border-[var(--fv-line)] hover:border-[var(--fv-brand)]/40 hover:text-[var(--fv-ink)]'
+              className={`${variant === 'vertical' ? 'flex w-full items-center rounded-lg px-3 py-2 text-left text-xs font-medium' : 'rounded-[var(--fv-radius-sm)] px-3 py-1.5 text-[13px] font-medium'} transition-colors ${
+                variant === 'vertical'
+                  ? isActive ? 'bg-[var(--fv-monolith)] text-white' : 'text-[var(--fv-ink-2)] hover:bg-[var(--fv-soft)] hover:text-[var(--fv-ink)]'
+                  : isActive ? 'bg-[var(--fv-surface)] font-semibold text-[var(--fv-ink)] shadow-[0_1px_2px_rgba(15,23,42,0.08)] ring-1 ring-[var(--fv-line)]' : 'text-[var(--fv-ink-2)] hover:text-[var(--fv-ink)]'
               }`}
             >
               {item.label}

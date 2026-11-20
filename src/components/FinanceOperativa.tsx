@@ -17,7 +17,7 @@ import { syncPayablesToSheets, syncReceivablesToSheets } from '../lib/sheetsServ
 import FinancialStatement from './FinancialStatement';
 import { useToast } from './ui/toast';
 
-type SubTab = 'estado' | 'cuentas' | 'metodos' | 'deudas' | 'cobrar' | 'pagar' | 'presupuesto' | 'flujo';
+export type SubTab = 'estado' | 'cuentas' | 'metodos' | 'deudas' | 'cobrar' | 'pagar' | 'presupuesto' | 'flujo';
 
 const cardClass = 'rounded-2xl border border-slate-200 bg-white p-4 shadow-sm';
 const inputClass = 'w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500';
@@ -29,19 +29,27 @@ function currentPeriodo(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
-export default function FinanceOperativa({ user, appData, formatCop }: { user: User; appData: AppData; formatCop: (n: number) => string }) {
-  const [tab, setTab] = useState<SubTab>('flujo');
+const ALL_TABS: SubTab[] = ['flujo', 'estado', 'cuentas', 'metodos', 'deudas', 'cobrar', 'pagar', 'presupuesto'];
+
+/**
+ * Finanzas operativas. Desde nov 2026 el menú la muestra en tres vistas
+ * (Caja y bancos, Cobrar y pagar, Estado y presupuesto): cada una pasa el
+ * subconjunto de pestañas que le toca en `tabs`. Sin `tabs`, muestra todas.
+ */
+export default function FinanceOperativa({ user, appData, formatCop, tabs = ALL_TABS, title = 'Finanzas operativas', description = 'Cuentas, deudas, por cobrar, por pagar, presupuesto y flujo de caja en un solo lugar.' }: { user: User; appData: AppData; formatCop: (n: number) => string; tabs?: SubTab[]; title?: string; description?: string }) {
+  const [selected, setTab] = useState<SubTab>(tabs[0]);
+  const tab = tabs.includes(selected) ? selected : tabs[0];
   const [periodo, setPeriodo] = useState(currentPeriodo());
 
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Finanzas Operativas</h1>
-        <p className="text-sm text-slate-500">Cuentas, deudas, por cobrar, por pagar, presupuesto y flujo de caja en un solo lugar.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">{title}</h1>
+        <p className="text-sm text-slate-500">{description}</p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2">
-        {(['flujo','estado','cuentas','metodos','deudas','cobrar','pagar','presupuesto'] as SubTab[]).map((t) => (
+        {tabs.length > 1 && tabs.map((t) => (
           <button key={t} onClick={() => setTab(t)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${tab === t ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
             {labels[t]}
           </button>

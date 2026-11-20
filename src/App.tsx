@@ -38,7 +38,7 @@ import AISidebar from './components/AISidebar';
 import CommandPalette from './components/CommandPalette';
 import TopBar from './components/TopBar';
 import { AppShell } from './components/layout/AppShell';
-import type { NavigationItem, NavigationSection } from './components/layout/navigationTypes';
+import { itemContains, itemTarget, type NavigationItem, type NavigationSection } from './components/layout/navigationTypes';
 import { isFerovaUiV2Enabled } from './lib/featureFlags';
 import { SeoHead } from './seo/SeoHead';
 import { QuickHourLog } from './components/QuickHourLog';
@@ -297,7 +297,7 @@ function AppInner() {
   // Si el cliente no tiene el módulo Financiero (plan solo "CRM y Ventas"),
   // ninguna de estas pestañas existe para él -- redirige a su módulo real.
   // Cubre tanto el tab inicial por defecto como un cambio de plan en caliente.
-  const FINANCIERO_TAB_IDS = ['dashboard', 'ventas', 'pagosEgresos', 'gastos', 'equilibrioGlobal', 'equilibrioServicio', 'iva', 'alertas', 'ajustes', 'proyectos', 'horas', 'clientes', 'servicios', 'kpisOperativos', 'seguimiento'];
+  const FINANCIERO_TAB_IDS = ['dashboard', 'ventas', 'pagosEgresos', 'gastos', 'equilibrioGlobal', 'equilibrioServicio', 'iva', 'alertas', 'ajustes', 'proyectos', 'horas', 'clientes', 'servicios', 'kpisOperativos', 'seguimiento', 'finCaja', 'finCobrar', 'finEstado'];
   // El seguimiento por cliente vive DENTRO de cada proyecto: el id antiguo
   // "seguimiento" redirige a Proyectos. "kpisOperativos" NO: es otro módulo
   // (metas de prospección, meta anual de MRR y pasarelas de pago con sus
@@ -306,6 +306,9 @@ function AppInner() {
     if (activeTab === 'seguimiento') setActiveTab('kpisOperativos');
     // "home"/"inicio" (búsqueda, notificaciones) apuntan al resumen real.
     if (activeTab === 'home' || activeTab === 'inicio') setActiveTab('dashboard');
+    // Finanzas operativas se dividió en tres vistas (nov 2026); el id viejo
+    // (guardado en el navegador o en enlaces) abre Caja y bancos.
+    if (activeTab === 'finops') setActiveTab('finCaja');
   }, [activeTab]);
   // Al pasar a una pantalla estrecha con el asistente abierto, se cierra para
   // que no tape el menú ni el contenido.
@@ -696,10 +699,11 @@ function AppInner() {
     'locked-calendar': { entitlement: 'google_calendar', nombre: 'Sincronización con Google Calendar' },
     'locked-sheets': { entitlement: 'google_sheets', nombre: 'Respaldo en Google Sheets' },
   };
-  const KNOWN_TABS = { has: (t: string) => t.startsWith('crm-') || t.startsWith('locked-') || ['ajustes','alertas','clientes','dashboard','equilibrioGlobal','equilibrioServicio','finops','gastos','holding','home','horas','inicio','integraciones','iva','kpisOperativos','marketingRoi','memoria','pagosEgresos','plan','planner','proyectos','reports','seguimiento','servicios','ventas','ventas-crm'].includes(t) };
+  const KNOWN_TABS = { has: (t: string) => t.startsWith('crm-') || t.startsWith('locked-') || ['ajustes','alertas','clientes','dashboard','finCaja','finCobrar','finEstado','equilibrioGlobal','equilibrioServicio','finops','gastos','holding','home','horas','inicio','integraciones','iva','kpisOperativos','marketingRoi','memoria','pagosEgresos','plan','planner','proyectos','reports','seguimiento','servicios','ventas','ventas-crm'].includes(t) };
   const lockedActive = !!LOCKED_TABS[activeTab] && !modules[LOCKED_TABS[activeTab].entitlement];
-  const lockedItem = (id: string, label: string, plan: string): NavigationItem => ({ id, label: `🔒 ${label}`, hint: `Disponible desde el plan ${plan}` });
-  const handleNavigate = (tab: string) => {
+  const lockedItem = (id: string, label: string, plan: string): NavigationItem => ({ id, label: `🔒 ${label}`, hint: `Disponible desde el plan ${plan}`, locked: true });
+  const handleNavigate = (requested: string) => {
+    const tab = resolveTab(requested);
     if (tab === 'plan') { openBilling(); return; }
     if (tab === '__ai') { setAiCollapsed(false); return; }
     if (LOCKED_TABS[tab] && !modules[LOCKED_TABS[tab].entitlement]) {
@@ -713,61 +717,100 @@ function AppInner() {
     setActiveTab(tab);
   };
 
+  // Menú (nov 2026): 5 secciones y 18 entradas. Las entradas con `children`
+  // reúnen módulos que antes eran pestañas sueltas; cada módulo conserva su id.
   const NAVIGATION_SECTIONS: NavigationSection[] = [
     { id: 'home', label: 'Inicio', icon: LayoutDashboard, items: [
-      { id: 'dashboard', label: 'Resumen', hint: 'Salud, prioridades y actividad' },
-      // Sólo para quien administra un holding con empresas debajo.
-      ...(workspace?.holdings.length ? [{ id: 'holding', label: 'Holding', hint: 'Las empresas del grupo, consolidadas' }] : []),
+      // Resumen ya trae las tareas de hoy del Planner y el diagnóstico.
+      // Holding se abre desde el selector de empresa ("Todo el grupo").
+      { id: 'dashboard', label: 'Resumen', hint: 'Salud, prioridades, tareas de hoy y actividad' },
     ] },
     { id: 'projects', label: 'Proyectos', icon: FolderKanban, items: modules.core_projects || modules.planner ? [
-      { id: 'clientes', label: 'Clientes', hint: 'Cuentas activas' },
-      { id: 'servicios', label: 'Servicios', hint: 'Catálogo y costos' },
-      { id: 'horas', label: 'Horas', hint: 'Capacidad y rentabilidad' },
-      ...(modules.core_projects ? [
-        { id: 'proyectos', label: 'Proyectos', hint: 'Plan y seguimiento por cliente' },
-      ] : []),
-      ...(modules.core_projects || modules.financiero ? [
-      ] : []),
       ...(modules.planner ? [{ id: 'planner', label: 'Planner', hint: 'Prioridades, agenda y bloques' }] : []),
+      ...(modules.core_projects ? [{ id: 'proyectos', label: 'Proyectos', hint: 'Plan y seguimiento por cliente' }] : []),
+      { id: 'horas', label: 'Horas', hint: 'Capacidad, temporizador y rentabilidad' },
+      // Base de la rentabilidad: disponible en todos los planes.
+      { id: 'g-clientes', label: 'Clientes y servicios', hint: 'Cuentas activas, catálogo, precios y costos', children: [
+        { id: 'clientes', label: 'Clientes' },
+        { id: 'servicios', label: 'Servicios' },
+      ] },
     ] : [] },
     { id: 'finance', label: 'Finanzas', icon: Boxes, items: [
-      ...(modules.advanced_analytics ? [{ id: 'reports', label: 'Reportes CEO', hint: 'Seguimiento ejecutivo' }] : [lockedItem('reports', 'Reportes CEO', 'Full')]),
+      { id: 'g-fin-resumen', label: 'Resumen', hint: 'Reportes ejecutivos, metas de MRR y pasarelas', children: [
+        ...(modules.financiero ? [{ id: 'kpisOperativos', label: 'Metas y seguimiento' }] : []),
+        modules.advanced_analytics ? { id: 'reports', label: 'Reportes CEO' } : { id: 'reports', label: '🔒 Reportes CEO', locked: true },
+      ] },
       ...(modules.financiero ? [
-      { id: 'finops', label: 'Finanzas operativas', hint: 'Cuentas, deudas, flujo', group: 'Finanzas' as const },
-      { id: 'ventas', label: 'Ingresos', hint: 'Ventas y abonos', group: 'Finanzas' as const },
-      { id: 'pagosEgresos', label: 'Pagos', hint: 'Egresos registrados', group: 'Finanzas' as const },
-      { id: 'gastos', label: 'Costos', hint: 'Herramientas y gastos', group: 'Finanzas' as const },
-      { id: 'equilibrioGlobal', label: 'Equilibrio', hint: 'Punto global', group: 'Finanzas' as const },
-      { id: 'equilibrioServicio', label: 'Por servicio', hint: 'Margen unitario', group: 'Finanzas' as const },
-      { id: 'iva', label: 'IVA', hint: 'Control tributario', group: 'Finanzas' as const },
-      { id: 'alertas', label: 'Alertas', hint: 'Riesgos y topes', group: 'Finanzas' as const },
-      // Metas de MRR y pasarelas con sus comisiones: es dinero, no pipeline.
-      // Estuvo en Ventas y ahí no era su sitio.
-      { id: 'kpisOperativos', label: 'Seguimiento', hint: 'Metas de MRR, prospección y pasarelas', group: 'Finanzas' as const },
+        { id: 'g-movimientos', label: 'Movimientos', hint: 'Ingresos, pagos y costos fijos', children: [
+          { id: 'ventas', label: 'Ingresos' },
+          { id: 'pagosEgresos', label: 'Pagos' },
+          { id: 'gastos', label: 'Costos fijos' },
+        ] },
+        { id: 'finCaja', label: 'Caja y bancos', hint: 'Flujo de caja, cuentas y métodos de pago' },
+        { id: 'finCobrar', label: 'Cobrar y pagar', hint: 'Por cobrar, por pagar y deudas' },
+        { id: 'finEstado', label: 'Estado y presupuesto', hint: 'Estado de resultados y presupuesto' },
+        { id: 'g-rentabilidad', label: 'Rentabilidad', hint: 'Punto de equilibrio y margen por servicio', children: [
+          { id: 'equilibrioGlobal', label: 'Punto de equilibrio' },
+          { id: 'equilibrioServicio', label: 'Por servicio' },
+        ] },
+        { id: 'g-impuestos', label: 'Impuestos', hint: 'IVA, alertas DIAN y topes', children: [
+          { id: 'iva', label: 'IVA' },
+          { id: 'alertas', label: 'Alertas DIAN' },
+        ] },
       ] : []),
     ] },
     { id: 'sales', label: 'Ventas', icon: Grid2X2, items: [
-      ...(modules.crm_ventas ? [{ id: 'ventas-crm', label: 'CRM', hint: 'Pipeline y oportunidades' }] : [lockedItem('ventas-crm', 'CRM', 'Intermedio')]),
-      ...(modules.marketing_roi ? [{ id: 'marketingRoi', label: 'Marketing ROI', hint: 'Campañas y calculadora' }] : [lockedItem('marketingRoi', 'Marketing ROI', 'Intermedio')]),
-      ...CRM_GROWTH_TABS,
+      { id: 'g-pipeline', label: 'Pipeline', hint: 'Oportunidades y citas', children: [
+        modules.crm_ventas ? { id: 'ventas-crm', label: 'Oportunidades' } : { id: 'ventas-crm', label: '🔒 Oportunidades', locked: true },
+        ...(modules.crm_ventas ? [{ id: 'crm-citas', label: 'Citas' }] : []),
+      ] },
+      ...(modules.marketing_roi ? [{ id: 'marketingRoi', label: 'Marketing ROI', hint: 'Campañas y calculadora' }] : [lockedItem('marketingRoi', 'Marketing ROI', 'Pro')]),
     ] },
     { id: 'settings', label: 'Configuración', icon: Settings, items: [
-      ...(modules.financiero ? [{ id: 'ajustes', label: 'Perfil del negocio', hint: 'Datos, horario, holding y colaboradores' }] : []),
-      { id: 'integraciones', label: 'Integraciones', hint: 'Google, WhatsApp, Apollo' },
-      ...(modules.google_calendar ? [] : [lockedItem('locked-calendar', 'Google Calendar', 'Básico')]),
-      ...(modules.google_sheets ? [] : [lockedItem('locked-sheets', 'Google Sheets', 'Básico')]),
+      ...(modules.financiero ? [{ id: 'ajustes', label: 'Negocio y equipo', hint: 'Datos, horario, empresas y colaboradores' }] : []),
+      { id: 'g-integraciones', label: 'Integraciones', hint: 'Google, WhatsApp, Apollo y Notion', children: [
+        { id: 'integraciones', label: 'Conexiones' },
+        ...(modules.crm_ventas ? [{ id: 'crm-bot', label: 'Bot WhatsApp' }] : []),
+        ...(modules.google_calendar ? [] : [{ id: 'locked-calendar', label: '🔒 Google Calendar', locked: true }]),
+        ...(modules.google_sheets ? [] : [{ id: 'locked-sheets', label: '🔒 Google Sheets', locked: true }]),
+      ] },
       { id: 'plan', label: 'Plan y suscripción', hint: 'Plan, pagos y cancelación' },
       { id: 'memoria', label: 'Memoria', hint: 'Cerebro del negocio: lo que sabe de ti y de tu operación' },
       ...(isTeam ? [{ id: 'admin', label: 'Administración Ferova', hint: 'Usuarios, planes, feedback y operaciones' }] : []),
     ] },
   ];
 
-  const activeSectionId = NAVIGATION_SECTIONS.find((section) => section.items.some((item) => item.id === activeTab))?.id ?? 'home';
+  // Permisos de colaborador: las vistas nuevas de Finanzas operativas usan el
+  // permiso de siempre ('finops').
+  const permissionKey = (tab: string) => (tab === 'finCaja' || tab === 'finCobrar' || tab === 'finEstado' ? 'finops' : tab);
+  const canViewTab = (tab: string) => canView(permissionKey(tab));
+
+  const activeSectionId = NAVIGATION_SECTIONS.find((section) => section.items.some((item) => itemContains(item, activeTab)))?.id ?? 'home';
   // Recorte por permisos de colaborador (para el dueño, canView es siempre true).
   const visibleNavigationSections = NAVIGATION_SECTIONS
-    .map((section) => ({ ...section, items: section.items.filter((item) => canView(item.id)) }))
+    .map((section) => ({
+      ...section,
+      items: section.items
+        .map((item) => (item.children ? { ...item, children: item.children.filter((child) => canViewTab(child.id)) } : item))
+        .filter((item) => (item.children ? item.children.length > 0 : canViewTab(item.id))),
+    }))
     .filter((section) => section.items.length > 0);
-  const navigateTo = (tab: string) => {
+
+  // Un id de grupo (g-…) abre su primera pestaña; 'finops' (enlaces viejos,
+  // ⌘K, asistente) abre Caja y bancos.
+  function resolveTab(tab: string): string {
+    if (tab === 'finops') return 'finCaja';
+    if (!tab.startsWith('g-')) return tab;
+    for (const section of visibleNavigationSections) {
+      const item = section.items.find((candidate) => candidate.id === tab);
+      if (item) return itemTarget(item);
+    }
+    return 'dashboard';
+  }
+
+  const navigateTo = (requested: string) => {
+    const tab = resolveTab(requested);
+    if (LOCKED_TABS[tab] && !modules[LOCKED_TABS[tab].entitlement]) { handleNavigate(tab); setIsMobileMenuOpen(false); return; }
     if (tab === 'plan') { openBilling(); setIsMobileMenuOpen(false); return; }
     if (tab === 'admin') { window.location.assign('/admin'); return; }
     setActiveTab(tab);
@@ -883,7 +926,7 @@ function AppInner() {
     <div className={isFerovaUiV2Enabled() ? 'ferova-v2-theme' : undefined}>
       <UpgradeModal currentPlan={plan} currentPeriodo={subscription.periodo} />
       <WhopCheckoutModal user={user} onActivated={() => { refreshAccess(); toastOk('Plan activado. ¡Gracias!'); }} />
-      <AISidebar user={user} collapsed={aiCollapsed} onToggle={() => setAiCollapsed((v) => !v)} width={aiWidth} onResize={setAiWidth} metrics={metrics} currentArea={NAVIGATION_SECTIONS.find((section) => section.items.some((item) => item.id === activeTab))?.label} />
+      <AISidebar user={user} collapsed={aiCollapsed} onToggle={() => setAiCollapsed((v) => !v)} width={aiWidth} onResize={setAiWidth} metrics={metrics} currentArea={NAVIGATION_SECTIONS.find((section) => section.items.some((item) => itemContains(item, activeTab)))?.label} />
     </div>
   );
 
@@ -897,7 +940,7 @@ function AppInner() {
   // nueva (AppShell + TopBar) no se renderizaba en ninguna parte, así que quien
   // tenía varias empresas no tenía forma de cambiar entre ellas.
   const workspaceSwitcherNode = workspace ? (
-    <WorkspaceSwitcher options={workspace.options} active={workspace.active} onSelect={switchWorkspace} />
+    <WorkspaceSwitcher options={workspace.options} active={workspace.active} onSelect={switchWorkspace} onOpenGroup={workspace.holdings.length ? () => navigateTo('holding') : undefined} />
   ) : null;
 
   const topBarNode = <TopBar userId={user.id} onOpenPalette={() => setPaletteOpen(true)} onNavigate={handleNavigate} user={user} extras={headerExtrasNode} workspaceSwitcher={workspaceSwitcherNode} onSignOut={handleSignOut} onOpenAssistant={() => setAiCollapsed(false)} />;
@@ -973,7 +1016,9 @@ function AppInner() {
             {activeTab === 'holding' && <HoldingOverview formatCop={formatCop} />}
             {activeTab === 'kpisOperativos' && <OperatingKpiDashboard userId={accountId} data={appData} formatCop={formatCop} />}
             {!lockedActive && activeTab === 'reports' && effectiveUser && <ReportsView user={effectiveUser} />}
-            {activeTab === 'finops' && effectiveUser && <FinanceOperativa user={effectiveUser} appData={appData} formatCop={formatCop} />}
+            {activeTab === 'finCaja' && effectiveUser && <FinanceOperativa user={effectiveUser} appData={appData} formatCop={formatCop} tabs={['flujo', 'cuentas', 'metodos']} title="Caja y bancos" description="Flujo de caja, saldos por cuenta y métodos de pago." />}
+            {activeTab === 'finCobrar' && effectiveUser && <FinanceOperativa user={effectiveUser} appData={appData} formatCop={formatCop} tabs={['cobrar', 'pagar', 'deudas']} title="Cobrar y pagar" description="Lo que te deben, lo que debes y tus deudas." />}
+            {activeTab === 'finEstado' && effectiveUser && <FinanceOperativa user={effectiveUser} appData={appData} formatCop={formatCop} tabs={['estado', 'presupuesto']} title="Estado y presupuesto" description="Estado de resultados del período y presupuesto." />}
             {!lockedActive && activeTab === 'marketingRoi' && effectiveUser && <MarketingROI user={effectiveUser} ventas={appData.ventas} config={appData.config} formatCop={formatCop} />}
             {activeTab === 'dashboard' && (
               <Home
@@ -1179,7 +1224,7 @@ function AppInner() {
                     {isActive && <div className="space-y-1 pt-2">{section.items.map((item, index) => (
                       <React.Fragment key={item.id}>
                         {item.group && section.items.findIndex((candidate) => candidate.group === item.group) === index && <p className="px-3 pb-1 pt-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 first:pt-1">{item.group}</p>}
-                        <button onClick={() => navigateTo(item.id)} className={`min-h-11 w-full rounded-xl px-3 py-2 text-left ${activeTab === item.id ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
+                        <button onClick={() => navigateTo(item.id)} className={`min-h-11 w-full rounded-xl px-3 py-2 text-left ${itemContains(item, activeTab) ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
                           <span className="block text-xs font-semibold">{item.label}</span>
                           <span className="block text-[11px] opacity-70">{item.hint}</span>
                         </button>
@@ -1224,7 +1269,7 @@ function AppInner() {
                       {section.items.map((item, index) => (
                         <React.Fragment key={item.id}>
                           {item.group && section.items.findIndex((candidate) => candidate.group === item.group) === index && <p className="px-3 pb-1 pt-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 first:pt-1">{item.group}</p>}
-                          <button onClick={() => navigateTo(item.id)} className={`w-full rounded-lg px-3 py-2 text-left transition ${activeTab === item.id ? 'bg-blue-50 text-blue-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}>
+                          <button onClick={() => navigateTo(item.id)} className={`w-full rounded-lg px-3 py-2 text-left transition ${itemContains(item, activeTab) ? 'bg-blue-50 text-blue-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}>
                             <span className="block text-xs font-semibold">{item.label}</span>
                             <span className="block pt-0.5 text-[11px] font-normal opacity-70">{item.hint}</span>
                           </button>
