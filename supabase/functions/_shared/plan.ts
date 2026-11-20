@@ -6,7 +6,7 @@ import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 // Y los topes de uso que el servidor debe hacer cumplir (la IA se controla
 // aquí porque ai_usage_log no es legible desde el navegador).
 
-export type ServerPlan = "free" | "basico" | "intermedio" | "full" | "legacy";
+export type ServerPlan = "free" | "medio" | "pro" | "basico" | "intermedio" | "full" | "legacy";
 
 const LEGACY = new Set(["projects", "finance", "planner", "crm", "completo", "custom", "financiero", "crm_ventas"]);
 
@@ -32,7 +32,7 @@ export async function resolvePlanForAccount(
 }
 
 function normalize(plan: unknown): ServerPlan {
-  if (plan === "free" || plan === "basico" || plan === "intermedio" || plan === "full") return plan;
+  if (plan === "free" || plan === "medio" || plan === "pro" || plan === "basico" || plan === "intermedio" || plan === "full") return plan;
   if (typeof plan === "string" && LEGACY.has(plan)) return "legacy";
   return "full";
 }
@@ -40,6 +40,8 @@ function normalize(plan: unknown): ServerPlan {
 /** Consultas al asistente por mes. null = sin tope. Debe coincidir con PLAN_LIMITS en src/lib/planService.ts. */
 export function aiMonthlyLimit(plan: ServerPlan): number | null {
   if (plan === "free") return 10;
+  if (plan === "medio") return 150;
+  if (plan === "pro") return 1000;
   if (plan === "basico") return 100;
   return null;
 }

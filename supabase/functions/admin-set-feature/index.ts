@@ -12,7 +12,7 @@ const BodySchema = z.discriminatedUnion('action', [
     action: z.literal('set'),
     key: z.string().regex(/^[a-z0-9_]{2,40}$/),
     estado: z.enum(['interno', 'beta', 'publicado']).optional(),
-    plan_minimo: z.enum(['basico', 'intermedio', 'full']).nullable().optional(),
+    plan_minimo: z.enum(['medio', 'pro', 'basico', 'intermedio', 'full']).nullable().optional(),
     motivo: z.string().max(300).optional(),
   }),
   z.object({

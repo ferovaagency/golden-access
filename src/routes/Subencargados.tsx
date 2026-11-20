@@ -45,10 +45,10 @@ const SUBPROCESSORS: Subprocessor[] = [
     rol: 'Encargado',
   },
   {
-    nombre: 'Paddle',
-    proposito: 'Comerciante registrado (Merchant of Record): cobro de la suscripción, facturación, impuestos, reembolsos y disputas.',
-    datos: 'Correo y estado de pago. Ferova no almacena datos de tarjetas.',
-    ubicacion: 'Reino Unido / Estados Unidos y jurisdicciones donde opere',
+    nombre: 'Whop, Inc.',
+    proposito: 'Plataforma de pagos: cobro de la suscripción, facturación, impuestos que correspondan, reembolsos, disputas y comisiones de afiliados.',
+    datos: 'Correo, plan y estado de pago. Ferova no almacena datos de tarjetas.',
+    ubicacion: 'Estados Unidos y jurisdicciones donde opere',
     rol: 'Responsable independiente',
   },
   {

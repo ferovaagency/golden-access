@@ -24,9 +24,12 @@ import { useToast, errMsg } from './components/ui/toast';
 import { LoadingState } from './components/ui/AsyncState';
 import AuthScreen from './components/AuthScreen';
 import UpgradeModal from './components/UpgradeModal';
-import SubscriptionGate, { TrialBanner } from './components/SubscriptionGate';
+import TrialBanner from './components/billing/TrialBanner';
+import WhopCheckoutModal from './components/billing/WhopCheckoutModal';
+import { openBillingPortal } from './lib/billingActions';
+import { readCheckoutReturn } from './lib/whop';
+import { getPlanCatalog } from './lib/planService';
 import { capturePlanIntentFromUrl, clearPlanIntent, type PlanIntent } from './lib/planIntent';
-import { addPaymentMethod } from './lib/subscriptionActions';
 import { requestEntitlement, requestUpgrade } from './lib/planGate';
 import { trackEvent } from './lib/analytics';
 import type { Entitlement } from './lib/planService';
@@ -357,8 +360,26 @@ function AppInner() {
     intentHandled.current = true;
     clearPlanIntent();
     if (planIntent.plan === plan) return;
-    requestUpgrade({ motivo: `Elegiste ${planIntent.plan === 'basico' ? 'Básico' : planIntent.plan === 'intermedio' ? 'Intermedio' : 'Full'} en la página de precios`, planSugerido: planIntent.plan, periodo: planIntent.periodo });
+    const nombre = getPlanCatalog().find((p) => p.id === planIntent.plan)?.nombre ?? planIntent.plan;
+    requestUpgrade({ motivo: `Elegiste ${nombre} en la página de precios`, planSugerido: planIntent.plan, periodo: planIntent.periodo });
   }, [appData, planIntent, hasPaid, isTeam, plan]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Vuelta desde un paso de pago fuera de la página (3DS o banco): Whop agrega
+  // ?checkout=whop&status=… El acceso lo activa el webhook; aquí se avisa y se
+  // vuelve a leer el plan un par de veces mientras llega.
+  const checkoutReturnHandled = useRef(false);
+  useEffect(() => {
+    if (checkoutReturnHandled.current || !user) return;
+    const result = readCheckoutReturn(window.location.search);
+    if (!result) return;
+    checkoutReturnHandled.current = true;
+    const url = new URL(window.location.href);
+    ['checkout', 'status', 'payment'].forEach((key) => url.searchParams.delete(key));
+    window.history.replaceState({}, '', url.toString());
+    if (result === 'failed' || result === 'canceled') { toastErr('El pago no se completó. Puedes intentarlo de nuevo desde Plan y suscripción.'); return; }
+    toastOk('Pago recibido. Estamos activando tu plan…');
+    [4000, 10000, 20000].forEach((ms) => window.setTimeout(() => refreshAccess(), ms));
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Conecta Google Workspace (scopes de Calendar/Sheets/Drive/Gmail). El OAuth
   // redirige la página; al volver, guardamos la pestaña para regresar aquí.
@@ -629,12 +650,6 @@ function AppInner() {
     </div></main>
   );
 
-  // Sin acceso: elegir plan y empezar la prueba de 7 días sin tarjeta, o
-  // agregar método de pago si la prueba ya venció. El equipo interno no pasa.
-  if (!hasPaid && !isTeam) {
-    return <SubscriptionGate onManageSubscription={openBilling} user={user} subscription={subscription} intent={planIntent} onReady={() => refreshAccess()} />;
-  }
-
   // Estado 2.5: pagó pero todavía no completó el onboarding de su negocio.
   // Los miembros del equipo de Ferova (isTeam) no son clientes reales, no pasan por esto.
   const isReady = appData !== null;
@@ -866,7 +881,8 @@ function AppInner() {
 
   const aiSidebarNode = (
     <div className={isFerovaUiV2Enabled() ? 'ferova-v2-theme' : undefined}>
-      <UpgradeModal user={user} currentPlan={plan} enPrueba={subscription.estado === 'trial'} onUpgraded={() => { refreshAccess(); toastOk('Plan actualizado.'); }} />
+      <UpgradeModal currentPlan={plan} currentPeriodo={subscription.periodo} />
+      <WhopCheckoutModal user={user} onActivated={() => { refreshAccess(); toastOk('Plan activado. ¡Gracias!'); }} />
       <AISidebar user={user} collapsed={aiCollapsed} onToggle={() => setAiCollapsed((v) => !v)} width={aiWidth} onResize={setAiWidth} metrics={metrics} currentArea={NAVIGATION_SECTIONS.find((section) => section.items.some((item) => item.id === activeTab))?.label} />
     </div>
   );
@@ -897,7 +913,7 @@ function AppInner() {
         <TrialBanner
           userId={user.id}
           trialEndsAt={subscription.trial_ends_at}
-          onAddCard={() => { void addPaymentMethod(user.id, () => { refreshAccess(); toastOk('Método de pago agregado. Tu plan sigue sin interrupciones.'); }, { email: user.email, plan: (['basico', 'intermedio', 'full'] as const).includes(plan as 'basico') ? (plan as 'basico' | 'intermedio' | 'full') : undefined, periodo: subscription.periodo === 'anual' ? 'anual' : 'mensual' }).catch((e) => toastErr(errMsg(e))); }}
+          onManage={() => { openBillingPortal('overview').catch((e) => toastErr(errMsg(e))); }}
         />
       )}
       {sheetsLoading && (

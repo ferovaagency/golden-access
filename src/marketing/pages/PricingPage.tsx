@@ -8,16 +8,16 @@ import { breadcrumbSchema, softwareApplicationSchema } from '../../seo/Structure
 import { trackEvent } from '../../lib/analytics';
 import { PLAN_PRICES_USD } from '../../lib/planService';
 
-// Freemium + 3 niveles (modelo del 8 oct 2026). Los precios viven en
-// planService (PLAN_PRICES_USD) y deben coincidir con los prices de Paddle.
+// Gratis / Medio / Pro (nov 2026). Los precios viven en planService
+// (PLAN_PRICES_USD) y deben coincidir con los planes creados en Whop.
 
 const FAQ = [
-  { q: '¿Cómo funciona la prueba gratis?', a: 'Eliges un plan y lo usas completo 7 días sin poner tarjeta. Si quieres seguir, agregas un método de pago desde la app; si no, el acceso se apaga solo al terminar y no se cobra nada.' },
-  { q: '¿Qué pasa cuando tengo más clientes de los que permite mi plan?', a: 'La app te lo dice en el momento de activar el cliente que sobra y te muestra el plan que alcanza (4 clientes → Intermedio; 11 → Full). Los clientes que ya tienes no se tocan.' },
-  { q: '¿Puedo cambiar de plan después?', a: 'Sí, desde dentro de la app. El cambio se prorratea desde el día en que lo haces. Durante la prueba, cambiar de plan puede pedir primero una tarjeta.' },
-  { q: '¿Qué pasa con mis datos si dejo vencer la prueba o cancelo?', a: 'Se quedan guardados. Cuando agregues un método de pago, sigues exactamente donde ibas. Tus datos siguen siendo tuyos.' },
-  { q: '¿Hay permanencia mínima?', a: 'No. Mensual o anual, cancelas cuando quieras, sin penalidades. En el anual, el acceso se mantiene hasta el fin del periodo pagado.' },
-  { q: '¿El precio incluye impuestos?', a: 'El precio mostrado es antes de impuestos según tu ubicación; Paddle, como comerciante registrado (Merchant of Record), calcula el total exacto en el checkout.' },
+  { q: '¿El plan Gratis tiene fecha de vencimiento?', a: 'No. Lo usas el tiempo que quieras, sin tarjeta, con hasta 2 clientes activos. Cuando necesitas más, subes de plan desde la app y no pierdes nada de lo que ya cargaste.' },
+  { q: '¿Qué pasa cuando tengo más clientes de los que permite mi plan?', a: 'La app te lo dice en el momento de activar el cliente que sobra y te muestra el plan que alcanza (3 clientes → Medio; 11 → Pro). Los clientes que ya tienes no se tocan.' },
+  { q: '¿Puedo cambiar de plan después?', a: 'Sí, desde dentro de la app. Al pagar el plan nuevo, el anterior se cancela automáticamente.' },
+  { q: '¿Qué pasa con mis datos si cancelo?', a: 'Se quedan guardados. Tu cuenta vuelve al plan Gratis y, si vuelves a un plan de pago, sigues exactamente donde ibas. Tus datos siguen siendo tuyos.' },
+  { q: '¿Hay permanencia mínima?', a: 'No. Mensual o anual, cancelas cuando quieras, sin penalidades. El acceso se mantiene hasta el fin del periodo pagado.' },
+  { q: '¿El precio incluye impuestos?', a: 'El precio mostrado es antes de impuestos. El pago se procesa con Whop, que muestra el total exacto según tu país antes de pagar.' },
 ];
 
 export default function PricingPage() {
@@ -25,11 +25,11 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bg-[var(--ferova-canvas)] text-[#1f1b16] font-sans">
       <SeoHead
-        title="Precios: 7 días gratis sin tarjeta, planes desde USD 19"
-        description="Básico, Intermedio y Full desde USD 19 al mes, con 7 días de prueba sin tarjeta y 30 % de ahorro en el plan anual. Sin permanencia."
+        title="Precios: plan Gratis para siempre, planes de pago desde USD 20"
+        description="Empieza gratis sin tarjeta. Medio a USD 20 y Pro a USD 50 al mes, con 30 % de ahorro en el plan anual. Sin permanencia."
         path="/precios"
         jsonLd={[
-          softwareApplicationSchema({ price: String(PLAN_PRICES_USD.basico.mensual), priceCurrency: 'USD' }),
+          softwareApplicationSchema({ price: String(PLAN_PRICES_USD.medio.mensual), priceCurrency: 'USD' }),
           breadcrumbSchema([{ name: 'Inicio', path: '/' }, { name: 'Precios', path: '/precios' }]),
         ]}
       />
@@ -37,8 +37,8 @@ export default function PricingPage() {
 
       <div className="mx-auto max-w-6xl px-4 py-20 text-center sm:px-6">
         <Reveal>
-          <h1 className="font-display text-3xl font-bold text-[#1f1b16] sm:text-4xl">7 días gratis en el plan que elijas. Sin tarjeta.</h1>
-          <p className="mx-auto mt-3 max-w-2xl text-[#57524a]">Planes para freelancers que crecen con tus clientes: hasta 3, hasta 10 o ilimitados. Pruebas el plan completo una semana sin tarjeta. Anual con 30 % de ahorro, sin permanencia.</p>
+          <h1 className="font-display text-3xl font-bold text-[#1f1b16] sm:text-4xl">Empieza gratis. Paga cuando tu negocio lo pida.</h1>
+          <p className="mx-auto mt-3 max-w-2xl text-[#57524a]">Planes que crecen con tus clientes: hasta 2 gratis, hasta 10 en Medio o ilimitados en Pro. Sin tarjeta para empezar. Anual con 30 % de ahorro, sin permanencia.</p>
         </Reveal>
         <Reveal className="mt-10">
           <PlanPricingTable source="/precios" />

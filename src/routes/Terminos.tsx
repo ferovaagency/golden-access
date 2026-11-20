@@ -32,9 +32,9 @@ export default function Terminos() {
           </Section>
 
           <Section title="3. Suscripciones y pagos">
-            <p>Las suscripciones se procesan a través de Paddle, que actúa como comerciante registrado (Merchant of Record) de la transacción: Paddle es el vendedor frente al cliente y gestiona el cobro recurrente, la facturación, los impuestos aplicables, los reembolsos y las disputas de pago según sus propios términos.</p>
-            <p>Ferova no almacena datos de tarjetas ni otros medios de pago. La activación depende de la confirmación de suscripción recibida de Paddle. Los precios y condiciones vigentes se muestran antes de contratar.</p>
-            <p><strong>Prueba gratis.</strong> Todo plan empieza con 7 días gratis sin tarjeta. Durante la prueba puedes bajar de plan sin costo; subir de plan abre el pago en Paddle y la suscripción empieza en ese momento. Si al terminar la prueba no has agregado un método de pago, el acceso se suspende y tus datos se conservan según la Política de Tratamiento de Datos.</p>
+            <p>Las suscripciones se procesan a través de Whop, Inc., plataforma de pagos que gestiona el cobro recurrente, la facturación, los reembolsos y las disputas de pago según sus propios términos. Los impuestos aplicables se calculan y se muestran en el pago antes de confirmarlo.</p>
+            <p>Ferova no almacena datos de tarjetas ni otros medios de pago. La activación depende de la confirmación de suscripción recibida de Whop. Los precios y condiciones vigentes se muestran antes de contratar.</p>
+            <p><strong>Plan Gratis.</strong> Puedes usar Ferova One sin costo y sin tarjeta, con los límites del plan Gratis publicados en la página de precios. Si contratas un plan de pago y luego lo cancelas, al terminar el período pagado tu cuenta vuelve al plan Gratis y tus datos se conservan según la Política de Tratamiento de Datos. Al contratar un plan distinto del que tienes, el anterior se cancela automáticamente.</p>
             <p><strong>Cambios de precio.</strong> Podemos ajustar el precio de la suscripción avisando con al menos 30 días de anticipación por correo; el nuevo precio aplica desde el siguiente período de facturación.</p>
           </Section>
 

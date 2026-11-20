@@ -35,8 +35,8 @@ export default function Privacidad() {
               <li>Conversaciones con el asistente y onboarding, contenido y archivos cargados.</li>
               <li>Registros de acceso, acciones, resultados de IA y estado de suscripción.</li>
             </ul>
-            <p>Si conectas Google, accedemos únicamente a los permisos autorizados. De Paddle recibimos solo los datos mínimos para confirmar la suscripción, como correo y estado del pago.</p>
-            <p><strong>No tratamos datos de pago.</strong> Paddle actúa como comerciante registrado (Merchant of Record) y responsable independiente de la transacción. No solicitamos datos sensibles ni de menores de edad; no los cargues en la plataforma.</p>
+            <p>Si conectas Google, accedemos únicamente a los permisos autorizados. De Whop recibimos solo los datos mínimos para confirmar la suscripción, como correo, plan y estado del pago.</p>
+            <p><strong>No tratamos datos de pago.</strong> Whop procesa el pago como responsable independiente de la transacción; Ferova no recibe ni almacena datos de tarjetas. No solicitamos datos sensibles ni de menores de edad; no los cargues en la plataforma.</p>
           </Section>
 
           <Section title="3. Finalidades">
@@ -55,7 +55,7 @@ export default function Privacidad() {
           </Section>
 
           <Section title="5. Transferencias internacionales">
-            <p>Para prestar el servicio, los datos pueden ser tratados por Google LLC, OpenAI, Lovable y Supabase en Estados Unidos, como encargados que prestan servicios tecnológicos. Si conectas integraciones opcionales (Google Workspace, Notion, Apollo, WhatsApp), los datos que decidas sincronizar viajan a esos proveedores según se describe en la <Link className="font-semibold text-blue-700 underline" to="/subencargados">lista de subencargados</Link>. Paddle puede tratar los datos de compra como comerciante registrado y responsable independiente de la transacción, desde el Reino Unido, Estados Unidos u otras jurisdicciones donde opere.</p>
+            <p>Para prestar el servicio, los datos pueden ser tratados por Google LLC, OpenAI, Lovable y Supabase en Estados Unidos, como encargados que prestan servicios tecnológicos. Si conectas integraciones opcionales (Google Workspace, Notion, Apollo, WhatsApp), los datos que decidas sincronizar viajan a esos proveedores según se describe en la <Link className="font-semibold text-blue-700 underline" to="/subencargados">lista de subencargados</Link>. Whop, Inc. trata los datos de compra como responsable independiente de la transacción, desde Estados Unidos u otras jurisdicciones donde opere.</p>
             <p>Al aceptar esta política autorizas de manera expresa estas transmisiones necesarias para operar Ferova OS. Si no las autorizas, no podremos prestarte el servicio.</p>
           </Section>
 

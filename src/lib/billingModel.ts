@@ -8,19 +8,23 @@ export interface BillingStatus {
   can_manage: boolean;
 }
 export type PortalIntent = "overview" | "cancel";
+
+/** El enlace de administración de Whop: sólo https y sólo whop.com o sus subdominios. */
 export function safePortalUrl(value: unknown): string {
-  if (typeof value !== "string") throw new Error("No se recibió un enlace válido de Paddle.");
+  if (typeof value !== "string") throw new Error("No se recibió un enlace válido de Whop.");
   const url = new URL(value);
+  const host = url.hostname.toLowerCase();
   if (
     url.protocol !== "https:" ||
     url.username ||
     url.password ||
     url.port ||
-    !["customer-portal.paddle.com", "sandbox-customer-portal.paddle.com"].includes(url.hostname)
+    (host !== "whop.com" && !host.endsWith(".whop.com"))
   )
-    throw new Error("El enlace de administración no pertenece a Paddle.");
+    throw new Error("El enlace de administración no pertenece a Whop.");
   return url.href;
 }
+
 export function billingMessage(state: BillingStatus): {
   title: string;
   description: string;
@@ -32,47 +36,47 @@ export function billingMessage(state: BillingStatus): {
     return {
       title: "Suscripción cancelada",
       description:
-        "Paddle confirma que esta suscripción está cancelada. Puedes consultar sus facturas en el portal.",
+        "Whop confirma que esta suscripción está cancelada. Tu cuenta sigue en el plan Gratis con todos tus datos.",
       cancelable: false,
     };
   if (state.cancel_at)
     return {
       title: "Renovación cancelada",
-      description: `La cancelación está programada para el ${date(state.cancel_at)}. Hasta esa fecha se conserva el período vigente.`,
+      description: `La cancelación está programada para el ${date(state.cancel_at)}. Hasta esa fecha se conserva el período pagado; después tu cuenta pasa al plan Gratis.`,
       cancelable: false,
     };
   if (state.status === "none")
     return {
-      title: "Sin suscripción recurrente registrada",
+      title: "Sin suscripción de pago",
       description:
-        "No encontramos una suscripción en Paddle. Si acabas de completar el pago, actualiza el estado en unos momentos.",
+        "Estás en el plan Gratis. Si acabas de pagar, actualiza el estado en unos momentos.",
       cancelable: false,
     };
   if (state.status === "trialing")
     return {
       title: "Suscripción en prueba",
       description:
-        "Puedes cancelar la suscripción desde Paddle. Antes de confirmar, verás allí la fecha efectiva y las condiciones de la prueba.",
+        "Puedes cancelar desde Whop antes de que termine la prueba. Allí verás la fecha efectiva y las condiciones antes de confirmar.",
       cancelable: true,
     };
   if (state.status === "past_due")
     return {
       title: "Hay un pago pendiente",
       description:
-        "Revisa el pago o cancela la renovación desde Paddle. La cancelación no elimina importes ya pendientes.",
+        "Actualiza el método de pago en Whop o cancela la renovación. La cancelación no elimina importes ya pendientes.",
       cancelable: true,
     };
   if (state.status === "paused")
     return {
       title: "Suscripción pausada",
-      description: "Administra tu suscripción o solicita su cancelación en Paddle.",
+      description: "Administra tu suscripción o solicita su cancelación en Whop.",
       cancelable: true,
     };
   return {
     title: "Suscripción activa",
     description: state.next_billed_at
       ? `Próxima renovación: ${date(state.next_billed_at)}.`
-      : "La fecha de renovación se puede consultar en Paddle.",
+      : "La fecha de renovación se puede consultar en Whop.",
     cancelable: true,
   };
 }

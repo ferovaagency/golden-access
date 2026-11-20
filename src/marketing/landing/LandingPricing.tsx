@@ -1,39 +1,31 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check } from "lucide-react";
-import { getPlanCatalog, TRIAL_DAYS, type PaidTier, type Periodo } from "../../lib/planService";
+import { FREE_PLAN_SUMMARY, getPlanCatalog, type PaidTier, type Periodo } from "../../lib/planService";
 import { planIntentPath } from "../../lib/planIntent";
 import { trackEvent } from "../../lib/analytics";
 
 const details: Record<PaidTier, { description: string; features: string[] }> = {
-  basico: {
-    description: "Controla tu negocio: proyectos, horas, costos y el precio que deberías cobrar.",
-    features: [
-      "Hasta 3 clientes activos",
-      "Proyectos, horas y Planner",
-      "Ingresos, gastos y control tributario",
-      "Google Calendar y Google Sheets",
-      "100 consultas de IA al mes",
-    ],
-  },
-  intermedio: {
-    description: "Organiza y haz crecer tu negocio: finanzas ampliadas, Planner y seguimiento comercial.",
+  medio: {
+    description: "Controla todo tu negocio: caja, cobros, impuestos y cuánto te deja cada cliente.",
     features: [
       "Hasta 10 clientes activos",
-      "Todo lo incluido en Básico",
-      "CRM y oportunidades de venta",
-      "Análisis de Marketing ROI",
-      "Mayor capacidad de uso del asistente",
+      "Finanzas completas: caja, cuentas por cobrar y por pagar",
+      "Impuestos: IVA, alertas DIAN y UVT",
+      "Rentabilidad por cliente y por servicio",
+      "Google Calendar y Google Sheets",
+      "150 consultas de IA al mes · 2 usuarios",
     ],
   },
-  full: {
-    description: "Gestiona tu negocio con inteligencia: análisis avanzado, varias marcas y equipo.",
+  pro: {
+    description: "Vende y crece con equipo: CRM, WhatsApp, varias empresas y reportes ejecutivos.",
     features: [
       "Clientes ilimitados",
-      "Todo lo incluido en Intermedio",
-      "Varias marcas o empresas",
-      "Reportes ejecutivos y análisis de negocio",
-      "Hasta 10 colaboradores",
+      "Todo lo incluido en Medio",
+      "CRM, pipeline y citas",
+      "Marketing ROI, WhatsApp y Apollo",
+      "Varias empresas y reportes CEO",
+      "1.000 consultas de IA al mes · 5 usuarios",
     ],
   },
 };
@@ -72,6 +64,39 @@ export function LandingPricing() {
         </button>
       </div>
       <div className="fo-pricing-grid">
+        <article className="fo-plan">
+          <div className="fo-plan-top">
+            <span>{FREE_PLAN_SUMMARY.etiqueta}</span>
+          </div>
+          <h3>{FREE_PLAN_SUMMARY.nombre}</h3>
+          <p>{FREE_PLAN_SUMMARY.promesa}</p>
+          <div className="fo-price">
+            <span>USD</span>
+            <strong>0</strong>
+            <span>/ mes</span>
+          </div>
+          <p className="fo-billing-detail">
+            Sin tarjeta y sin fecha de vencimiento.
+            <br />
+            Subes de plan cuando lo necesites.
+          </p>
+          <Link
+            className="fo-button fo-button-outline"
+            to="/app"
+            onClick={() => trackEvent("pricing_cta", { path: "/", plan: "free", periodo: period, source: "landing_redesign" })}
+          >
+            Empezar gratis
+            <ArrowRight size={16} aria-hidden="true" />
+          </Link>
+          <ul>
+            {FREE_PLAN_SUMMARY.incluye.map((feature) => (
+              <li key={feature}>
+                <Check size={16} aria-hidden="true" />
+                {feature}
+              </li>
+            ))}
+          </ul>
+        </article>
         {plans.map((plan) => (
           <article key={plan.id} className={`fo-plan ${plan.destacado ? "fo-plan-featured" : ""}`}>
             <div className="fo-plan-top">
@@ -90,7 +115,7 @@ export function LandingPricing() {
                 ? `USD ${plan.precioAnualTotal} al año · ahorro de ${plan.ahorroAnualPct}%.`
                 : "Facturación mensual."}
               <br />
-              Después de tus {TRIAL_DAYS} días de prueba.
+              Cancelas cuando quieras.
             </p>
             <Link
               className={`fo-button ${plan.destacado ? "fo-button-primary" : "fo-button-outline"}`}
@@ -104,7 +129,7 @@ export function LandingPricing() {
                 })
               }
             >
-              Probar {plan.nombre}
+              Elegir {plan.nombre}
               <ArrowRight size={16} aria-hidden="true" />
             </Link>
             <ul>
@@ -119,10 +144,10 @@ export function LandingPricing() {
         ))}
       </div>
       <p className="fo-pricing-note">
-        Todos los planes incluyen {TRIAL_DAYS} días gratis, sin tarjeta. Precios en USD antes de
-        impuestos.
+        Empiezas gratis, sin tarjeta. Precios en USD antes de impuestos; el pago se procesa con
+        Whop.
         <br />
-        Si no añades un método de pago, la prueba termina sin un cobro automático.{" "}
+        Si cancelas un plan de pago, tu cuenta vuelve al plan Gratis con todos tus datos.{" "}
         <Link to="/precios">
           Ver detalles de los planes <ArrowRight size={13} aria-hidden="true" />
         </Link>

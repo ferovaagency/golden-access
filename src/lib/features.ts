@@ -10,9 +10,9 @@ import { supabase } from './supabase';
 import type { PlanId } from './planService';
 
 export type FeatureEstado = 'interno' | 'beta' | 'publicado';
-export interface FeatureGrant { key: string; plan_minimo: 'basico' | 'intermedio' | 'full' | null; estado: FeatureEstado }
+export interface FeatureGrant { key: string; plan_minimo: 'medio' | 'pro' | 'basico' | 'intermedio' | 'full' | null; estado: FeatureEstado }
 
-const ORDEN: Record<string, number> = { free: 0, basico: 1, intermedio: 2, full: 3 };
+const ORDEN: Record<string, number> = { free: 0, basico: 1, medio: 1, intermedio: 2, pro: 3, full: 3 };
 
 let cache: FeatureGrant[] | null = null;
 let inflight: Promise<FeatureGrant[]> | null = null;

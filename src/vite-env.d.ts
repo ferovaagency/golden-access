@@ -4,12 +4,13 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_URL?: string;
   readonly VITE_SUPABASE_PUBLISHABLE_KEY?: string;
   readonly VITE_SUPABASE_PROJECT_ID?: string;
-  /** Client-side token de Paddle. Público, seguro de exponer en el navegador. */
-  readonly VITE_PADDLE_CLIENT_TOKEN?: string;
-  /** Price id de Paddle (pri_...) del plan de Ferova One. */
-  readonly VITE_PADDLE_PRICE_ID?: string;
+  /** Ids de los planes de Whop (plan_…). Públicos por diseño: el checkout embebido los necesita. */
+  readonly VITE_WHOP_PLAN_MEDIO_MENSUAL?: string;
+  readonly VITE_WHOP_PLAN_MEDIO_ANUAL?: string;
+  readonly VITE_WHOP_PLAN_PRO_MENSUAL?: string;
+  readonly VITE_WHOP_PLAN_PRO_ANUAL?: string;
   /** 'sandbox' o 'production' (default). */
-  readonly VITE_PADDLE_ENV?: string;
+  readonly VITE_WHOP_ENV?: string;
   readonly VITE_PAYWALL_PRICE_USD?: string;
   /** DSN de Sentry. Sin él, la observabilidad es no-op. */
   readonly VITE_SENTRY_DSN?: string;

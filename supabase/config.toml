@@ -3,7 +3,8 @@
 # externo Ferova.com.co.
 project_id = "izkhdzzyqfopjveaagwk"
 
-[functions.paddle-webhook]
+# Whop no envía JWT de Supabase; la función verifica la firma del webhook.
+[functions.whop-webhook]
 verify_jwt = false
 
 [functions.purge-deleted-accounts]

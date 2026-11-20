@@ -21,7 +21,7 @@ import {
   websiteSchema,
   softwareApplicationSchema,
 } from "../seo/StructuredData";
-import { getPlanCatalog, TRIAL_DAYS } from "../lib/planService";
+import { getPlanCatalog } from "../lib/planService";
 import { trackEvent } from "../lib/analytics";
 import { FerovaBrand } from "../marketing/landing/FerovaBrand";
 import { ProductPreview } from "../marketing/landing/ProductPreview";
@@ -35,7 +35,7 @@ const steps = [
   {
     n: "01",
     title: "Elige tu plan.",
-    text: "Selecciona el nivel que se ajusta a tu negocio. Los primeros 7 días son gratis y sin tarjeta.",
+    text: "Empieza con el plan Gratis, sin tarjeta. Sube a Medio o Pro cuando tu negocio lo pida.",
   },
   {
     n: "02",
@@ -74,7 +74,7 @@ const beneficios = [
 
 function TrialLink({
   source,
-  children = "Empezar mis 7 días gratis",
+  children = "Empezar gratis",
   className = "fo-button-primary",
 }: {
   source: string;
@@ -529,7 +529,7 @@ export default function Landing() {
             ))}
           </div>
           <div className="fo-center">
-            <TrialLink source="how_it_works">Elegir mi plan de prueba</TrialLink>
+            <TrialLink source="how_it_works">Ver los planes</TrialLink>
           </div>
         </section>
         <section className="fo-section fo-container fo-testimonial" aria-labelledby="testimonio-title">
@@ -557,7 +557,7 @@ export default function Landing() {
               <p>
                 Elige según los clientes que atiendes y las herramientas que necesitas.
                 <br />
-                Pruébalo {TRIAL_DAYS} días sin tarjeta.
+                Empieza gratis, sin tarjeta.
               </p>
             </div>
             <LandingPricing />
@@ -596,10 +596,10 @@ export default function Landing() {
               <br />
               <span>Decide con tus números.</span>
             </h2>
-            <p>Elige tu plan y prueba Ferova One con tu propio negocio.</p>
+            <p>Empieza gratis y prueba Ferova One con tu propio negocio.</p>
             <TrialLink source="footer" className="fo-button-light">Explorar planes y empezar gratis</TrialLink>
             <p className="fo-final-note">
-              {TRIAL_DAYS} días gratis · Sin tarjeta · Tú decides si continúas
+              Plan Gratis para siempre · Sin tarjeta · Subes cuando quieras
             </p>
           </div>
           <img src="/brand/ferova-isotipo.png" width="230" height="283" alt="" loading="lazy" />

@@ -251,13 +251,13 @@ export const logout = async () => {
 };
 
 // ============================================================
-// Suscripciones (Paywall Paddle — Merchant of Record)
+// Suscripciones (cobro con Whop; ver supabase/functions/whop-webhook)
 // ============================================================
 export interface UserSubscription {
   id: string;
   user_id: string;
   status: 'active' | 'cancelled' | 'pending';
-  provider: 'paddle' | string;
+  provider: 'whop' | 'courtesy' | string;
   provider_order_id: string | null;
   amount_usd: number | null;
   created_at: string;
@@ -291,22 +291,24 @@ export const checkSubscription = async (userId: string): Promise<boolean> => {
 // de Ferova y no debe mezclarse con el acceso de un cliente real.
 /** Lo que la app necesita saber de la suscripción para pintar prueba / vencida. */
 export interface SubscriptionInfo {
-  /** none = nunca tuvo; trial = en prueba sin tarjeta; active = pagando; expired = prueba vencida o cancelada; courtesy = acceso de cortesía. */
+  /** none = plan Gratis, nunca pagó; trial = en prueba; active = pagando; expired = pagó y su suscripción terminó (vuelve a Gratis); courtesy = acceso de cortesía. */
   estado: 'none' | 'trial' | 'active' | 'expired' | 'courtesy';
   trial_ends_at: string | null;
   periodo: 'mensual' | 'anual' | null;
 }
 
 export const resolveAccess = async (userId: string, email: string): Promise<{ hasPaid: boolean; plan: PlanId; subscription: SubscriptionInfo }> => {
-  // La fila más reciente, viva o no: una prueba cancelada también cuenta para
-  // saber que la persona ya la usó.
-  const { data: sub, error: subError } = await db<{ id: string; status: string; expires_at: string | null; plan: PlanId | null; trial_ends_at: string | null; periodo: 'mensual' | 'anual' | null }>('user_subscriptions')
+  // La suscripción viva más reciente; si no hay, la última fila (viva o no)
+  // dice si la persona ya pagó alguna vez. Al cambiar de plan conviven por un
+  // momento la membresía nueva y la anterior: gana la que da acceso.
+  const { data: subs, error: subError } = await db<{ id: string; status: string; expires_at: string | null; plan: PlanId | null; trial_ends_at: string | null; periodo: 'mensual' | 'anual' | null }>('user_subscriptions')
     .select('id, status, expires_at, plan, trial_ends_at, periodo')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .limit(10);
   if (subError) console.error('[supabase] resolveAccess subscription error:', subError);
+  const rows = subs ?? [];
+  const sub = rows.find((row) => subscriptionGrantsAccess(row)) ?? rows[0] ?? null;
   if (subscriptionGrantsAccess(sub)) {
     const enPrueba = !!sub!.trial_ends_at && new Date(sub!.trial_ends_at) >= new Date();
     return { hasPaid: true, plan: (sub!.plan || 'full') as PlanId, subscription: { estado: enPrueba ? 'trial' : 'active', trial_ends_at: sub!.trial_ends_at, periodo: sub!.periodo } };
@@ -321,6 +323,7 @@ export const resolveAccess = async (userId: string, email: string): Promise<{ ha
     if (courtesy) return { hasPaid: true, plan: (courtesy.plan || 'completo') as PlanId, subscription: { estado: 'courtesy', trial_ends_at: null, periodo: null } };
   }
 
-  // Sin acceso: o nunca empezó la prueba, o la prueba/suscripción ya venció.
-  return { hasPaid: false, plan: 'free', subscription: { estado: sub ? 'expired' : 'none', trial_ends_at: sub?.trial_ends_at ?? null, periodo: sub?.periodo ?? null } };
+  // Sin suscripción de pago: plan Gratis. Todos entran; los topes y módulos
+  // del plan Gratis los aplica planService. `hasPaid` = puede usar la app.
+  return { hasPaid: true, plan: 'free', subscription: { estado: sub ? 'expired' : 'none', trial_ends_at: sub?.trial_ends_at ?? null, periodo: sub?.periodo ?? null } };
 };

@@ -34,7 +34,7 @@ for (const url of urls) {
 }
 const home = await readFile(resolve(dist, "index.html"), "utf8");
 assert.ok(home.includes("Tu negocio, claro."));
-assert.ok(home.replace(/<!--.*?-->/g, "").includes("Probar Básico"));
+assert.ok(home.replace(/<!--.*?-->/g, "").includes("Elegir Medio"));
 assert.ok(home.includes("/app?plan=basico&amp;periodo=mensual"));
 assert.ok(home.includes("FAQPage"));
 assert.ok(!home.includes("aggregateRating"), "Do not invent ratings");

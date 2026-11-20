@@ -1,8 +1,8 @@
-// Acciones sobre la suscripción desde la app: agregar tarjeta (prueba sin
-// tarjeta → suscripción que se renueva) y cambiar de plan. Hablan con
-// `paddle-manage-subscription`; el checkout de Paddle se abre aquí.
-import { supabase, checkSubscription } from './supabase';
-import { openPaddleCheckout, openPaddlePaymentMethodCheckout, type PaidPlan, type Periodo } from './paddle';
+// Acciones sobre la suscripción desde la app. El pago se hace en el checkout
+// embebido de Whop (components/billing/WhopCheckoutModal); el acceso lo activa
+// el webhook y aquí sólo se espera a verlo reflejado en user_subscriptions.
+import { supabase } from './supabase';
+import type { PaidTier } from './planService';
 
 type FnResponse = { ok?: boolean; code?: string; message?: string; [key: string]: unknown };
 
@@ -26,59 +26,28 @@ export async function invokeFn(name: string, body: Record<string, unknown>): Pro
   return { ok: false, message };
 }
 
-export function waitUntilPaid(userId: string, onActivated?: () => void) {
-  if (!onActivated) return;
+/**
+ * Espera (hasta ~60 s) a que el webhook de Whop deje activa una suscripción
+ * del plan comprado. Se compara el plan, no sólo "hay algo activo": quien
+ * cambia de Medio a Pro ya tenía una fila activa antes de pagar.
+ */
+export function waitForPlan(userId: string, plan: PaidTier, done: (ok: boolean) => void): () => void {
   let attempts = 0;
+  let stopped = false;
   const timer = window.setInterval(async () => {
     attempts += 1;
-    const paid = await checkSubscription(userId).catch(() => false);
-    if (paid || attempts >= 20) { window.clearInterval(timer); if (paid) onActivated(); }
+    const { data } = await supabase
+      .from('user_subscriptions')
+      .select('id, plan, status, expires_at')
+      .eq('user_id', userId)
+      .eq('provider', 'whop')
+      .eq('status', 'active')
+      .eq('plan', plan)
+      .limit(1)
+      .maybeSingle();
+    const ok = !!data && (!data.expires_at || new Date(data.expires_at) >= new Date());
+    if (stopped) return;
+    if (ok || attempts >= 20) { stopped = true; window.clearInterval(timer); done(ok); }
   }, 3000);
-}
-
-const PLANES: readonly string[] = ['basico', 'intermedio', 'full'];
-
-/**
- * Agregar tarjeta. Si la prueba sin tarjeta ya es una suscripción en Paddle,
- * se abre el checkout de "actualizar método de pago"; si Paddle todavía no
- * la convirtió en suscripción (checkout_required), se abre el checkout normal
- * del plan elegido y el webhook activa al pagar.
- */
-export async function addPaymentMethod(userId: string, onActivated?: () => void, fallback?: { email?: string | null; plan?: PaidPlan; periodo?: Periodo }): Promise<void> {
-  const data = await invokeFn('paddle-manage-subscription', { action: 'payment_method' });
-  if (data.ok && typeof data.transaction_id === 'string') {
-    await openPaddlePaymentMethodCheckout({
-      transactionId: data.transaction_id,
-      onEvent: (event) => { if (event.name === 'checkout.completed') waitUntilPaid(userId, onActivated); },
-    });
-    return;
-  }
-  if (data.code === 'checkout_required') {
-    const plan = (typeof data.plan === 'string' && PLANES.includes(data.plan) ? data.plan : fallback?.plan || 'basico') as PaidPlan;
-    const periodo = (data.periodo === 'anual' || fallback?.periodo === 'anual' ? 'anual' : 'mensual') as Periodo;
-    await openPaddleCheckout({
-      userId,
-      email: fallback?.email || undefined,
-      customerId: typeof data.customer_id === 'string' ? data.customer_id : null,
-      plan,
-      periodo,
-      onEvent: (event) => { if (event.name === 'checkout.completed') waitUntilPaid(userId, onActivated); },
-    });
-    return;
-  }
-  throw new Error(data.message || 'No fue posible preparar el pago.');
-}
-
-export type ChangePlanResult =
-  | { ok: true; trialOnly?: boolean }
-  | { ok: false; paymentMethodRequired: true; transactionId: string }
-  | { ok: false; checkoutRequired: true; plan: PaidPlan; periodo: Periodo; customerId: string | null }
-  | { ok: false; paymentMethodRequired?: false; checkoutRequired?: false; message: string };
-
-export async function changePlan(plan: PaidPlan, periodo: Periodo): Promise<ChangePlanResult> {
-  const data = await invokeFn('paddle-manage-subscription', { action: 'change_plan', plan, periodo });
-  if (data.ok) return { ok: true, trialOnly: data.trial_only === true };
-  if (data.code === 'payment_method_required' && typeof data.transaction_id === 'string') return { ok: false, paymentMethodRequired: true, transactionId: data.transaction_id };
-  if (data.code === 'checkout_required') return { ok: false, checkoutRequired: true, plan, periodo, customerId: typeof data.customer_id === 'string' ? data.customer_id : null };
-  return { ok: false, message: data.message || 'No fue posible cambiar de plan.' };
+  return () => { stopped = true; window.clearInterval(timer); };
 }

@@ -22,7 +22,7 @@ export default function Reembolsos() {
 
         <div className="mt-8 space-y-8">
           <Section title="1. Suscripción y facturación">
-            <p>Ferova OS se ofrece como suscripción de pago recurrente. El cobro lo procesa <strong>Paddle</strong>, que actúa como comerciante registrado (Merchant of Record) de la transacción. No exige permanencia: puedes cancelar en cualquier momento y conservarás el acceso hasta el final del período ya pagado.</p>
+            <p>Ferova OS ofrece un plan Gratis y planes de pago con suscripción recurrente. El cobro lo procesa <strong>Whop</strong>, plataforma de pagos que gestiona la transacción. No exige permanencia: puedes cancelar en cualquier momento y conservarás el acceso hasta el final del período ya pagado.</p>
             <p>Cancelar la suscripción evita cobros futuros pero no genera, por sí solo, un reembolso del período en curso, salvo en los casos descritos abajo.</p>
           </Section>
 
@@ -41,7 +41,7 @@ export default function Reembolsos() {
 
           <Section title="5. Cómo solicitar un reembolso">
             <p>Envía tu solicitud a <strong>gerencia@seoparaecommerce.co</strong> con el correo de tu cuenta y el motivo. Respondemos en un plazo de 1 día hábil. Los reembolsos aprobados se procesan a través de Paddle al mismo medio de pago; el tiempo de acreditación depende de Paddle y de tu banco.</p>
-            <p>Como comerciante registrado, Paddle también gestiona la facturación, los impuestos y las disputas de pago conforme a sus políticas.</p>
+            <p>Whop también gestiona la facturación, el cobro de los impuestos que correspondan y las disputas de pago conforme a sus políticas.</p>
           </Section>
 
           <Section title="6. Contacto">

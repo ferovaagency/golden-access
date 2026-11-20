@@ -1,12 +1,12 @@
 import { invokeFn } from "./subscriptionActions";
 import { safePortalUrl, type BillingStatus, type PortalIntent } from "./billingModel";
 export async function getBillingStatus(): Promise<BillingStatus> {
-  const data = await invokeFn("paddle-manage-subscription", { action: "status" });
+  const data = await invokeFn("whop-manage-subscription", { action: "status" });
   if (!data.ok) throw new Error(data.message || "No se pudo consultar la suscripción.");
   if (
     !["active", "trialing", "past_due", "paused", "canceled", "none"].includes(String(data.status))
   )
-    throw new Error("Paddle devolvió un estado de suscripción desconocido.");
+    throw new Error("Whop devolvió un estado de suscripción desconocido.");
   return {
     status: data.status as BillingStatus["status"],
     next_billed_at: typeof data.next_billed_at === "string" ? data.next_billed_at : null,
@@ -22,8 +22,10 @@ export async function openBillingPortal(intent: PortalIntent): Promise<void> {
   const popup = window.open("about:blank", "_blank");
   if (popup) popup.opener = null;
   try {
-    const data = await invokeFn("paddle-manage-subscription", { action: "portal", intent });
-    if (!data.ok) throw new Error(data.message || "No se pudo abrir el portal de Paddle.");
+    // Whop entrega un solo enlace de administración (pago, facturas y
+    // cancelación con sus ofertas de retención); el intent sólo cambia el texto.
+    const data = await invokeFn("whop-manage-subscription", { action: "portal", intent });
+    if (!data.ok) throw new Error(data.message || "No se pudo abrir la administración en Whop.");
     const url = safePortalUrl(data.url);
     if (popup && !popup.closed) popup.location.replace(url);
     else window.location.assign(url);
@@ -31,4 +33,11 @@ export async function openBillingPortal(intent: PortalIntent): Promise<void> {
     popup?.close();
     throw error;
   }
+}
+
+/** Deshace una cancelación programada: la suscripción vuelve a renovarse. */
+export async function resumeSubscription(): Promise<BillingStatus> {
+  const data = await invokeFn("whop-manage-subscription", { action: "resume" });
+  if (!data.ok) throw new Error(data.message || "No se pudo reactivar la renovación.");
+  return getBillingStatus();
 }

@@ -6,13 +6,13 @@
 // abra el modal de upgrade. Los módulos bloqueados llaman a `requestUpgrade`.
 // No hay React aquí a propósito: lo usan servicios puros.
 import { supabase } from './supabase';
-import { getLimits, minimumPlanFor, withinLimit, type Entitlement, type LimitKind, type PlanId, type PlanLimits } from './planService';
+import { getLimits, minimumPlanFor, withinLimit, type Entitlement, type LimitKind, type PaidTier, type PlanId, type PlanLimits } from './planService';
 
 export interface UpgradeRequest {
   /** Por qué se pide: límite alcanzado o módulo bloqueado. */
   motivo: string;
   /** Plan mínimo que lo resuelve. */
-  planSugerido: 'basico' | 'intermedio' | 'full';
+  planSugerido: PaidTier;
   limit?: LimitKind;
   entitlement?: Entitlement;
   /** Periodo preseleccionado en el modal (p. ej. el elegido en la landing). */

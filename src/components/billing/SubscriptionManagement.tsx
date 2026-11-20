@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CreditCard, ExternalLink, Loader2, RefreshCw, X } from "lucide-react";
-import { getBillingStatus, openBillingPortal } from "../../lib/billingActions";
+import { getBillingStatus, openBillingPortal, resumeSubscription } from "../../lib/billingActions";
 import { billingMessage, type BillingStatus, type PortalIntent } from "../../lib/billingModel";
 export interface BillingServices {
   status: () => Promise<BillingStatus>;
   open: (intent: PortalIntent) => Promise<void>;
+  resume?: () => Promise<BillingStatus>;
 }
-const services: BillingServices = { status: getBillingStatus, open: openBillingPortal };
+const services: BillingServices = { status: getBillingStatus, open: openBillingPortal, resume: resumeSubscription };
 /** Self-service is available even when access to paid modules has expired. */
 export function SubscriptionManagement({
   onChanged,
@@ -17,7 +18,7 @@ export function SubscriptionManagement({
 }) {
   const [state, setState] = useState<BillingStatus | null>(null);
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState<PortalIntent | null>(null);
+  const [busy, setBusy] = useState<PortalIntent | "resume" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [opened, setOpened] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -58,7 +59,20 @@ export function SubscriptionManagement({
       dialog.current?.close();
       setOpened(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo abrir Paddle.");
+      setError(e instanceof Error ? e.message : "No se pudo abrir Whop.");
+    } finally {
+      setBusy(null);
+    }
+  };
+  const resume = async () => {
+    if (!api.resume) return;
+    setBusy("resume");
+    setError(null);
+    try {
+      setState(await api.resume());
+      changed.current?.();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo reactivar la renovación.");
     } finally {
       setBusy(null);
     }
@@ -81,7 +95,7 @@ export function SubscriptionManagement({
         {loading ? (
           <p className="billing-loading">
             <Loader2 size={17} className="animate-spin" aria-hidden="true" /> Consultando el estado
-            en Paddle…
+            en Whop…
           </p>
         ) : summary ? (
           <>
@@ -99,7 +113,7 @@ export function SubscriptionManagement({
       )}
       {opened && (
         <p role="status" className="billing-notice">
-          Paddle se abrió para completar tu solicitud. No se ha confirmado ningún cambio aquí. Al
+          Whop se abrió para completar tu solicitud. No se ha confirmado ningún cambio aquí. Al
           volver, actualiza el estado para comprobar el resultado.
         </p>
       )}
@@ -115,8 +129,13 @@ export function SubscriptionManagement({
           ) : (
             <ExternalLink size={16} />
           )}{" "}
-          Abrir administración en Paddle
+          Abrir administración en Whop
         </button>
+        {state?.cancel_at && api.resume && (
+          <button type="button" className="billing-secondary" onClick={() => void resume()} disabled={!!busy}>
+            {busy === "resume" ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />} Reactivar renovación
+          </button>
+        )}
         <button
           type="button"
           className="billing-secondary"
@@ -134,8 +153,8 @@ export function SubscriptionManagement({
           <div>
             <h3>Cancelar suscripción</h3>
             <p>
-              Paddle mostrará la fecha efectiva antes de la confirmación final. No necesitas
-              explicar el motivo a Ferova.
+              Whop mostrará la fecha efectiva antes de la confirmación final. Al cancelar,
+              tu cuenta pasa al plan Gratis y conservas todos tus datos.
             </p>
           </div>
           <button
@@ -150,7 +169,7 @@ export function SubscriptionManagement({
       )}
       <p className="billing-footnote">
         Cancelar la suscripción no solicita la eliminación de tu cuenta. La gestión se abre en una
-        página segura de Paddle.
+        página segura de Whop.
       </p>
       <dialog
         ref={dialog}
@@ -172,19 +191,19 @@ export function SubscriptionManagement({
           </button>
         </header>
         <p>
-          Vas a abrir la cancelación en Paddle. Allí verás cuándo termina la suscripción y
-          confirmarás tu decisión.
+          Vas a abrir la administración de tu suscripción en Whop. Allí verás cuándo termina el
+          período pagado y confirmarás tu decisión.
         </p>
         {state?.status === "active" && state.current_period_ends_at && (
           <p>
             El período de facturación actual termina el{" "}
             <strong>{new Date(state.current_period_ends_at).toLocaleDateString("es-CO")}</strong>.
-            Consulta la fecha definitiva en Paddle antes de confirmar.
+            Consulta la fecha definitiva en Whop antes de confirmar.
           </p>
         )}
         {state?.status === "trialing" && (
           <p>
-            La cancelación de una prueba puede ser inmediata. Revisa la fecha que indique Paddle.
+            La cancelación de una prueba puede ser inmediata. Revisa la fecha que indique Whop.
           </p>
         )}
         {state?.status === "past_due" && (

@@ -2,16 +2,15 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { ArrowRight, Check } from 'lucide-react';
-import { getPlanCatalog, TRIAL_DAYS, type Periodo } from '../../lib/planService';
+import { FREE_PLAN_SUMMARY, getPlanCatalog, type Periodo } from '../../lib/planService';
 import { planIntentPath } from '../../lib/planIntent';
 import { trackEvent } from '../../lib/analytics';
 
-// Tabla de los 3 planes con interruptor mensual/anual (−30 %). Todos empiezan
-// con 7 días de prueba sin tarjeta (cardless trial de Paddle). La usan la
-// landing y /precios; el modal de upgrade dentro de la app tiene la suya.
-// Intermedio va destacado: es el plan que queremos que la mayoría elija.
-// El botón lleva el plan y el periodo en la URL (/app?plan=…&periodo=…): la
-// app lo guarda como intención y, al entrar, arranca la prueba con ese plan.
+// Tabla de planes (Gratis, Medio, Pro) con interruptor mensual/anual (−30 %).
+// La usa /precios; el modal de upgrade dentro de la app tiene la suya. Medio va
+// destacado: es el plan que queremos que la mayoría elija. El botón de un plan
+// de pago lleva el plan y el periodo en la URL (/app?plan=…&periodo=…): la app
+// lo guarda y, al entrar, abre el checkout de Whop con ese plan.
 
 export function PlanPricingTable({ source = '/' }: { source?: string }) {
   const [periodo, setPeriodo] = useState<Periodo>('mensual');
@@ -25,6 +24,29 @@ export function PlanPricingTable({ source = '/' }: { source?: string }) {
       </div>
 
       <div className="mt-8 grid gap-4 md:grid-cols-3">
+        <div className="relative flex flex-col rounded-3xl border border-slate-200 bg-slate-50 p-6 text-left">
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">{FREE_PLAN_SUMMARY.etiqueta}</p>
+          <h3 className="mt-1 font-serif text-2xl text-slate-900">{FREE_PLAN_SUMMARY.nombre}</h3>
+          <div className="mt-4 flex items-baseline gap-1">
+            <span className="font-serif text-4xl text-slate-900">USD 0</span>
+            <span className="text-sm text-slate-500">/ mes</span>
+          </div>
+          <p className="mt-1 min-h-[2.5rem] text-xs text-slate-500">Sin tarjeta y sin fecha de vencimiento.</p>
+          <p className="mt-3 text-sm text-slate-700">{FREE_PLAN_SUMMARY.promesa}</p>
+          <ul className="mt-4 flex-1 space-y-2">
+            {FREE_PLAN_SUMMARY.incluye.map((f) => (
+              <li key={f} className="flex items-start gap-2 text-sm text-slate-700"><Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /> {f}</li>
+            ))}
+          </ul>
+          <Link
+            to="/app"
+            onClick={() => trackEvent('pricing_cta', { path: source, plan: 'free', periodo })}
+            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-medium text-slate-900 ring-1 ring-slate-300 hover:bg-slate-100"
+          >
+            Empezar gratis <ArrowRight className="h-4 w-4" />
+          </Link>
+          <p className="mt-2 text-center text-[11px] text-slate-400">Subes de plan cuando lo necesites.</p>
+        </div>
         {planes.map((plan, index) => {
           const precio = periodo === 'anual' ? plan.precioAnualMes : plan.precioMensual;
           return (
@@ -44,7 +66,7 @@ export function PlanPricingTable({ source = '/' }: { source?: string }) {
                 <span className="text-sm text-slate-500">/ mes</span>
               </div>
               <p className="mt-1 min-h-[2.5rem] text-xs text-slate-500">
-                {periodo === 'anual' ? `USD ${plan.precioAnualTotal} facturados una vez al año (ahorras ${plan.ahorroAnualPct} %).` : 'Facturado cada mes.'} Los primeros {TRIAL_DAYS} días son gratis y sin tarjeta.
+                {periodo === 'anual' ? `USD ${plan.precioAnualTotal} facturados una vez al año (ahorras ${plan.ahorroAnualPct} %).` : 'Facturado cada mes.'} Cancelas cuando quieras.
               </p>
               <p className="mt-3 text-sm text-slate-700">{plan.para}</p>
               <ul className="mt-4 flex-1 space-y-2">
@@ -57,9 +79,9 @@ export function PlanPricingTable({ source = '/' }: { source?: string }) {
                 onClick={() => trackEvent('pricing_cta', { path: source, plan: plan.id, periodo })}
                 className={`mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-medium ${plan.destacado ? 'bg-amber-500 text-white hover:bg-amber-600' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
               >
-                Probar {plan.nombre} {TRIAL_DAYS} días gratis <ArrowRight className="h-4 w-4" />
+                Elegir {plan.nombre} <ArrowRight className="h-4 w-4" />
               </Link>
-              <p className="mt-2 text-center text-[11px] text-slate-400">Sin tarjeta. Si no agregas una, se apaga solo al terminar.</p>
+              <p className="mt-2 text-center text-[11px] text-slate-400">Pago seguro con Whop. Si cancelas, vuelves al plan Gratis.</p>
             </motion.div>
           );
         })}

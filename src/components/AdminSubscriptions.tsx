@@ -14,9 +14,9 @@ interface Overview {
   por_proveedor: { provider: string; n: number }[];
 }
 
-// Estimación conservadora con 4 planes: se asume el Básico. El MRR exacto por
-// plan sale de Paddle; esto es sólo una referencia del panel.
-const listPrice = PLAN_PRICES_USD.basico.mensual;
+// Estimación conservadora: se asume el plan Medio mensual. El MRR exacto por
+// plan sale de Whop; esto es sólo una referencia del panel.
+const listPrice = PLAN_PRICES_USD.medio.mensual;
 const usd = (n: number) => `US$ ${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
@@ -64,7 +64,7 @@ export default function AdminSubscriptions() {
       </div>
       <div className="space-y-3 p-4">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <Stat label="MRR estimado" value={usd(mrr)} hint={`${data.activos_pagos} de pago × ${usd(listPrice)} (Básico; el real por plan está en Paddle)`} />
+          <Stat label="MRR estimado" value={usd(mrr)} hint={`${data.activos_pagos} de pago × ${usd(listPrice)} (Medio; el real por plan está en Whop)`} />
           <Stat label="Suscriptores de pago" value={String(data.activos_pagos)} />
           <Stat label="Nuevos este mes" value={String(data.nuevos_mes)} />
           <Stat label="Activos (incl. cortesía)" value={String(data.activos)} />

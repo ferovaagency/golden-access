@@ -1,10 +1,11 @@
-import { lazy, Suspense } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import NotFound from "./components/NotFound";
 import MaintenancePage from "./components/MaintenancePage";
 import { usePageView } from "./lib/usePageView";
+import { captureAffiliateFromUrl } from "./lib/whop";
 
 // Lazy-loaded route entrypoints. `/app` hosts the full tab-based shell
 // (App.tsx: login screen when logged out, dashboard when logged in) — turn 5
@@ -37,6 +38,13 @@ function PageViewTracker() {
   return null;
 }
 
+/** Guarda el código de afiliado (?a=usuario) de cualquier página para pasarlo al checkout de Whop. */
+function AffiliateCapture() {
+  const { search } = useLocation();
+  useEffect(() => { captureAffiliateFromUrl(search); }, [search]);
+  return null;
+}
+
 function RouteFallback() {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -58,6 +66,7 @@ export function AppRoutes() {
   return (
     <>
       <PageViewTracker />
+      <AffiliateCapture />
       <ErrorBoundary>
         <Suspense fallback={<RouteFallback />}>
           <Routes>

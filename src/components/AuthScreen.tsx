@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { Loader2, Sparkles, WandSparkles } from 'lucide-react';
 import { googleSignIn, microsoftSignIn, emailSignIn, emailSignUp, magicLinkSignIn } from '../lib/supabase';
 import { trackEvent } from '../lib/analytics';
-import { getPlanCatalog, TRIAL_DAYS } from '../lib/planService';
+import { getPlanCatalog } from '../lib/planService';
 import { planIntentPath, type PlanIntent } from '../lib/planIntent';
 
 // Pantalla de acceso. Tres caminos: Google, correo + contraseña y enlace
 // mágico (sin contraseña). Si la persona llegó desde la landing con un plan
-// elegido (`intent`), se le muestra el plan y, al entrar, la prueba de 7 días
-// arranca sola (SubscriptionGate).
+// elegido (`intent`), se le muestra el plan y, al entrar, se abre el modal de
+// planes con ese plan para pagarlo con Whop (App.tsx).
 
 type Mode = 'signin' | 'signup' | 'magic';
 
@@ -89,7 +89,7 @@ export default function AuthScreen({ intent = null }: { intent?: PlanIntent | nu
           </p>
           {planElegido && (
             <p className="mx-auto inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
-              <Sparkles className="h-3.5 w-3.5" /> Plan {planElegido.nombre} · {intent?.periodo === 'anual' ? 'anual' : 'mensual'} · {TRIAL_DAYS} días gratis, sin tarjeta
+              <Sparkles className="h-3.5 w-3.5" /> Plan {planElegido.nombre} · {intent?.periodo === 'anual' ? 'anual' : 'mensual'} · empiezas gratis y lo activas al entrar
             </p>
           )}
         </div>

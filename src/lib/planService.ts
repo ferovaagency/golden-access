@@ -1,18 +1,19 @@
 // Product access is resolved from the plan, then adjusted by explicit admin
 // overrides. Legacy identifiers are accepted only for existing subscriptions.
 //
-// Modelo (oct 2026): 3 niveles de pago con 7 días de prueba sin tarjeta
-// (cardless trial de Paddle) en el plan que la persona elija.
-//   free        → id reservado (ya no se vende; sin suscripción no hay acceso).
-//   basico      → Control operativo personal: Calendar, Sheets, finanzas
-//                 completas, impuestos y punto de equilibrio.
-//   intermedio  → Automatización comercial e IA: CRM, Apollo, WhatsApp,
-//                 rentabilidad por cliente, proyectos ilimitados.
-//   full        → Multi-empresa, BI y equipo.
-// Los ids viejos (completo, financiero, …) siguen resolviendo para quien ya
-// los tiene; `completo` equivale a `full`.
+// Modelo (nov 2026, cobro con Whop):
+//   free   → Gratis: saber si ganas o pierdes. Toda cuenta sin suscripción
+//            entra aquí, con topes de volumen.
+//   medio  → USD 20: controlar todo el negocio de una persona (finanzas
+//            completas, impuestos, Google, rentabilidad por cliente).
+//   pro    → USD 50: vender y crecer con equipo (CRM, WhatsApp, Apollo, BI,
+//            varias empresas).
+// Los ids anteriores (basico / intermedio / full de oct 2026, y completo,
+// financiero, … de antes) siguen resolviendo para quien ya los tiene.
 export type PlanId =
   | 'free'
+  | 'medio'
+  | 'pro'
   | 'basico'
   | 'intermedio'
   | 'full'
@@ -25,11 +26,13 @@ export type PlanId =
   | 'financiero'
   | 'crm_ventas';
 
-/** Los tres planes que se venden hoy, en orden ascendente. */
-export const PAID_TIERS = ['basico', 'intermedio', 'full'] as const;
+/** Los planes de pago que se venden hoy, en orden ascendente. */
+export const PAID_TIERS = ['medio', 'pro'] as const;
 export type PaidTier = typeof PAID_TIERS[number];
-/** Días de prueba sin tarjeta. Debe coincidir con el trial_period de los prices en Paddle. */
-export const TRIAL_DAYS = 7;
+/** Planes de pago anteriores (oct 2026). Ya no se venden; quien los tiene los conserva. */
+export const LEGACY_PAID_TIERS = ['basico', 'intermedio', 'full'] as const;
+/** Orden de nivel para comparar planes (subir / bajar). */
+export const PLAN_RANK: Record<string, number> = { free: 0, basico: 1, medio: 1, intermedio: 2, pro: 3, full: 3 };
 
 export type Entitlement =
   | 'core_projects'
@@ -62,8 +65,11 @@ export interface ModuleFlags {
 export type ModuleOverrides = Partial<Record<Entitlement, boolean>>;
 
 const PLAN_ENTITLEMENTS: Record<PlanId, readonly Entitlement[]> = {
-  // Freemium: planner + finanzas básicas + proyectos + IA, todo con tope.
+  // Gratis: planner + finanzas + proyectos + IA, todo con tope.
   free: ['core_projects', 'finance', 'planner', 'ai_assistant'],
+  medio: ['core_projects', 'finance', 'planner', 'ai_assistant', 'google_calendar', 'google_sheets'],
+  pro: ['core_projects', 'finance', 'planner', 'ai_assistant', 'google_calendar', 'google_sheets', 'crm', 'marketing_roi', 'advanced_analytics', 'team_management'],
+  // Planes de oct 2026 (ya no se venden).
   basico: ['core_projects', 'finance', 'planner', 'ai_assistant', 'google_calendar', 'google_sheets'],
   intermedio: ['core_projects', 'finance', 'planner', 'ai_assistant', 'google_calendar', 'google_sheets', 'crm', 'marketing_roi'],
   full: ['core_projects', 'finance', 'planner', 'ai_assistant', 'google_calendar', 'google_sheets', 'crm', 'marketing_roi', 'advanced_analytics', 'team_management'],
@@ -139,9 +145,11 @@ export interface PlanLimits {
 const UNLIMITED: PlanLimits = { tareas_semana: null, movimientos_mes: null, proyectos_activos: null, consultas_ia_mes: null, miembros: null };
 
 const PLAN_LIMITS: Record<PlanId, PlanLimits> = {
-  free: { tareas_semana: 15, movimientos_mes: 20, proyectos_activos: 1, consultas_ia_mes: 10, miembros: 1 },
-  // La escalera es por clientes activos: todos los planes son para
-  // freelancers y suben según cuántos clientes atienden.
+  // `proyectos_activos` cuenta clientes activos (ver financeService).
+  free: { tareas_semana: 15, movimientos_mes: 30, proyectos_activos: 2, consultas_ia_mes: 10, miembros: 1 },
+  medio: { tareas_semana: null, movimientos_mes: null, proyectos_activos: 10, consultas_ia_mes: 150, miembros: 2 },
+  pro: { tareas_semana: null, movimientos_mes: null, proyectos_activos: null, consultas_ia_mes: 1000, miembros: 5 },
+  // Planes de oct 2026: conservan sus topes.
   basico: { tareas_semana: null, movimientos_mes: null, proyectos_activos: 3, consultas_ia_mes: 100, miembros: 1 },
   intermedio: { tareas_semana: null, movimientos_mes: null, proyectos_activos: 10, consultas_ia_mes: null, miembros: 3 },
   full: { ...UNLIMITED, miembros: 10 },
@@ -163,29 +171,27 @@ export function withinLimit(limits: PlanLimits, kind: LimitKind, used: number, e
 
 /**
  * Plan mínimo que desbloquea un módulo, o cuyo tope alcanza para `needed`
- * (sin `needed`: el primero sin tope). Ej.: 4 clientes → Intermedio; 11 → Full.
+ * (sin `needed`: el primero sin tope). Ej.: 3 clientes → Medio; 11 → Pro.
  */
-export function minimumPlanFor(target: { entitlement?: Entitlement; limit?: LimitKind; needed?: number }): 'basico' | 'intermedio' | 'full' {
-  for (const tier of ['basico', 'intermedio', 'full'] as const) {
+export function minimumPlanFor(target: { entitlement?: Entitlement; limit?: LimitKind; needed?: number }): PaidTier {
+  for (const tier of PAID_TIERS) {
     if (target.entitlement && PLAN_ENTITLEMENTS[tier].includes(target.entitlement)) return tier;
     if (target.limit) {
       const limit = PLAN_LIMITS[tier][target.limit];
       if (limit === null || (target.needed !== undefined && target.needed <= limit)) return tier;
     }
   }
-  return 'full';
+  return 'pro';
 }
 
 // ---------------------------------------------------------------------------
-// Catálogo comercial. Precios = los prices reales de Paddle (8 oct 2026):
-// mensual 19 / 29 / 99 y anual 159 / 249 / 829 (≈ 30 % menos). Se pueden
-// sobreescribir por entorno (VITE_PLAN_PRICE_*) sin tocar código, pero lo
-// que cobra Paddle es lo que tenga el price: si cambia uno, cambia el otro.
+// Catálogo comercial (nov 2026). Lo que cobra Whop es el precio del plan
+// configurado allá: si cambia uno, cambia el otro. Se pueden sobreescribir por
+// entorno (VITE_PLAN_PRICE_*) sin tocar código.
 // ---------------------------------------------------------------------------
 export const PLAN_PRICES_USD: Record<PaidTier, { mensual: number; anualTotal: number }> = {
-  basico: { mensual: 19, anualTotal: 159 },
-  intermedio: { mensual: 29, anualTotal: 249 },
-  full: { mensual: 99, anualTotal: 829 },
+  medio: { mensual: 20, anualTotal: 168 },
+  pro: { mensual: 50, anualTotal: 420 },
 };
 
 export type Periodo = 'mensual' | 'anual';
@@ -229,22 +235,25 @@ function card(id: PaidTier, base: Omit<PlanCard, 'id' | 'precioMensual' | 'preci
   };
 }
 
+/** Lo que incluye el plan Gratis (no se cobra, así que no es una PlanCard). */
+export const FREE_PLAN_SUMMARY = {
+  nombre: 'Gratis',
+  etiqueta: 'Hasta 2 clientes activos',
+  promesa: 'Sabes si con cada servicio ganas o pierdes.',
+  incluye: ['Hasta 2 clientes activos y servicios ilimitados', 'Ingresos, pagos y costos: 30 movimientos al mes', 'Rentabilidad y punto de equilibrio por servicio', '1 proyecto con horas y temporizador', 'Planner: 15 tareas por semana', 'Asistente IA: 10 consultas al mes'],
+} as const;
+
 export function getPlanCatalog(): PlanCard[] {
   return [
-    card('basico', {
-      nombre: 'Básico', etiqueta: 'Hasta 3 clientes activos', para: 'Para el freelancer que arranca: pocos clientes y la necesidad de saber si con ellos gana o pierde.',
-      promesa: 'Sabes cuánto te deja cada hora, cuánto cobrar y cuándo pagar impuestos.', destacado: false,
-      incluye: ['Hasta 3 clientes activos con rentabilidad por hora', 'Planner con captura en lenguaje natural + Google Calendar', 'Finanzas completas: ingresos, egresos, IVA e impuestos, punto de equilibrio', 'Respaldo y sincronización con Google Sheets', 'Asistente IA: 100 consultas al mes'],
+    card('medio', {
+      nombre: 'Medio', etiqueta: 'Hasta 10 clientes activos', para: 'Para el freelancer que quiere controlar todo su negocio: caja, cobros, impuestos y cuánto le deja cada cliente.',
+      promesa: 'Sabes cuánto te deja cada cliente, cuánto cobrar y cuándo pagar impuestos.', destacado: true,
+      incluye: ['Hasta 10 clientes activos', 'Todo lo del plan Gratis, sin topes de movimientos ni tareas', 'Caja y bancos, cuentas por cobrar y por pagar, presupuesto', 'Impuestos: IVA, alertas DIAN y UVT', 'Rentabilidad por cliente y por servicio', 'Proyectos ilimitados · Google Calendar y respaldo en Sheets', 'Asistente IA: 150 consultas al mes · Memoria del negocio', '2 usuarios'],
     }),
-    card('intermedio', {
-      nombre: 'Intermedio', etiqueta: 'Hasta 10 clientes activos', para: 'Para el freelancer con cartera: varios clientes a la vez, cotizaciones abiertas y la pregunta de a quién cobrarle más.',
-      promesa: 'Sabes a qué cliente cobrarle más y de dónde sale el próximo.', destacado: true,
-      incluye: ['Hasta 10 clientes activos', 'Todo lo del Básico', 'CRM: pipeline, cotizaciones y valor ganado', 'Leads enriquecidos con Apollo y oportunidades en Reddit', 'WhatsApp: avisos y asistencia con contexto', 'Rentabilidad por cliente y por servicio · IA sin tope razonable', 'Acceso a actualizaciones y funciones nuevas', 'Próximamente: vitrina para encontrar clientes'],
-    }),
-    card('full', {
-      nombre: 'Full', etiqueta: 'Clientes ilimitados', para: 'Para el freelancer que ya es una pequeña agencia: muchos clientes, varias marcas y gente que ayuda.',
-      promesa: 'Todos tus clientes y marcas en un solo tablero, y el sistema te avisa antes de que algo se rompa.', destacado: false,
-      incluye: ['Clientes ilimitados', 'Todo lo del Intermedio', 'Varias marcas o empresas desde una sola cuenta', 'Motor BI: salud del negocio y puntos ciegos', 'Reportes ejecutivos', 'Colaboradores con roles (hasta 10)', 'Soporte prioritario y onboarding asistido', 'Primeros en probar cada función nueva (acceso anticipado)', 'Próximamente: vitrina para encontrar clientes, con prioridad'],
+    card('pro', {
+      nombre: 'Pro', etiqueta: 'Clientes ilimitados', para: 'Para la pequeña agencia que vende, tiene equipo y maneja una o varias empresas.',
+      promesa: 'Vendes, cobras y ves todas tus empresas en un solo tablero.', destacado: false,
+      incluye: ['Clientes ilimitados', 'Todo lo del plan Medio', 'Ventas: CRM, pipeline y citas', 'Marketing ROI · WhatsApp, bot y Apollo', 'Reportes CEO, salud del negocio y metas de MRR', 'Varias empresas / holding', 'Asistente IA: 1.000 consultas al mes', '5 usuarios con permisos'],
     }),
   ];
 }

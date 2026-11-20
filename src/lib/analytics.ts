@@ -13,6 +13,8 @@ export type AnalyticsEvent =
   | 'pricing_cta'
   | 'blog_article_view'
   | 'blog_cta_click'
+  | 'checkout_open'
+  | 'checkout_complete'
   | 'signup_start'
   | 'signup_complete'
   | 'activation'

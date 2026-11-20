@@ -8,7 +8,7 @@ import type { FeatureEstado } from '../lib/features';
 // Beta (equipo + correos), Publicado (todos, con plan mínimo opcional). Cada
 // cambio de estado queda en la bitácora con motivo y autor.
 
-interface Flag { key: string; nombre: string; descripcion: string | null; estado: FeatureEstado; plan_minimo: 'basico' | 'intermedio' | 'full' | null; updated_at: string; updated_by: string | null }
+interface Flag { key: string; nombre: string; descripcion: string | null; estado: FeatureEstado; plan_minimo: 'medio' | 'pro' | 'basico' | 'intermedio' | 'full' | null; updated_at: string; updated_by: string | null }
 interface FlagUser { flag_key: string; email: string; added_at: string }
 interface Change { id: number; flag_key: string; de: string | null; a: string; motivo: string | null; por: string | null; created_at: string }
 
@@ -119,9 +119,9 @@ export default function AdminFeatures() {
                   <label className="text-[11px] text-slate-500">Plan mínimo al publicar
                     <select value={f.plan_minimo ?? ''} disabled={busy === f.key} onChange={(e) => setPlan(f, (e.target.value || null) as Flag['plan_minimo'])} className="ml-2 rounded-lg border border-slate-200 px-2 py-1 text-xs text-slate-800">
                       <option value="">Todos los planes</option>
-                      <option value="basico">Básico o superior</option>
-                      <option value="intermedio">Intermedio o superior</option>
-                      <option value="full">Solo Full</option>
+                      <option value="medio">Medio o superior</option>
+                      <option value="pro">Solo Pro</option>
+                      {f.plan_minimo && ['basico', 'intermedio', 'full'].includes(f.plan_minimo) && <option value={f.plan_minimo}>{f.plan_minimo === 'basico' ? 'Básico (anterior)' : f.plan_minimo === 'intermedio' ? 'Intermedio (anterior)' : 'Full (anterior)'}</option>}
                     </select>
                   </label>
                 </div>
