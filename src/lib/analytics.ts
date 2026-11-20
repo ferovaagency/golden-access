@@ -21,6 +21,8 @@ export type AnalyticsEvent =
   | 'login_click'
   | 'upgrade_modal_open'
   | 'upgrade_checkout'
+  | 'upgrade_nudge_view'
+  | 'upgrade_nudge_click'
   | 'locked_module_click'
   | 'calculadora_horas';
 

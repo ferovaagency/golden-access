@@ -30,6 +30,7 @@ assert.equal(free.finance, true);
 assert.equal(free.ai_assistant, true);
 assert.equal(free.google_calendar, false, 'Calendar es disparador de upgrade');
 assert.equal(free.crm, false);
+assert.equal(free.finance_advanced, false, 'caja, cobros, impuestos y presupuesto van en Medio');
 assert.equal(getModules(null, false).google_sheets, false, 'sin plan = Gratis');
 
 const medio = getModules('medio', false);
@@ -37,6 +38,8 @@ assert.equal(medio.finance, true);
 assert.equal(medio.google_calendar, true);
 assert.equal(medio.google_sheets, true);
 assert.equal(medio.crm, false, 'el CRM va en Pro');
+assert.equal(medio.finance_advanced, true);
+assert.equal(minimumPlanFor({ entitlement: 'finance_advanced' }), 'medio');
 assert.equal(medio.team_management, false);
 
 const pro = getModules('pro', false);
@@ -44,6 +47,9 @@ assert.equal(pro.crm, true);
 assert.equal(pro.marketing_roi, true);
 assert.equal(pro.advanced_analytics, true);
 assert.equal(pro.team_management, true);
+assert.equal(pro.finance_advanced, true);
+assert.equal(getModules('financiero', false).finance_advanced, true, 'quien pagaba finanzas antes conserva todo');
+assert.equal(getModules('full', false).finance_advanced, true);
 
 const basico = getModules('basico', false);
 assert.equal(basico.google_calendar, true);

@@ -3,7 +3,8 @@ import type { User } from '@supabase/supabase-js';
 import { ArrowLeft, ArrowRight, CheckCircle2, Circle, HelpCircle, Plus, Sparkles, Trash2 } from 'lucide-react';
 import type { BusinessProfile } from '../lib/businessProfileService';
 import { upsertBusinessProfile } from '../lib/businessProfileService';
-import type { ModuleFlags, PlanId } from '../lib/planService';
+import { FREE_PLAN_SUMMARY, getPlanCatalog, PLAN_RANK, type ModuleFlags, type PlanId } from '../lib/planService';
+import { requestUpgrade } from '../lib/planGate';
 import { upsertBudgetLine } from '../lib/budgetService';
 import type { AppData, Cliente, Config, Herramienta, OtroGasto, Servicio } from '../types';
 import { convertToCop } from '../lib/calculations';
@@ -37,7 +38,7 @@ interface Props {
 const inputClass = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
 
 const planNames: Record<string, string> = {
-  free: 'Gratis', basico: 'Básico', intermedio: 'Intermedio', full: 'Full',
+  free: 'Gratis', medio: 'Medio', pro: 'Pro', basico: 'Básico', intermedio: 'Intermedio', full: 'Full',
   projects: 'Proyectos', finance: 'Finanzas', financiero: 'Finanzas', planner: 'Planner', crm: 'Ventas', crm_ventas: 'Ventas', completo: 'Todo incluido', custom: 'Personalizado',
 };
 
@@ -50,6 +51,32 @@ const STEPS = ['Tu empresa', 'Tus servicios', 'Clientes', 'Costos fijos', 'Metas
 
 const fmt = (n: number) => n.toLocaleString('es-CO', { maximumFractionDigits: 0 });
 const periodoActual = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
+
+/**
+ * Qué trae el plan con el que entra la persona y, en una línea, qué suma el
+ * siguiente. Sin presión: el enlace abre el modal de planes, que se cierra
+ * y deja seguir el onboarding.
+ */
+function PlanIncludes({ plan }: { plan: PlanId }) {
+  const [medio, pro] = getPlanCatalog();
+  const nivel = PLAN_RANK[plan] ?? 3;
+  if (nivel >= 3) return null;
+  const actual = nivel === 0 ? FREE_PLAN_SUMMARY.incluye : medio.incluye;
+  const siguiente = nivel === 0
+    ? { plan: 'medio' as const, texto: 'Con Medio sumas caja y bancos, cobros, impuestos (IVA y DIAN), presupuesto y Google.' }
+    : { plan: 'pro' as const, texto: `Con Pro sumas CRM, WhatsApp, reportes CEO y varias empresas. Pro trae 7 días de prueba.` };
+  return (
+    <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4 text-xs leading-5 text-slate-300">
+      <p className="font-semibold text-white">Tu plan incluye</p>
+      <ul className="mt-2 space-y-1">
+        {actual.slice(0, 4).map((item) => <li key={item} className="flex gap-1.5"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" /> {item}</li>)}
+      </ul>
+      <p className="mt-3 text-slate-400">{siguiente.texto}</p>
+      <button type="button" onClick={() => requestUpgrade({ motivo: 'Comparar planes', planSugerido: siguiente.plan })} className="mt-2 font-semibold text-blue-300 hover:text-blue-200">Comparar planes</button>
+      {nivel === 0 && <p className="mt-1 text-[11px] text-slate-500">Puedes seguir gratis: nada de lo que cargues se pierde si cambias después.</p>}
+    </div>
+  );
+}
 
 /** Pequeña ayuda expandible: "¿qué es esto y para qué sirve?", sin saturar el formulario. */
 function HelpNote({ children }: { children: React.ReactNode }) {
@@ -257,7 +284,7 @@ export default function PlanOnboarding({ user, plan, modules, profile, appData, 
         await onSaveConfig({ salario_propuesto: Number(salario) || 0, meta_ventas_mensual: Number(metaVentas) || 0 });
       }
       let lineas = 0;
-      if (modules.finance && crearPresupuesto) {
+      if (modules.finance_advanced && crearPresupuesto) {
         try { lineas = await sembrarPresupuesto(); }
         catch (err: any) { toastErr(`El presupuesto no se pudo crear: ${errMsg(err)}. Puedes hacerlo luego en Finanzas operativas.`); }
       }
@@ -286,6 +313,7 @@ export default function PlanOnboarding({ user, plan, modules, profile, appData, 
             <ol className="mt-8 space-y-4 text-sm">
               {STEPS.map((label, index) => <li key={label} className={`flex items-center gap-3 ${step >= index ? 'text-white' : 'text-slate-500'}`}>{step > index ? <CheckCircle2 className="h-5 w-5 text-emerald-400" /> : <Circle className="h-5 w-5" />} <span><span className="mr-1 text-slate-500">{index + 1}.</span>{label}</span></li>)}
             </ol>
+            <PlanIncludes plan={plan} />
           </aside>
           <section className="p-5 sm:p-8 lg:p-10">
             {step === 0 && <div>
@@ -411,7 +439,7 @@ export default function PlanOnboarding({ user, plan, modules, profile, appData, 
                   <HelpNote>Cuánto necesitas facturar al mes para cubrir costos fijos y sueldo. Si no lo sabes, pon lo que facturas hoy: el equilibrio te dirá si alcanza.</HelpNote>
                 </div>
               </div>
-              {modules.finance && (
+              {modules.finance_advanced && (
                 <label className="mt-6 flex cursor-pointer items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
                   <input type="checkbox" checked={crearPresupuesto} onChange={(e) => setCrearPresupuesto(e.target.checked)} className="mt-1 h-4 w-4 accent-amber-500" />
                   <span>

@@ -25,10 +25,11 @@ import { LoadingState } from './components/ui/AsyncState';
 import AuthScreen from './components/AuthScreen';
 import UpgradeModal from './components/UpgradeModal';
 import TrialBanner from './components/billing/TrialBanner';
+import UpgradeNudge from './components/billing/UpgradeNudge';
 import WhopCheckoutModal from './components/billing/WhopCheckoutModal';
 import { openBillingPortal } from './lib/billingActions';
 import { readCheckoutReturn } from './lib/whop';
-import { getPlanCatalog } from './lib/planService';
+import { getLimits, getPlanCatalog, minimumPlanFor } from './lib/planService';
 import { capturePlanIntentFromUrl, clearPlanIntent, type PlanIntent } from './lib/planIntent';
 import { requestEntitlement, requestUpgrade } from './lib/planGate';
 import { trackEvent } from './lib/analytics';
@@ -673,6 +674,9 @@ function AppInner() {
         onSaveHerramientas={handleSaveHerramientas}
         onDone={(profile) => setBusinessProfile(profile)}
       />
+      {/* "Comparar planes" del onboarding abre el mismo modal y checkout que la app. */}
+      <UpgradeModal currentPlan={plan} currentPeriodo={subscription.periodo} />
+      <WhopCheckoutModal user={user} onActivated={() => { refreshAccess(); toastOk('Plan activado. ¡Gracias!'); }} />
       </>
     );
   }
@@ -698,10 +702,26 @@ function AppInner() {
     reports: { entitlement: 'advanced_analytics', nombre: 'Reportes CEO y salud del negocio' },
     'locked-calendar': { entitlement: 'google_calendar', nombre: 'Sincronización con Google Calendar' },
     'locked-sheets': { entitlement: 'google_sheets', nombre: 'Respaldo en Google Sheets' },
+    // Medio: lo que va más allá de saber si ganas o pierdes.
+    finCaja: { entitlement: 'finance_advanced', nombre: 'Caja y bancos' },
+    finCobrar: { entitlement: 'finance_advanced', nombre: 'Cuentas por cobrar y por pagar' },
+    finEstado: { entitlement: 'finance_advanced', nombre: 'Estado de resultados y presupuesto' },
+    iva: { entitlement: 'finance_advanced', nombre: 'IVA' },
+    alertas: { entitlement: 'finance_advanced', nombre: 'Alertas DIAN y topes' },
+    memoria: { entitlement: 'finance_advanced', nombre: 'Memoria del negocio' },
+    // Pro.
+    kpisOperativos: { entitlement: 'advanced_analytics', nombre: 'Metas de MRR y seguimiento' },
+    holding: { entitlement: 'team_management', nombre: 'Varias empresas (holding)' },
   };
   const KNOWN_TABS = { has: (t: string) => t.startsWith('crm-') || t.startsWith('locked-') || ['ajustes','alertas','clientes','dashboard','finCaja','finCobrar','finEstado','equilibrioGlobal','equilibrioServicio','finops','gastos','holding','home','horas','inicio','integraciones','iva','kpisOperativos','marketingRoi','memoria','pagosEgresos','plan','planner','proyectos','reports','seguimiento','servicios','ventas','ventas-crm'].includes(t) };
   const lockedActive = !!LOCKED_TABS[activeTab] && !modules[LOCKED_TABS[activeTab].entitlement];
   const lockedItem = (id: string, label: string, plan: string): NavigationItem => ({ id, label: `🔒 ${label}`, hint: `Disponible desde el plan ${plan}`, locked: true });
+  /** Entrada normal si el plan la trae; si no, con candado y el plan que la desbloquea. */
+  const gatedItem = (id: string, label: string, hint?: string): NavigationItem => {
+    const lock = LOCKED_TABS[id];
+    if (lock && !modules[lock.entitlement]) return lockedItem(id, label, minimumPlanFor({ entitlement: lock.entitlement }) === 'pro' ? 'Pro' : 'Medio');
+    return { id, label, hint: hint ?? '' };
+  };
   const handleNavigate = (requested: string) => {
     const tab = resolveTab(requested);
     if (tab === 'plan') { openBilling(); return; }
@@ -737,7 +757,7 @@ function AppInner() {
     ] : [] },
     { id: 'finance', label: 'Finanzas', icon: Boxes, items: [
       { id: 'g-fin-resumen', label: 'Resumen', hint: 'Reportes ejecutivos, metas de MRR y pasarelas', children: [
-        ...(modules.financiero ? [{ id: 'kpisOperativos', label: 'Metas y seguimiento' }] : []),
+        ...(modules.financiero ? [gatedItem('kpisOperativos', 'Metas y seguimiento')] : []),
         modules.advanced_analytics ? { id: 'reports', label: 'Reportes CEO' } : { id: 'reports', label: '🔒 Reportes CEO', locked: true },
       ] },
       ...(modules.financiero ? [
@@ -746,16 +766,16 @@ function AppInner() {
           { id: 'pagosEgresos', label: 'Pagos' },
           { id: 'gastos', label: 'Costos fijos' },
         ] },
-        { id: 'finCaja', label: 'Caja y bancos', hint: 'Flujo de caja, cuentas y métodos de pago' },
-        { id: 'finCobrar', label: 'Cobrar y pagar', hint: 'Por cobrar, por pagar y deudas' },
-        { id: 'finEstado', label: 'Estado y presupuesto', hint: 'Estado de resultados y presupuesto' },
+        gatedItem('finCaja', 'Caja y bancos', 'Flujo de caja, cuentas y métodos de pago'),
+        gatedItem('finCobrar', 'Cobrar y pagar', 'Por cobrar, por pagar y deudas'),
+        gatedItem('finEstado', 'Estado y presupuesto', 'Estado de resultados y presupuesto'),
         { id: 'g-rentabilidad', label: 'Rentabilidad', hint: 'Punto de equilibrio y margen por servicio', children: [
           { id: 'equilibrioGlobal', label: 'Punto de equilibrio' },
           { id: 'equilibrioServicio', label: 'Por servicio' },
         ] },
         { id: 'g-impuestos', label: 'Impuestos', hint: 'IVA, alertas DIAN y topes', children: [
-          { id: 'iva', label: 'IVA' },
-          { id: 'alertas', label: 'Alertas DIAN' },
+          gatedItem('iva', 'IVA'),
+          gatedItem('alertas', 'Alertas DIAN'),
         ] },
       ] : []),
     ] },
@@ -775,7 +795,7 @@ function AppInner() {
         ...(modules.google_sheets ? [] : [{ id: 'locked-sheets', label: '🔒 Google Sheets', locked: true }]),
       ] },
       { id: 'plan', label: 'Plan y suscripción', hint: 'Plan, pagos y cancelación' },
-      { id: 'memoria', label: 'Memoria', hint: 'Cerebro del negocio: lo que sabe de ti y de tu operación' },
+      gatedItem('memoria', 'Memoria', 'Cerebro del negocio: lo que sabe de ti y de tu operación'),
       ...(isTeam ? [{ id: 'admin', label: 'Administración Ferova', hint: 'Usuarios, planes, feedback y operaciones' }] : []),
     ] },
   ];
@@ -1013,12 +1033,12 @@ function AppInner() {
               </div>
             )}
             {!lockedActive && activeTab === 'planner' && <SmartPlanner />}
-            {activeTab === 'holding' && <HoldingOverview formatCop={formatCop} />}
-            {activeTab === 'kpisOperativos' && <OperatingKpiDashboard userId={accountId} data={appData} formatCop={formatCop} />}
+            {!lockedActive && activeTab === 'holding' && <HoldingOverview formatCop={formatCop} />}
+            {!lockedActive && activeTab === 'kpisOperativos' && <OperatingKpiDashboard userId={accountId} data={appData} formatCop={formatCop} />}
             {!lockedActive && activeTab === 'reports' && effectiveUser && <ReportsView user={effectiveUser} />}
-            {activeTab === 'finCaja' && effectiveUser && <FinanceOperativa user={effectiveUser} appData={appData} formatCop={formatCop} tabs={['flujo', 'cuentas', 'metodos']} title="Caja y bancos" description="Flujo de caja, saldos por cuenta y métodos de pago." />}
-            {activeTab === 'finCobrar' && effectiveUser && <FinanceOperativa user={effectiveUser} appData={appData} formatCop={formatCop} tabs={['cobrar', 'pagar', 'deudas']} title="Cobrar y pagar" description="Lo que te deben, lo que debes y tus deudas." />}
-            {activeTab === 'finEstado' && effectiveUser && <FinanceOperativa user={effectiveUser} appData={appData} formatCop={formatCop} tabs={['estado', 'presupuesto']} title="Estado y presupuesto" description="Estado de resultados del período y presupuesto." />}
+            {!lockedActive && activeTab === 'finCaja' && effectiveUser && <FinanceOperativa user={effectiveUser} appData={appData} formatCop={formatCop} tabs={['flujo', 'cuentas', 'metodos']} title="Caja y bancos" description="Flujo de caja, saldos por cuenta y métodos de pago." />}
+            {!lockedActive && activeTab === 'finCobrar' && effectiveUser && <FinanceOperativa user={effectiveUser} appData={appData} formatCop={formatCop} tabs={['cobrar', 'pagar', 'deudas']} title="Cobrar y pagar" description="Lo que te deben, lo que debes y tus deudas." />}
+            {!lockedActive && activeTab === 'finEstado' && effectiveUser && <FinanceOperativa user={effectiveUser} appData={appData} formatCop={formatCop} tabs={['estado', 'presupuesto']} title="Estado y presupuesto" description="Estado de resultados del período y presupuesto." />}
             {!lockedActive && activeTab === 'marketingRoi' && effectiveUser && <MarketingROI user={effectiveUser} ventas={appData.ventas} config={appData.config} formatCop={formatCop} />}
             {activeTab === 'dashboard' && (
               <Home
@@ -1054,8 +1074,8 @@ function AppInner() {
             {activeTab === 'equilibrioServicio' && (
               <EquilibrioServicio servicios={appData.servicios} herramientas={appData.herramientas} clientes={appData.clientes} ventas={appData.ventas} config={appData.config} period={period} formatCop={formatCop} />
             )}
-            {activeTab === 'iva' && <ImpuestosIva data={appData} metrics={metrics} formatCop={formatCop} />}
-            {activeTab === 'alertas' && <AlertasTributarias data={appData} fiscal={fiscalProfile} formatCop={formatCop} />}
+            {!lockedActive && activeTab === 'iva' && <ImpuestosIva data={appData} metrics={metrics} formatCop={formatCop} />}
+            {!lockedActive && activeTab === 'alertas' && <AlertasTributarias data={appData} fiscal={fiscalProfile} formatCop={formatCop} />}
             {activeTab === 'servicios' && (
               <ServiciosAdmin servicios={appData.servicios} ventas={appData.ventas} horas={appData.horas} config={appData.config} onSaveServicios={handleSaveServicios} formatCop={formatCop} />
             )}
@@ -1072,7 +1092,7 @@ function AppInner() {
                 onNavigate={handleNavigate}
               />
             )}
-            {activeTab === 'memoria' && <MemoriaPanel />}
+            {!lockedActive && activeTab === 'memoria' && <MemoriaPanel />}
             {activeTab === 'plan' && <PlanSettings user={user} plan={plan} subscription={subscription} isTeam={isTeam} onChanged={() => refreshAccess()} />}
             {modules.crm_ventas && activeTab.startsWith('crm-') && (
               // Las pestañas de crecimiento (Pipeline, Citas, LinkedIn+Reddit,
@@ -1103,6 +1123,14 @@ function AppInner() {
         ] : []}
       />
       <ProductTour userId={user.id} modules={modules} onNavigate={handleNavigate} />
+      <UpgradeNudge
+        userId={user.id}
+        plan={plan}
+        isTeam={isTeam}
+        enPrueba={subscription.estado === 'trial'}
+        activeTab={activeTab}
+        usage={{ clientesActivos: appData ? appData.clientes.filter((cliente) => cliente.activo).length : 0, limiteClientes: getLimits(plan, isTeam).proyectos_activos }}
+      />
     </>
   );
 

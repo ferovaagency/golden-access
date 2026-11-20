@@ -37,6 +37,7 @@ export const PLAN_RANK: Record<string, number> = { free: 0, basico: 1, medio: 1,
 export type Entitlement =
   | 'core_projects'
   | 'finance'
+  | 'finance_advanced'
   | 'planner'
   | 'crm'
   | 'marketing_roi'
@@ -49,6 +50,8 @@ export type Entitlement =
 export interface ModuleFlags {
   core_projects: boolean;
   finance: boolean;
+  /** Medio+: caja y bancos, cobrar y pagar, estado y presupuesto, impuestos y memoria. */
+  finance_advanced: boolean;
   planner: boolean;
   crm: boolean;
   marketing_roi: boolean;
@@ -65,28 +68,29 @@ export interface ModuleFlags {
 export type ModuleOverrides = Partial<Record<Entitlement, boolean>>;
 
 const PLAN_ENTITLEMENTS: Record<PlanId, readonly Entitlement[]> = {
-  // Gratis: planner + finanzas + proyectos + IA, todo con tope.
+  // Gratis: planner + finanzas básicas (movimientos, rentabilidad) + proyectos + IA, todo con tope.
   free: ['core_projects', 'finance', 'planner', 'ai_assistant'],
-  medio: ['core_projects', 'finance', 'planner', 'ai_assistant', 'google_calendar', 'google_sheets'],
-  pro: ['core_projects', 'finance', 'planner', 'ai_assistant', 'google_calendar', 'google_sheets', 'crm', 'marketing_roi', 'advanced_analytics', 'team_management'],
+  medio: ['core_projects', 'finance', 'finance_advanced', 'planner', 'ai_assistant', 'google_calendar', 'google_sheets'],
+  pro: ['core_projects', 'finance', 'finance_advanced', 'planner', 'ai_assistant', 'google_calendar', 'google_sheets', 'crm', 'marketing_roi', 'advanced_analytics', 'team_management'],
   // Planes de oct 2026 (ya no se venden).
-  basico: ['core_projects', 'finance', 'planner', 'ai_assistant', 'google_calendar', 'google_sheets'],
-  intermedio: ['core_projects', 'finance', 'planner', 'ai_assistant', 'google_calendar', 'google_sheets', 'crm', 'marketing_roi'],
-  full: ['core_projects', 'finance', 'planner', 'ai_assistant', 'google_calendar', 'google_sheets', 'crm', 'marketing_roi', 'advanced_analytics', 'team_management'],
-  // Legado.
+  basico: ['core_projects', 'finance', 'finance_advanced', 'planner', 'ai_assistant', 'google_calendar', 'google_sheets'],
+  intermedio: ['core_projects', 'finance', 'finance_advanced', 'planner', 'ai_assistant', 'google_calendar', 'google_sheets', 'crm', 'marketing_roi'],
+  full: ['core_projects', 'finance', 'finance_advanced', 'planner', 'ai_assistant', 'google_calendar', 'google_sheets', 'crm', 'marketing_roi', 'advanced_analytics', 'team_management'],
+  // Legado: quien ya pagaba finanzas conserva todo lo de finanzas.
   projects: ['core_projects'],
-  finance: ['core_projects', 'finance', 'marketing_roi', 'google_sheets'],
+  finance: ['core_projects', 'finance', 'finance_advanced', 'marketing_roi', 'google_sheets'],
   planner: ['core_projects', 'planner', 'ai_assistant', 'google_calendar'],
   crm: ['core_projects', 'crm', 'ai_assistant'],
-  completo: ['core_projects', 'finance', 'planner', 'crm', 'marketing_roi', 'ai_assistant', 'google_sheets', 'google_calendar', 'advanced_analytics', 'team_management'],
+  completo: ['core_projects', 'finance', 'finance_advanced', 'planner', 'crm', 'marketing_roi', 'ai_assistant', 'google_sheets', 'google_calendar', 'advanced_analytics', 'team_management'],
   custom: ['core_projects'],
-  financiero: ['core_projects', 'finance', 'marketing_roi', 'google_sheets'],
+  financiero: ['core_projects', 'finance', 'finance_advanced', 'marketing_roi', 'google_sheets'],
   crm_ventas: ['core_projects', 'crm', 'ai_assistant'],
 };
 
 const ALL_ENTITLEMENTS = Object.keys({
   core_projects: true,
   finance: true,
+  finance_advanced: true,
   planner: true,
   crm: true,
   marketing_roi: true,
@@ -116,6 +120,7 @@ export function getModules(
   return {
     core_projects: has('core_projects'),
     finance: has('finance'),
+    finance_advanced: has('finance_advanced'),
     planner: has('planner'),
     crm: has('crm'),
     marketing_roi: has('marketing_roi'),
