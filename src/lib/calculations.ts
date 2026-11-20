@@ -28,6 +28,28 @@ export function calcularProyeccionAnualIngresos(ventas: Venta[], totalVentas: nu
   return { avgMonthlySales, proyeccionAnual: avgMonthlySales * 12, recordsMonthsCount };
 }
 
+/** Año calendario en curso (1 ene – 31 dic): la base de los topes DIAN, que son anuales. */
+export function periodoAnioEnCurso(today: Date = new Date()): { from: string; to: string } {
+  const y = today.getFullYear();
+  return { from: `${y}-01-01`, to: `${y}-12-31` };
+}
+
+/**
+ * Proyección anual para los topes DIAN (Alertas e IVA). Siempre sobre el año
+ * en curso, sin importar el período elegido en pantalla: promedio de los meses
+ * del año con ventas × 12.
+ *
+ * Antes usaba las ventas del período elegido divididas entre los meses con
+ * ventas de TODO el historial: con "Este mes" sin ventas daba $0, y con un
+ * solo mes elegido subestimaba la proyección.
+ */
+export function proyeccionAnualDelAnio(data: AppData, fiscal?: FiscalContext, today: Date = new Date()) {
+  const periodo = periodoAnioEnCurso(today);
+  const metrics = calcularMétricasFinancieras(data, periodo, fiscal);
+  const ventasDelAnio = data.ventas.filter((v) => inPeriod(v.fecha, periodo));
+  return { ...calcularProyeccionAnualIngresos(ventasDelAnio, metrics.totalVentas), metrics, anio: today.getFullYear() };
+}
+
 /**
  * Calculates Independent Contractor (Persona Natural) Social Security obligations.
  * Solo aplica en Colombia; para otros países devuelve ceros y `applies=false`.
@@ -137,6 +159,8 @@ export interface FinancialMetrics {
   impuestoRentaEstimado: number;
   utilidadNeta: number;
   margenContribucion: number;
+  /** De dónde sale el margen: las ventas del período, el histórico (período sin ventas) o ninguno (nunca hubo ventas). */
+  margenContribucionFuente: 'periodo' | 'historico' | 'sin_ventas';
   puntoEquilibrioVentas: number;
   
   // Details for rendering
@@ -256,7 +280,23 @@ export function calcularMétricasFinancieras(
   const utilidadNeta = utilidadAntesImpuestos - impuestoRentaEstimado;
 
   // 4. Break even point
-  const margenContribucion = totalVentas > 0 ? (utilidadBruta / totalVentas) : 0;
+  // Sin ventas en el período, el margen del período no existe: se usa el
+  // margen histórico de todas las ventas. Antes quedaba en 0, el punto de
+  // equilibrio en $0 y el diagnóstico decía "Zona ganancia" sin vender nada.
+  let margenContribucion = totalVentas > 0 ? (utilidadBruta / totalVentas) : 0;
+  let margenContribucionFuente: FinancialMetrics['margenContribucionFuente'] = totalVentas > 0 ? 'periodo' : 'sin_ventas';
+  if (totalVentas <= 0) {
+    let ventasHistoricas = 0;
+    let costosHistoricos = 0;
+    ventas.forEach((v) => {
+      ventasHistoricas += convertToCop(v.precio_venta_unitario, v.moneda, trm) * v.cantidad;
+      costosHistoricos += v.costo_unitario * v.cantidad;
+    });
+    if (ventasHistoricas > 0) {
+      margenContribucion = (ventasHistoricas - costosHistoricos) / ventasHistoricas;
+      margenContribucionFuente = 'historico';
+    }
+  }
   const totalGastosFijos = gastosOperativos + salarioPropuesto;
   const puntoEquilibrioVentas = margenContribucion > 0 ? (totalGastosFijos / margenContribucion) : 0;
 
@@ -279,6 +319,7 @@ export function calcularMétricasFinancieras(
     impuestoRentaEstimado,
     utilidadNeta,
     margenContribucion,
+    margenContribucionFuente,
     puntoEquilibrioVentas,
     herramientasCostoTotalCop,
     otrosGastosCostoTotalCop,

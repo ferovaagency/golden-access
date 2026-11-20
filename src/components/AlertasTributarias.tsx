@@ -1,16 +1,18 @@
-import { Config, Venta } from '../types';
-import { FinancialMetrics, calcularProyeccionAnualIngresos } from '../lib/calculations';
+import type { AppData } from '../types';
+import { proyeccionAnualDelAnio, type FiscalContext } from '../lib/calculations';
 import { BookOpen, AlertCircle, Milestone } from 'lucide-react';
 
 interface AlertasTributariasProps {
-  metrics: FinancialMetrics;
-  config: Config;
-  ventas: Venta[];
+  data: AppData;
+  fiscal?: FiscalContext;
   formatCop: (val: number) => string;
 }
 
-export default function AlertasTributarias({ metrics, config, ventas, formatCop }: AlertasTributariasProps) {
-  const { avgMonthlySales, proyeccionAnual: projectedAnnualSales, recordsMonthsCount } = calcularProyeccionAnualIngresos(ventas, metrics.totalVentas);
+// Los topes DIAN son anuales: esta pantalla siempre calcula con el año en
+// curso, sin importar el período elegido arriba (ver proyeccionAnualDelAnio).
+export default function AlertasTributarias({ data, fiscal, formatCop }: AlertasTributariasProps) {
+  const { config } = data;
+  const { avgMonthlySales, proyeccionAnual: projectedAnnualSales, recordsMonthsCount, metrics, anio } = proyeccionAnualDelAnio(data, fiscal);
 
   // Limits
   const limiteRentaVentas = config.tope_no_declarante_uvt * config.uvt; // 1400 uvt
@@ -92,7 +94,7 @@ export default function AlertasTributarias({ metrics, config, ventas, formatCop 
         <div className="space-y-1">
           <span className="font-semibold text-[#e8e3d8] block">Metodología de Proyección Anual</span>
           <p className="text-[#a39d8e]">
-            Las alertas toman tu promedio de facturación real acumulado mensual (<b className="text-slate-900">{formatCop(avgMonthlySales)}/mes</b>) multiplicándolo por 12 meses. Esto permite anticipar con meses de anticipación qué topes romperás a fin de año bajo tu volumen actual de operación.
+            Las alertas toman tu promedio de facturación real de {anio} (<b className="text-slate-900">{formatCop(avgMonthlySales)}/mes</b>, {recordsMonthsCount} {recordsMonthsCount === 1 ? 'mes' : 'meses'} con ventas) multiplicándolo por 12 meses. Siempre usan el año completo, aunque arriba elijas otro período. Esto permite anticipar con meses de anticipación qué topes romperás a fin de año bajo tu volumen actual de operación.
           </p>
         </div>
       </div>

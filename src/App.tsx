@@ -1055,7 +1055,7 @@ function AppInner() {
               <EquilibrioServicio servicios={appData.servicios} herramientas={appData.herramientas} clientes={appData.clientes} ventas={appData.ventas} config={appData.config} period={period} formatCop={formatCop} />
             )}
             {activeTab === 'iva' && <ImpuestosIva data={appData} metrics={metrics} formatCop={formatCop} />}
-            {activeTab === 'alertas' && <AlertasTributarias metrics={metrics} config={appData.config} ventas={appData.ventas} formatCop={formatCop} />}
+            {activeTab === 'alertas' && <AlertasTributarias data={appData} fiscal={fiscalProfile} formatCop={formatCop} />}
             {activeTab === 'servicios' && (
               <ServiciosAdmin servicios={appData.servicios} ventas={appData.ventas} horas={appData.horas} config={appData.config} onSaveServicios={handleSaveServicios} formatCop={formatCop} />
             )}

@@ -12,15 +12,18 @@ export default function EquilibrioGlobal({ metrics, formatCop }: EquilibrioGloba
     gastosOperativos,
     salarioPropuesto,
     margenContribucion,
+    margenContribucionFuente,
     puntoEquilibrioVentas
   } = metrics;
+  // Nunca hubo ventas: no hay margen con qué calcular el punto de equilibrio.
+  const sinDatos = margenContribucionFuente === 'sin_ventas';
 
   // Expenses total
   const gastosFijosTotales = gastosOperativos + salarioPropuesto;
 
   // Sales vs breakeven
   const diferenciaBreakeven = totalVentas - puntoEquilibrioVentas;
-  const haSuperadoBreakeven = totalVentas >= puntoEquilibrioVentas;
+  const haSuperadoBreakeven = !sinDatos && totalVentas >= puntoEquilibrioVentas;
   const porcentajeAvance = puntoEquilibrioVentas > 0 
     ? (totalVentas / puntoEquilibrioVentas) * 100 
     : 0;
@@ -46,7 +49,7 @@ export default function EquilibrioGlobal({ metrics, formatCop }: EquilibrioGloba
         <div className="bg-[#161412] border border-[#2a2620] p-5 rounded-lg border-l-3 border-l-blue-500">
           <span className="text-[10px] font-mono tracking-wider text-[#8a8377] uppercase block">Margen Contribución Prom.</span>
           <div className="text-xl font-display font-semibold text-blue-500 mt-2">{(margenContribucion * 100).toFixed(1)}%</div>
-          <span className="text-[10px] text-[#8a8377] font-mono block mt-1">Ingresos promedio menos variables</span>
+          <span className="text-[10px] text-[#8a8377] font-mono block mt-1">{margenContribucionFuente === 'historico' ? 'Sin ventas en este período: margen histórico' : sinDatos ? 'Aún no hay ventas registradas' : 'Ingresos promedio menos variables'}</span>
         </div>
 
         <div className="bg-[#161412] border border-[#2a2620] p-5 rounded-lg border-l-3 border-l-blue-500">
@@ -58,12 +61,14 @@ export default function EquilibrioGlobal({ metrics, formatCop }: EquilibrioGloba
         <div className={`border p-5 rounded-lg border-l-3 ${haSuperadoBreakeven ? 'border-l-emerald-500 bg-[#141812] border-[#2a2620]' : 'border-l-rose-500 bg-[#181312] border-[#2a2620]'}`}>
           <span className="text-[10px] font-mono tracking-wider text-[#8a8377] uppercase block">Diagnóstico Financiero</span>
           <div className="text-xl font-display font-bold mt-2" style={{ color: haSuperadoBreakeven ? 'var(--success)' : 'var(--danger)' }}>
-            {haSuperadoBreakeven ? 'ZONA GANANCIA' : 'ZONA DÉFICIT'}
+            {sinDatos ? 'SIN VENTAS' : haSuperadoBreakeven ? 'ZONA GANANCIA' : 'ZONA DÉFICIT'}
           </div>
           <span className="text-[10px] text-[#8a8377] font-mono block mt-1">
-            {haSuperadoBreakeven 
-              ? `${formatCop(diferenciaBreakeven)} sobre mínimo` 
-              : `Faltan ${formatCop(Math.abs(diferenciaBreakeven))} para sanear`}
+            {sinDatos
+              ? 'Registra ventas para calcular tu punto de equilibrio'
+              : haSuperadoBreakeven
+                ? `${formatCop(diferenciaBreakeven)} sobre mínimo`
+                : `Faltan ${formatCop(Math.abs(diferenciaBreakeven))} para sanear`}
           </span>
         </div>
 

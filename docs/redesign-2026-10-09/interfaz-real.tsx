@@ -258,12 +258,7 @@ function Preview() {
       break;
     case "alertas":
       content = (
-        <AlertasTributarias
-          metrics={metrics}
-          config={data.config}
-          ventas={data.ventas}
-          formatCop={cop}
-        />
+        <AlertasTributarias data={data} formatCop={cop} />
       );
       break;
     default:

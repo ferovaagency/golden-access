@@ -8,6 +8,7 @@ import {
   calcularProductividadClientes,
   calcularProductividadServicios,
   isColombiaFiscal,
+  proyeccionAnualDelAnio,
 } from '../src/lib/calculations';
 import type { AppData, Config, Cliente, Servicio, Herramienta, Venta, Hora } from '../src/types';
 
@@ -108,6 +109,27 @@ assert.equal(metricsMayo.fiscalCountry, 'CO');
 const metricsAll = calcularMétricasFinancieras(data, 'Todos');
 assert.equal(metricsAll.activeMonthsCountScale, 2);
 assert.equal(metricsAll.totalVentas, 3_000_000 + 2 * 500 * 4000); // 3M + 4M USD
+
+// --- Equilibrio: período sin ventas usa el margen histórico ---
+assert.equal(metricsMayo.margenContribucionFuente, 'periodo');
+const metricsSinVentas = calcularMétricasFinancieras(data, '2025-07');
+assert.equal(metricsSinVentas.totalVentas, 0);
+assert.equal(metricsSinVentas.margenContribucionFuente, 'historico');
+// Histórico: ventas 7M, costos variables 0,5M + 0,6M = 1,1M → margen 84,3 %.
+assert.ok(Math.abs(metricsSinVentas.margenContribucion - (7_000_000 - 1_100_000) / 7_000_000) < 1e-9);
+assert.ok(metricsSinVentas.puntoEquilibrioVentas > 0, 'sin ventas el punto de equilibrio no puede ser $0');
+const metricsNunca = calcularMétricasFinancieras({ ...data, ventas: [] }, 'Todos');
+assert.equal(metricsNunca.margenContribucionFuente, 'sin_ventas');
+assert.equal(metricsNunca.puntoEquilibrioVentas, 0);
+
+// --- Topes DIAN: proyección con el año en curso, no con el período elegido ---
+const anio2025 = proyeccionAnualDelAnio(data, undefined, new Date('2025-11-19T12:00:00Z'));
+assert.equal(anio2025.anio, 2025);
+assert.equal(anio2025.recordsMonthsCount, 2, 'mayo y junio');
+assert.equal(anio2025.avgMonthlySales, 3_500_000);
+assert.equal(anio2025.proyeccionAnual, 42_000_000);
+const anioSiguiente = proyeccionAnualDelAnio(data, undefined, new Date('2026-03-01T12:00:00Z'));
+assert.equal(anioSiguiente.proyeccionAnual, 0, 'las ventas de 2025 no cuentan para los topes de 2026');
 
 // --- Fiscal fuera de CO: impuesto renta 0 ---
 const metricsMx = calcularMétricasFinancieras(data, '2025-05', { country: 'MX', person_type: null, regime: null } as any);
