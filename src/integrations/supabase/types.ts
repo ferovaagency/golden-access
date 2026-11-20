@@ -157,6 +157,36 @@ export type Database = {
           },
         ]
       }
+      billing_webhook_events: {
+        Row: {
+          created_at: string
+          event_id: string
+          event_type: string
+          id: number
+          outcome: string
+          payload: Json
+          provider: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          event_type: string
+          id?: never
+          outcome?: string
+          payload: Json
+          provider: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          event_type?: string
+          id?: never
+          outcome?: string
+          payload?: Json
+          provider?: string
+        }
+        Relationships: []
+      }
       biz_crm_contactos: {
         Row: {
           canal_origen: string | null
@@ -3884,6 +3914,7 @@ export type Database = {
       }
       admin_ai_usage_overview: { Args: { p_days?: number }; Returns: Json }
       admin_subscriptions_overview: { Args: never; Returns: Json }
+      billing_user_id_by_email: { Args: { p_email: string }; Returns: string }
       can_access_account: { Args: { owner: string }; Returns: boolean }
       can_admin_org: { Args: { target: string }; Returns: boolean }
       complete_past_crm_citas: { Args: never; Returns: undefined }
